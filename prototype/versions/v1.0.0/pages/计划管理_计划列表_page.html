@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>计划管理 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .card-hover { transition: transform .2s, box-shadow .2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .btn-cta:active { transform: scale(.95); }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="plans" data-title="计划管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option>全部关联目标</option>
+          <option>【月】8 月桥吊效率月目标</option>
+          <option>【月】9 月桥吊效率月目标</option>
+          <option>【季】桥吊作业效率提升 15%（专项/跨月）</option>
+          <option>【季】设备完好率 ≥ 98%</option>
+        </select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部（含非专项）</option><option>仅专项计划</option><option>仅非专项</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
+      </div>
+      <button type="button" onclick="openPlanForm('create')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建计划</button>
+    </div>
+    <p class="text-xs text-slate-500 mb-3">计划挂靠规则：<span class="text-slate-700">默认挂月目标</span>；季目标仅用于专项/跨月；<span class="text-slate-700">禁止挂年目标</span>。节奏用起止时间 + 关键节点表达，不再单独选年/季/月周期类型。</p>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">计划名称</th>
+            <th class="px-5 py-3 text-left">关联目标</th>
+            <th class="px-5 py-3 text-left">是否专项</th>
+            <th class="px-5 py-3 text-left">时间节点</th>
+            <th class="px-5 py-3 text-left">负责人</th>
+            <th class="px-5 py-3 text-left">完成率</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanDetail()">8 月装卸效率提升计划</button></td>
+            <td class="px-5 py-3"><span class="text-xs text-sky-700 mr-1">【月】</span>8 月桥吊效率月目标</td>
+            <td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">是 · 桥吊效能提升专项</span></td>
+            <td class="px-5 py-3">08-01 ~ 08-31</td>
+            <td class="px-5 py-3">刘强</td>
+            <td class="px-5 py-3">55%</td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openPlanForm('edit')" class="hover:text-teal-700">编辑</button><button type="button" onclick="openPlanDetail()" class="hover:text-teal-700">详情</button></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanDetail()">Q3 桥吊点检专项计划</button></td>
+            <td class="px-5 py-3"><span class="text-xs text-teal-800 mr-1">【季】</span>桥吊作业效率提升 15%</td>
+            <td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">是 · 桥吊效能提升专项</span></td>
+            <td class="px-5 py-3">07-01 ~ 09-30</td>
+            <td class="px-5 py-3">刘强</td>
+            <td class="px-5 py-3">62%</td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openPlanForm('edit')" class="hover:text-teal-700">编辑</button><button type="button" onclick="openPlanDetail()" class="hover:text-teal-700">详情</button></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanDetail()">堆场周转优化计划</button></td>
+            <td class="px-5 py-3"><span class="text-xs text-sky-700 mr-1">【月】</span>8 月堆场周转月目标</td>
+            <td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">否</span></td>
+            <td class="px-5 py-3">08-01 ~ 08-31</td>
+            <td class="px-5 py-3">陈敏</td>
+            <td class="px-5 py-3">65%</td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openPlanForm('edit')" class="hover:text-teal-700">编辑</button><button type="button" onclick="openPlanDetail()" class="hover:text-teal-700">详情</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500">共 8 条 · 月目标可挂多计划；季目标示例仅用于跨月专项</div>
+    </div>
+
+    <!-- 新建/编辑 · 大弹窗 -->
+    <div id="modal-plan" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex items-center justify-between">
+          <h3 id="planFormTitle" class="text-xl font-semibold">新建计划</h3>
+          <button type="button" onclick="BMS.closeModal('modal-plan')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">计划名称 <span class="text-red-500">*</span></label>
+                <input id="planName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="8 月装卸效率提升计划" />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">关联目标 <span class="text-red-500">*</span></label>
+                <select id="planGoal" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="onPlanGoalChange()">
+                  <option value="">请选择关联目标</option>
+                  <optgroup label="月目标（推荐）">
+                    <option value="8 月桥吊效率月目标" data-level="month" selected>【月】8 月桥吊效率月目标（上级：桥吊作业效率提升 15%）</option>
+                    <option value="9 月桥吊效率月目标" data-level="month">【月】9 月桥吊效率月目标（上级：桥吊作业效率提升 15%）</option>
+                    <option value="8 月堆场周转月目标" data-level="month">【月】8 月堆场周转月目标</option>
+                    <option value="8 月设备完好率月目标" data-level="month">【月】8 月设备完好率月目标</option>
+                  </optgroup>
+                  <optgroup label="季目标（仅专项/跨月）">
+                    <option value="桥吊作业效率提升 15%" data-level="quarter">【季】桥吊作业效率提升 15%</option>
+                    <option value="设备完好率 ≥ 98%" data-level="quarter">【季】设备完好率 ≥ 98%</option>
+                  </optgroup>
+                </select>
+                <p id="goalPrefillHint" class="hidden text-xs text-teal-700 mt-1"></p>
+                <p id="goalLevelHint" class="text-xs text-slate-400 mt-1">默认挂月目标落地；年目标不可选。</p>
+              </div>
+              <div>
+                <label class="block text-sm text-slate-600 mb-2">是否专项 <span class="text-red-500">*</span></label>
+                <div class="flex gap-4 text-sm">
+                  <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="isSpecial" value="yes" checked onchange="toggleSpecial()" /> 是</label>
+                  <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="isSpecial" value="no" onchange="toggleSpecial()" /> 否</label>
+                </div>
+              </div>
+              <div id="specialWrap">
+                <label class="block text-sm text-slate-600 mb-1">关联专项 <span class="text-red-500">*</span></label>
+                <select id="planSpecial" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                  <option value="">请选择专项</option>
+                  <option selected>桥吊效能提升专项</option>
+                  <option>堆场周转优化专项</option>
+                  <option>设备点检达标专项</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">开始时间 <span class="text-red-500">*</span></label>
+                  <input id="planStart" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-01" />
+                </div>
+                <div>
+                  <label class="block text-sm text-slate-600 mb-1">结束时间 <span class="text-red-500">*</span></label>
+                  <input id="planEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-31" />
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 -mt-2">计划节奏由起止时间与关键节点表达（已弱化年/季/月周期类型字段）。</p>
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="block text-sm text-slate-600">关键节点 <span class="text-red-500">*</span></label>
+                  <button type="button" onclick="addMilestone()" class="text-xs text-teal-700 inline-flex items-center gap-1"><i class="fa-solid fa-plus"></i>添加节点</button>
+                </div>
+                <div id="milestoneList" class="space-y-2"></div>
+                <p class="text-xs text-slate-400 mt-1">至少 1 条；节点日期建议落在起止时间范围内。</p>
+              </div>
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">计划负责人 <span class="text-red-500">*</span></label>
+                <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>刘强</option><option>陈敏</option><option>周杰</option></select>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">计划说明 <span class="text-red-500">*</span></label>
+                <textarea id="planDesc" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-40" placeholder="说明本计划背景、范围、关键措施与预期结果">围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施；配合点检整改，支撑 Q3 桥吊效率目标。</textarea>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="block text-sm text-slate-600">计划附件</label>
+                  <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1">
+                    <i class="fa-solid fa-upload"></i>上传附件
+                    <input id="planFileInput" type="file" class="hidden" multiple onchange="uploadPlanFiles(event)" />
+                  </label>
+                </div>
+                <div id="planAttachList" class="border border-slate-100 rounded-2xl divide-y text-sm min-h-[120px]">
+                  <div class="flex items-center justify-between px-4 py-3">
+                    <div class="flex items-center gap-3 min-w-0"><i class="fa-solid fa-file-pdf text-red-400"></i><div class="min-w-0"><div class="truncate font-medium">8月装卸效率措施清单.pdf</div><div class="text-xs text-slate-400">刘强 · 08-01 · 860KB</div></div></div>
+                    <div class="flex gap-2 shrink-0"><button type="button" class="text-teal-700 text-xs" onclick="BMS.toast('原型：预览')">预览</button><button type="button" class="text-red-500 text-xs" onclick="this.closest('div.flex.items-center.justify-between').remove()">删除</button></div>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">支持文档、图片；单文件不超过 20MB</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="savePlan()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存计划</button>
+          <button type="button" onclick="BMS.closeModal('modal-plan')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 详情 · 大弹窗 -->
+    <div id="modal-plan-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 class="text-xl font-semibold">8 月装卸效率提升计划</h3>
+            <p class="text-sm text-slate-500 mt-1">关联目标：【月】8 月桥吊效率月目标 · 专项：桥吊效能提升专项 · 08-01 ~ 08-31 · 完成率 55%</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="BMS.closeModal('modal-plan-detail');openPlanForm('edit')" class="border text-sm px-4 py-2 rounded-xl">编辑</button>
+            <a href="任务管理_任务列表_page.html?open=modal-task" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">新增任务</a>
+            <button type="button" onclick="BMS.closeModal('modal-plan-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">是否专项</div><div class="mt-1 font-medium">是</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联专项</div><div class="mt-1 font-medium">桥吊效能提升专项</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">起止时间</div><div class="mt-1 font-medium">08-01 ~ 08-31</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">下属任务</div><div class="mt-1 font-medium">3</div></div>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">关键节点</div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">节点日期</th><th class="text-left px-4 py-2.5">节点名称</th><th class="text-left px-4 py-2.5">说明</th></tr></thead>
+                <tbody>
+                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-08</td><td class="px-4 py-2.5">夜班流程复盘完成</td><td class="px-4 py-2.5 text-slate-500">形成整改清单</td></tr>
+                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-15</td><td class="px-4 py-2.5">班前会标准化落地</td><td class="px-4 py-2.5 text-slate-500">全班组宣贯</td></tr>
+                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-25</td><td class="px-4 py-2.5">效率中期复核</td><td class="px-4 py-2.5 text-slate-500">对照目标值</td></tr>
+                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-31</td><td class="px-4 py-2.5">月度总结闭环</td><td class="px-4 py-2.5 text-slate-500">输出下月计划输入</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-1">计划说明</div>
+            <p class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3">围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施；配合点检整改，支撑 Q3 桥吊效率目标。</p>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">计划附件</div>
+            <div class="border border-slate-100 rounded-2xl divide-y text-sm">
+              <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center gap-3"><i class="fa-solid fa-file-pdf text-red-400"></i><div><div class="font-medium">8月装卸效率措施清单.pdf</div><div class="text-xs text-slate-400">刘强 · 08-01 · 860KB</div></div></div>
+                <button type="button" class="text-teal-700 text-xs" onclick="BMS.toast('原型：预览')">预览</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">下属任务</div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">任务</th><th class="text-left px-4 py-2.5">责任人</th><th class="text-left px-4 py-2.5">完成率</th><th class="text-left px-4 py-2.5">状态</th><th class="text-left px-4 py-2.5">操作</th></tr></thead>
+                <tbody>
+                  <tr class="border-t row-hover"><td class="px-4 py-2.5">桥吊夜班流程复盘</td><td class="px-4 py-2.5">刘强</td><td class="px-4 py-2.5">40%</td><td class="px-4 py-2.5"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span></td><td class="px-4 py-2.5"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
+                  <tr class="border-t row-hover"><td class="px-4 py-2.5">班前会标准化宣贯</td><td class="px-4 py-2.5">孙伟</td><td class="px-4 py-2.5">60%</td><td class="px-4 py-2.5"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td><td class="px-4 py-2.5"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
+                  <tr class="border-t row-hover"><td class="px-4 py-2.5">岸桥对位训练</td><td class="px-4 py-2.5">马超</td><td class="px-4 py-2.5">35%</td><td class="px-4 py-2.5"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td><td class="px-4 py-2.5"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    const DEFAULT_MILESTONES = [
+      { date: '2026-08-08', name: '夜班流程复盘完成', note: '形成整改清单' },
+      { date: '2026-08-15', name: '班前会标准化落地', note: '全班组宣贯' },
+      { date: '2026-08-25', name: '效率中期复核', note: '对照目标值' },
+      { date: '2026-08-31', name: '月度总结闭环', note: '输出下月计划输入' }
+    ];
+
+    const YEAR_GOAL_NAMES = ['全年集装箱吞吐量目标', '安全生产零事故'];
+
+    function getSelectedGoalLevel() {
+      const sel = document.getElementById('planGoal');
+      const opt = sel.options[sel.selectedIndex];
+      return opt ? (opt.getAttribute('data-level') || '') : '';
+    }
+
+    function onPlanGoalChange() {
+      const level = getSelectedGoalLevel();
+      const hint = document.getElementById('goalLevelHint');
+      if (level === 'quarter') {
+        hint.className = 'text-xs text-amber-700 mt-1';
+        hint.textContent = '已选季目标：仅建议用于专项或跨月战役计划；常规落地请改挂月目标。';
+      } else if (level === 'month') {
+        hint.className = 'text-xs text-slate-400 mt-1';
+        hint.textContent = '已选月目标（推荐）：一目标可挂多条计划。';
+      } else {
+        hint.className = 'text-xs text-slate-400 mt-1';
+        hint.textContent = '默认挂月目标落地；年目标不可选。';
+      }
+    }
+
+    function openPlanForm(mode, opts) {
+      opts = opts || {};
+      document.getElementById('planFormTitle').textContent = mode === 'create' ? '新建计划' : '编辑计划';
+      const hint = document.getElementById('goalPrefillHint');
+      const sel = document.getElementById('planGoal');
+      if (opts.goal) {
+        if (YEAR_GOAL_NAMES.includes(opts.goal)) {
+          hint.classList.remove('hidden');
+          hint.className = 'text-xs text-amber-700 mt-1';
+          hint.textContent = '年目标禁止挂计划。请先拆到月目标（或季专项）后再新建。';
+          sel.value = '8 月桥吊效率月目标';
+          BMS.toast('年目标不可挂计划，已改为推荐月目标', 'error');
+        } else {
+          const match = Array.from(sel.options).find(o => o.value === opts.goal || (o.textContent || '').includes(opts.goal));
+          if (match) sel.value = match.value;
+          else sel.value = '8 月桥吊效率月目标';
+          hint.classList.remove('hidden');
+          hint.className = 'text-xs text-teal-700 mt-1';
+          hint.textContent = '已从目标详情带入关联目标，如需可改选。';
+        }
+      } else {
+        if (mode === 'create') sel.value = '8 月桥吊效率月目标';
+        hint.classList.add('hidden');
+      }
+      onPlanGoalChange();
+      if (mode === 'create' && !opts.keepMilestones) {
+        renderMilestones(opts.milestones || [{ date: '', name: '', note: '' }]);
+      } else if (mode === 'edit') {
+        renderMilestones(DEFAULT_MILESTONES);
+      }
+      BMS.openModal('modal-plan');
+      toggleSpecial();
+    }
+    function openPlanDetail() { BMS.openModal('modal-plan-detail'); }
+    function toggleSpecial() {
+      const yes = document.querySelector('input[name="isSpecial"]:checked')?.value === 'yes';
+      document.getElementById('specialWrap').classList.toggle('hidden', !yes);
+    }
+    function renderMilestones(rows) {
+      const list = document.getElementById('milestoneList');
+      list.innerHTML = '';
+      (rows.length ? rows : [{ date: '', name: '', note: '' }]).forEach(r => addMilestone(r));
+    }
+    function addMilestone(data) {
+      data = data || { date: '', name: '', note: '' };
+      const list = document.getElementById('milestoneList');
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-12 gap-2 items-start milestone-row';
+      row.innerHTML = `
+        <div class="col-span-3"><input type="date" class="ms-date w-full border border-slate-200 rounded-xl px-2 py-2 text-sm" value="${data.date || ''}" /></div>
+        <div class="col-span-4"><input class="ms-name w-full border border-slate-200 rounded-xl px-2 py-2 text-sm" placeholder="节点名称" value="" /></div>
+        <div class="col-span-4"><input class="ms-note w-full border border-slate-200 rounded-xl px-2 py-2 text-sm" placeholder="说明（可选）" value="" /></div>
+        <div class="col-span-1 flex justify-end pt-1"><button type="button" class="text-slate-400 hover:text-red-500" title="删除" onclick="removeMilestone(this)"><i class="fa-solid fa-trash-can"></i></button></div>`;
+      row.querySelector('.ms-name').value = data.name || '';
+      row.querySelector('.ms-note').value = data.note || '';
+      list.appendChild(row);
+    }
+    function removeMilestone(btn) {
+      const list = document.getElementById('milestoneList');
+      if (list.querySelectorAll('.milestone-row').length <= 1) {
+        BMS.toast('至少保留 1 条关键节点', 'error');
+        return;
+      }
+      btn.closest('.milestone-row').remove();
+    }
+    function collectMilestones() {
+      return Array.from(document.querySelectorAll('#milestoneList .milestone-row')).map(row => ({
+        date: row.querySelector('.ms-date').value,
+        name: row.querySelector('.ms-name').value.trim(),
+        note: row.querySelector('.ms-note').value.trim()
+      }));
+    }
+    function savePlan() {
+      const name = document.getElementById('planName').value.trim();
+      const goal = document.getElementById('planGoal').value.trim();
+      const level = getSelectedGoalLevel();
+      const desc = document.getElementById('planDesc').value.trim();
+      const start = document.getElementById('planStart').value;
+      const end = document.getElementById('planEnd').value;
+      const isSpecial = document.querySelector('input[name="isSpecial"]:checked')?.value === 'yes';
+      const special = document.getElementById('planSpecial').value.trim();
+      const milestones = collectMilestones();
+      if (!name) { BMS.toast('请填写计划名称', 'error'); return; }
+      if (!goal) { BMS.toast('请选择关联目标', 'error'); return; }
+      if (level === 'year' || YEAR_GOAL_NAMES.includes(goal)) {
+        BMS.toast('禁止将计划挂在年目标上，请选择月目标或季目标', 'error');
+        return;
+      }
+      if (level === 'quarter' && !isSpecial) {
+        // 季目标允许挂计划；非专项时仅弱提示，不拦截
+        BMS.toast('提示：挂季目标更适合专项/跨月计划，常规工作建议挂月目标');
+      }
+      if (isSpecial && !special) { BMS.toast('已选择「是专项」，请选择关联专项', 'error'); return; }
+      if (!start || !end) { BMS.toast('请填写起止时间', 'error'); return; }
+      if (start > end) { BMS.toast('开始时间不能晚于结束时间', 'error'); return; }
+      if (!milestones.length) { BMS.toast('请至少添加 1 条关键节点', 'error'); return; }
+      for (let i = 0; i < milestones.length; i++) {
+        const m = milestones[i];
+        if (!m.name || !m.date) { BMS.toast('第 ' + (i + 1) + ' 条关键节点需填写名称与日期', 'error'); return; }
+        if (m.date < start || m.date > end) { BMS.toast('第 ' + (i + 1) + ' 条关键节点日期需在起止时间范围内', 'error'); return; }
+      }
+      if (!desc) { BMS.toast('请填写计划说明', 'error'); return; }
+      BMS.toast('计划已保存');
+      BMS.closeModal('modal-plan');
+    }
+    function uploadPlanFiles(e) {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      const max = 20 * 1024 * 1024;
+      const list = document.getElementById('planAttachList');
+      let ok = 0;
+      files.forEach(f => {
+        const okType = f.type.startsWith('image/') || f.type === 'application/pdf' || /\.(docx?|xlsx?|pptx?|pdf|png|jpe?g|gif|webp)$/i.test(f.name);
+        if (!okType) { BMS.toast('仅支持文档、图片：' + f.name, 'error'); return; }
+        if (f.size > max) { BMS.toast('超过 20MB：' + f.name, 'error'); return; }
+        ok++;
+        const size = f.size > 1024 * 1024 ? (f.size / 1024 / 1024).toFixed(1) + 'MB' : Math.max(1, Math.round(f.size / 1024)) + 'KB';
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between px-4 py-3';
+        row.innerHTML = `<div class="flex items-center gap-3 min-w-0"><i class="fa-solid fa-file text-slate-400"></i><div class="min-w-0"><div class="truncate font-medium"></div><div class="text-xs text-slate-400">刘强 · 刚刚 · ${size}</div></div></div><div class="flex gap-2 shrink-0"><button type="button" class="text-teal-700 text-xs" onclick="BMS.toast('原型：预览')">预览</button><button type="button" class="text-red-500 text-xs" onclick="this.closest('div.flex.items-center.justify-between').remove()">删除</button></div>`;
+        row.querySelector('.truncate').textContent = f.name;
+        list.appendChild(row);
+      });
+      e.target.value = '';
+      if (ok) BMS.toast('已添加 ' + ok + ' 个附件');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      renderMilestones(DEFAULT_MILESTONES);
+      const params = new URLSearchParams(location.search);
+      const open = params.get('open');
+      const goal = params.get('goal');
+      if (open === 'modal-plan') setTimeout(() => openPlanForm('create', { goal: goal || '', milestones: [{ date: '', name: '', note: '' }] }), 60);
+      if (open === 'modal-plan-detail') setTimeout(() => openPlanDetail(), 60);
+    });
+  </script>
+</body>
+</html>

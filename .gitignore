@@ -1,0 +1,26 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+.idea/
+.vscode/
+*.code-workspace
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+credentials.json
+**/secrets/**
+
+# Temp / restore
+_tmp_*
+**/_tmp_*
+*.log
+*.tmp
+
+# Dependencies (if any later)
+node_modules/
+dist/
+.cache/

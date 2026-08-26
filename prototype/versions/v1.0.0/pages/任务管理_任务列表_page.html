@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>任务列表 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .card-hover { transition: transform .2s, box-shadow .2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .btn-cta:active { transform: scale(.95); }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="tasks" data-title="任务列表">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部专项</option><option>桥吊效能提升专项</option><option>堆场周转专项</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>进行中</option><option>已延期</option><option>本月未更新</option></select>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="BMS.openModal('modal-task')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建任务</button>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500"><tr><th class="px-5 py-3 text-left">任务名称</th><th class="px-5 py-3 text-left">关联计划</th><th class="px-5 py-3 text-left">部门</th><th class="px-5 py-3 text-left">责任人</th><th class="px-5 py-3 text-left">完成率</th><th class="px-5 py-3 text-left">状态</th><th class="px-5 py-3 text-left">操作</th></tr></thead>
+        <tbody>
+          <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline" onclick="BMS.openModal('modal-task-detail')">桥吊夜班流程复盘</button></td><td class="px-5 py-3">8 月装卸效率提升计划</td><td class="px-5 py-3">装卸队</td><td class="px-5 py-3">刘强</td><td class="px-5 py-3">40%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span></td><td class="px-5 py-3"><button type="button" onclick="BMS.openModal('modal-task')" class="hover:text-teal-700">编辑</button></td></tr>
+          <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline" onclick="BMS.openModal('modal-task-detail')">岸桥对位训练</button></td><td class="px-5 py-3">8 月装卸效率提升计划</td><td class="px-5 py-3">装卸队</td><td class="px-5 py-3">马超</td><td class="px-5 py-3">35%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td><td class="px-5 py-3"><button type="button" onclick="BMS.openModal('modal-task')" class="hover:text-teal-700">编辑</button></td></tr>
+          <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline" onclick="BMS.openModal('modal-task-detail')">班前会标准化宣贯</button></td><td class="px-5 py-3">夜班协同保障计划</td><td class="px-5 py-3">装卸队</td><td class="px-5 py-3">孙伟</td><td class="px-5 py-3">70%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td><td class="px-5 py-3"><button type="button" onclick="BMS.openModal('modal-task')" class="hover:text-teal-700">编辑</button></td></tr>
+        </tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500">共 27 条 · 点击名称打开<strong>大尺寸</strong>任务详情弹窗</div>
+    </div>
+
+    <!-- 新建/编辑（常规弹窗） -->
+    <div id="modal-task" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-xl p-6 space-y-3">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">新建 / 编辑任务</h3><button type="button" onclick="BMS.closeModal('modal-task')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <input id="taskName" class="w-full border rounded-xl px-3 py-2.5 text-sm" value="桥吊夜班流程复盘" />
+        <select class="w-full border rounded-xl px-3 py-2.5 text-sm"><option>8 月装卸效率提升计划</option><option>Q3 桥吊点检专项计划</option><option>夜班协同保障计划</option></select>
+        <div class="grid grid-cols-2 gap-3"><select class="border rounded-xl px-3 py-2.5 text-sm"><option>装卸队</option><option>调度中心</option><option>设备部</option></select><select class="border rounded-xl px-3 py-2.5 text-sm"><option>刘强</option><option>孙伟</option><option>马超</option></select></div>
+        <div class="flex gap-2"><button type="button" onclick="(function(){if(!document.getElementById('taskName').value.trim()){BMS.toast('请填写任务名称','error');return;}BMS.toast('任务已保存');BMS.closeModal('modal-task');})()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button><button type="button" onclick="BMS.closeModal('modal-task')" class="text-sm text-slate-500">取消</button></div>
+      </div>
+    </div>
+
+    <!-- 任务详情 · 大弹窗 -->
+    <div id="modal-task-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-xl font-semibold text-slate-900">桥吊夜班流程复盘</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">装卸队 · 责任人 刘强 · 关联计划：8 月装卸效率提升计划 · 完成率 40%</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="BMS.closeModal('modal-task-detail');BMS.openModal('modal-fill')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">本周汇报</button>
+            <button type="button" onclick="BMS.closeModal('modal-task-detail');BMS.openModal('modal-task')" class="border text-sm px-4 py-2 rounded-xl">编辑</button>
+            <button type="button" onclick="BMS.closeModal('modal-task-detail')" class="w-9 h-9 rounded-xl border text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+          <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+            <!-- 左：基础 + 填报 + 附件 -->
+            <div class="lg:col-span-3 space-y-5">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">开始日期</div><div class="mt-1 font-medium">2026-08-01</div></div>
+                <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">结束日期</div><div class="mt-1 font-medium">2026-08-20</div></div>
+                <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联专项</div><div class="mt-1 font-medium">桥吊效能提升专项</div></div>
+                <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">优先级</div><div class="mt-1 font-medium">中</div></div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-2"><h4 class="font-medium text-slate-900">进展汇报记录</h4></div>
+                <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                  <table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">周期</th><th class="text-left px-4 py-2.5">完成率</th><th class="text-left px-4 py-2.5">进展说明</th></tr></thead>
+                  <tbody>
+                    <tr class="border-t"><td class="px-4 py-2.5">2026-W32</td><td class="px-4 py-2.5">25%</td><td class="px-4 py-2.5">完成夜班交接清单初稿</td></tr>
+                    <tr class="border-t"><td class="px-4 py-2.5">2026-W33</td><td class="px-4 py-2.5">40%</td><td class="px-4 py-2.5">班组试运行，收集卡点问题</td></tr>
+                    <tr class="border-t"><td class="px-4 py-2.5">2026-W34</td><td class="px-4 py-2.5 text-amber-600">待汇报</td><td class="px-4 py-2.5"><button type="button" class="text-teal-700" onclick="BMS.closeModal('modal-task-detail');BMS.openModal('modal-fill')">去汇报</button></td></tr>
+                  </tbody></table>
+                </div>
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <h4 class="font-medium text-slate-900">附件</h4>
+                  <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1">
+                    <i class="fa-solid fa-upload"></i>上传附件
+                    <input id="fileInput" type="file" class="hidden" multiple onchange="uploadFiles(event)" />
+                  </label>
+                </div>
+                <div id="attachList" class="border border-slate-100 rounded-2xl divide-y text-sm">
+                  <div class="flex items-center justify-between px-4 py-3">
+                    <div class="flex items-center gap-3 min-w-0"><i class="fa-solid fa-file-pdf text-red-400"></i><div class="min-w-0"><div class="truncate font-medium">桥吊夜班交接清单_v2.pdf</div><div class="text-xs text-slate-400">刘强 · 08-14 16:20 · 1.2MB</div></div></div>
+                    <div class="flex gap-2 shrink-0"><button type="button" class="text-teal-700 text-xs" onclick="BMS.toast('原型：打开预览')">预览</button><button type="button" class="text-slate-500 text-xs" onclick="BMS.toast('原型：开始下载')">下载</button></div>
+                  </div>
+                  <div class="flex items-center justify-between px-4 py-3">
+                    <div class="flex items-center gap-3 min-w-0"><i class="fa-solid fa-file-image text-sky-500"></i><div class="min-w-0"><div class="truncate font-medium">夜班现场卡点照片.png</div><div class="text-xs text-slate-400">孙伟 · 08-12 11:08 · 860KB</div></div></div>
+                    <div class="flex gap-2 shrink-0"><button type="button" class="text-teal-700 text-xs" onclick="BMS.toast('原型：打开预览')">预览</button><button type="button" class="text-slate-500 text-xs" onclick="BMS.toast('原型：开始下载')">下载</button></div>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2">支持文档、图片等；单文件建议不超过 20MB（细则待确认）</p>
+              </div>
+            </div>
+            <!-- 右：评论记录 -->
+            <div class="lg:col-span-2 flex flex-col border border-slate-100 rounded-2xl overflow-hidden min-h-[420px]">
+              <div class="px-4 py-3 border-b bg-slate-50 font-medium text-sm">评论记录</div>
+              <div id="commentList" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+              <div class="border-t p-4 bg-white">
+                <textarea id="commentInput" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-20" placeholder="输入跟踪评论，可用 @姓名 提醒相关人"></textarea>
+                <div class="mt-2 flex justify-between items-center">
+                  <div class="text-xs text-slate-400">快捷：<button type="button" class="text-teal-700" onclick="document.getElementById('commentInput').value+=' @刘强 '">@刘强</button> <button type="button" class="text-teal-700 ml-1" onclick="document.getElementById('commentInput').value+=' @张港长 '">@张港长</button></div>
+                  <button type="button" onclick="addComment()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">发表评论</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-fill" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-fill')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-3">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">进展汇报</h3><button type="button" onclick="BMS.closeModal('modal-fill')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <input type="number" class="w-full border rounded-xl px-3 py-2.5 text-sm" value="55" placeholder="完成率" />
+        <textarea class="w-full border rounded-xl px-3 py-2.5 text-sm h-20">整改清单已定稿，待班组宣贯。</textarea>
+        <div class="flex gap-2"><button type="button" onclick="BMS.toast('汇报已提交');BMS.closeModal('modal-fill');BMS.openModal('modal-task-detail')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">提交</button><button type="button" onclick="BMS.closeModal('modal-fill')" class="text-sm text-slate-500">取消</button></div>
+      </div>
+    </div>
+
+    <div id="modal-confirm-del" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-confirm-del')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-sm p-6">
+        <h3 class="text-lg font-semibold mb-2">确认删除评论？</h3>
+        <p class="text-sm text-slate-600 mb-5">删除后不可恢复，仅可删除自己发表的评论。</p>
+        <div class="flex gap-2 justify-end"><button type="button" onclick="BMS.closeModal('modal-confirm-del')" class="text-sm px-4 py-2 text-slate-500">取消</button><button type="button" onclick="confirmDeleteComment()" class="text-sm px-4 py-2 rounded-xl bg-red-500 text-white">确认删除</button></div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    // 原型：当前登录用户视为「刘强」，仅本人评论可编辑/删除
+    const CURRENT_USER = "刘强";
+    let comments = [
+      { id: 1, author: "张港长", mine: false, time: "08-19 10:22", text: "@刘强 夜班交接卡点请本周闭环，避免影响桥吊准班率。" },
+      { id: 2, author: "刘强", mine: true, time: "08-19 14:05", text: "已组织班组试运行，周四前输出整改清单。" },
+      { id: 3, author: "孙伟", mine: false, time: "08-20 09:18", text: "对位训练班次也请同步关注，@刘强" },
+      { id: 4, author: "刘强", mine: true, time: "08-20 11:02", text: "训练计划已挂夜班协同保障计划，见附件。" }
+    ];
+    let pendingDeleteId = null;
+    let editingId = null;
+
+    function renderComments() {
+      const box = document.getElementById("commentList");
+      box.innerHTML = "";
+      comments.forEach((c) => {
+        const el = document.createElement("div");
+        el.className = "group";
+        el.dataset.id = c.id;
+        const avatar = c.author.slice(0, 1);
+        let actions = "";
+        if (c.mine) {
+          actions = `<div class="flex gap-2 mt-1 text-xs"><button type="button" class="text-teal-700" onclick="startEdit(${c.id})">编辑</button><button type="button" class="text-red-500" onclick="askDelete(${c.id})">删除</button></div>`;
+        }
+        if (editingId === c.id) {
+          el.innerHTML = `
+            <div class="flex gap-3">
+              <span class="w-8 h-8 rounded-full bg-teal-100 text-teal-800 flex items-center justify-center text-xs shrink-0">${avatar}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs text-slate-400 mb-1">${c.author} · 本人 · ${c.time}</div>
+                <textarea id="editArea-${c.id}" class="w-full border rounded-xl px-3 py-2 text-sm h-20">${c.text.replace(/</g,"&lt;")}</textarea>
+                <div class="mt-2 flex gap-2"><button type="button" class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl" onclick="saveEdit(${c.id})">保存</button><button type="button" class="text-xs text-slate-500 px-2" onclick="cancelEdit()">取消</button></div>
+              </div>
+            </div>`;
+        } else {
+          el.innerHTML = `
+            <div class="flex gap-3">
+              <span class="w-8 h-8 rounded-full ${c.mine ? "bg-teal-100 text-teal-800" : "bg-slate-200 text-slate-600"} flex items-center justify-center text-xs shrink-0">${avatar}</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs text-slate-400 mb-1">${c.author}${c.mine ? " · 本人" : ""} · ${c.time}</div>
+                <div class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap"></div>
+                ${actions}
+              </div>
+            </div>`;
+          el.querySelector(".text-sm").textContent = c.text;
+        }
+        box.appendChild(el);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function addComment() {
+      const v = document.getElementById("commentInput").value.trim();
+      if (!v) { BMS.toast("请输入评论内容", "error"); return; }
+      const now = new Date();
+      const t = `${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+      comments.push({ id: Date.now(), author: CURRENT_USER, mine: true, time: t, text: v });
+      document.getElementById("commentInput").value = "";
+      editingId = null;
+      renderComments();
+      BMS.toast("评论已发表");
+    }
+
+    function startEdit(id) { editingId = id; renderComments(); }
+    function cancelEdit() { editingId = null; renderComments(); }
+    function saveEdit(id) {
+      const area = document.getElementById("editArea-" + id);
+      const v = (area && area.value || "").trim();
+      if (!v) { BMS.toast("评论不能为空", "error"); return; }
+      const c = comments.find(x => x.id === id);
+      if (!c || !c.mine) { BMS.toast("只能编辑自己的评论", "error"); return; }
+      c.text = v;
+      editingId = null;
+      renderComments();
+      BMS.toast("评论已更新");
+    }
+    function askDelete(id) {
+      const c = comments.find(x => x.id === id);
+      if (!c || !c.mine) { BMS.toast("只能删除自己的评论", "error"); return; }
+      pendingDeleteId = id;
+      BMS.openModal("modal-confirm-del");
+    }
+    function confirmDeleteComment() {
+      comments = comments.filter(x => x.id !== pendingDeleteId);
+      pendingDeleteId = null;
+      BMS.closeModal("modal-confirm-del");
+      renderComments();
+      BMS.toast("评论已删除");
+    }
+    function uploadFiles(e) {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      const list = document.getElementById("attachList");
+      files.forEach(f => {
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between px-4 py-3";
+        const icon = f.type.startsWith("image/") ? "fa-file-image text-sky-500" : "fa-file text-slate-400";
+        const size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+"MB" : Math.max(1, Math.round(f.size/1024))+"KB";
+        row.innerHTML = `<div class="flex items-center gap-3 min-w-0"><i class="fa-solid ${icon}"></i><div class="min-w-0"><div class="truncate font-medium"></div><div class="text-xs text-slate-400">刘强 · 刚刚 · ${size}</div></div></div><div class="flex gap-2 shrink-0"><button type="button" class="text-teal-700 text-xs" onclick="BMS.toast('原型：打开预览')">预览</button><button type="button" class="text-red-500 text-xs" onclick="this.closest('div.flex.items-center.justify-between').remove();BMS.toast('附件已移除')">删除</button></div>`;
+        row.querySelector(".truncate").textContent = f.name;
+        list.appendChild(row);
+      });
+      e.target.value = "";
+      BMS.toast("已添加 " + files.length + " 个附件");
+    }
+
+    // 首次打开详情时渲染评论
+    const _open = window.BMS && BMS.openModal;
+    document.addEventListener("DOMContentLoaded", () => {
+      const rawOpen = BMS.openModal.bind(BMS);
+      BMS.openModal = function(id) {
+        rawOpen(id);
+        if (id === "modal-task-detail") setTimeout(renderComments, 0);
+      };
+      if (new URLSearchParams(location.search).get("open") === "modal-task-detail") {
+        setTimeout(renderComments, 80);
+      }
+    });
+  </script>
+</body>
+</html>

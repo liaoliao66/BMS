@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>经营总览 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .card-hover { transition: transform .2s, box-shadow .2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .btn-cta:active { transform: scale(.95); }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="dashboard" data-title="经营总览">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <!-- 筛选 + 快捷入口 -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div class="flex flex-wrap gap-2 items-center">
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>2026 年</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option selected>Q3</option><option>Q2</option><option>Q4</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option></select>
+        <span class="text-xs text-slate-400">数据截止：2026-08-26</span>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <a href="经营台账_工作汇报_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">工作汇报</a>
+        <a href="部门工作台_部门工作台_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">工作台</a>
+        <a href="任务中心_汇报提醒_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">汇报提醒</a>
+        <a href="目标管理_目标列表_page.html?open=modal-goal" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建目标</a>
+      </div>
+    </div>
+
+    <!-- KPI 摘要 -->
+    <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">码头目标完成率</div>
+        <div class="mt-1 text-2xl font-semibold">71%</div>
+        <div class="mt-1 text-xs text-emerald-600">较上季 +3%</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">进行中目标</div>
+        <div class="mt-1 text-2xl font-semibold">14</div>
+        <div class="mt-1 text-xs text-slate-400">年 3 · 季 5 · 月 6</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">进行中计划</div>
+        <div class="mt-1 text-2xl font-semibold">22</div>
+        <div class="mt-1 text-xs text-slate-400">含专项计划 6</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">本周待汇报</div>
+        <div class="mt-1 text-2xl font-semibold text-amber-600">31</div>
+        <div class="mt-1 text-xs"><a href="任务中心_汇报提醒_page.html" class="text-amber-600 hover:underline">去提醒</a></div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">风险 / 滞后</div>
+        <div class="mt-1 text-2xl font-semibold text-red-500">7</div>
+        <div class="mt-1 text-xs text-slate-400">任务 5 · 目标 2</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">督办中</div>
+        <div class="mt-1 text-2xl font-semibold">9</div>
+        <div class="mt-1 text-xs"><a href="任务中心_任务督办_page.html" class="text-teal-700 hover:underline">任务督办</a></div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">合同回款率</div>
+        <div class="mt-1 text-2xl font-semibold">58%</div>
+        <div class="mt-1 text-xs text-slate-400">回款 2145 / 总额 3680 万</div>
+      </div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
+        <div class="text-xs text-slate-500">剩余收款（万）</div>
+        <div class="mt-1 text-2xl font-semibold text-amber-600">1,535</div>
+        <div class="mt-1 text-xs"><a href="合同收款_收款管理_page.html" class="text-teal-700 hover:underline">收款管理</a></div>
+      </div>
+    </div>
+
+    <!-- 工作汇报快照 -->
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] px-5 py-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <div class="text-sm font-medium text-slate-900">本周工作汇报快照 · W34</div>
+        <p class="text-xs text-slate-500 mt-1">目标完成较上周 <span class="text-emerald-600">+2%</span> · 计划推进较上周 <span class="text-emerald-600">+1</span> · 未填待催 <span class="text-amber-600 font-medium">8 人</span>（较上周 -2）</p>
+      </div>
+      <a href="经营台账_工作汇报_page.html" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">查看工作汇报</a>
+    </div>
+
+    <!-- 目标—计划—任务漏斗 + 合同收款摘要 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
+        <div class="px-5 py-4 border-b flex justify-between items-center">
+          <h2 class="font-medium">目标 · 计划 · 任务链路</h2>
+          <span class="text-xs text-slate-400">本季汇总</span>
+        </div>
+        <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="border border-slate-100 rounded-2xl p-4">
+            <div class="flex justify-between items-start mb-3">
+              <div class="text-sm font-medium">目标</div>
+              <a href="目标管理_目标列表_page.html" class="text-xs text-teal-700">目标管理</a>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-slate-500">年目标</span><span>3 · 均完成 68%</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">季目标</span><span>5 · 均完成 71%</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">月目标</span><span>6 · 均完成 64%</span></div>
+            </div>
+          </div>
+          <div class="border border-slate-100 rounded-2xl p-4">
+            <div class="flex justify-between items-start mb-3">
+              <div class="text-sm font-medium">计划</div>
+              <a href="计划管理_计划列表_page.html" class="text-xs text-teal-700">计划管理</a>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-slate-500">进行中</span><span>22</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">专项计划</span><span>6</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">本月节点到期</span><span class="text-amber-600">5</span></div>
+            </div>
+          </div>
+          <div class="border border-slate-100 rounded-2xl p-4">
+            <div class="flex justify-between items-start mb-3">
+              <div class="text-sm font-medium">任务</div>
+              <a href="任务中心_我的任务_page.html" class="text-xs text-teal-700">我的任务</a>
+            </div>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between"><span class="text-slate-500">进行中</span><span>86</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">督办下达</span><span>9</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">已延期</span><span class="text-red-500">5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
+        <div class="px-5 py-4 border-b flex justify-between items-center">
+          <h2 class="font-medium">合同收款摘要</h2>
+          <a href="合同收款_合同管理_page.html" class="text-xs text-teal-700">合同管理</a>
+        </div>
+        <div class="p-5 space-y-3 text-sm">
+          <div class="flex justify-between"><span class="text-slate-500">合同总数</span><span class="font-medium">12</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">合同总额</span><span class="font-medium">3,680 万</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">回款总额</span><span class="font-medium text-emerald-600">2,145 万</span></div>
+          <div class="flex justify-between"><span class="text-slate-500">剩余收款</span><span class="font-medium text-amber-600">1,535 万</span></div>
+          <div class="pt-2">
+            <div class="flex justify-between text-xs text-slate-400 mb-1"><span>回款进度</span><span>58%</span></div>
+            <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600" style="width:58%"></div></div>
+          </div>
+          <div class="text-xs text-slate-400 pt-1">本年计划收款见收款管理独立配置，不与合同总额强制加总。</div>
+          <a href="合同收款_收款管理_page.html" class="inline-flex text-sm text-teal-700 mt-1">去收款管理 →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 部门达成 + 重点专项 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
+        <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">各部门达成一览</h2><span class="text-xs text-slate-400">点击打开部门详情</span></div>
+        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button type="button" onclick="openDept('装卸队','58%','2','需关注')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+            <div class="flex justify-between"><div class="font-medium">装卸队</div><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span></div>
+            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[58%]"></div></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>58%</span><span>目标 3 · 计划 6 · 滞后 2</span></div>
+          </button>
+          <button type="button" onclick="openDept('调度中心','76%','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+            <div class="flex justify-between"><div class="font-medium">调度中心</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
+            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[76%]"></div></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>76%</span><span>目标 2 · 计划 4 · 滞后 0</span></div>
+          </button>
+          <button type="button" onclick="openDept('设备部','82%','1','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+            <div class="flex justify-between"><div class="font-medium">设备部</div><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">正常</span></div>
+            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[82%]"></div></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>82%</span><span>目标 2 · 计划 5 · 滞后 1</span></div>
+          </button>
+          <button type="button" onclick="openDept('安全环保部','90%','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+            <div class="flex justify-between"><div class="font-medium">安全环保部</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
+            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[90%]"></div></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>90%</span><span>目标 2 · 计划 3 · 滞后 0</span></div>
+          </button>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
+        <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">重点专项</h2><a href="专项管理_专项列表_page.html" class="text-xs text-teal-700">专项管理</a></div>
+        <ul class="divide-y">
+          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">桥吊效能提升专项</div><div class="text-xs text-slate-500 mt-1">装卸队 · 2 个计划</div></div><span class="text-sm text-amber-600">58%</span></button></li>
+          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">堆场周转优化专项</div><div class="text-xs text-slate-500 mt-1">调度中心 · 1 个计划</div></div><span class="text-sm text-teal-700">74%</span></button></li>
+          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">设备点检达标专项</div><div class="text-xs text-slate-500 mt-1">设备部 · 1 个计划</div></div><span class="text-sm text-teal-700">82%</span></button></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 风险与待办 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-2">
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
+        <div class="px-5 py-4 border-b flex justify-between">
+          <h2 class="font-medium">风险 / 滞后任务</h2>
+          <a href="任务中心_任务督办_page.html" class="text-xs text-teal-700">去督办</a>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-5 py-2.5">任务</th><th class="text-left px-4 py-2.5">部门</th><th class="text-left px-4 py-2.5">状态</th><th class="text-left px-5 py-2.5">操作</th></tr></thead>
+          <tbody>
+            <tr class="border-t row-hover"><td class="px-5 py-3">岸桥对位训练</td><td class="px-4 py-3">装卸队</td><td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td><td class="px-5 py-3"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
+            <tr class="border-t row-hover"><td class="px-5 py-3">堆场周转异常复盘纪要</td><td class="px-4 py-3">调度中心</td><td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td><td class="px-5 py-3"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
+            <tr class="border-t row-hover"><td class="px-5 py-3">桥吊夜班流程复盘</td><td class="px-4 py-3">装卸队</td><td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span></td><td class="px-5 py-3"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
+        <div class="px-5 py-4 border-b flex justify-between">
+          <h2 class="font-medium">待汇报人员（本周）</h2>
+          <a href="任务中心_汇报提醒_page.html" class="text-xs text-teal-700">汇报提醒</a>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-5 py-2.5">人员</th><th class="text-left px-4 py-2.5">部门</th><th class="text-left px-4 py-2.5">待报任务</th><th class="text-left px-5 py-2.5">操作</th></tr></thead>
+          <tbody>
+            <tr class="border-t row-hover"><td class="px-5 py-3">刘强</td><td class="px-4 py-3">装卸队</td><td class="px-4 py-3">2</td><td class="px-5 py-3"><button type="button" onclick="BMS.toast('原型：已发提醒')" class="text-teal-700">提醒</button></td></tr>
+            <tr class="border-t row-hover"><td class="px-5 py-3">陈敏</td><td class="px-4 py-3">调度中心</td><td class="px-4 py-3">1</td><td class="px-5 py-3"><button type="button" onclick="BMS.toast('原型：已发提醒')" class="text-teal-700">提醒</button></td></tr>
+            <tr class="border-t row-hover"><td class="px-5 py-3">周杰</td><td class="px-4 py-3">设备部</td><td class="px-4 py-3">3</td><td class="px-5 py-3"><button type="button" onclick="BMS.toast('原型：已发提醒')" class="text-teal-700">提醒</button></td></tr>
+          </tbody>
+        </table>
+        <div class="px-5 py-3 border-t text-xs text-slate-400">共 8 人未交本周汇报 · 一键催填请前往汇报提醒</div>
+      </div>
+    </div>
+
+    <!-- 部门详情弹窗 -->
+    <div id="modal-dept" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-dept')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold" id="deptTitle">装卸队 · 经营详情</h3>
+            <p class="text-sm text-slate-500 mt-1" id="deptSub">完成率 58% · 滞后任务 2</p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-dept')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mb-4 text-sm">
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">目标</div><div class="mt-1 font-medium">3</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">计划</div><div class="mt-1 font-medium">6</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">任务</div><div class="mt-1 font-medium">12</div></div>
+        </div>
+        <h4 class="text-sm font-medium mb-2">重点目标</h4>
+        <ul class="text-sm space-y-2 mb-4">
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊作业效率提升 15%</span><span>58%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>班组准点出勤率</span><span>91%</span></li>
+        </ul>
+        <h4 class="text-sm font-medium mb-2">关联计划 / 滞后任务</h4>
+        <ul class="text-sm space-y-2 mb-5">
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>8 月装卸效率提升计划</span><span class="text-amber-600">45%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练（已延期）</span><span class="text-red-500">35%</span></li>
+        </ul>
+        <div class="flex gap-2 flex-wrap">
+          <a href="部门工作台_部门工作台_page.html" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">进入工作台</a>
+          <a href="任务中心_汇报提醒_page.html" class="border px-4 py-2 rounded-xl text-sm">汇报提醒</a>
+          <button type="button" onclick="BMS.closeModal('modal-dept')" class="text-sm text-slate-500 px-2">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 专项详情弹窗 -->
+    <div id="modal-special" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold">桥吊效能提升专项</h3>
+            <p class="text-sm text-slate-500 mt-1">装卸队 · 负责人 刘强 · 完成率 58%</p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-special')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <h4 class="text-sm font-medium mb-2">关联计划</h4>
+        <ul class="text-sm space-y-2 mb-4">
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>Q3 桥吊点检专项计划</span><span>50%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>8 月装卸效率提升计划</span><span>45%</span></li>
+        </ul>
+        <h4 class="text-sm font-medium mb-2">关键任务</h4>
+        <ul class="text-sm space-y-2 mb-5">
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊夜班流程复盘</span><span>40%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>钢丝绳点检整改</span><span>70%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练</span><span class="text-red-500">35% · 已延期</span></li>
+        </ul>
+        <div class="flex gap-2">
+          <a href="专项管理_专项列表_page.html" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">专项管理</a>
+          <a href="计划管理_计划列表_page.html" class="border px-4 py-2 rounded-xl text-sm">计划管理</a>
+          <button type="button" onclick="BMS.closeModal('modal-special')" class="text-sm text-slate-500 px-2">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    function openDept(name, rate, lag, tag) {
+      document.getElementById('deptTitle').textContent = name + ' · 经营详情';
+      document.getElementById('deptSub').textContent = '完成率 ' + rate + ' · 滞后任务 ' + lag + ' · ' + tag;
+      BMS.openModal('modal-dept');
+    }
+  </script>
+</body>
+</html>

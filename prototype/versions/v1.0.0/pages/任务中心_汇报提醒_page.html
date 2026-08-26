@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>汇报提醒 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .btn-cta:active { transform: scale(.95); }
+    .row-hover:hover { background:#f8fafc; }
+    .tab-on { background:#0f766e; color:#fff; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="reminders" data-title="汇报提醒">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">领导/部门负责人查看本周期<strong>尚未提交周报、月报</strong>的人员清单，勾选后一键提醒（消息触达由平台消息中心完成）。</p>
+
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <div class="inline-flex bg-white border border-slate-200 rounded-xl overflow-hidden text-sm">
+          <button type="button" id="tabWeek" onclick="switchType('week')" class="px-3 py-2 tab-on">周报</button>
+          <button type="button" id="tabMonth" onclick="switchType('month')" class="px-3 py-2 text-slate-600 hover:bg-slate-50">月报</button>
+        </div>
+        <select id="periodWeek" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option>2026-W34（08-18 ~ 08-24）</option>
+          <option>2026-W33（08-11 ~ 08-17）</option>
+        </select>
+        <select id="periodMonth" class="hidden bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option>2026-08</option>
+          <option>2026-07</option>
+        </select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option>
+        </select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option>全部状态</option><option selected>未填报</option><option>已逾期</option><option>已提醒</option>
+        </select>
+      </div>
+      <button type="button" onclick="openRemind()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2">
+        <i class="fa-solid fa-bell"></i>一键提醒已选
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">应填人数</div>
+        <div class="text-2xl font-semibold mt-1" id="nTotal">28</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">已填人数</div>
+        <div class="text-2xl font-semibold mt-1 text-emerald-600" id="nDone">20</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">未填 / 逾期（待提醒）</div>
+        <div class="text-2xl font-semibold mt-1 text-amber-600" id="nTodo">8</div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div class="px-5 py-4 border-b flex flex-wrap justify-between items-center gap-2">
+        <span class="font-medium" id="listTitle">未填写周报人员清单</span>
+        <span class="text-xs text-slate-400">默认展示未填与逾期；勾选后可催填</span>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left"><input type="checkbox" id="checkAll" checked onchange="toggleAll(this.checked)" /></th>
+            <th class="px-5 py-3 text-left">责任人</th>
+            <th class="px-5 py-3 text-left">部门</th>
+            <th class="px-5 py-3 text-left">待填任务 / 事项</th>
+            <th class="px-5 py-3 text-left">周期</th>
+            <th class="px-5 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">最近提醒</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="todoBody"></tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500" id="footerHint">已勾选 0 人，可一键提醒</div>
+    </div>
+
+    <div id="modal-remind" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-remind')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">确认发送汇报提醒</h3>
+          <button type="button" onclick="BMS.closeModal('modal-remind')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">将对已勾选的 <strong id="remindCount">0</strong> 名责任人发送汇报提醒。消息由平台消息中心触达。</p>
+        <div class="bg-slate-50 rounded-xl p-3 text-sm text-slate-600 mb-5" id="remindPreview">提醒文案预览</div>
+        <div class="flex gap-2">
+          <button type="button" onclick="confirmRemind()" class="btn-cta text-white px-5 py-2.5 rounded-xl text-sm">确认提醒</button>
+          <button type="button" onclick="BMS.closeModal('modal-remind')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    let reportType = 'week';
+    const WEEK_ROWS = [
+      { name: '马超', dept: '装卸队', task: '岸桥对位训练', period: '周报 · W34', status: '未填报', last: '—', checked: true },
+      { name: '孙伟', dept: '装卸队', task: '班前会标准化宣贯', period: '周报 · W34', status: '未填报', last: '—', checked: true },
+      { name: '陈敏', dept: '调度中心', task: '堆场翻箱压降', period: '周报 · W34', status: '已逾期', last: '08-23 09:00', checked: true },
+      { name: '周杰', dept: '设备部', task: '点检台账周复核', period: '周报 · W34', status: '未填报', last: '—', checked: false }
+    ];
+    const MONTH_ROWS = [
+      { name: '马超', dept: '装卸队', task: '岸桥对位训练', period: '月报 · 2026-08', status: '未填报', last: '—', checked: true },
+      { name: '陈敏', dept: '调度中心', task: '堆场翻箱压降', period: '月报 · 2026-08', status: '已逾期', last: '08-20 18:00', checked: true },
+      { name: '刘洋', dept: '商务部', task: '航线班期兑现跟踪', period: '月报 · 2026-08', status: '未填报', last: '—', checked: true }
+    ];
+
+    function statusBadge(s) {
+      if (s === '已逾期') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已逾期</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">未填报</span>';
+    }
+
+    function switchType(type) {
+      reportType = type;
+      document.getElementById('tabWeek').className = type === 'week' ? 'px-3 py-2 tab-on' : 'px-3 py-2 text-slate-600 hover:bg-slate-50';
+      document.getElementById('tabMonth').className = type === 'month' ? 'px-3 py-2 tab-on' : 'px-3 py-2 text-slate-600 hover:bg-slate-50';
+      document.getElementById('periodWeek').classList.toggle('hidden', type !== 'week');
+      document.getElementById('periodMonth').classList.toggle('hidden', type !== 'month');
+      document.getElementById('listTitle').textContent = type === 'week' ? '未填写周报人员清单' : '未填写月报人员清单';
+      if (type === 'week') {
+        document.getElementById('nTotal').textContent = '28';
+        document.getElementById('nDone').textContent = '20';
+        document.getElementById('nTodo').textContent = '8';
+      } else {
+        document.getElementById('nTotal').textContent = '32';
+        document.getElementById('nDone').textContent = '25';
+        document.getElementById('nTodo').textContent = '7';
+      }
+      renderTable();
+    }
+
+    function renderTable() {
+      const rows = reportType === 'week' ? WEEK_ROWS : MONTH_ROWS;
+      const body = document.getElementById('todoBody');
+      body.innerHTML = rows.map((r, i) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><input type="checkbox" class="row-check" data-i="${i}" ${r.checked ? 'checked' : ''} onchange="updateFooter()" /></td>
+          <td class="px-5 py-3 font-medium">${r.name}</td>
+          <td class="px-5 py-3">${r.dept}</td>
+          <td class="px-5 py-3"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">${r.task}</a></td>
+          <td class="px-5 py-3">${r.period}</td>
+          <td class="px-5 py-3">${statusBadge(r.status)}</td>
+          <td class="px-5 py-3 ${r.last === '—' ? 'text-slate-400' : ''}">${r.last}</td>
+          <td class="px-5 py-3"><button type="button" class="text-teal-700" onclick="remindOne('${r.name}')">${r.last === '—' ? '提醒' : '再次提醒'}</button></td>
+        </tr>`).join('');
+      updateFooter();
+    }
+
+    function toggleAll(on) {
+      document.querySelectorAll('.row-check').forEach(c => { c.checked = on; });
+      updateFooter();
+    }
+
+    function selectedCount() {
+      return document.querySelectorAll('.row-check:checked').length;
+    }
+
+    function updateFooter() {
+      const n = selectedCount();
+      document.getElementById('footerHint').textContent = '已勾选 ' + n + ' 人，可一键提醒';
+      document.getElementById('checkAll').checked = n > 0 && n === document.querySelectorAll('.row-check').length;
+    }
+
+    function openRemind() {
+      const n = selectedCount();
+      if (!n) { BMS.toast('请先勾选需要提醒的人员', 'error'); return; }
+      document.getElementById('remindCount').textContent = n;
+      document.getElementById('remindPreview').textContent = reportType === 'week'
+        ? '请尽快完成【2026-W34】周报填报，截止今日 18:00。'
+        : '请尽快完成【2026-08】月报填报，截止本月末。';
+      BMS.openModal('modal-remind');
+    }
+
+    function remindOne(name) {
+      document.querySelectorAll('.row-check').forEach(c => { c.checked = false; });
+      const rows = reportType === 'week' ? WEEK_ROWS : MONTH_ROWS;
+      const idx = rows.findIndex(r => r.name === name);
+      const checks = document.querySelectorAll('.row-check');
+      if (idx >= 0 && checks[idx]) checks[idx].checked = true;
+      updateFooter();
+      openRemind();
+    }
+
+    function confirmRemind() {
+      BMS.toast('已提交提醒，平台消息发送中');
+      BMS.closeModal('modal-remind');
+    }
+
+    document.addEventListener('DOMContentLoaded', renderTable);
+  </script>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>收款管理 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="receipts" data-title="收款管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>2026 年</option><option>2025 年</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部合同</option><option>HT-2026-0012</option><option>HT-2026-0008</option><option>HT-2026-0015</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部客户</option><option>远洋航运有限公司</option><option>港联物流集团</option></select>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button type="button" onclick="BMS.openModal('modal-year-plan')" class="border bg-white text-sm px-4 py-2 rounded-xl">配置本年计划收款</button>
+        <a href="合同收款_合同管理_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">合同管理</a>
+        <button type="button" onclick="openReceiptForm()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>登记收款</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="flex justify-between items-start">
+          <div class="text-sm text-slate-500">本年计划收款（万元）</div>
+          <button type="button" class="text-xs text-teal-700" onclick="BMS.openModal('modal-year-plan')">配置</button>
+        </div>
+        <div class="text-2xl font-semibold mt-1" id="yearPlanAmt">2,800</div>
+        <div class="text-xs text-slate-400 mt-1">独立配置，不与合同自动关联</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">累计收款（万元）</div>
+        <div class="text-2xl font-semibold mt-1 text-emerald-600">2,145</div>
+        <div class="text-xs text-slate-400 mt-1">已登记收款合计</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">剩余收款（万元）</div>
+        <div class="text-2xl font-semibold mt-1 text-amber-600">1,535</div>
+        <div class="text-xs text-slate-400 mt-1">= 合同总额 − 累计收款</div>
+      </div>
+    </div>
+
+    <p class="text-xs text-slate-500 mb-3">收款<strong>必须关联合同</strong>。若累计回款将超过合同金额，系统提示后仍可确认保存。</p>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">收款日期</th>
+            <th class="px-4 py-3 text-left">关联合同</th>
+            <th class="px-4 py-3 text-left">客户</th>
+            <th class="px-4 py-3 text-left">收款金额</th>
+            <th class="px-4 py-3 text-left">收款方式</th>
+            <th class="px-4 py-3 text-left">说明</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3">2026-08-10</td>
+            <td class="px-4 py-3"><a href="合同收款_合同管理_page.html" class="text-teal-700">HT-2026-0012 装卸服务</a></td>
+            <td class="px-4 py-3">远洋航运有限公司</td>
+            <td class="px-4 py-3 font-medium">120 万</td>
+            <td class="px-4 py-3">银行转账</td>
+            <td class="px-4 py-3 text-slate-500">Q3 首期</td>
+            <td class="px-5 py-3"><button type="button" onclick="openReceiptForm()" class="hover:text-teal-700">编辑</button></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3">2026-07-05</td>
+            <td class="px-4 py-3"><a href="合同收款_合同管理_page.html" class="text-teal-700">HT-2026-0015 设备维保</a></td>
+            <td class="px-4 py-3">港机装备股份</td>
+            <td class="px-4 py-3 font-medium">80 万</td>
+            <td class="px-4 py-3">银行转账</td>
+            <td class="px-4 py-3 text-slate-500">半年节点</td>
+            <td class="px-5 py-3"><button type="button" onclick="openReceiptForm()" class="hover:text-teal-700">编辑</button></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3">2026-06-20</td>
+            <td class="px-4 py-3"><a href="合同收款_合同管理_page.html" class="text-teal-700">HT-2026-0012 装卸服务</a></td>
+            <td class="px-4 py-3">远洋航运有限公司</td>
+            <td class="px-4 py-3 font-medium">200 万</td>
+            <td class="px-4 py-3">银行转账</td>
+            <td class="px-4 py-3 text-slate-500">半年节点</td>
+            <td class="px-5 py-3"><button type="button" onclick="openReceiptForm()" class="hover:text-teal-700">编辑</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500">共 48 笔收款</div>
+    </div>
+
+    <!-- 本年计划独立配置 -->
+    <div id="modal-year-plan" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-year-plan')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">配置本年计划收款</h3><button type="button" onclick="BMS.closeModal('modal-year-plan')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-xs text-slate-500">独立配置年度计划金额，不与合同金额自动加总或关联。</p>
+        <div><label class="block text-sm text-slate-600 mb-1">所属年度 <span class="text-red-500">*</span></label><select id="planYear" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>2026</option><option>2027</option></select></div>
+        <div><label class="block text-sm text-slate-600 mb-1">本年计划收款（万元） <span class="text-red-500">*</span></label><input id="planAmt" type="number" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2800" /></div>
+        <div class="flex gap-2"><button type="button" onclick="saveYearPlan()" class="btn-cta text-white px-5 py-2.5 rounded-xl text-sm">保存配置</button><button type="button" onclick="BMS.closeModal('modal-year-plan')" class="text-sm text-slate-500">取消</button></div>
+      </div>
+    </div>
+
+    <!-- 登记收款 -->
+    <div id="modal-receipt" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-receipt')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between">
+          <h3 class="text-lg font-semibold">登记收款</h3>
+          <button type="button" onclick="BMS.closeModal('modal-receipt')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">关联合同 <span class="text-red-500">*</span></label>
+            <select id="rContract" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="onContractChange()">
+              <option value="">请选择合同</option>
+              <option value="HT-2026-0012" data-total="1200" data-paid="680" selected>HT-2026-0012 · 装卸服务（远洋航运）· 剩余 520 万</option>
+              <option value="HT-2026-0008" data-total="860" data-paid="860">HT-2026-0008 · 堆场仓储（港联物流）· 剩余 0 万</option>
+              <option value="HT-2026-0015" data-total="420" data-paid="150">HT-2026-0015 · 设备维保（港机装备）· 剩余 270 万</option>
+            </select>
+          </div>
+          <div id="contractHint" class="bg-slate-50 rounded-xl p-3 text-sm text-slate-600">合同金额 1,200 万 · 已回款 680 万 · 剩余 520 万</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">收款金额（万元） <span class="text-red-500">*</span></label><input id="rAmount" type="number" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="100" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">收款日期 <span class="text-red-500">*</span></label><input id="rDate" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-25" /></div>
+          </div>
+          <div><label class="block text-sm text-slate-600 mb-1">收款方式</label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>银行转账</option><option>承兑汇票</option><option>其他</option></select></div>
+          <div><label class="block text-sm text-slate-600 mb-1">说明</label><textarea id="rNote" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-20" placeholder="可选">Q3 二期回款</textarea></div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveReceipt()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存收款</button>
+          <button type="button" onclick="BMS.closeModal('modal-receipt')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 超额确认 -->
+    <div id="modal-overpay" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-overpay')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+        <h3 class="text-lg font-semibold mb-2">超额收款提示</h3>
+        <p class="text-sm text-slate-600 leading-relaxed mb-4" id="overpayText">本次收款后，累计回款将超过合同金额。是否仍要保存？</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="confirmOverpay()" class="btn-cta text-white px-5 py-2.5 rounded-xl text-sm">仍要保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-overpay')" class="text-sm text-slate-500 px-3">返回修改</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    function onContractChange() {
+      const sel = document.getElementById('rContract');
+      const opt = sel.options[sel.selectedIndex];
+      const hint = document.getElementById('contractHint');
+      if (!opt.value) { hint.textContent = '请先选择关联合同'; return; }
+      const total = Number(opt.getAttribute('data-total'));
+      const paid = Number(opt.getAttribute('data-paid'));
+      hint.textContent = '合同金额 ' + total.toLocaleString() + ' 万 · 已回款 ' + paid.toLocaleString() + ' 万 · 剩余 ' + (total - paid).toLocaleString() + ' 万';
+    }
+
+    function openReceiptForm() {
+      onContractChange();
+      BMS.openModal('modal-receipt');
+    }
+
+    function saveYearPlan() {
+      const amt = Number(document.getElementById('planAmt').value);
+      if (!amt || amt <= 0) { BMS.toast('请填写有效计划金额', 'error'); return; }
+      document.getElementById('yearPlanAmt').textContent = amt.toLocaleString();
+      BMS.toast('本年计划收款已保存（独立配置）');
+      BMS.closeModal('modal-year-plan');
+    }
+
+    function saveReceipt() {
+      const contract = document.getElementById('rContract').value;
+      const amount = Number(document.getElementById('rAmount').value);
+      const date = document.getElementById('rDate').value;
+      if (!contract) { BMS.toast('请选择关联合同（收款必须挂合同）', 'error'); return; }
+      if (!amount || amount <= 0) { BMS.toast('请填写有效收款金额', 'error'); return; }
+      if (!date) { BMS.toast('请填写收款日期', 'error'); return; }
+      const opt = document.getElementById('rContract').options[document.getElementById('rContract').selectedIndex];
+      const total = Number(opt.getAttribute('data-total'));
+      const paid = Number(opt.getAttribute('data-paid'));
+      if (paid + amount > total) {
+        document.getElementById('overpayText').textContent = '本次收款 ' + amount + ' 万后，累计回款将达 ' + (paid + amount) + ' 万，超过合同金额 ' + total + ' 万。允许保存，请确认。';
+        BMS.openModal('modal-overpay');
+        return;
+      }
+      finishSave();
+    }
+
+    function confirmOverpay() {
+      BMS.closeModal('modal-overpay');
+      finishSave();
+    }
+
+    function finishSave() {
+      BMS.toast('收款已保存');
+      BMS.closeModal('modal-receipt');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(location.search);
+      if (params.get('open') === 'modal-receipt') {
+        const c = params.get('contract');
+        if (c) {
+          const sel = document.getElementById('rContract');
+          const hit = Array.from(sel.options).find(o => o.value === c);
+          if (hit) sel.value = c;
+        }
+        setTimeout(openReceiptForm, 60);
+      }
+    });
+  </script>
+</body>
+</html>

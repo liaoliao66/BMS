@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>任务督办 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="supervise" data-title="任务督办">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">领导向指定人员<strong>下达督办任务</strong>，须<strong>关联计划</strong>；下达后出现在对方「我的任务」中，可跟踪执行与催办。</p>
+
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>进行中</option><option>待汇报</option><option>已完成</option><option>已延期</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
+        <input class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-44" placeholder="搜索任务/责任人" />
+      </div>
+      <button type="button" onclick="openAssign()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>下达任务</button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5">
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">督办中</div><div class="text-2xl font-semibold mt-1">9</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">待汇报</div><div class="text-2xl font-semibold mt-1 text-amber-600">3</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">已延期</div><div class="text-2xl font-semibold mt-1 text-red-500">1</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">本周已完成</div><div class="text-2xl font-semibold mt-1 text-emerald-600">2</div></div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">督办任务</th>
+            <th class="px-4 py-3 text-left">关联计划</th>
+            <th class="px-4 py-3 text-left">责任人</th>
+            <th class="px-4 py-3 text-left">部门</th>
+            <th class="px-4 py-3 text-left">截止日期</th>
+            <th class="px-4 py-3 text-left">完成率</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-4 py-3 text-left">下达人</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3 font-medium">Q3 安全隐患现场复核</td>
+            <td class="px-4 py-3">Q3 桥吊点检专项计划</td>
+            <td class="px-4 py-3">刘强</td>
+            <td class="px-4 py-3">装卸队</td>
+            <td class="px-4 py-3">2026-08-27</td>
+            <td class="px-4 py-3">20%</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">待汇报</span></td>
+            <td class="px-4 py-3">张港长</td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3 font-medium">桥吊夜班交接问题闭环</td>
+            <td class="px-4 py-3">8 月装卸效率提升计划</td>
+            <td class="px-4 py-3">孙伟</td>
+            <td class="px-4 py-3">装卸队</td>
+            <td class="px-4 py-3">2026-08-30</td>
+            <td class="px-4 py-3">55%</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td>
+            <td class="px-4 py-3">张港长</td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3 font-medium">堆场周转异常复盘纪要</td>
+            <td class="px-4 py-3">堆场周转优化计划</td>
+            <td class="px-4 py-3">陈敏</td>
+            <td class="px-4 py-3">调度中心</td>
+            <td class="px-4 py-3">2026-08-22</td>
+            <td class="px-4 py-3">40%</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td>
+            <td class="px-4 py-3">张港长</td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500">共 9 条督办任务</div>
+    </div>
+
+    <!-- 下达任务 -->
+    <div id="modal-assign" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-assign')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between">
+          <h3 class="text-lg font-semibold">下达督办任务</h3>
+          <button type="button" onclick="BMS.closeModal('modal-assign')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">任务名称 <span class="text-red-500">*</span></label>
+            <input id="aName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="请输入督办事项" value="泊位准点兑现异常核查" />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">任务说明 <span class="text-red-500">*</span></label>
+            <textarea id="aDesc" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="说明背景、要求与验收要点">核查本周泊位准点兑现偏低原因，形成问题清单并明确责任班组。</textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">责任人 <span class="text-red-500">*</span></label>
+              <select id="aOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option value="">请选择</option>
+                <option selected>刘强 · 装卸队</option>
+                <option>陈敏 · 调度中心</option>
+                <option>周杰 · 设备部</option>
+                <option>孙伟 · 装卸队</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">截止日期 <span class="text-red-500">*</span></label>
+              <input id="aDeadline" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-29" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">关联计划 <span class="text-red-500">*</span></label>
+              <select id="aPlan" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option value="">请选择计划</option>
+                <option selected>8 月装卸效率提升计划</option>
+                <option>Q3 桥吊点检专项计划</option>
+                <option>堆场周转优化计划</option>
+                <option>夜班协同保障计划</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">优先级</label>
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>高</option><option selected>中</option><option>低</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveAssign()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认下达</button>
+          <button type="button" onclick="BMS.closeModal('modal-assign')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6">
+        <div class="flex justify-between mb-3"><h3 class="text-lg font-semibold">Q3 安全隐患现场复核</h3><button type="button" onclick="BMS.closeModal('modal-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-600 mb-3">关联计划：Q3 桥吊点检专项计划 · 责任人 刘强 · 截止 2026-08-27 · 完成率 20% · 待汇报</p>
+        <p class="text-sm text-slate-700 bg-slate-50 rounded-xl p-3 mb-4">对装卸作业区安全隐患进行现场复核，输出整改清单并反馈。</p>
+        <button type="button" onclick="BMS.closeModal('modal-detail')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">关闭</button>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    function openAssign() { BMS.openModal('modal-assign'); }
+    function saveAssign() {
+      const n = document.getElementById('aName').value.trim();
+      const d = document.getElementById('aDesc').value.trim();
+      const o = document.getElementById('aOwner').value.trim();
+      const dl = document.getElementById('aDeadline').value;
+      const p = document.getElementById('aPlan').value.trim();
+      if (!n || !d) { BMS.toast('请填写任务名称与说明', 'error'); return; }
+      if (!p) { BMS.toast('请选择关联计划', 'error'); return; }
+      if (!o) { BMS.toast('请选择责任人', 'error'); return; }
+      if (!dl) { BMS.toast('请填写截止日期', 'error'); return; }
+      BMS.toast('督办任务已下达，责任人「我的任务」可见');
+      BMS.closeModal('modal-assign');
+    }
+  </script>
+</body>
+</html>

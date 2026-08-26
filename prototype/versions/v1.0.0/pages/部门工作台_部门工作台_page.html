@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>工作台 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .card-hover { transition: transform .2s, box-shadow .2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .btn-cta:active { transform: scale(.95); }
+    .row-hover:hover { background:#f8fafc; }
+    .tab-active { background:#0f766e; color:#fff; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="depts" data-title="工作台">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="text-sm text-slate-500">当前部门</label>
+        <select id="deptSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-medium" onchange="switchDept()">
+          <option selected>装卸队（我的部门）</option>
+          <option>调度中心</option>
+          <option>设备部</option>
+          <option>安全环保部</option>
+        </select>
+        <select id="memberFilter" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option>全部成员</option>
+          <option selected>我负责的</option>
+          <option>刘强</option>
+          <option>周杰</option>
+          <option>孙伟</option>
+          <option>马超</option>
+        </select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>2026-Q3</option><option>2026 年</option><option>2026-08</option></select>
+      </div>
+      <div class="text-xs text-slate-400 self-center">部门人员仅可见本部门目标 / 计划 / 任务</div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-xs text-slate-500">部门完成率</div><div class="text-2xl font-semibold mt-1" id="kpiRate">52%</div></div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-xs text-slate-500">目标数</div><div class="text-2xl font-semibold mt-1">3</div></div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-xs text-slate-500">计划数</div><div class="text-2xl font-semibold mt-1">6</div></div>
+      <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-xs text-slate-500">任务 / 待填报</div><div class="text-2xl font-semibold mt-1">12 <span class="text-base text-amber-600">/ 4</span></div></div>
+    </div>
+    <div class="flex gap-2 mb-4" id="tabs">
+      <button type="button" data-tab="goals" class="tab-btn px-4 py-2 rounded-xl text-sm tab-active" onclick="switchTab('goals')">目标</button>
+      <button type="button" data-tab="plans" class="tab-btn px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchTab('plans')">计划</button>
+      <button type="button" data-tab="tasks" class="tab-btn px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchTab('tasks')">任务</button>
+    </div>
+    <div id="pane-goals" class="tab-pane bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-5 py-3">目标名称</th><th class="text-left px-5 py-3">周期</th><th class="text-left px-5 py-3">责任人</th><th class="text-left px-5 py-3">完成率</th><th class="text-left px-5 py-3">状态</th></tr></thead>
+      <tbody>
+        <tr class="border-t row-hover cursor-pointer" onclick="BMS.openModal('modal-goal-detail')"><td class="px-5 py-3 text-teal-700">班组准点出勤率</td><td class="px-5 py-3">2026 年</td><td class="px-5 py-3">刘强</td><td class="px-5 py-3">55%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td></tr>
+        <tr class="border-t row-hover cursor-pointer" onclick="BMS.openModal('modal-goal-detail')"><td class="px-5 py-3 text-teal-700">桥吊作业效率提升 15%</td><td class="px-5 py-3">2026-Q3</td><td class="px-5 py-3">刘强</td><td class="px-5 py-3">48%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span></td></tr>
+        <tr class="border-t row-hover cursor-pointer" onclick="BMS.openModal('modal-goal-detail')"><td class="px-5 py-3 text-teal-700">夜班装卸协同达标</td><td class="px-5 py-3">2026-Q3</td><td class="px-5 py-3">孙伟</td><td class="px-5 py-3">62%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td></tr>
+      </tbody></table>
+    </div>
+    <div id="pane-plans" class="tab-pane hidden bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-5 py-3">计划名称</th><th class="text-left px-5 py-3">关联目标</th><th class="text-left px-5 py-3">周期</th><th class="text-left px-5 py-3">负责人</th><th class="text-left px-5 py-3">完成率</th></tr></thead>
+      <tbody>
+        <tr class="border-t row-hover cursor-pointer" onclick="BMS.openModal('modal-plan-detail')"><td class="px-5 py-3 text-teal-700">Q3 桥吊点检专项计划</td><td class="px-5 py-3">桥吊作业效率提升 15%</td><td class="px-5 py-3">2026-Q3</td><td class="px-5 py-3">刘强</td><td class="px-5 py-3">50%</td></tr>
+        <tr class="border-t row-hover cursor-pointer" onclick="BMS.openModal('modal-plan-detail')"><td class="px-5 py-3 text-teal-700">8 月装卸效率提升计划</td><td class="px-5 py-3">桥吊作业效率提升 15%</td><td class="px-5 py-3">2026-08</td><td class="px-5 py-3">刘强</td><td class="px-5 py-3">45%</td></tr>
+        <tr class="border-t row-hover cursor-pointer" onclick="BMS.openModal('modal-plan-detail')"><td class="px-5 py-3 text-teal-700">夜班协同保障计划</td><td class="px-5 py-3">夜班装卸协同达标</td><td class="px-5 py-3">2026-08</td><td class="px-5 py-3">孙伟</td><td class="px-5 py-3">60%</td></tr>
+      </tbody></table>
+    </div>
+    <div id="pane-tasks" class="tab-pane hidden bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div class="px-5 py-3 border-b flex justify-between text-sm"><span class="text-slate-500">本部门任务</span><a href="任务中心_我的任务_page.html" class="text-teal-700">我的任务</a></div>
+      <table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-5 py-3">任务</th><th class="text-left px-5 py-3">计划</th><th class="text-left px-5 py-3">责任人</th><th class="text-left px-5 py-3">完成率</th><th class="text-left px-5 py-3">状态</th></tr></thead>
+      <tbody>
+        <tr class="border-t row-hover cursor-pointer" onclick="location.href='任务管理_任务列表_page.html?open=modal-task-detail'"><td class="px-5 py-3 text-teal-700">桥吊夜班流程复盘</td><td class="px-5 py-3">8 月装卸效率提升计划</td><td class="px-5 py-3">刘强</td><td class="px-5 py-3">40%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span></td></tr>
+        <tr class="border-t row-hover cursor-pointer" onclick="location.href='任务管理_任务列表_page.html?open=modal-task-detail'"><td class="px-5 py-3 text-teal-700">钢丝绳点检整改</td><td class="px-5 py-3">8 月装卸效率提升计划</td><td class="px-5 py-3">周杰</td><td class="px-5 py-3">70%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td></tr>
+        <tr class="border-t row-hover cursor-pointer" onclick="location.href='任务管理_任务列表_page.html?open=modal-task-detail'"><td class="px-5 py-3 text-teal-700">班前会标准化宣贯</td><td class="px-5 py-3">夜班协同保障计划</td><td class="px-5 py-3">孙伟</td><td class="px-5 py-3">60%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td></tr>
+        <tr class="border-t row-hover cursor-pointer" onclick="location.href='任务管理_任务列表_page.html?open=modal-task-detail'"><td class="px-5 py-3 text-teal-700">岸桥对位训练</td><td class="px-5 py-3">Q3 桥吊点检专项计划</td><td class="px-5 py-3">马超</td><td class="px-5 py-3">85%</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td></tr>
+      </tbody></table>
+    </div>
+
+    <div id="modal-goal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-semibold">桥吊作业效率提升 15%</h3><p class="text-sm text-slate-500 mt-1">装卸队 · 2026-Q3 · 完成率 48%</p></div><button onclick="BMS.closeModal('modal-goal-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-700 mb-4 leading-relaxed">完成新品发布、渠道预热与首月转化目标，确保上市战役关键节点按时达成。</p>
+        <div class="text-sm font-medium mb-2">下属计划</div>
+        <ul class="text-sm space-y-2 mb-4"><li class="flex justify-between border rounded-xl px-3 py-2"><span>8 月装卸效率提升计划</span><span class="text-slate-500">45%</span></li><li class="flex justify-between border rounded-xl px-3 py-2"><span>Q3 桥吊点检专项计划</span><span class="text-slate-500">50%</span></li></ul>
+        <div class="flex gap-2"><button onclick="BMS.closeModal('modal-goal-detail');BMS.openModal('modal-plan-form')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">新增计划</button><button onclick="BMS.closeModal('modal-goal-detail')" class="text-sm text-slate-500">关闭</button></div>
+      </div>
+    </div>
+    <div id="modal-plan-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-semibold">8 月装卸效率提升计划</h3><p class="text-sm text-slate-500 mt-1">关联目标：桥吊作业效率提升 15% · 负责人 刘强</p></div><button onclick="BMS.closeModal('modal-plan-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <div class="grid grid-cols-3 gap-3 mb-4 text-sm"><div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">目标值</div><div class="font-medium mt-1">传播触达 50 万</div></div><div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">完成率</div><div class="font-medium mt-1">45%</div></div><div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">任务数</div><div class="font-medium mt-1">3</div></div></div>
+        <div class="text-sm font-medium mb-2">下属任务</div>
+        <ul class="text-sm space-y-2 mb-4"><li class="flex justify-between border rounded-xl px-3 py-2 cursor-pointer hover:bg-slate-50" onclick="BMS.closeModal('modal-plan-detail');BMS.openModal('modal-task-detail')"><span class="text-teal-700">桥吊夜班流程复盘</span><span>刘强 · 40%</span></li><li class="flex justify-between border rounded-xl px-3 py-2 cursor-pointer hover:bg-slate-50" onclick="BMS.closeModal('modal-plan-detail');BMS.openModal('modal-task-detail')"><span class="text-teal-700">钢丝绳点检整改</span><span>周杰 · 70%</span></li></ul>
+        <div class="flex gap-2"><button onclick="BMS.closeModal('modal-plan-detail');BMS.openModal('modal-task-form')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">新增任务</button><button onclick="BMS.closeModal('modal-plan-detail')" class="text-sm text-slate-500">关闭</button></div>
+      </div>
+    </div>
+    <div id="modal-task-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-semibold">桥吊夜班流程复盘</h3><p class="text-sm text-slate-500 mt-1">刘强 · 装卸队 · 完成率 40%</p></div><button onclick="BMS.closeModal('modal-task-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <div class="mb-4"><div class="text-sm font-medium mb-2">跟踪评论</div><div class="space-y-3 text-sm max-h-40 overflow-y-auto mb-2"><div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-400 mb-1">张明 · 08-19</div>@刘强 请本周确认印刷档期。</div><div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-400 mb-1">刘强 · 08-19</div>已对接供应商，周四出样。</div></div><textarea id="deptComment" class="w-full border rounded-xl px-3 py-2 text-sm h-16" placeholder="发表跟踪评论"></textarea><button onclick="(function(){if(!document.getElementById('deptComment').value.trim()){BMS.toast('请输入评论','error');return;}BMS.toast('评论已发表');document.getElementById('deptComment').value='';})()" class="mt-2 btn-cta text-white text-sm px-4 py-2 rounded-xl">发表</button></div>
+        <div class="flex gap-2"><button onclick="BMS.closeModal('modal-task-detail');BMS.openModal('modal-fill')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">本周填报</button><button onclick="BMS.closeModal('modal-task-detail')" class="text-sm text-slate-500">关闭</button></div>
+      </div>
+    </div>
+    <div id="modal-plan-form" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4"><div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-form')"></div><div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-3"><div class="flex justify-between"><h3 class="font-semibold text-lg">新增计划</h3><button onclick="BMS.closeModal('modal-plan-form')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div><input class="w-full border rounded-xl px-3 py-2.5 text-sm" placeholder="计划名称" /><div class="flex gap-2"><button onclick="BMS.toast('计划已保存');BMS.closeModal('modal-plan-form')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button><button onclick="BMS.closeModal('modal-plan-form')" class="text-sm text-slate-500">取消</button></div></div></div>
+    <div id="modal-task-form" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4"><div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task-form')"></div><div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-3"><div class="flex justify-between"><h3 class="font-semibold text-lg">新增任务</h3><button onclick="BMS.closeModal('modal-task-form')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div><input class="w-full border rounded-xl px-3 py-2.5 text-sm" placeholder="任务名称" /><select class="w-full border rounded-xl px-3 py-2.5 text-sm"><option>刘强</option><option>周杰</option><option>孙伟</option></select><div class="flex gap-2"><button onclick="BMS.toast('任务已保存');BMS.closeModal('modal-task-form')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button><button onclick="BMS.closeModal('modal-task-form')" class="text-sm text-slate-500">取消</button></div></div></div>
+    <div id="modal-fill" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4"><div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-fill')"></div><div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-3"><div class="flex justify-between"><h3 class="font-semibold text-lg">周期填报</h3><button onclick="BMS.closeModal('modal-fill')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div><input type="number" class="w-full border rounded-xl px-3 py-2.5 text-sm" placeholder="完成率" value="55" /><textarea class="w-full border rounded-xl px-3 py-2.5 text-sm h-20" placeholder="进展说明">印刷样张已出。</textarea><div class="flex gap-2"><button onclick="BMS.toast('填报已提交');BMS.closeModal('modal-fill')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">提交</button><button onclick="BMS.closeModal('modal-fill')" class="text-sm text-slate-500">取消</button></div></div></div>
+    <script>
+      function switchTab(name){
+        document.querySelectorAll('.tab-pane').forEach(p=>p.classList.add('hidden'));
+        document.getElementById('pane-'+name).classList.remove('hidden');
+        document.querySelectorAll('.tab-btn').forEach(b=>{
+          b.classList.remove('tab-active'); b.classList.add('bg-white','border','border-slate-200');
+          if(b.getAttribute('data-tab')===name){ b.classList.add('tab-active'); b.classList.remove('bg-white','border','border-slate-200'); }
+        });
+      }
+      function switchDept(){ BMS.toast('已切换部门视图'); }
+    </script>
+  </div>
+  <script src="../assets/common.js"></script>
+</body>
+</html>

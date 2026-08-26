@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>合同管理 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="contracts" data-title="合同管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <input class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-48" placeholder="搜索合同名称/编号" />
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>执行中</option><option>已完成</option><option>已终止</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>商务部</option><option>调度中心</option></select>
+      </div>
+      <div class="flex gap-2">
+        <a href="合同收款_收款管理_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">收款管理</a>
+        <button type="button" onclick="openContractForm('create')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建合同</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总数</div><div class="text-2xl font-semibold mt-1">12</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总额（万元）</div><div class="text-2xl font-semibold mt-1">3,680</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">回款总额（万元）</div><div class="text-2xl font-semibold mt-1 text-emerald-600">2,145</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">剩余收款（万元）</div><div class="text-2xl font-semibold mt-1 text-amber-600">1,535</div><div class="text-xs text-slate-400 mt-1">= 合同总额 − 回款总额</div></div>
+    </div>
+
+    <p class="text-xs text-slate-500 mb-3">客户选自 CRM（本模块不维护客户档案）。剩余收款口径：合同总额 − 累计回款。</p>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">合同名称</th>
+            <th class="px-4 py-3 text-left">合同编号</th>
+            <th class="px-4 py-3 text-left">客户（CRM）</th>
+            <th class="px-4 py-3 text-left">合同金额</th>
+            <th class="px-4 py-3 text-left">已回款</th>
+            <th class="px-4 py-3 text-left">剩余收款</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">2026 年度集装箱装卸服务合同</button></td>
+            <td class="px-4 py-3">HT-2026-0012</td>
+            <td class="px-4 py-3">远洋航运有限公司</td>
+            <td class="px-4 py-3">1,200 万</td>
+            <td class="px-4 py-3">680 万</td>
+            <td class="px-4 py-3 text-amber-600">520 万</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">执行中</span></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0012" class="text-teal-700">登记收款</a></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">堆场仓储服务合同</button></td>
+            <td class="px-4 py-3">HT-2026-0008</td>
+            <td class="px-4 py-3">港联物流集团</td>
+            <td class="px-4 py-3">860 万</td>
+            <td class="px-4 py-3">860 万</td>
+            <td class="px-4 py-3 text-emerald-600">0 万</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">已完成</span></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0008" class="text-teal-700">登记收款</a></td>
+          </tr>
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">设备维保年度合同</button></td>
+            <td class="px-4 py-3">HT-2026-0015</td>
+            <td class="px-4 py-3">港机装备股份</td>
+            <td class="px-4 py-3">420 万</td>
+            <td class="px-4 py-3">150 万</td>
+            <td class="px-4 py-3 text-amber-600">270 万</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">执行中</span></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0015" class="text-teal-700">登记收款</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500">共 12 条合同</div>
+    </div>
+
+    <!-- 新建/编辑 -->
+    <div id="modal-contract" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-contract')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 id="contractFormTitle" class="text-lg font-semibold">新建合同</h3>
+          <button type="button" onclick="BMS.closeModal('modal-contract')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">合同名称 <span class="text-red-500">*</span></label><input id="cName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026 年度集装箱装卸服务合同" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">合同编号 <span class="text-red-500">*</span></label><input id="cCode" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="HT-2026-0012" /></div>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">客户 <span class="text-red-500">*</span></label>
+            <select id="cCustomer" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+              <option value="">请从 CRM 选择客户</option>
+              <option selected>远洋航运有限公司</option>
+              <option>港联物流集团</option>
+              <option>港机装备股份</option>
+              <option>东海集装箱代理</option>
+            </select>
+            <p class="text-xs text-slate-400 mt-1">客户主数据在 CRM 维护；此处仅选择，不可新建客户。</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">合同金额（万元） <span class="text-red-500">*</span></label><input id="cAmount" type="number" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="1200" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">签订日期 <span class="text-red-500">*</span></label><input id="cSign" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-01-15" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label><input id="cStart" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-01-01" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label><input id="cEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-12-31" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">责任部门 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>商务部</option><option>调度中心</option><option>设备部</option></select></div>
+            <div><label class="block text-sm text-slate-600 mb-1">负责人 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>陈敏</option><option>刘强</option><option>周杰</option></select></div>
+          </div>
+          <div><label class="block text-sm text-slate-600 mb-1">合同状态 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option selected>执行中</option><option>已完成</option><option>已终止</option><option>已作废</option></select></div>
+          <div><label class="block text-sm text-slate-600 mb-1">合同说明</label><textarea class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-20" placeholder="可选">含桥吊装卸、堆场周转相关服务条款。</textarea></div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveContract()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-contract')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 详情 -->
+    <div id="modal-contract-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-contract-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold">2026 年度集装箱装卸服务合同</h3>
+            <p class="text-sm text-slate-500 mt-1">HT-2026-0012 · 远洋航运有限公司 · 执行中</p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-contract-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">合同金额</div><div class="mt-1 font-medium">1,200 万</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">已回款</div><div class="mt-1 font-medium text-emerald-600">680 万</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">剩余收款</div><div class="mt-1 font-medium text-amber-600">520 万</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">签订日</div><div class="mt-1 font-medium">2026-01-15</div></div>
+        </div>
+        <div class="text-sm font-medium mb-2">近期收款</div>
+        <div class="border border-slate-100 rounded-2xl overflow-hidden mb-4">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">收款日期</th><th class="text-left px-4 py-2.5">金额</th><th class="text-left px-4 py-2.5">说明</th></tr></thead>
+            <tbody>
+              <tr class="border-t"><td class="px-4 py-2.5">2026-08-10</td><td class="px-4 py-2.5">120 万</td><td class="px-4 py-2.5 text-slate-500">Q3 首期</td></tr>
+              <tr class="border-t"><td class="px-4 py-2.5">2026-06-20</td><td class="px-4 py-2.5">200 万</td><td class="px-4 py-2.5 text-slate-500">半年节点</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex gap-2">
+          <a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0012" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">登记收款</a>
+          <button type="button" onclick="BMS.closeModal('modal-contract-detail');openContractForm('edit')" class="border px-4 py-2 rounded-xl text-sm">编辑</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    function openContractForm(mode) {
+      document.getElementById('contractFormTitle').textContent = mode === 'create' ? '新建合同' : '编辑合同';
+      BMS.openModal('modal-contract');
+    }
+    function openContractDetail() { BMS.openModal('modal-contract-detail'); }
+    function saveContract() {
+      const name = document.getElementById('cName').value.trim();
+      const code = document.getElementById('cCode').value.trim();
+      const cust = document.getElementById('cCustomer').value.trim();
+      const amt = Number(document.getElementById('cAmount').value);
+      if (!name || !code) { BMS.toast('请填写合同名称与编号', 'error'); return; }
+      if (!cust) { BMS.toast('请从 CRM 选择客户', 'error'); return; }
+      if (!amt || amt <= 0) { BMS.toast('请填写有效合同金额', 'error'); return; }
+      BMS.toast('合同已保存');
+      BMS.closeModal('modal-contract');
+    }
+  </script>
+</body>
+</html>

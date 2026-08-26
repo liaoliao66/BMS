@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>工作汇报 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .report-tab-on { background:#0f766e; color:#fff; }
+    .section-tab-on { background:#0f766e; color:#fff; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="reports" data-title="工作汇报">
+  <div id="app-root"></div>
+  <div id="page-main">
+  <!-- 报告类型 Tab -->
+  <div class="flex flex-wrap gap-3 justify-between mb-4">
+    <div class="inline-flex bg-white border border-slate-200 rounded-xl overflow-hidden text-sm shadow-sm">
+      <button type="button" id="btnWeek" onclick="switchReport('week')" class="px-4 py-2 report-tab-on">周报</button>
+      <button type="button" id="btnMonth" onclick="switchReport('month')" class="px-4 py-2 text-slate-600 hover:bg-slate-50">月报</button>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center">
+      <span id="roleHint" class="text-xs text-slate-500 hidden sm:inline">当前视角：装卸队负责人（可看本部门；执行人仅看本人相关）</span>
+      <button type="button" onclick="BMS.toast('原型：已刷新本周期快照')" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600"><i class="fa-solid fa-rotate mr-1"></i>刷新</button>
+    </div>
+  </div>
+
+  <!-- 筛选 -->
+  <div class="flex flex-wrap gap-2 mb-4">
+    <select id="periodSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderPeriodLabel()">
+      <option value="2026-W34">2026-W34（08-18 ~ 08-24）</option>
+      <option value="2026-W33">2026-W33（08-11 ~ 08-17）</option>
+      <option value="2026-W32">2026-W32（08-04 ~ 08-10）</option>
+    </select>
+    <select id="monthSelect" class="hidden bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderPeriodLabel()">
+      <option value="2026-08">2026-08（8 月）</option>
+      <option value="2026-07">2026-07（7 月）</option>
+      <option value="2026-06">2026-06（6 月）</option>
+    </select>
+    <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+      <option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option>
+    </select>
+    <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+      <option>全部专项</option><option>桥吊效能提升专项</option><option>堆场周转优化专项</option>
+    </select>
+  </div>
+
+  <p id="periodDesc" class="text-xs text-slate-500 mb-4">周期快照 · 数据截止 2026-08-24 23:59 · 生成于 2026-08-25 08:00 · 完成率为关联展示，非强制加总 · 详情均以大弹窗打开</p>
+
+  <!-- 摘要卡片 -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+    <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+      <div class="text-sm text-slate-500">目标（本周期涉及）</div>
+      <div class="text-2xl font-semibold mt-2" id="sumGoals">5</div>
+      <div class="mt-2 text-xs" id="cmpGoals"><span class="text-amber-600">需关注 2</span> · 较上期 <span class="text-emerald-600">+1 个跟进</span></div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+      <div class="text-sm text-slate-500">计划进展</div>
+      <div class="text-2xl font-semibold mt-2" id="sumPlans">6</div>
+      <div class="mt-2 text-xs" id="cmpPlans">关键节点到期 <span class="font-medium">4</span> · 较上期 <span class="text-emerald-600">完成率 +3%</span></div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+      <div class="text-sm text-slate-500">任务落地</div>
+      <div class="text-2xl font-semibold mt-2" id="sumTasks">18</div>
+      <div class="mt-2 text-xs" id="cmpTasks">滞后 <span class="text-red-500 font-medium">3</span> · 填报率 <span class="font-medium">72%</span> · 较上期 <span class="text-emerald-600">+5%</span></div>
+    </div>
+    <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+      <div class="text-sm text-slate-500">过程质量</div>
+      <div class="text-2xl font-semibold mt-2" id="sumFill">72%</div>
+      <div class="mt-2 text-xs" id="cmpFill">未填待催 <span class="text-amber-600 font-medium">8</span> · <a href="任务中心_汇报提醒_page.html" class="text-teal-700">去汇报提醒</a></div>
+    </div>
+  </div>
+
+  <!-- 内容 Tab -->
+  <div class="flex flex-wrap gap-2 mb-3">
+    <button type="button" data-section="goals" class="section-tab px-4 py-2 rounded-xl text-sm section-tab-on" onclick="switchSection('goals')">目标完成情况</button>
+    <button type="button" data-section="plans" class="section-tab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchSection('plans')">计划进展情况</button>
+    <button type="button" data-section="tasks" class="section-tab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchSection('tasks')">任务执行情况</button>
+  </div>
+
+  <div id="section-goals" class="section-pane">
+    <p id="goalsScopeHint" class="text-xs text-slate-500 mb-2">周报：仅展示本周期有任务/填报活动的目标子树。点击「详情」以大弹窗查看。</p>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">目标名称</th>
+            <th class="px-4 py-3 text-left">类型</th>
+            <th class="px-4 py-3 text-left">部门</th>
+            <th class="px-4 py-3 text-left">完成率</th>
+            <th class="px-4 py-3 text-left">较上期</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="goalsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="section-plans" class="section-pane hidden">
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">计划名称</th>
+            <th class="px-4 py-3 text-left">关联目标</th>
+            <th class="px-4 py-3 text-left">关键节点</th>
+            <th class="px-4 py-3 text-left">完成率</th>
+            <th class="px-4 py-3 text-left">较上期</th>
+            <th class="px-4 py-3 text-left">任务/滞后</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="plansBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="section-tasks" class="section-pane hidden">
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">任务名称</th>
+            <th class="px-4 py-3 text-left">所属计划</th>
+            <th class="px-4 py-3 text-left">责任人</th>
+            <th class="px-4 py-3 text-left">本周期填报</th>
+            <th class="px-4 py-3 text-left">完成率</th>
+            <th class="px-4 py-3 text-left">较上期</th>
+            <th class="px-4 py-3 text-left">进展摘要</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tasksBody"></tbody>
+      </table>
+    </div>
+    <p class="text-xs text-slate-400 mt-2">未填报任务可前往 <a href="任务中心_汇报提醒_page.html" class="text-teal-700">汇报提醒</a>；任务详情在本页大弹窗打开。</p>
+  </div>
+
+  <!-- 目标详情 · 大弹窗 -->
+  <div id="modal-goal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal-detail')"></div>
+    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-xl font-semibold" id="gTitle">桥吊作业效率提升 15%</h3>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700" id="gStatus">需关注</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-1" id="gMeta">季目标 · 装卸队 · 完成率 58% · 较上期 -2%</p>
+        </div>
+        <button type="button" onclick="BMS.closeModal('modal-goal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">目标类型</div><div class="mt-1 font-medium" id="gType">季</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">责任部门</div><div class="mt-1 font-medium" id="gDept">装卸队</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">完成率</div><div class="mt-1 font-medium" id="gRate">58%</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">截止时间</div><div class="mt-1 font-medium">2026-09-30</div></div>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">目标介绍</h4>
+          <p class="text-sm text-slate-600 bg-slate-50 rounded-xl p-4 leading-relaxed" id="gDesc">围绕桥吊作业效率提升 15% 的季度目标，通过夜班流程复盘、点检整改与对位训练等措施推进；本周期完成率较上期回落，需重点关注装卸队落地。</p>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">关联计划（本周期）</h4>
+          <div class="border border-slate-100 rounded-2xl overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">计划</th><th class="text-left px-4 py-2.5">完成率</th><th class="text-left px-4 py-2.5">关键节点</th><th class="text-left px-4 py-2.5">操作</th></tr></thead>
+              <tbody>
+                <tr class="border-t"><td class="px-4 py-2.5">8 月装卸效率提升计划</td><td class="px-4 py-2.5">55%</td><td class="px-4 py-2.5">08-25 效率复核</td><td class="px-4 py-2.5"><button type="button" class="text-teal-700" onclick="BMS.closeModal('modal-goal-detail');openPlanDetail(0)">详情</button></td></tr>
+                <tr class="border-t"><td class="px-4 py-2.5">Q3 桥吊点检专项计划</td><td class="px-4 py-2.5">62%</td><td class="px-4 py-2.5">08-31 季度节点</td><td class="px-4 py-2.5"><button type="button" class="text-teal-700" onclick="BMS.closeModal('modal-goal-detail');openPlanDetail(1)">详情</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">关联任务摘要</h4>
+          <ul class="text-sm space-y-2">
+            <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊夜班流程复盘</span><span>40%</span></li>
+            <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练</span><span class="text-red-500">35% · 未填</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 计划详情 · 大弹窗 -->
+  <div id="modal-plan-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-detail')"></div>
+    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 class="text-xl font-semibold" id="pTitle">8 月装卸效率提升计划</h3>
+          <p class="text-sm text-slate-500 mt-1" id="pMeta">关联目标：【月】8 月桥吊效率月目标 · 完成率 55% · 较上期 +5%</p>
+        </div>
+        <button type="button" onclick="BMS.closeModal('modal-plan-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联目标</div><div class="mt-1 font-medium" id="pGoal">【月】8 月桥吊效率月目标</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关键节点</div><div class="mt-1 font-medium" id="pNode">08-25 效率复核</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">完成率</div><div class="mt-1 font-medium" id="pRate">55%</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">任务 / 滞后</div><div class="mt-1 font-medium" id="pLag">3 / 1</div></div>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">计划说明</h4>
+          <p class="text-sm text-slate-600 bg-slate-50 rounded-xl p-4 leading-relaxed" id="pDesc">围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施；配合点检整改，支撑月度桥吊效率目标。</p>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">关键节点</h4>
+          <ul class="text-sm space-y-2">
+            <li class="border rounded-xl px-3 py-2 flex justify-between"><span>08-10 夜班流程初稿</span><span class="text-emerald-600">已完成</span></li>
+            <li class="border rounded-xl px-3 py-2 flex justify-between"><span>08-25 效率复核</span><span class="text-amber-600">临期</span></li>
+            <li class="border rounded-xl px-3 py-2 flex justify-between"><span>08-31 月度复盘</span><span class="text-slate-500">未开始</span></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-medium mb-2">下属任务</h4>
+          <div class="border border-slate-100 rounded-2xl overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">任务</th><th class="text-left px-4 py-2.5">责任人</th><th class="text-left px-4 py-2.5">完成率</th><th class="text-left px-4 py-2.5">本周期</th><th class="text-left px-4 py-2.5">操作</th></tr></thead>
+              <tbody id="pTaskRows">
+                <tr class="border-t"><td class="px-4 py-2.5">桥吊夜班流程复盘</td><td class="px-4 py-2.5">刘强</td><td class="px-4 py-2.5">40%</td><td class="px-4 py-2.5 text-emerald-600">已填</td><td class="px-4 py-2.5"><button type="button" class="text-teal-700" onclick="BMS.closeModal('modal-plan-detail');openTaskDetail(0)">详情</button></td></tr>
+                <tr class="border-t"><td class="px-4 py-2.5">班前会标准化宣贯</td><td class="px-4 py-2.5">孙伟</td><td class="px-4 py-2.5">60%</td><td class="px-4 py-2.5 text-emerald-600">已填</td><td class="px-4 py-2.5"><button type="button" class="text-teal-700" onclick="BMS.closeModal('modal-plan-detail');openTaskDetail(1)">详情</button></td></tr>
+                <tr class="border-t"><td class="px-4 py-2.5">岸桥对位训练</td><td class="px-4 py-2.5">马超</td><td class="px-4 py-2.5">35%</td><td class="px-4 py-2.5 text-red-500">未填</td><td class="px-4 py-2.5"><button type="button" class="text-teal-700" onclick="BMS.closeModal('modal-plan-detail');openTaskDetail(2)">详情</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任务详情 · 大弹窗 -->
+  <div id="modal-task-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task-detail')"></div>
+    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h3 class="text-xl font-semibold" id="tTitle">桥吊夜班流程复盘</h3>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700" id="tFillBadge">本周期已填</span>
+          </div>
+          <p class="text-sm text-slate-500 mt-1" id="tMeta">责任人 刘强 · 所属计划：8 月装卸效率提升计划 · 完成率 40%</p>
+        </div>
+        <button type="button" onclick="BMS.closeModal('modal-task-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto px-6 py-5">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <div class="lg:col-span-3 space-y-5">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+              <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">责任人</div><div class="mt-1 font-medium" id="tOwner">刘强</div></div>
+              <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">所属计划</div><div class="mt-1 font-medium" id="tPlan">8 月装卸效率提升计划</div></div>
+              <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">完成率</div><div class="mt-1 font-medium" id="tRate">40%</div></div>
+              <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">较上期</div><div class="mt-1 font-medium" id="tCmp">+5%</div></div>
+            </div>
+            <div>
+              <h4 class="font-medium mb-2">本周期进展摘要</h4>
+              <p class="text-sm text-slate-600 bg-slate-50 rounded-xl p-4 leading-relaxed" id="tSummary">形成初版整改清单</p>
+            </div>
+            <div>
+              <h4 class="font-medium mb-2">进展汇报记录</h4>
+              <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                <table class="w-full text-sm">
+                  <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">周期</th><th class="text-left px-4 py-2.5">完成率</th><th class="text-left px-4 py-2.5">进展说明</th></tr></thead>
+                  <tbody id="tFillRows">
+                    <tr class="border-t"><td class="px-4 py-2.5">2026-W32</td><td class="px-4 py-2.5">25%</td><td class="px-4 py-2.5">完成夜班交接清单初稿</td></tr>
+                    <tr class="border-t"><td class="px-4 py-2.5">2026-W33</td><td class="px-4 py-2.5">35%</td><td class="px-4 py-2.5">班组试运行，收集卡点</td></tr>
+                    <tr class="border-t"><td class="px-4 py-2.5">2026-W34</td><td class="px-4 py-2.5">40%</td><td class="px-4 py-2.5">形成初版整改清单</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="lg:col-span-2 border border-slate-100 rounded-2xl overflow-hidden min-h-[320px] flex flex-col">
+            <div class="px-4 py-3 border-b bg-slate-50 font-medium text-sm">最近评论</div>
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
+              <div>
+                <div class="text-xs text-slate-400 mb-1">张港长 · 08-19 10:22</div>
+                <div class="text-slate-700">夜班交接卡点请本周闭环，避免影响桥吊准班率。</div>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400 mb-1">刘强 · 08-19 14:05</div>
+                <div class="text-slate-700">已组织班组试运行，周四前输出整改清单。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <script src="../assets/common.js"></script>
+  <script>
+    let reportType = 'week';
+
+    const WEEK_GOALS = [
+      ['全年集装箱吞吐量目标', '年', '商务部', '72%', '+1%', '进行中'],
+      ['桥吊作业效率提升 15%', '季', '装卸队', '58%', '-2%', '需关注'],
+      ['8 月桥吊效率月目标', '月', '装卸队', '55%', '-3%', '需关注']
+    ];
+    const MONTH_GOALS = [
+      ['全年集装箱吞吐量目标', '年', '商务部', '72%', '+4%', '进行中'],
+      ['桥吊作业效率提升 15%', '季', '装卸队', '58%', '+2%', '需关注'],
+      ['8 月桥吊效率月目标', '月', '装卸队', '55%', '+5%', '需关注'],
+      ['9 月桥吊效率月目标', '月', '装卸队', '20%', '新', '进行中'],
+      ['设备完好率 ≥ 98%', '季', '设备部', '96%', '+1%', '进行中'],
+      ['8 月设备完好率月目标', '月', '设备部', '97%', '+2%', '进行中']
+    ];
+
+    const PLANS = [
+      ['8 月装卸效率提升计划', '【月】8 月桥吊效率月目标', '08-25 效率复核', '55%', '+5%', '3 / 1', '围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施。'],
+      ['Q3 桥吊点检专项计划', '【季】桥吊作业效率提升 15%', '08-31 季度节点', '62%', '+2%', '2 / 0', '按季度推进桥吊点检与隐患闭环，支撑效率提升目标。'],
+      ['堆场周转优化计划', '【月】8 月堆场周转月目标', '08-20 周转复盘', '65%', '+8%', '4 / 1', '优化堆场箱位周转与异常复盘节奏，提升月度周转指标。']
+    ];
+
+    const TASKS = [
+      ['桥吊夜班流程复盘', '8 月装卸效率提升计划', '刘强', '已填', '40%', '+5%', '形成初版整改清单'],
+      ['班前会标准化宣贯', '8 月装卸效率提升计划', '孙伟', '已填', '60%', '+10%', '全班组第一轮宣贯完成'],
+      ['岸桥对位训练', '8 月装卸效率提升计划', '马超', '未填', '35%', '0%', '—'],
+      ['钢丝绳点检整改', 'Q3 桥吊点检专项计划', '周杰', '已填', '70%', '+5%', '整改项 8 条已闭环 5 条']
+    ];
+
+    function typeBadge(t) {
+      if (t === '年') return '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">年</span>';
+      if (t === '季') return '<span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">季</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">月</span>';
+    }
+
+    function cmpCell(v) {
+      if (v === '新') return '<span class="text-slate-500">新目标</span>';
+      if (v.startsWith('+')) return '<span class="text-emerald-600">' + v + '</span>';
+      if (v.startsWith('-')) return '<span class="text-red-500">' + v + '</span>';
+      return v;
+    }
+
+    function openGoalDetail(idx) {
+      const goals = reportType === 'week' ? WEEK_GOALS : MONTH_GOALS;
+      const r = goals[idx];
+      if (!r) return;
+      document.getElementById('gTitle').textContent = r[0];
+      document.getElementById('gStatus').textContent = r[5];
+      document.getElementById('gStatus').className = r[5] === '需关注'
+        ? 'text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700'
+        : 'text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700';
+      document.getElementById('gMeta').textContent = r[1] + '目标 · ' + r[2] + ' · 完成率 ' + r[3] + ' · 较上期 ' + r[4];
+      document.getElementById('gType').textContent = r[1];
+      document.getElementById('gDept').textContent = r[2];
+      document.getElementById('gRate').textContent = r[3];
+      document.getElementById('gDesc').textContent = '「' + r[0] + '」本周期完成率 ' + r[3] + '（较上期 ' + r[4] + '）。完成率为关联展示，不做下级强制加总。责任部门：' + r[2] + '。';
+      BMS.openModal('modal-goal-detail');
+    }
+
+    function openPlanDetail(idx) {
+      const r = PLANS[idx];
+      if (!r) return;
+      document.getElementById('pTitle').textContent = r[0];
+      document.getElementById('pMeta').textContent = '关联目标：' + r[1] + ' · 完成率 ' + r[3] + ' · 较上期 ' + r[4];
+      document.getElementById('pGoal').textContent = r[1];
+      document.getElementById('pNode').textContent = r[2];
+      document.getElementById('pRate').textContent = r[3];
+      document.getElementById('pLag').textContent = r[5];
+      document.getElementById('pDesc').textContent = r[6];
+      BMS.openModal('modal-plan-detail');
+    }
+
+    function openTaskDetail(idx) {
+      const r = TASKS[idx];
+      if (!r) return;
+      document.getElementById('tTitle').textContent = r[0];
+      const filled = r[3] === '已填';
+      document.getElementById('tFillBadge').textContent = filled ? '本周期已填' : '本周期未填';
+      document.getElementById('tFillBadge').className = filled
+        ? 'text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700'
+        : 'text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600';
+      document.getElementById('tMeta').textContent = '责任人 ' + r[2] + ' · 所属计划：' + r[1] + ' · 完成率 ' + r[4];
+      document.getElementById('tOwner').textContent = r[2];
+      document.getElementById('tPlan').textContent = r[1];
+      document.getElementById('tRate').textContent = r[4];
+      document.getElementById('tCmp').textContent = r[5];
+      document.getElementById('tSummary').textContent = r[6] === '—' ? '本周期尚未提交进展汇报。' : r[6];
+      const fillRows = document.getElementById('tFillRows');
+      if (filled) {
+        fillRows.innerHTML = `
+          <tr class="border-t"><td class="px-4 py-2.5">2026-W32</td><td class="px-4 py-2.5">25%</td><td class="px-4 py-2.5">前期推进</td></tr>
+          <tr class="border-t"><td class="px-4 py-2.5">2026-W33</td><td class="px-4 py-2.5">${r[4]}</td><td class="px-4 py-2.5">${r[6]}</td></tr>
+          <tr class="border-t"><td class="px-4 py-2.5">2026-W34</td><td class="px-4 py-2.5">${r[4]}</td><td class="px-4 py-2.5">${r[6]}</td></tr>`;
+      } else {
+        fillRows.innerHTML = `
+          <tr class="border-t"><td class="px-4 py-2.5">2026-W32</td><td class="px-4 py-2.5">25%</td><td class="px-4 py-2.5">前期推进</td></tr>
+          <tr class="border-t"><td class="px-4 py-2.5">2026-W33</td><td class="px-4 py-2.5">35%</td><td class="px-4 py-2.5">部分推进</td></tr>
+          <tr class="border-t"><td class="px-4 py-2.5">2026-W34</td><td class="px-4 py-2.5 text-amber-600">待汇报</td><td class="px-4 py-2.5 text-slate-400">尚未提交</td></tr>`;
+      }
+      BMS.openModal('modal-task-detail');
+    }
+
+    function switchReport(type) {
+      reportType = type;
+      document.getElementById('btnWeek').className = type === 'week' ? 'px-4 py-2 report-tab-on' : 'px-4 py-2 text-slate-600 hover:bg-slate-50';
+      document.getElementById('btnMonth').className = type === 'month' ? 'px-4 py-2 report-tab-on' : 'px-4 py-2 text-slate-600 hover:bg-slate-50';
+      document.getElementById('periodSelect').classList.toggle('hidden', type !== 'week');
+      document.getElementById('monthSelect').classList.toggle('hidden', type !== 'month');
+      document.getElementById('goalsScopeHint').textContent = type === 'week'
+        ? '周报：仅展示本周期有任务/填报活动的目标子树。点击「详情」以大弹窗查看。'
+        : '月报：展示当月全部月目标及年→季→月路径。点击「详情」以大弹窗查看。';
+      if (type === 'week') {
+        document.getElementById('sumGoals').textContent = '5';
+        document.getElementById('cmpGoals').innerHTML = '<span class="text-amber-600">需关注 2</span> · 较上周 <span class="text-emerald-600">完成率均值 +1%</span>';
+        document.getElementById('cmpPlans').innerHTML = '关键节点到期 <span class="font-medium">4</span> · 较上周 <span class="text-emerald-600">+3%</span>';
+        document.getElementById('cmpTasks').innerHTML = '滞后 <span class="text-red-500 font-medium">3</span> · 填报率 72% · 较上周 <span class="text-emerald-600">+5%</span>';
+        document.getElementById('cmpFill').innerHTML = '未填待催 <span class="text-amber-600 font-medium">8</span> · 较上周 <span class="text-emerald-600">-2 人</span> · <a href="任务中心_汇报提醒_page.html" class="text-teal-700">去汇报提醒</a>';
+      } else {
+        document.getElementById('sumGoals').textContent = '8';
+        document.getElementById('cmpGoals').innerHTML = '<span class="text-amber-600">需关注 2</span> · 较上月 <span class="text-emerald-600">完成率均值 +3%</span>';
+        document.getElementById('cmpPlans').innerHTML = '关键节点到期 <span class="font-medium">12</span> · 较上月 <span class="text-emerald-600">+6%</span>';
+        document.getElementById('cmpTasks').innerHTML = '滞后 <span class="text-red-500 font-medium">5</span> · 填报率 74% · 较上月 <span class="text-emerald-600">+8%</span>';
+        document.getElementById('cmpFill').innerHTML = '未填待催 <span class="text-amber-600 font-medium">7</span> · 较上月 <span class="text-emerald-600">-3 人</span> · <a href="任务中心_汇报提醒_page.html" class="text-teal-700">去汇报提醒</a>';
+      }
+      renderTables();
+      renderPeriodLabel();
+    }
+
+    function renderPeriodLabel() {
+      const el = document.getElementById('periodDesc');
+      if (reportType === 'week') {
+        const v = document.getElementById('periodSelect').value;
+        el.textContent = '周报快照 · ' + v + ' · 数据截止周期末 23:59 · 生成于次日 08:00 · 详情均以大弹窗打开';
+      } else {
+        const v = document.getElementById('monthSelect').value;
+        el.textContent = '月报快照 · ' + v + ' · 数据截止月末 23:59 · 生成于次月 1 日 08:00 · 详情均以大弹窗打开';
+      }
+    }
+
+    function switchSection(name) {
+      document.querySelectorAll('.section-pane').forEach(p => p.classList.add('hidden'));
+      document.getElementById('section-' + name).classList.remove('hidden');
+      document.querySelectorAll('.section-tab').forEach(b => {
+        const on = b.getAttribute('data-section') === name;
+        b.className = on ? 'section-tab px-4 py-2 rounded-xl text-sm section-tab-on' : 'section-tab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200';
+      });
+    }
+
+    function renderTables() {
+      const goals = reportType === 'week' ? WEEK_GOALS : MONTH_GOALS;
+      document.getElementById('goalsBody').innerHTML = goals.map((r, i) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><button type="button" class="font-medium text-teal-700 hover:underline text-left" onclick="openGoalDetail(${i})">${r[0]}</button></td>
+          <td class="px-4 py-3">${typeBadge(r[1])}</td>
+          <td class="px-4 py-3">${r[2]}</td>
+          <td class="px-4 py-3">${r[3]}</td>
+          <td class="px-4 py-3">${cmpCell(r[4])}</td>
+          <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100">${r[5]}</span></td>
+          <td class="px-5 py-3"><button type="button" onclick="openGoalDetail(${i})" class="text-teal-700">详情</button></td>
+        </tr>`).join('');
+
+      document.getElementById('plansBody').innerHTML = PLANS.map((r, i) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanDetail(${i})">${r[0]}</button></td>
+          <td class="px-4 py-3 text-slate-600">${r[1]}</td>
+          <td class="px-4 py-3">${r[2]}</td>
+          <td class="px-4 py-3">${r[3]}</td>
+          <td class="px-4 py-3">${cmpCell(r[4])}</td>
+          <td class="px-4 py-3">${r[5]}</td>
+          <td class="px-5 py-3"><button type="button" onclick="openPlanDetail(${i})" class="text-teal-700">详情</button></td>
+        </tr>`).join('');
+
+      document.getElementById('tasksBody').innerHTML = TASKS.map((r, i) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openTaskDetail(${i})">${r[0]}</button></td>
+          <td class="px-4 py-3 text-slate-600">${r[1]}</td>
+          <td class="px-4 py-3">${r[2]}</td>
+          <td class="px-4 py-3">${r[3] === '未填' ? '<span class="text-red-500">未填</span>' : '<span class="text-emerald-600">已填</span>'}</td>
+          <td class="px-4 py-3">${r[4]}</td>
+          <td class="px-4 py-3">${cmpCell(r[5])}</td>
+          <td class="px-4 py-3 text-slate-500 max-w-[160px] truncate">${r[6]}</td>
+          <td class="px-5 py-3"><button type="button" onclick="openTaskDetail(${i})" class="text-teal-700">详情</button></td>
+        </tr>`).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTables();
+      renderPeriodLabel();
+    });
+  </script>
+</body>
+</html>

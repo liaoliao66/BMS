@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>我的任务 · 经营目标管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .tab-on { background:#0f766e; color:#fff; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="my-tasks" data-title="我的任务">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">展示本人责任任务；支持待汇报筛选与周期进展填报。</p>
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="filter-btn px-3 py-1.5 rounded-xl text-sm tab-on" data-f="all" onclick="filterTasks('all')">全部</button>
+        <button type="button" class="filter-btn px-3 py-1.5 rounded-xl text-sm bg-white border border-slate-200" data-f="todo" onclick="filterTasks('todo')">待汇报</button>
+        <button type="button" class="filter-btn px-3 py-1.5 rounded-xl text-sm bg-white border border-slate-200" data-f="doing" onclick="filterTasks('doing')">进行中</button>
+        <button type="button" class="filter-btn px-3 py-1.5 rounded-xl text-sm bg-white border border-slate-200" data-f="delay" onclick="filterTasks('delay')">已延期</button>
+      </div>
+      <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>本周</option><option>本月</option><option>全部周期</option></select>
+    </div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">任务名称</th>
+            <th class="px-4 py-3 text-left">所属计划</th>
+            <th class="px-4 py-3 text-left">来源</th>
+            <th class="px-4 py-3 text-left">起止</th>
+            <th class="px-4 py-3 text-left">完成率</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="taskBody"></tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500" id="footerHint">共 0 条</div>
+    </div>
+
+    <div id="modal-fill" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-fill')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-3">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">提交进展汇报</h3><button type="button" onclick="BMS.closeModal('modal-fill')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-500" id="fillTaskName">桥吊夜班流程复盘 · 周报 W34</p>
+        <input type="number" class="w-full border rounded-xl px-3 py-2.5 text-sm" value="55" placeholder="完成率 %" />
+        <textarea class="w-full border rounded-xl px-3 py-2.5 text-sm h-24" placeholder="本周期进展说明">整改清单已定稿，待班组宣贯。</textarea>
+        <div class="flex gap-2"><button type="button" onclick="BMS.toast('汇报已提交');BMS.closeModal('modal-fill')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">提交</button><button type="button" onclick="BMS.closeModal('modal-fill')" class="text-sm text-slate-500">取消</button></div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    const ROWS = [
+      { name: '桥吊夜班流程复盘', plan: '8 月装卸效率提升计划', src: '计划任务', range: '08-01 ~ 08-20', rate: '40%', status: '待汇报', tag: 'todo' },
+      { name: '班前会标准化宣贯', plan: '8 月装卸效率提升计划', src: '计划任务', range: '08-01 ~ 08-25', rate: '60%', status: '进行中', tag: 'doing' },
+      { name: '岸桥对位训练', plan: '8 月装卸效率提升计划', src: '计划任务', range: '08-05 ~ 08-18', rate: '35%', status: '已延期', tag: 'delay' },
+      { name: 'Q3 安全隐患现场复核', plan: 'Q3 桥吊点检专项计划', src: '督办下达', range: '08-20 ~ 08-27', rate: '20%', status: '待汇报', tag: 'todo' }
+    ];
+
+    function statusBadge(s) {
+      if (s === '待汇报') return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">待汇报</span>';
+      if (s === '已延期') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span>';
+    }
+
+    function filterTasks(f) {
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        const on = b.getAttribute('data-f') === f;
+        b.className = on ? 'filter-btn px-3 py-1.5 rounded-xl text-sm tab-on' : 'filter-btn px-3 py-1.5 rounded-xl text-sm bg-white border border-slate-200';
+      });
+      const list = f === 'all' ? ROWS : ROWS.filter(r => r.tag === f);
+      document.getElementById('taskBody').innerHTML = list.map(r => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3 font-medium">${r.name}</td>
+          <td class="px-4 py-3 text-slate-600">${r.plan}</td>
+          <td class="px-4 py-3">${r.src}</td>
+          <td class="px-4 py-3">${r.range}</td>
+          <td class="px-4 py-3">${r.rate}</td>
+          <td class="px-4 py-3">${statusBadge(r.status)}</td>
+          <td class="px-5 py-3 space-x-2">
+            <button type="button" class="text-teal-700" onclick="openFill('${r.name}')">${r.tag === 'todo' ? '去汇报' : '更新进展'}</button>
+            <a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-slate-500 hover:text-teal-700">详情</a>
+          </td>
+        </tr>`).join('');
+      document.getElementById('footerHint').textContent = '共 ' + list.length + ' 条';
+    }
+
+    function openFill(name) {
+      document.getElementById('fillTaskName').textContent = name + ' · 周报 W34';
+      BMS.openModal('modal-fill');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => filterTasks('all'));
+  </script>
+</body>
+</html>
