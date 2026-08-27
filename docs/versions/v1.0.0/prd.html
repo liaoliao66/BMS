@@ -270,18 +270,33 @@
 
     async function renderMermaid(container) {
       const blocks = container.querySelectorAll("pre code.language-mermaid, pre code.lang-mermaid");
-      const nodes = [];
-      blocks.forEach(function (code, idx) {
+      let failCount = 0;
+      for (let idx = 0; idx < blocks.length; idx++) {
+        const code = blocks[idx];
         const pre = code.parentElement;
         const div = document.createElement("div");
         div.className = "mermaid";
         div.textContent = code.textContent;
         div.setAttribute("data-mermaid-idx", String(idx));
         pre.replaceWith(div);
-        nodes.push(div);
-      });
-      if (nodes.length) {
-        await mermaid.run({ nodes: nodes });
+        try {
+          await mermaid.run({ nodes: [div] });
+        } catch (err) {
+          failCount++;
+          const fallback = document.createElement("pre");
+          fallback.className = "mermaid-fallback";
+          fallback.style.cssText = "background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px;border-radius:8px;font-size:12px;overflow:auto;white-space:pre-wrap;";
+          fallback.textContent = "流程图渲染失败（不影响正文阅读），源码：\n" + code.textContent;
+          div.replaceWith(fallback);
+          console.warn("Mermaid block " + idx + " failed", err);
+        }
+      }
+      if (failCount) {
+        const note = document.createElement("p");
+        note.className = "footer-note";
+        note.style.color = "#b45309";
+        note.textContent = "部分 Mermaid 流程图未能渲染（共 " + failCount + " 处），正文与表格已正常加载。";
+        container.appendChild(note);
       }
     }
 
@@ -295,15 +310,14 @@
         const md = await res.text();
         marked.setOptions({ gfm: true, breaks: false });
         content.innerHTML = marked.parse(md);
-        // Ensure heading ids for TOC / anchor
         content.querySelectorAll("h1, h2, h3, h4").forEach(function (h) {
           if (!h.id) h.id = slugify(h.textContent);
         });
-        await renderMermaid(content);
         buildToc(content, nav);
         status.hidden = true;
         content.hidden = false;
         document.getElementById("footer-note").hidden = false;
+        await renderMermaid(content);
       } catch (err) {
         status.className = "status error";
         status.textContent = "PRD 加载失败：" + (err && err.message ? err.message : String(err)) + "。请确认同目录存在 prd.md，并通过本地/静态服务器访问。";
