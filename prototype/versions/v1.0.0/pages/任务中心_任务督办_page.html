@@ -15,11 +15,11 @@
 <body class="bg-slate-50" data-page="supervise" data-title="任务督办">
   <div id="app-root"></div>
   <div id="page-main">
-    <p class="text-xs text-slate-500 mb-4">领导向指定人员<strong>下达督办任务</strong>，须<strong>关联计划</strong>；下达后出现在对方「我的任务」中，可跟踪执行与催办。</p>
+    <p class="text-xs text-slate-500 mb-4">领导向指定人员<strong>下达督办任务</strong>，须<strong>关联计划</strong>；下达后出现在对方「任务清单」中，可跟踪执行与催办。</p>
 
     <div class="flex flex-wrap gap-3 justify-between mb-5">
       <div class="flex flex-wrap gap-2">
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>进行中</option><option>待汇报</option><option>已完成</option><option>已延期</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>进行中</option><option>已完成</option><option>已延期</option></select>
         <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
         <input class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-44" placeholder="搜索任务/责任人" />
       </div>
@@ -28,7 +28,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-5">
       <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">督办中</div><div class="text-2xl font-semibold mt-1">9</div></div>
-      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">待汇报</div><div class="text-2xl font-semibold mt-1 text-amber-600">3</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">进行中</div><div class="text-2xl font-semibold mt-1 text-sky-700">6</div></div>
       <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">已延期</div><div class="text-2xl font-semibold mt-1 text-red-500">1</div></div>
       <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">本周已完成</div><div class="text-2xl font-semibold mt-1 text-emerald-600">2</div></div>
     </div>
@@ -42,7 +42,7 @@
             <th class="px-4 py-3 text-left">责任人</th>
             <th class="px-4 py-3 text-left">部门</th>
             <th class="px-4 py-3 text-left">截止日期</th>
-            <th class="px-4 py-3 text-left">完成率</th>
+            <th class="px-4 py-3 text-left">本周期更新</th>
             <th class="px-4 py-3 text-left">状态</th>
             <th class="px-4 py-3 text-left">下达人</th>
             <th class="px-5 py-3 text-left">操作</th>
@@ -55,8 +55,8 @@
             <td class="px-4 py-3">刘强</td>
             <td class="px-4 py-3">装卸队</td>
             <td class="px-4 py-3">2026-08-27</td>
-            <td class="px-4 py-3">20%</td>
-            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">待汇报</span></td>
+            <td class="px-4 py-3"><span class="text-emerald-600">已更新</span></td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td>
             <td class="px-4 py-3">张港长</td>
             <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
           </tr>
@@ -66,7 +66,7 @@
             <td class="px-4 py-3">孙伟</td>
             <td class="px-4 py-3">装卸队</td>
             <td class="px-4 py-3">2026-08-30</td>
-            <td class="px-4 py-3">55%</td>
+            <td class="px-4 py-3"><span class="text-emerald-600">已更新</span></td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td>
             <td class="px-4 py-3">张港长</td>
             <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
@@ -77,7 +77,7 @@
             <td class="px-4 py-3">陈敏</td>
             <td class="px-4 py-3">调度中心</td>
             <td class="px-4 py-3">2026-08-22</td>
-            <td class="px-4 py-3">40%</td>
+            <td class="px-4 py-3"><span class="text-red-500">未更新</span></td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td>
             <td class="px-4 py-3">张港长</td>
             <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
@@ -148,7 +148,7 @@
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-detail')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6">
         <div class="flex justify-between mb-3"><h3 class="text-lg font-semibold">Q3 安全隐患现场复核</h3><button type="button" onclick="BMS.closeModal('modal-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
-        <p class="text-sm text-slate-600 mb-3">关联计划：Q3 桥吊点检专项计划 · 责任人 刘强 · 截止 2026-08-27 · 完成率 20% · 待汇报</p>
+        <p class="text-sm text-slate-600 mb-3">关联计划：Q3 桥吊点检专项计划 · 责任人 刘强 · 截止 2026-08-27 · 状态：进行中</p>
         <p class="text-sm text-slate-700 bg-slate-50 rounded-xl p-3 mb-4">对装卸作业区安全隐患进行现场复核，输出整改清单并反馈。</p>
         <button type="button" onclick="BMS.closeModal('modal-detail')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">关闭</button>
       </div>
@@ -167,7 +167,7 @@
       if (!p) { BMS.toast('请选择关联计划', 'error'); return; }
       if (!o) { BMS.toast('请选择责任人', 'error'); return; }
       if (!dl) { BMS.toast('请填写截止日期', 'error'); return; }
-      BMS.toast('督办任务已下达，责任人「我的任务」可见');
+      BMS.toast('督办任务已下达，责任人「任务清单」可见');
       BMS.closeModal('modal-assign');
     }
   </script>

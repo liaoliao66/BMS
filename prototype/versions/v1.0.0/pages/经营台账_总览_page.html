@@ -37,14 +37,14 @@
     <!-- KPI 摘要 -->
     <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
       <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
-        <div class="text-xs text-slate-500">码头目标完成率</div>
-        <div class="mt-1 text-2xl font-semibold">71%</div>
-        <div class="mt-1 text-xs text-emerald-600">较上季 +3%</div>
+        <div class="text-xs text-slate-500">需关注目标</div>
+        <div class="mt-1 text-2xl font-semibold text-amber-600">5</div>
+        <div class="mt-1 text-xs text-slate-400">正常 9 · 风险 2</div>
       </div>
       <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
-        <div class="text-xs text-slate-500">进行中目标</div>
-        <div class="mt-1 text-2xl font-semibold">14</div>
-        <div class="mt-1 text-xs text-slate-400">年 3 · 季 5 · 月 6</div>
+        <div class="text-xs text-slate-500">本周到期节点</div>
+        <div class="mt-1 text-2xl font-semibold">4</div>
+        <div class="mt-1 text-xs text-amber-600">临期 2 · 逾期 1</div>
       </div>
       <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover">
         <div class="text-xs text-slate-500">进行中计划</div>
@@ -82,7 +82,7 @@
     <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] px-5 py-4 mb-6 flex flex-wrap items-center justify-between gap-3">
       <div>
         <div class="text-sm font-medium text-slate-900">本周工作汇报快照 · W34</div>
-        <p class="text-xs text-slate-500 mt-1">目标完成较上周 <span class="text-emerald-600">+2%</span> · 计划推进较上周 <span class="text-emerald-600">+1</span> · 未填待催 <span class="text-amber-600 font-medium">8 人</span>（较上周 -2）</p>
+        <p class="text-xs text-slate-500 mt-1">健康状态较上周 <span class="text-emerald-600">需关注 -1</span> · 节点按期较上周 <span class="text-emerald-600">+2</span> · 未填待催 <span class="text-amber-600 font-medium">8 人</span>（较上周 -2）</p>
       </div>
       <a href="经营台账_工作汇报_page.html" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">查看工作汇报</a>
     </div>
@@ -101,9 +101,9 @@
               <a href="目标管理_目标列表_page.html" class="text-xs text-teal-700">目标管理</a>
             </div>
             <div class="space-y-2 text-sm">
-              <div class="flex justify-between"><span class="text-slate-500">年目标</span><span>3 · 均完成 68%</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">季目标</span><span>5 · 均完成 71%</span></div>
-              <div class="flex justify-between"><span class="text-slate-500">月目标</span><span>6 · 均完成 64%</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">年目标</span><span>3 · 正常 2 · 需关注 1</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">季目标</span><span>5 · 正常 3 · 需关注 2</span></div>
+              <div class="flex justify-between"><span class="text-slate-500">月目标</span><span>6 · 正常 4 · 需关注 2</span></div>
             </div>
           </div>
           <div class="border border-slate-100 rounded-2xl p-4">
@@ -120,7 +120,7 @@
           <div class="border border-slate-100 rounded-2xl p-4">
             <div class="flex justify-between items-start mb-3">
               <div class="text-sm font-medium">任务</div>
-              <a href="任务中心_我的任务_page.html" class="text-xs text-teal-700">我的任务</a>
+              <a href="任务中心_我的任务_page.html" class="text-xs text-teal-700">任务清单</a>
             </div>
             <div class="space-y-2 text-sm">
               <div class="flex justify-between"><span class="text-slate-500">进行中</span><span>86</span></div>
@@ -155,34 +155,34 @@
       <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
         <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">各部门达成一览</h2><span class="text-xs text-slate-400">点击打开部门详情</span></div>
         <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button type="button" onclick="openDept('装卸队','58%','2','需关注')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+          <button type="button" onclick="openDept('装卸队','正常 1 · 需关注 1 · 风险 1','2','需关注')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
             <div class="flex justify-between"><div class="font-medium">装卸队</div><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span></div>
-            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[58%]"></div></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>58%</span><span>目标 3 · 计划 6 · 滞后 2</span></div>
+            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">1</span> · 需关注 <span class="font-medium text-amber-600">1</span> · 风险 <span class="font-medium text-red-500">1</span></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 3 · 计划 6</span><span>滞后 2</span></div>
           </button>
-          <button type="button" onclick="openDept('调度中心','76%','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+          <button type="button" onclick="openDept('调度中心','正常 2 · 需关注 0 · 风险 0','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
             <div class="flex justify-between"><div class="font-medium">调度中心</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
-            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[76%]"></div></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>76%</span><span>目标 2 · 计划 4 · 滞后 0</span></div>
+            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">2</span> · 需关注 <span class="font-medium">0</span> · 风险 <span class="font-medium">0</span></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 2 · 计划 4</span><span>滞后 0</span></div>
           </button>
-          <button type="button" onclick="openDept('设备部','82%','1','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
-            <div class="flex justify-between"><div class="font-medium">设备部</div><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">正常</span></div>
-            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[82%]"></div></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>82%</span><span>目标 2 · 计划 5 · 滞后 1</span></div>
+          <button type="button" onclick="openDept('设备部','正常 2 · 需关注 0 · 风险 0','1','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+            <div class="flex justify-between"><div class="font-medium">设备部</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
+            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">2</span> · 需关注 <span class="font-medium">0</span> · 风险 <span class="font-medium">0</span></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 2 · 计划 5</span><span>滞后 1</span></div>
           </button>
-          <button type="button" onclick="openDept('安全环保部','90%','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
+          <button type="button" onclick="openDept('安全环保部','正常 2 · 需关注 0 · 风险 0','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
             <div class="flex justify-between"><div class="font-medium">安全环保部</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
-            <div class="mt-3 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600 w-[90%]"></div></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>90%</span><span>目标 2 · 计划 3 · 滞后 0</span></div>
+            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">2</span> · 需关注 <span class="font-medium">0</span> · 风险 <span class="font-medium">0</span></div>
+            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 2 · 计划 3</span><span>滞后 0</span></div>
           </button>
         </div>
       </div>
       <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
         <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">重点专项</h2><a href="专项管理_专项列表_page.html" class="text-xs text-teal-700">专项管理</a></div>
         <ul class="divide-y">
-          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">桥吊效能提升专项</div><div class="text-xs text-slate-500 mt-1">装卸队 · 2 个计划</div></div><span class="text-sm text-amber-600">58%</span></button></li>
-          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">堆场周转优化专项</div><div class="text-xs text-slate-500 mt-1">调度中心 · 1 个计划</div></div><span class="text-sm text-teal-700">74%</span></button></li>
-          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">设备点检达标专项</div><div class="text-xs text-slate-500 mt-1">设备部 · 1 个计划</div></div><span class="text-sm text-teal-700">82%</span></button></li>
+          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">桥吊效能提升专项</div><div class="text-xs text-slate-500 mt-1">装卸队 · 2 个计划 · 滞后 2</div></div><span class="text-sm text-amber-600">节点 2/4</span></button></li>
+          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">堆场周转优化专项</div><div class="text-xs text-slate-500 mt-1">调度中心 · 1 个计划</div></div><span class="text-sm text-teal-700">节点 3/4</span></button></li>
+          <li><button type="button" onclick="BMS.openModal('modal-special')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">设备点检达标专项</div><div class="text-xs text-slate-500 mt-1">设备部 · 1 个计划</div></div><span class="text-sm text-teal-700">节点 4/5</span></button></li>
         </ul>
       </div>
     </div>
@@ -227,7 +227,7 @@
         <div class="flex justify-between mb-4">
           <div>
             <h3 class="text-lg font-semibold" id="deptTitle">装卸队 · 经营详情</h3>
-            <p class="text-sm text-slate-500 mt-1" id="deptSub">完成率 58% · 滞后任务 2</p>
+            <p class="text-sm text-slate-500 mt-1" id="deptSub">健康分布 正常 1 · 需关注 1 · 风险 1 · 滞后任务 2</p>
           </div>
           <button type="button" onclick="BMS.closeModal('modal-dept')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
         </div>
@@ -238,13 +238,13 @@
         </div>
         <h4 class="text-sm font-medium mb-2">重点目标</h4>
         <ul class="text-sm space-y-2 mb-4">
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊作业效率提升 15%</span><span>58%</span></li>
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>班组准点出勤率</span><span>91%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊作业效率提升 15%</span><span class="text-amber-600">需关注 · 12% / 15%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>班组准点出勤率</span><span class="text-emerald-600">正常 · 91% / 90%</span></li>
         </ul>
         <h4 class="text-sm font-medium mb-2">关联计划 / 滞后任务</h4>
         <ul class="text-sm space-y-2 mb-5">
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>8 月装卸效率提升计划</span><span class="text-amber-600">45%</span></li>
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练（已延期）</span><span class="text-red-500">35%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>8 月装卸效率提升计划</span><span class="text-amber-600">节点 2/4 · 滞后 1</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练（已延期）</span><span class="text-red-500">未更新</span></li>
         </ul>
         <div class="flex gap-2 flex-wrap">
           <a href="部门工作台_部门工作台_page.html" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">进入工作台</a>
@@ -261,20 +261,20 @@
         <div class="flex justify-between mb-4">
           <div>
             <h3 class="text-lg font-semibold">桥吊效能提升专项</h3>
-            <p class="text-sm text-slate-500 mt-1">装卸队 · 负责人 刘强 · 完成率 58%</p>
+            <p class="text-sm text-slate-500 mt-1">装卸队 · 负责人 刘强 · 节点 2/4 · 滞后 2</p>
           </div>
           <button type="button" onclick="BMS.closeModal('modal-special')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
         </div>
         <h4 class="text-sm font-medium mb-2">关联计划</h4>
         <ul class="text-sm space-y-2 mb-4">
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>Q3 桥吊点检专项计划</span><span>50%</span></li>
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>8 月装卸效率提升计划</span><span>45%</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>Q3 桥吊点检专项计划</span><span>节点 2/4 · 3天后到期</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>8 月装卸效率提升计划</span><span>节点 2/4 · 滞后 1</span></li>
         </ul>
         <h4 class="text-sm font-medium mb-2">关键任务</h4>
         <ul class="text-sm space-y-2 mb-5">
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊夜班流程复盘</span><span>40%</span></li>
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>钢丝绳点检整改</span><span>70%</span></li>
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练</span><span class="text-red-500">35% · 已延期</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊夜班流程复盘</span><span class="text-amber-600">本月未更新</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>钢丝绳点检整改</span><span class="text-emerald-600">进行中</span></li>
+          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练</span><span class="text-red-500">已延期</span></li>
         </ul>
         <div class="flex gap-2">
           <a href="专项管理_专项列表_page.html" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">专项管理</a>
@@ -286,9 +286,9 @@
   </div>
   <script src="../assets/common.js"></script>
   <script>
-    function openDept(name, rate, lag, tag) {
+    function openDept(name, health, lag, tag) {
       document.getElementById('deptTitle').textContent = name + ' · 经营详情';
-      document.getElementById('deptSub').textContent = '完成率 ' + rate + ' · 滞后任务 ' + lag + ' · ' + tag;
+      document.getElementById('deptSub').textContent = '健康分布 ' + health + ' · 滞后任务 ' + lag + ' · ' + tag;
       BMS.openModal('modal-dept');
     }
   </script>

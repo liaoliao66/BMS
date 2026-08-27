@@ -19,7 +19,7 @@
     {
       group: "任务中心",
       items: [
-        { id: "my-tasks", name: "我的任务", href: "任务中心_我的任务_page.html", icon: "fa-list-check" },
+        { id: "my-tasks", name: "任务清单", href: "任务中心_我的任务_page.html", icon: "fa-list-check" },
         { id: "supervise", name: "任务督办", href: "任务中心_任务督办_page.html", icon: "fa-flag" },
         { id: "reminders", name: "汇报提醒", href: "任务中心_汇报提醒_page.html", icon: "fa-bell" },
       ],
@@ -56,10 +56,17 @@
         border-radius: 0 !important;
         margin: 0 !important;
       }
+      .bms-fs-group {
+        display: inline-flex !important;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;
+        margin-left: auto;
+      }
       .bms-fs-btn {
         width: 2.25rem; height: 2.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;
         color: #94a3b8; background: #fff; display: inline-flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
+        flex-shrink: 0; padding: 0; line-height: 1;
       }
       .bms-fs-btn:hover { color: #475569; background: #f8fafc; }
     `;
@@ -115,7 +122,7 @@
     if (!panel) return;
     const closeBtn = findCloseButton(panel);
     if (!closeBtn) return;
-    if (closeBtn.parentElement && closeBtn.parentElement.querySelector(".bms-fs-btn")) {
+    if (panel.querySelector(".bms-fs-btn") || closeBtn.closest(".bms-fs-group")) {
       modal.dataset.bmsFsReady = "1";
       return;
     }
@@ -130,10 +137,16 @@
       e.stopPropagation();
       setModalFullscreen(modal, !modal.classList.contains("bms-modal-fs"));
     });
-    closeBtn.parentNode.insertBefore(fsBtn, closeBtn);
     if (closeBtn.querySelector(".fa-xmark, .fa-times") && !/\bw-9\b/.test(closeBtn.className)) {
       closeBtn.classList.add("w-9", "h-9", "rounded-xl", "border", "inline-flex", "items-center", "justify-center");
     }
+    // 与关闭按钮绑成紧挨一组，避免落在 justify-between 中间被撑开
+    const parent = closeBtn.parentNode;
+    const group = document.createElement("div");
+    group.className = "bms-fs-group";
+    parent.insertBefore(group, closeBtn);
+    group.appendChild(fsBtn);
+    group.appendChild(closeBtn);
     modal.dataset.bmsFsReady = "1";
   }
 
@@ -249,4 +262,13 @@
   if (openId) {
     setTimeout(() => window.BMS.openModal(openId), 50);
   }
+
+  (function loadAiAssistant() {
+    const ref = document.querySelector('script[src*="common.js"]');
+    const src = ref ? ref.src.replace(/common\.js(\?.*)?$/, "ai-assistant.js") : "../assets/ai-assistant.js";
+    const s = document.createElement("script");
+    s.src = src;
+    s.defer = true;
+    document.body.appendChild(s);
+  })();
 })();
