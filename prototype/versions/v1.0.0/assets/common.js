@@ -1,4 +1,4 @@
-/* 经营目标管理系统 v1.0.0 · PC 公共壳（菜单第 2 轮） */
+/* 经营管理系统 v1.0.0 · PC 公共壳（菜单第 2 轮） */
 (function () {
   const NAV = [
     {
@@ -40,7 +40,7 @@
   ];
 
   const pageId = document.body.getAttribute("data-page") || "";
-  const title = document.body.getAttribute("data-title") || "经营目标管理系统";
+  const title = document.body.getAttribute("data-title") || "经营管理系统";
 
   function injectModalStyles() {
     if (document.getElementById("bms-modal-fs-style")) return;
@@ -158,7 +158,7 @@
     let html = `
       <aside class="w-64 shrink-0 bg-slate-800 text-slate-200 min-h-screen flex flex-col">
         <div class="px-5 py-5 border-b border-slate-700">
-          <div class="text-white font-semibold text-base tracking-wide">经营目标管理系统</div>
+          <div class="text-white font-semibold text-base tracking-wide">经营管理系统</div>
           <div class="text-xs text-slate-400 mt-1">v1.0.0 · PC 原型</div>
         </div>
         <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">`;

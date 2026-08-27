@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>专项管理 · 经营目标管理系统</title>
+  <title>专项管理 · 经营管理系统</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
@@ -13,32 +13,582 @@
     .btn-cta:hover { background:#0d9488; }
     .btn-cta:active { transform: scale(.95); }
     .row-hover:hover { background:#f8fafc; }
+    .detail-tab-on { background:#0f766e; color:#fff; }
+    .status-tab-on { background:#0f766e; color:#fff; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="projects" data-title="专项管理">
   <div id="app-root"></div>
   <div id="page-main">
-    <div class="flex flex-wrap gap-3 justify-between mb-5">
-      <div class="flex flex-wrap gap-2">
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>进行中</option><option>已延期</option></select>
+    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+      <div class="flex flex-wrap gap-2 items-center">
+        <select id="deptFilter" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderTable()">
+          <option value="">全部部门</option>
+          <option>装卸队</option>
+          <option>调度中心</option>
+          <option>设备部</option>
+          <option>安全环保部</option>
+        </select>
+        <div class="flex flex-wrap gap-1 bg-white border border-slate-200 rounded-xl p-1">
+          <button type="button" class="status-tab px-3 py-1.5 rounded-lg text-sm status-tab-on" data-status="" onclick="switchStatusTab('')">全部</button>
+          <button type="button" class="status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="进行中" onclick="switchStatusTab('进行中')">进行中</button>
+          <button type="button" class="status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="已延期" onclick="switchStatusTab('已延期')">已延期</button>
+          <button type="button" class="status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="已完成" onclick="switchStatusTab('已完成')">已完成</button>
+        </div>
       </div>
-      <button type="button" onclick="BMS.openModal('modal-special-form')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建专项</button>
+      <button type="button" onclick="openSpecialForm('create')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建专项</button>
     </div>
     <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
       <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-slate-500"><tr><th class="px-5 py-3 text-left">专项名称</th><th class="px-5 py-3 text-left">归属部门</th><th class="px-5 py-3 text-left">负责人</th><th class="px-5 py-3 text-left">节点达成</th><th class="px-5 py-3 text-left">滞后任务</th><th class="px-5 py-3 text-left">状态</th><th class="px-5 py-3 text-left">操作</th></tr></thead>
-        <tbody>
-          <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline" onclick="BMS.openModal('modal-special-detail')">桥吊效能提升专项</button></td><td class="px-5 py-3">装卸队</td><td class="px-5 py-3">刘强</td><td class="px-5 py-3">2/4 按期</td><td class="px-5 py-3 text-red-500">2</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span></td><td class="px-5 py-3"><button type="button" onclick="BMS.openModal('modal-special-form')" class="hover:text-teal-700">编辑</button></td></tr>
-          <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline" onclick="BMS.openModal('modal-special-detail')">堆场周转优化专项</button></td><td class="px-5 py-3">调度中心</td><td class="px-5 py-3">陈敏</td><td class="px-5 py-3">3/4 按期</td><td class="px-5 py-3">1</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td><td class="px-5 py-3"><button type="button" onclick="BMS.openModal('modal-special-form')" class="hover:text-teal-700">编辑</button></td></tr>
-          <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline" onclick="BMS.openModal('modal-special-detail')">设备点检达标专项</button></td><td class="px-5 py-3">设备部</td><td class="px-5 py-3">赵磊</td><td class="px-5 py-3">4/5 按期</td><td class="px-5 py-3">0</td><td class="px-5 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td><td class="px-5 py-3"><button type="button" onclick="BMS.openModal('modal-special-form')" class="hover:text-teal-700">编辑</button></td></tr>
-        </tbody>
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">专项名称</th>
+            <th class="px-5 py-3 text-left">归属部门</th>
+            <th class="px-5 py-3 text-left">负责人</th>
+            <th class="px-5 py-3 text-left">节点达成</th>
+            <th class="px-5 py-3 text-left">滞后任务</th>
+            <th class="px-5 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="specialTbody"></tbody>
       </table>
-      <div class="px-5 py-3 border-t text-sm text-slate-500">共 6 条 · 「专项」用于码头运营战役归集，任务可挂接专项</div>
+      <div id="specialFooter" class="px-5 py-3 border-t text-sm text-slate-500">共 6 条 · 「专项」用于码头运营战役归集，任务可挂接专项</div>
     </div>
-    <div id="modal-special-form" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4"><div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special-form')"></div><div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-xl p-6 space-y-3"><div class="flex justify-between"><h3 class="text-lg font-semibold">新建 / 编辑专项</h3><button onclick="BMS.closeModal('modal-special-form')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div><input id="spName" class="w-full border rounded-xl px-3 py-2.5 text-sm" value="桥吊效能提升专项" /><div class="grid grid-cols-2 gap-3"><select class="border rounded-xl px-3 py-2.5 text-sm"><option>装卸队</option><option>调度中心</option><option>设备部</option></select><select class="border rounded-xl px-3 py-2.5 text-sm"><option>刘强</option><option>陈敏</option><option>赵磊</option></select></div><div class="grid grid-cols-2 gap-3"><input type="date" class="border rounded-xl px-3 py-2.5 text-sm" value="2026-07-01" /><input type="date" class="border rounded-xl px-3 py-2.5 text-sm" value="2026-09-30" /></div><div class="flex gap-2"><button onclick="(function(){if(!document.getElementById('spName').value.trim()){BMS.toast('请填写专项名称','error');return;}BMS.toast('专项已保存');BMS.closeModal('modal-special-form');})()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button><button onclick="BMS.closeModal('modal-special-form')" class="text-sm text-slate-500">取消</button></div></div></div>
-    <div id="modal-special-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4"><div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special-detail')"></div><div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6"><div class="flex justify-between mb-4"><div><h3 class="text-lg font-semibold">桥吊效能提升专项</h3><p class="text-sm text-slate-500 mt-1">装卸队 · 刘强 · 节点 2/4 · 滞后 2</p></div><button onclick="BMS.closeModal('modal-special-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div><ul class="text-sm space-y-2 mb-4"><li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊夜班流程复盘</span><span class="text-amber-600">未更新</span></li><li class="border rounded-xl px-3 py-2 flex justify-between"><span>钢丝绳点检整改</span><span class="text-emerald-600">进行中</span></li></ul><div class="flex gap-2"><button onclick="BMS.closeModal('modal-special-detail');BMS.openModal('modal-special-form')" class="border px-4 py-2 rounded-xl text-sm">编辑</button><button onclick="BMS.closeModal('modal-special-detail')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">关闭</button></div></div></div>
+
+    <!-- 新建/编辑 -->
+    <div id="modal-special-form" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special-form')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 id="spFormTitle" class="text-lg font-semibold">新建专项</h3>
+          <button type="button" onclick="BMS.closeModal('modal-special-form')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">专项名称 <span class="text-red-500">*</span></label>
+            <input id="spName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="请输入专项名称" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">归属部门 <span class="text-red-500">*</span></label>
+              <select id="spDept" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option value="">请选择</option>
+                <option>装卸队</option>
+                <option>调度中心</option>
+                <option>设备部</option>
+                <option>安全环保部</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">负责人 <span class="text-red-500">*</span></label>
+              <select id="spOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option value="">请选择</option>
+                <option>刘强</option>
+                <option>陈敏</option>
+                <option>周杰</option>
+                <option>赵磊</option>
+                <option>孙伟</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label>
+              <input id="spStart" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label>
+              <input id="spEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">专项说明</label>
+            <textarea id="spDesc" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="背景、目标与验收要点"></textarea>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2">
+          <button type="button" onclick="saveSpecialForm()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-special-form')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 详情 · 大弹窗 -->
+    <div id="modal-special-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 id="detailName" class="text-xl font-semibold text-slate-900">—</h3>
+              <span id="detailStatusBadge" class="text-xs px-2 py-0.5 rounded-full"></span>
+            </div>
+            <p id="detailSub" class="text-sm text-slate-500 mt-1">—</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" id="detailEditBtn" class="border text-sm px-4 py-2 rounded-xl">编辑</button>
+            <button type="button" id="detailDeleteBtn" class="text-sm px-4 py-2 rounded-xl text-red-600 border border-red-200 hover:bg-red-50">删除</button>
+            <button type="button" onclick="BMS.closeModal('modal-special-detail')" class="w-9 h-9 rounded-xl border text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-3 border-b bg-slate-50/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">节点达成</div><div id="detailNodes" class="font-medium mt-0.5">—</div></div>
+          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">滞后任务</div><div id="detailDelayed" class="font-medium mt-0.5">—</div></div>
+          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">关联计划</div><div id="detailPlanCount" class="font-medium mt-0.5">—</div></div>
+          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">挂接任务</div><div id="detailTaskCount" class="font-medium mt-0.5">—</div></div>
+        </div>
+        <div class="shrink-0 px-6 pt-4 flex gap-2">
+          <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on" data-dtab="info" onclick="switchDetailTab('info')">基本信息</button>
+          <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600" data-dtab="plans" onclick="switchDetailTab('plans')">关联计划</button>
+          <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600" data-dtab="tasks" onclick="switchDetailTab('tasks')">关键任务</button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+          <div id="detailPane-info" class="detail-pane space-y-3 text-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">归属部门</div><div id="detailDept">—</div></div>
+              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">负责人</div><div id="detailOwner">—</div></div>
+              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">专项周期</div><div id="detailPeriod">—</div></div>
+              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">创建时间</div><div id="detailCreated">—</div></div>
+            </div>
+            <div class="border border-slate-100 rounded-xl p-4">
+              <div class="text-xs text-slate-500 mb-2">专项说明</div>
+              <p id="detailDesc" class="text-slate-700 leading-relaxed">—</p>
+            </div>
+          </div>
+          <div id="detailPane-plans" class="detail-pane hidden">
+            <p class="text-xs text-slate-500 mb-3">以下为挂接本专项的计划，点击名称可查看计划详情</p>
+            <div class="overflow-hidden border border-slate-200 rounded-xl">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500"><tr>
+                  <th class="px-4 py-2.5 text-left">计划名称</th>
+                  <th class="px-4 py-2.5 text-left">关联目标</th>
+                  <th class="px-4 py-2.5 text-left">节点达成</th>
+                  <th class="px-4 py-2.5 text-left">任务概况</th>
+                  <th class="px-4 py-2.5 text-left">负责人</th>
+                </tr></thead>
+                <tbody id="detailPlansBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="detailPane-tasks" class="detail-pane hidden">
+            <p class="text-xs text-slate-500 mb-3">挂接本专项计划下的任务，点击名称可查看任务详情</p>
+            <div class="overflow-hidden border border-slate-200 rounded-xl">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500"><tr>
+                  <th class="px-4 py-2.5 text-left">任务名称</th>
+                  <th class="px-4 py-2.5 text-left">所属计划</th>
+                  <th class="px-4 py-2.5 text-left">责任人</th>
+                  <th class="px-4 py-2.5 text-left">本周期更新</th>
+                  <th class="px-4 py-2.5 text-left">状态</th>
+                </tr></thead>
+                <tbody id="detailTasksBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2">
+          <button type="button" onclick="BMS.closeModal('modal-special-detail')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 删除确认 -->
+    <div id="modal-special-delete" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special-delete')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0"><i class="fa-solid fa-trash-can"></i></div>
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900">确认删除专项</h3>
+            <p class="text-sm text-slate-500 mt-1">删除后不可恢复，请确认是否继续。</p>
+          </div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-4 text-sm mb-4 space-y-2">
+          <div class="font-medium text-slate-900" id="deleteSpecialName">—</div>
+          <div class="text-slate-600" id="deleteSpecialMeta">—</div>
+          <div class="text-red-600 text-xs pt-1 border-t border-slate-200" id="deleteSpecialWarn">—</div>
+        </div>
+        <div class="flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-special-delete')" class="text-sm text-slate-500 px-4 py-2">取消</button>
+          <button type="button" onclick="confirmDeleteSpecial()" class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2 rounded-xl">确认删除</button>
+        </div>
+      </div>
+    </div>
   </div>
   <script src="../assets/common.js"></script>
+  <script>
+    const STATUS_CLASS = {
+      '进行中': 'bg-sky-50 text-sky-700',
+      '已延期': 'bg-red-50 text-red-600',
+      '已完成': 'bg-emerald-50 text-emerald-700'
+    };
+
+    let SPECIAL_LIST = [
+      {
+        id: 'sp1',
+        name: '桥吊效能提升专项',
+        dept: '装卸队',
+        owner: '刘强',
+        nodes: '2/4 按期',
+        delayed: 2,
+        status: '已延期',
+        start: '2026-07-01',
+        end: '2026-09-30',
+        created: '2026-06-28',
+        desc: '围绕桥吊作业效率提升开展专项攻坚，涵盖点检整改、夜班流程优化与对位训练，目标为季效率指标 +15%。',
+        plans: [
+          { name: 'Q3 桥吊点检专项计划', goal: '桥吊作业效率提升 15%', nodes: '2/4 按期', tasks: '1/1/0', owner: '刘强' },
+          { name: '8 月装卸效率提升计划', goal: '8 月桥吊效率月目标', nodes: '2/4 按期', tasks: '0/2/1', owner: '刘强' }
+        ],
+        tasks: [
+          { name: '桥吊夜班流程复盘', plan: '8 月装卸效率提升计划', owner: '刘强', updated: '未更新', status: '本月未更新', statusClass: 'text-amber-600' },
+          { name: '钢丝绳点检整改', plan: 'Q3 桥吊点检专项计划', owner: '周杰', updated: '已更新', status: '进行中', statusClass: 'text-sky-700' },
+          { name: '岸桥对位训练', plan: '8 月装卸效率提升计划', owner: '马超', updated: '已更新', status: '已延期', statusClass: 'text-red-500' }
+        ]
+      },
+      {
+        id: 'sp2',
+        name: '堆场周转优化专项',
+        dept: '调度中心',
+        owner: '陈敏',
+        nodes: '3/4 按期',
+        delayed: 1,
+        status: '进行中',
+        start: '2026-08-01',
+        end: '2026-10-31',
+        created: '2026-07-15',
+        desc: '优化堆场箱位周转与协同调度，降低压箱率，提升出箱准点率。',
+        plans: [
+          { name: '堆场周转优化计划', goal: '8 月堆场周转月目标', nodes: '3/4 按期', tasks: '2/1/1', owner: '陈敏' }
+        ],
+        tasks: [
+          { name: '堆场周转异常复盘', plan: '堆场周转优化计划', owner: '陈敏', updated: '已更新', status: '已完成', statusClass: 'text-emerald-600' },
+          { name: '箱位周转日报核对', plan: '堆场周转优化计划', owner: '陈敏', updated: '已更新', status: '进行中', statusClass: 'text-sky-700' },
+          { name: '堆场协同会议跟进', plan: '堆场周转优化计划', owner: '王芳', updated: '未更新', status: '已延期', statusClass: 'text-red-500' }
+        ]
+      },
+      {
+        id: 'sp3',
+        name: '设备点检达标专项',
+        dept: '设备部',
+        owner: '赵磊',
+        nodes: '4/5 按期',
+        delayed: 0,
+        status: '进行中',
+        start: '2026-07-01',
+        end: '2026-12-31',
+        created: '2026-06-20',
+        desc: '保障桥吊、岸桥等关键设备点检达标率，形成隐患闭环与报告归档机制。',
+        plans: [
+          { name: '设备点检达标计划', goal: '设备完好率 ≥ 98%', nodes: '4/5 按期', tasks: '3/2/0', owner: '赵磊' }
+        ],
+        tasks: [
+          { name: '点检报告归档', plan: '设备点检达标计划', owner: '赵磊', updated: '已更新', status: '已完成', statusClass: 'text-emerald-600' },
+          { name: '隐患整改闭环', plan: '设备点检达标计划', owner: '周杰', updated: '已更新', status: '进行中', statusClass: 'text-sky-700' }
+        ]
+      },
+      {
+        id: 'sp4',
+        name: '夜班协同保障专项',
+        dept: '装卸队',
+        owner: '孙伟',
+        nodes: '1/3 按期',
+        delayed: 1,
+        status: '已延期',
+        start: '2026-08-01',
+        end: '2026-09-30',
+        created: '2026-07-28',
+        desc: '夜班作业协同与班前会标准化，保障夜班安全与效率。',
+        plans: [
+          { name: '夜班协同保障计划', goal: '8 月桥吊效率月目标', nodes: '1/3 按期', tasks: '1/2/0', owner: '孙伟' }
+        ],
+        tasks: [
+          { name: '班前会标准化宣贯', plan: '夜班协同保障计划', owner: '孙伟', updated: '已更新', status: '进行中', statusClass: 'text-sky-700' },
+          { name: '夜班交接问题闭环', plan: '夜班协同保障计划', owner: '孙伟', updated: '未更新', status: '本月未更新', statusClass: 'text-amber-600' }
+        ]
+      },
+      {
+        id: 'sp5',
+        name: '安全生产零事故专项',
+        dept: '安全环保部',
+        owner: '李芳',
+        nodes: '2/2 按期',
+        delayed: 0,
+        status: '进行中',
+        start: '2026-01-01',
+        end: '2026-12-31',
+        created: '2026-01-05',
+        desc: '全年安全生产零事故目标专项，含隐患排查、整改复核与培训宣贯。',
+        plans: [
+          { name: 'Q3 安全隐患排查计划', goal: '安全生产零事故', nodes: '2/2 按期', tasks: '2/0/0', owner: '李芳' }
+        ],
+        tasks: [
+          { name: 'Q3 安全隐患现场复核', plan: 'Q3 安全隐患排查计划', owner: '刘强', updated: '已更新', status: '进行中', statusClass: 'text-sky-700' }
+        ]
+      },
+      {
+        id: 'sp6',
+        name: '泊位准点兑现专项',
+        dept: '调度中心',
+        owner: '陈敏',
+        nodes: '1/2 按期',
+        delayed: 0,
+        status: '进行中',
+        start: '2026-08-15',
+        end: '2026-11-30',
+        created: '2026-08-10',
+        desc: '提升泊位准点兑现率，优化船期衔接与资源调度。',
+        plans: [
+          { name: '泊位准点提升计划', goal: '8 月堆场周转月目标', nodes: '1/2 按期', tasks: '0/1/0', owner: '陈敏' }
+        ],
+        tasks: [
+          { name: '泊位准点兑现异常核查', plan: '泊位准点提升计划', owner: '陈敏', updated: '已更新', status: '进行中', statusClass: 'text-sky-700' }
+        ]
+      }
+    ];
+
+    let formMode = 'create';
+    let formId = null;
+    let detailId = null;
+    let deleteId = null;
+    let detailTab = 'info';
+    let statusTab = '';
+
+    function findSpecial(id) {
+      return SPECIAL_LIST.find(s => s.id === id);
+    }
+
+    function findSpecialIndex(id) {
+      return SPECIAL_LIST.findIndex(s => s.id === id);
+    }
+
+    function getFilteredList() {
+      const dept = document.getElementById('deptFilter').value;
+      return SPECIAL_LIST.filter(s => {
+        if (statusTab && s.status !== statusTab) return false;
+        if (dept && s.dept !== dept) return false;
+        return true;
+      });
+    }
+
+    function switchStatusTab(status) {
+      statusTab = status;
+      document.querySelectorAll('.status-tab').forEach(b => {
+        const on = b.getAttribute('data-status') === status;
+        b.className = on
+          ? 'status-tab px-3 py-1.5 rounded-lg text-sm status-tab-on'
+          : 'status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600';
+      });
+      renderTable();
+    }
+
+    function statusBadge(status) {
+      const cls = STATUS_CLASS[status] || 'bg-slate-100 text-slate-600';
+      return '<span class="text-xs px-2 py-0.5 rounded-full ' + cls + '">' + status + '</span>';
+    }
+
+    function renderTable() {
+      const list = getFilteredList();
+      const tbody = document.getElementById('specialTbody');
+      if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="7" class="px-5 py-12 text-center text-slate-400">暂无符合条件的专项</td></tr>';
+      } else {
+        tbody.innerHTML = list.map(s => `
+          <tr class="border-t row-hover">
+            <td class="px-5 py-3">
+              <button type="button" class="text-teal-700 hover:underline text-left" onclick="openSpecialDetail('${s.id}')">${s.name}</button>
+            </td>
+            <td class="px-5 py-3">${s.dept}</td>
+            <td class="px-5 py-3">${s.owner}</td>
+            <td class="px-5 py-3">${s.nodes}</td>
+            <td class="px-5 py-3 ${s.delayed ? 'text-red-500' : ''}">${s.delayed}</td>
+            <td class="px-5 py-3">${statusBadge(s.status)}</td>
+            <td class="px-5 py-3 space-x-2 whitespace-nowrap">
+              <button type="button" onclick="openSpecialDetail('${s.id}')" class="hover:text-teal-700">详情</button>
+              <button type="button" onclick="openSpecialForm('edit','${s.id}')" class="hover:text-teal-700">编辑</button>
+              <button type="button" onclick="openDeleteConfirm('${s.id}')" class="hover:text-red-600">删除</button>
+            </td>
+          </tr>`).join('');
+      }
+      const total = SPECIAL_LIST.length;
+      const label = statusTab || '全部';
+      document.getElementById('specialFooter').textContent =
+        '当前筛选「' + label + '」共 ' + list.length + ' 条 · 档案总计 ' + total + ' 条 · 「专项」用于码头运营战役归集，任务可挂接专项';
+    }
+
+    function switchDetailTab(tab) {
+      detailTab = tab;
+      document.querySelectorAll('.detail-tab').forEach(b => {
+        const on = b.getAttribute('data-dtab') === tab;
+        b.className = on ? 'detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on' : 'detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600';
+      });
+      document.querySelectorAll('.detail-pane').forEach(p => p.classList.add('hidden'));
+      document.getElementById('detailPane-' + tab).classList.remove('hidden');
+    }
+
+    function openSpecialDetail(id) {
+      const s = findSpecial(id);
+      if (!s) return;
+      detailId = id;
+      detailTab = 'info';
+      switchDetailTab('info');
+
+      document.getElementById('detailName').textContent = s.name;
+      document.getElementById('detailSub').textContent = s.dept + ' · 负责人 ' + s.owner + ' · ' + s.start + ' ~ ' + s.end;
+      const badge = document.getElementById('detailStatusBadge');
+      badge.textContent = s.status;
+      badge.className = 'text-xs px-2 py-0.5 rounded-full ' + (STATUS_CLASS[s.status] || 'bg-slate-100 text-slate-600');
+
+      document.getElementById('detailNodes').textContent = s.nodes;
+      document.getElementById('detailDelayed').textContent = s.delayed + ' 项';
+      document.getElementById('detailDelayed').className = 'font-medium mt-0.5' + (s.delayed ? ' text-red-500' : '');
+      document.getElementById('detailPlanCount').textContent = s.plans.length + ' 个';
+      document.getElementById('detailTaskCount').textContent = s.tasks.length + ' 项';
+
+      document.getElementById('detailDept').textContent = s.dept;
+      document.getElementById('detailOwner').textContent = s.owner;
+      document.getElementById('detailPeriod').textContent = s.start + ' ~ ' + s.end;
+      document.getElementById('detailCreated').textContent = s.created;
+      document.getElementById('detailDesc').textContent = s.desc;
+
+      document.getElementById('detailPlansBody').innerHTML = s.plans.map(p => `
+        <tr class="border-t row-hover">
+          <td class="px-4 py-2.5">
+            <button type="button" class="text-teal-700 hover:underline text-left" onclick="goPlanDetail('${p.name.replace(/'/g, "\\'")}')">${p.name}</button>
+          </td>
+          <td class="px-4 py-2.5">${p.goal}</td>
+          <td class="px-4 py-2.5">${p.nodes}</td>
+          <td class="px-4 py-2.5">${p.tasks}</td>
+          <td class="px-4 py-2.5">${p.owner}</td>
+        </tr>`).join('');
+
+      document.getElementById('detailTasksBody').innerHTML = s.tasks.map(t => `
+        <tr class="border-t row-hover">
+          <td class="px-4 py-2.5">
+            <button type="button" class="text-teal-700 hover:underline text-left" onclick="goTaskDetail('${t.name.replace(/'/g, "\\'")}')">${t.name}</button>
+          </td>
+          <td class="px-4 py-2.5">${t.plan}</td>
+          <td class="px-4 py-2.5">${t.owner}</td>
+          <td class="px-4 py-2.5 ${t.updated === '未更新' ? 'text-red-500' : 'text-emerald-600'}">${t.updated}</td>
+          <td class="px-4 py-2.5 ${t.statusClass}">${t.status}</td>
+        </tr>`).join('');
+
+      document.getElementById('detailEditBtn').onclick = function () {
+        BMS.closeModal('modal-special-detail');
+        openSpecialForm('edit', id);
+      };
+      document.getElementById('detailDeleteBtn').onclick = function () {
+        openDeleteConfirm(id, true);
+      };
+
+      BMS.openModal('modal-special-detail');
+    }
+
+    function openDeleteConfirm(id, fromDetail) {
+      const s = findSpecial(id);
+      if (!s) return;
+      deleteId = id;
+      const planNames = s.plans.map(p => p.name).join('、');
+      const taskNames = s.tasks.map(t => t.name).join('、');
+      document.getElementById('deleteSpecialName').textContent = s.name;
+      document.getElementById('deleteSpecialMeta').textContent =
+        s.dept + ' · ' + s.owner + ' · ' + s.plans.length + ' 个关联计划 · ' + s.tasks.length + ' 个关联任务';
+      document.getElementById('deleteSpecialWarn').innerHTML =
+        '将一并删除：<strong>' + s.plans.length + '</strong> 个关联计划、<strong>' + s.tasks.length + '</strong> 个关联任务及其挂接关系。' +
+        (planNames ? '<br><span class="text-slate-500">计划：' + planNames + '</span>' : '') +
+        (taskNames ? '<br><span class="text-slate-500">任务：' + taskNames + '</span>' : '');
+      if (fromDetail) BMS.closeModal('modal-special-detail');
+      BMS.openModal('modal-special-delete');
+    }
+
+    function confirmDeleteSpecial() {
+      if (!deleteId) return;
+      const idx = findSpecialIndex(deleteId);
+      if (idx < 0) return;
+      const s = SPECIAL_LIST[idx];
+      const planN = s.plans.length;
+      const taskN = s.tasks.length;
+      SPECIAL_LIST.splice(idx, 1);
+      deleteId = null;
+      BMS.closeModal('modal-special-delete');
+      renderTable();
+      BMS.toast('已删除专项「' + s.name + '」及 ' + planN + ' 个计划、' + taskN + ' 个任务');
+    }
+
+    function goPlanDetail(name) {
+      BMS.toast('跳转计划详情：' + name);
+      location.href = '计划管理_计划列表_page.html';
+    }
+
+    function goTaskDetail(name) {
+      BMS.toast('跳转任务详情：' + name);
+      location.href = '任务管理_任务列表_page.html?open=modal-task-detail';
+    }
+
+    function openSpecialForm(mode, id) {
+      formMode = mode;
+      formId = id || null;
+      document.getElementById('spFormTitle').textContent = mode === 'create' ? '新建专项' : '编辑专项';
+
+      if (mode === 'edit' && id) {
+        const s = findSpecial(id);
+        if (!s) return;
+        document.getElementById('spName').value = s.name;
+        document.getElementById('spDept').value = s.dept;
+        document.getElementById('spOwner').value = s.owner;
+        document.getElementById('spStart').value = s.start;
+        document.getElementById('spEnd').value = s.end;
+        document.getElementById('spDesc').value = s.desc;
+      } else {
+        document.getElementById('spName').value = '';
+        document.getElementById('spDept').value = '';
+        document.getElementById('spOwner').value = '';
+        document.getElementById('spStart').value = '';
+        document.getElementById('spEnd').value = '';
+        document.getElementById('spDesc').value = '';
+      }
+      BMS.openModal('modal-special-form');
+    }
+
+    function saveSpecialForm() {
+      const name = document.getElementById('spName').value.trim();
+      const dept = document.getElementById('spDept').value;
+      const owner = document.getElementById('spOwner').value;
+      const start = document.getElementById('spStart').value;
+      const end = document.getElementById('spEnd').value;
+      if (!name) { BMS.toast('请填写专项名称', 'error'); return; }
+      if (!dept) { BMS.toast('请选择归属部门', 'error'); return; }
+      if (!owner) { BMS.toast('请选择负责人', 'error'); return; }
+      if (!start || !end) { BMS.toast('请填写专项周期', 'error'); return; }
+      if (end < start) { BMS.toast('结束日期不能早于开始日期', 'error'); return; }
+
+      if (formMode === 'edit' && formId) {
+        const s = findSpecial(formId);
+        if (s) {
+          s.name = name;
+          s.dept = dept;
+          s.owner = owner;
+          s.start = start;
+          s.end = end;
+          s.desc = document.getElementById('spDesc').value.trim() || s.desc;
+        }
+        renderTable();
+        BMS.toast('专项已更新');
+      } else {
+        BMS.toast('专项已创建');
+      }
+      BMS.closeModal('modal-special-form');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTable();
+      const params = new URLSearchParams(location.search);
+      const openId = params.get('id');
+      if (openId && findSpecial(openId)) {
+        setTimeout(() => openSpecialDetail(openId), 100);
+      }
+    });
+  </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>经营总览 · 经营目标管理系统</title>
+  <title>经营总览 · 经营管理系统</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
@@ -75,13 +75,6 @@
         <div class="mt-1 text-xs text-slate-400">待收合同 5 笔</div>
       </button>
     </div>
-
-    <!-- 工作汇报快照 -->
-    <button type="button" onclick="openSummary('reportSnapshot')" class="w-full text-left bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] px-5 py-4 mb-6 card-hover clickable">
-      <div class="text-sm font-medium text-slate-900">本周工作周报快照 · W34</div>
-      <p class="text-xs text-slate-500 mt-1">健康状态较上周 <span class="text-emerald-600">需关注 -1</span> · 节点按期较上周 <span class="text-emerald-600">+2</span> · 未填待催 <span class="text-amber-600 font-medium">8 人</span>（较上周 -2）</p>
-      <p class="text-xs text-teal-700 mt-2">点击查看快照明细</p>
-    </button>
 
     <!-- 目标—计划—任务漏斗 + 合同收款摘要 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
@@ -376,19 +369,6 @@
           ['堆场仓储服务合同', '远洋货运', '395', '2026-10-10', '商务部·王芳']
         ]
       },
-      reportSnapshot: {
-        title: '本周工作周报快照 · W34',
-        sub: '数据截止 2026-08-24 23:59 · 生成于 2026-08-25 08:00',
-        cols: ['维度', '本周期', '较上周变化'],
-        rows: [
-          ['需关注目标', '5 项', '需关注 -1'],
-          ['节点按期', '18/24', '+2 节点'],
-          ['滞后任务', '7 项', '持平'],
-          ['填报率', '71%', '+5%'],
-          ['未填人数', '8 人', '-2 人']
-        ],
-        note: '快照为周期截止态，与实时待办可能存在差异。'
-      },
       goalYear: {
         title: '年目标明细',
         sub: '共 3 项 · 正常 2 · 需关注 1',
@@ -473,7 +453,18 @@
       BMS.openModal('modal-dept');
     }
 
+    const SPECIAL_ID_MAP = {
+      '桥吊效能提升专项': 'sp1',
+      '堆场周转优化专项': 'sp2',
+      '设备点检达标专项': 'sp3'
+    };
+
     function openSpecial(name) {
+      const id = SPECIAL_ID_MAP[name];
+      if (id) {
+        location.href = '专项管理_专项列表_page.html?id=' + id;
+        return;
+      }
       const d = SPECIAL_DATA[name];
       if (!d) return;
       document.getElementById('specialTitle').textContent = name;
