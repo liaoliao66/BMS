@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>周期填报 · 企微</title>
+  <link rel="stylesheet" href="../../assets/wecom-common.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body data-module="tasks" data-page="period-fill" data-title="周期填报">
+  <div id="app-root"></div>
+  <main id="page-main" class="wecom-main">
+
+    <div class="wecom-seg" id="typeSeg">
+      <button type="button" data-type="week" class="wecom-seg-btn on" onclick="switchType('week')">周报</button>
+      <button type="button" data-type="month" class="wecom-seg-btn" onclick="switchType('month')">月报</button>
+    </div>
+
+    <div class="wecom-form">
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">周期</span>
+        <select id="periodSelect" class="wecom-select" onchange="renderList()"></select>
+      </div>
+    </div>
+    <p class="wecom-tips" id="periodTips">周报 · 周日 23:59 截止 · 责任人须提交进展说明</p>
+
+    <div class="wecom-panel">
+      <div class="wecom-kpi-grid">
+        <div class="wecom-kpi-item">
+          <div class="wecom-kpi-label">待填报</div>
+          <div class="wecom-kpi-val warn" id="kPending">0</div>
+        </div>
+        <div class="wecom-kpi-item">
+          <div class="wecom-kpi-label">已填报</div>
+          <div class="wecom-kpi-val primary" id="kDone">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wecom-seg" id="statusSeg">
+      <button type="button" data-s="pending" class="wecom-seg-btn on" onclick="switchStatus('pending')">待填报</button>
+      <button type="button" data-s="done" class="wecom-seg-btn" onclick="switchStatus('done')">已填报</button>
+    </div>
+
+    <div class="wecom-cells" id="fillList"></div>
+  </main>
+
+  <div id="modal-fill" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-fill')"></div>
+    <div class="wecom-dialog" style="max-width:340px">
+      <div class="wecom-dialog-hd">
+        <div class="wecom-dialog-title">周期填报</div>
+        <div class="wecom-dialog-sub" id="fTaskName">—</div>
+      </div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <label class="wecom-field-label">进展说明 *</label>
+        <textarea id="fProgress" class="wecom-input" style="min-height:96px;resize:vertical" placeholder="本周期做了什么、产出什么"></textarea>
+        <label class="wecom-field-label" style="margin-top:12px">风险/阻塞（选填）</label>
+        <textarea id="fRisk" class="wecom-input" style="min-height:64px;resize:vertical" placeholder="卡点与需协调事项"></textarea>
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-fill')">取消</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="submitFill()">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-detail')"></div>
+    <div class="wecom-dialog" style="max-width:340px">
+      <div class="wecom-dialog-hd">
+        <div class="wecom-dialog-title" id="dTitle">—</div>
+        <div class="wecom-dialog-sub" id="dSub">—</div>
+      </div>
+      <div class="wecom-dialog-bd" id="dBody"></div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn primary" onclick="BMS.closeModal('modal-detail')">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/wecom-common.js"></script>
+  <script>
+    const SELF = '刘强';
+    let fillType = 'week';
+    let listStatus = 'pending';
+    let fillIdx = -1;
+
+    const PERIODS = {
+      week: [
+        { id: '2026-W34', label: '2026-W34（08-18 ~ 08-24）' },
+        { id: '2026-W33', label: '2026-W33（08-11 ~ 08-17）' }
+      ],
+      month: [
+        { id: '2026-08', label: '2026 年 8 月' },
+        { id: '2026-07', label: '2026 年 7 月' }
+      ]
+    };
+
+    let ITEMS = [
+      { id: 1, type: 'week', period: '2026-W34', task: '桥吊夜班流程复盘', plan: '8 月装卸效率提升计划', owner: '刘强', filled: false, progress: '', risk: '' },
+      { id: 2, type: 'week', period: '2026-W34', task: '班前会标准化宣贯', plan: '8 月装卸效率提升计划', owner: '刘强', filled: false, progress: '', risk: '' },
+      { id: 3, type: 'week', period: '2026-W34', task: 'Q3 安全隐患现场复核', plan: 'Q3 桥吊点检专项计划', owner: '刘强', filled: true, progress: '现场复核完成 3/5 项，剩余项已排期。', risk: '需设备部配合验电', submittedAt: '2026-08-26 16:20' },
+      { id: 4, type: 'week', period: '2026-W33', task: '堆场周转异常复盘', plan: '堆场周转优化计划', owner: '刘强', filled: true, progress: '已形成复盘纪要。', risk: '', submittedAt: '2026-08-22 14:10' },
+      { id: 5, type: 'month', period: '2026-08', task: '桥吊作业效率量化更新', plan: '8 月装卸效率提升计划', owner: '刘强', filled: false, progress: '', risk: '', goal: true },
+      { id: 6, type: 'month', period: '2026-08', task: '班组准点出勤率录入', plan: '—', owner: '刘强', filled: true, progress: '当前值 91%，目标 90%。', risk: '', submittedAt: '2026-08-25 09:00', goal: true }
+    ];
+
+    function switchType(type) {
+      fillType = type;
+      document.querySelectorAll('#typeSeg .wecom-seg-btn').forEach(b => b.classList.toggle('on', b.getAttribute('data-type') === type));
+      document.getElementById('periodTips').textContent = type === 'week'
+        ? '周报 · 周日 23:59 截止 · 责任人须提交进展说明'
+        : '月报 · 月末截止 · 含目标量化值更新与任务进展';
+      const sel = document.getElementById('periodSelect');
+      sel.innerHTML = PERIODS[type].map(p => `<option value="${p.id}">${p.label}</option>`).join('');
+      renderList();
+    }
+
+    function switchStatus(s) {
+      listStatus = s;
+      document.querySelectorAll('#statusSeg .wecom-seg-btn').forEach(b => b.classList.toggle('on', b.getAttribute('data-s') === s));
+      renderList();
+    }
+
+    function currentItems() {
+      const period = document.getElementById('periodSelect').value;
+      return ITEMS.filter(i => i.type === fillType && i.period === period && i.owner === SELF);
+    }
+
+    function renderList() {
+      const all = currentItems();
+      const pending = all.filter(i => !i.filled);
+      const done = all.filter(i => i.filled);
+      document.getElementById('kPending').textContent = pending.length;
+      document.getElementById('kDone').textContent = done.length;
+      const rows = listStatus === 'pending' ? pending : done;
+      const el = document.getElementById('fillList');
+      if (!rows.length) {
+        el.innerHTML = WECOM.emptyState({
+          title: listStatus === 'pending' ? '暂无待填报' : '暂无已填报记录',
+          desc: listStatus === 'pending' ? '当前周期任务均已提交进展' : '切换周期或类型查看历史'
+        });
+        return;
+      }
+      el.innerHTML = rows.map((item, i) => {
+        const idx = ITEMS.indexOf(item);
+        if (listStatus === 'pending') {
+          return WECOM.cell({
+            title: item.task,
+            link: true,
+            desc: (item.goal ? '目标量化 · ' : '') + item.plan,
+            ft: WECOM.statusBadge('未填报', 'warn'),
+            onclick: 'openFill(' + idx + ')'
+          });
+        }
+        return WECOM.cell({
+          title: item.task,
+          link: true,
+          desc: item.submittedAt + ' 提交',
+          ft: WECOM.statusBadge('已填报', 'ok'),
+          onclick: 'openDetail(' + idx + ')'
+        });
+      }).join('');
+    }
+
+    function openFill(idx) {
+      fillIdx = idx;
+      const item = ITEMS[idx];
+      document.getElementById('fTaskName').textContent = item.task;
+      document.getElementById('fProgress').value = '';
+      document.getElementById('fRisk').value = '';
+      BMS.openModal('modal-fill');
+    }
+
+    function submitFill() {
+      const progress = document.getElementById('fProgress').value.trim();
+      if (!progress) { WECOM.toast('请填写进展说明'); return; }
+      ITEMS[fillIdx].filled = true;
+      ITEMS[fillIdx].progress = progress;
+      ITEMS[fillIdx].risk = document.getElementById('fRisk').value.trim();
+      ITEMS[fillIdx].submittedAt = '2026-08-27 19:00';
+      WECOM.toast('填报已提交');
+      BMS.closeModal('modal-fill');
+      switchStatus('pending');
+      renderList();
+    }
+
+    function openDetail(idx) {
+      const item = ITEMS[idx];
+      document.getElementById('dTitle').textContent = item.task;
+      document.getElementById('dSub').textContent = item.plan;
+      document.getElementById('dBody').innerHTML = [
+        ['进展说明', item.progress],
+        ['风险/阻塞', item.risk || '—'],
+        ['提交时间', item.submittedAt]
+      ].map(r => `<div class="wecom-dialog-row"><span class="lbl">${r[0]}</span><span class="val">${r[1]}</span></div>`).join('');
+      BMS.openModal('modal-detail');
+    }
+
+    (function init() {
+      switchType('week');
+      const params = new URLSearchParams(location.search);
+      const taskId = params.get('task');
+      if (taskId) {
+        const idx = ITEMS.findIndex(i => String(i.id) === taskId && !i.filled);
+        if (idx >= 0) setTimeout(() => openFill(idx), 300);
+      }
+    })();
+  </script>
+</body>
+</html>

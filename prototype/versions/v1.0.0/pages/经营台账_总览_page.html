@@ -17,122 +17,167 @@
     .clickable:hover { background: #f8fafc; }
     .kpi-card { cursor: pointer; text-align: left; width: 100%; border: none; }
     .kpi-card:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+    .kpi-section { border: 1px solid #e2e8f0; border-radius: 1rem; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.04); }
+    .kpi-section-head { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; }
+    .scope-badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #64748b; }
+    .scope-badge-fixed { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+    .scope-badge-filter { background: #ecfdf5; color: #0f766e; border: 1px solid #99f6e4; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="dashboard" data-title="经营总览">
   <div id="app-root"></div>
   <div id="page-main">
-    <!-- 筛选 -->
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
-      <div class="flex flex-wrap gap-2 items-center">
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>2026 年</option></select>
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option selected>Q3</option><option>Q2</option><option>Q4</option></select>
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option></select>
-        <span class="text-xs text-slate-400">数据截止：2026-08-26 · 点击汇总数字查看明细</span>
+    <!-- 一、合同 · 开票 · 收款（全量累计，不随时间筛选） -->
+    <section class="kpi-section mb-6">
+      <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="font-medium text-slate-800">合同 · 开票 · 收款</h2>
+            <span class="scope-badge scope-badge-fixed">全量累计 · 不随年度/季度变化</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">口径为全部有效合同及开票/收款记录；点击数字查看明细</p>
+        </div>
+        <span class="text-xs text-slate-400">数据截止：2026-08-26</span>
       </div>
-    </div>
+      <div class="p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          <button type="button" onclick="openSummary('contractRate')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">合同回款率</div>
+            <div class="mt-1 text-2xl font-semibold">58%</div>
+            <div class="mt-1 text-xs text-slate-400">回款 2,145 / 总额 3,680 万</div>
+          </button>
+          <button type="button" onclick="openSummary('invoiceTotal')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">累计开票（万）</div>
+            <div class="mt-1 text-2xl font-semibold text-violet-700">2,580</div>
+            <div class="mt-1 text-xs text-slate-400">开票率 70% · 待开 1,100 万 · 不含已作废</div>
+          </button>
+          <button type="button" onclick="openSummary('remaining')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">剩余收款（万）</div>
+            <div class="mt-1 text-2xl font-semibold text-amber-600">1,535</div>
+            <div class="mt-1 text-xs text-slate-400">待收合同 5 笔</div>
+          </button>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="border border-slate-100 rounded-2xl p-4">
+            <div class="text-sm font-medium mb-3 text-slate-700">合同与收付明细</div>
+            <div class="space-y-1 text-sm">
+              <button type="button" onclick="openSummary('contractCount')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">合同总数</span><span class="font-medium">12</span></button>
+              <button type="button" onclick="openSummary('contractTotal')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">合同总额</span><span class="font-medium">3,680 万</span></button>
+              <button type="button" onclick="openSummary('invoiceTotal')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">累计开票</span><span class="font-medium text-violet-700">2,580 万</span></button>
+              <button type="button" onclick="openSummary('invoicePending')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">待开票</span><span class="font-medium text-amber-600">1,100 万</span></button>
+              <button type="button" onclick="openSummary('contractPaid')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">回款总额</span><span class="font-medium text-emerald-600">2,145 万</span></button>
+              <button type="button" onclick="openSummary('remaining')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">剩余收款</span><span class="font-medium text-amber-600">1,535 万</span></button>
+            </div>
+          </div>
+          <div class="border border-slate-100 rounded-2xl p-4">
+            <div class="text-sm font-medium mb-3 text-slate-700">开票 / 回款进度</div>
+            <div class="space-y-4 px-1">
+              <div>
+                <div class="flex justify-between text-xs text-slate-500 mb-1"><span>开票进度</span><span>70%</span></div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-violet-600" style="width:70%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs text-slate-500 mb-1"><span>回款进度</span><span>58%</span></div>
+                <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600" style="width:58%"></div></div>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-4">本年计划收款见<a href="合同收款_收款记录_page.html" class="text-teal-700">收款记录</a>独立配置。明细分别见<a href="合同收款_合同管理_page.html" class="text-teal-700">合同管理</a>、<a href="合同收款_开票记录_page.html" class="text-teal-700">开票记录</a>。</p>
+          </div>
+        </div>
+      </div>
+    </section>
 
-    <!-- KPI 摘要 -->
-    <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
-      <button type="button" onclick="openSummary('goals')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">需关注目标</div>
-        <div class="mt-1 text-2xl font-semibold text-amber-600">5</div>
-        <div class="mt-1 text-xs text-slate-400">正常 9 · 风险 2</div>
-      </button>
-      <button type="button" onclick="openSummary('nodes')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">本周到期节点</div>
-        <div class="mt-1 text-2xl font-semibold">4</div>
-        <div class="mt-1 text-xs text-amber-600">临期 2 · 逾期 1</div>
-      </button>
-      <button type="button" onclick="openSummary('plans')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">进行中计划</div>
-        <div class="mt-1 text-2xl font-semibold">22</div>
-        <div class="mt-1 text-xs text-slate-400">含专项计划 6</div>
-      </button>
-      <button type="button" onclick="openSummary('pendingReport')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">本周待汇报</div>
-        <div class="mt-1 text-2xl font-semibold text-amber-600">31</div>
-        <div class="mt-1 text-xs text-slate-400">未填 8 人</div>
-      </button>
-      <button type="button" onclick="openSummary('risk')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">风险 / 滞后</div>
-        <div class="mt-1 text-2xl font-semibold text-red-500">7</div>
-        <div class="mt-1 text-xs text-slate-400">任务 5 · 目标 2</div>
-      </button>
-      <button type="button" onclick="openSummary('supervise')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">督办中</div>
-        <div class="mt-1 text-2xl font-semibold">9</div>
-        <div class="mt-1 text-xs text-slate-400">督办下达任务</div>
-      </button>
-      <button type="button" onclick="openSummary('contractRate')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">合同回款率</div>
-        <div class="mt-1 text-2xl font-semibold">58%</div>
-        <div class="mt-1 text-xs text-slate-400">回款 2145 / 总额 3680 万</div>
-      </button>
-      <button type="button" onclick="openSummary('remaining')" class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,.05)] card-hover kpi-card">
-        <div class="text-xs text-slate-500">剩余收款（万）</div>
-        <div class="mt-1 text-2xl font-semibold text-amber-600">1,535</div>
-        <div class="mt-1 text-xs text-slate-400">待收合同 5 笔</div>
-      </button>
-    </div>
+    <!-- 二、目标 · 计划 · 任务（随年度/季度/部门筛选） -->
+    <section class="kpi-section mb-6">
+      <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="font-medium text-slate-800">目标 · 计划 · 任务</h2>
+            <span class="scope-badge scope-badge-filter">随筛选变化</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">切换年度、季度或部门后，本区 KPI 与链路摘要同步刷新</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <select id="filterYear" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodFilterChange()"><option>2026 年</option><option>2025 年</option></select>
+          <select id="filterQuarter" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodFilterChange()"><option selected>Q3</option><option>Q2</option><option>Q4</option></select>
+          <select id="filterDept" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodFilterChange()"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option></select>
+        </div>
+      </div>
+      <div class="p-5">
+        <p class="text-xs text-slate-500 mb-4" id="periodFilterHint">当前范围：<strong class="text-slate-700">2026 年 · Q3 · 全部部门</strong> · 数据截止 2026-08-26</p>
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
+          <button type="button" onclick="openSummary('goals')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">需关注目标</div>
+            <div class="mt-1 text-2xl font-semibold text-amber-600" id="kpiGoals">5</div>
+            <div class="mt-1 text-xs text-slate-400">正常 9 · 风险 2</div>
+          </button>
+          <button type="button" onclick="openSummary('nodes')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">本周到期节点</div>
+            <div class="mt-1 text-2xl font-semibold" id="kpiNodes">4</div>
+            <div class="mt-1 text-xs text-amber-600">临期 2 · 逾期 1</div>
+          </button>
+          <button type="button" onclick="openSummary('plans')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">进行中计划</div>
+            <div class="mt-1 text-2xl font-semibold" id="kpiPlans">22</div>
+            <div class="mt-1 text-xs text-slate-400">含专项计划 6</div>
+          </button>
+          <button type="button" onclick="openSummary('pendingReport')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">本周待汇报</div>
+            <div class="mt-1 text-2xl font-semibold text-amber-600" id="kpiPending">31</div>
+            <div class="mt-1 text-xs text-slate-400">未填 8 人</div>
+          </button>
+          <button type="button" onclick="openSummary('risk')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">风险 / 滞后</div>
+            <div class="mt-1 text-2xl font-semibold text-red-500" id="kpiRisk">7</div>
+            <div class="mt-1 text-xs text-slate-400">任务 5 · 目标 2</div>
+          </button>
+          <button type="button" onclick="openSummary('supervise')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
+            <div class="text-xs text-slate-500">督办中</div>
+            <div class="mt-1 text-2xl font-semibold" id="kpiSupervise">9</div>
+            <div class="mt-1 text-xs text-slate-400">督办下达任务</div>
+          </button>
+        </div>
 
-    <!-- 目标—计划—任务漏斗 + 合同收款摘要 -->
+        <!-- 目标—计划—任务链路 -->
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden mb-5">
+          <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-white">
+            <h3 class="text-sm font-medium">目标 · 计划 · 任务链路</h3>
+            <span class="text-xs text-slate-400" id="funnelScopeLabel">2026-Q3 汇总</span>
+          </div>
+          <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white border border-slate-100 rounded-2xl p-4">
+              <div class="text-sm font-medium mb-3">目标</div>
+              <div class="space-y-1 text-sm">
+                <button type="button" onclick="openSummary('goalYear')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">年目标</span><span id="funnelGoalYear">3 · 正常 2 · 需关注 1</span></button>
+                <button type="button" onclick="openSummary('goalQuarter')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">季目标</span><span id="funnelGoalQuarter">5 · 正常 3 · 需关注 2</span></button>
+                <button type="button" onclick="openSummary('goalMonth')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">月目标</span><span id="funnelGoalMonth">6 · 正常 4 · 需关注 2</span></button>
+              </div>
+            </div>
+            <div class="bg-white border border-slate-100 rounded-2xl p-4">
+              <div class="text-sm font-medium mb-3">计划</div>
+              <div class="space-y-1 text-sm">
+                <button type="button" onclick="openSummary('planActive')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">进行中</span><span id="funnelPlanActive">22</span></button>
+                <button type="button" onclick="openSummary('planSpecial')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">专项计划</span><span id="funnelPlanSpecial">6</span></button>
+                <button type="button" onclick="openSummary('planNodesDue')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">本月节点到期</span><span class="text-amber-600" id="funnelPlanNodes">5</span></button>
+              </div>
+            </div>
+            <div class="bg-white border border-slate-100 rounded-2xl p-4">
+              <div class="text-sm font-medium mb-3">任务</div>
+              <div class="space-y-1 text-sm">
+                <button type="button" onclick="openSummary('taskActive')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">进行中</span><span id="funnelTaskActive">86</span></button>
+                <button type="button" onclick="openSummary('taskSupervise')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">督办下达</span><span id="funnelTaskSupervise">9</span></button>
+                <button type="button" onclick="openSummary('taskDelayed')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">已延期</span><span class="text-red-500" id="funnelTaskDelayed">5</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 部门达成 + 重点专项（随筛选） -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
       <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
-        <div class="px-5 py-4 border-b flex justify-between items-center">
-          <h2 class="font-medium">目标 · 计划 · 任务链路</h2>
-          <span class="text-xs text-slate-400">本季汇总 · 点击数字查看</span>
-        </div>
-        <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="border border-slate-100 rounded-2xl p-4">
-            <div class="text-sm font-medium mb-3">目标</div>
-            <div class="space-y-1 text-sm">
-              <button type="button" onclick="openSummary('goalYear')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">年目标</span><span>3 · 正常 2 · 需关注 1</span></button>
-              <button type="button" onclick="openSummary('goalQuarter')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">季目标</span><span>5 · 正常 3 · 需关注 2</span></button>
-              <button type="button" onclick="openSummary('goalMonth')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">月目标</span><span>6 · 正常 4 · 需关注 2</span></button>
-            </div>
-          </div>
-          <div class="border border-slate-100 rounded-2xl p-4">
-            <div class="text-sm font-medium mb-3">计划</div>
-            <div class="space-y-1 text-sm">
-              <button type="button" onclick="openSummary('planActive')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">进行中</span><span>22</span></button>
-              <button type="button" onclick="openSummary('planSpecial')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">专项计划</span><span>6</span></button>
-              <button type="button" onclick="openSummary('planNodesDue')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">本月节点到期</span><span class="text-amber-600">5</span></button>
-            </div>
-          </div>
-          <div class="border border-slate-100 rounded-2xl p-4">
-            <div class="text-sm font-medium mb-3">任务</div>
-            <div class="space-y-1 text-sm">
-              <button type="button" onclick="openSummary('taskActive')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">进行中</span><span>86</span></button>
-              <button type="button" onclick="openSummary('taskSupervise')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">督办下达</span><span>9</span></button>
-              <button type="button" onclick="openSummary('taskDelayed')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">已延期</span><span class="text-red-500">5</span></button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
-        <div class="px-5 py-4 border-b flex justify-between items-center">
-          <h2 class="font-medium">合同收款摘要</h2>
-          <span class="text-xs text-slate-400">点击查看明细</span>
-        </div>
-        <div class="p-5 space-y-1 text-sm">
-          <button type="button" onclick="openSummary('contractCount')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">合同总数</span><span class="font-medium">12</span></button>
-          <button type="button" onclick="openSummary('contractTotal')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">合同总额</span><span class="font-medium">3,680 万</span></button>
-          <button type="button" onclick="openSummary('contractPaid')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">回款总额</span><span class="font-medium text-emerald-600">2,145 万</span></button>
-          <button type="button" onclick="openSummary('remaining')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">剩余收款</span><span class="font-medium text-amber-600">1,535 万</span></button>
-          <div class="pt-3 px-2">
-            <div class="flex justify-between text-xs text-slate-400 mb-1"><span>回款进度</span><span>58%</span></div>
-            <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600" style="width:58%"></div></div>
-          </div>
-          <p class="text-xs text-slate-400 pt-2 px-2">本年计划收款见收款管理独立配置，不与合同总额强制加总。</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 部门达成 + 重点专项 -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-      <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
-        <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">各部门达成一览</h2><span class="text-xs text-slate-400">点击打开部门详情</span></div>
+        <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">各部门达成一览</h2><span class="text-xs text-slate-400" id="deptScopeLabel">2026-Q3 · 全部部门</span></div>
         <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button type="button" onclick="openDept('装卸队','正常 1 · 需关注 1 · 风险 1','2','需关注')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
             <div class="flex justify-between"><div class="font-medium">装卸队</div><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span></div>
@@ -359,6 +404,27 @@
           ['堆场仓储服务合同', '远洋货运', '900', '505', '56%']
         ]
       },
+      invoiceTotal: {
+        title: '累计开票明细',
+        sub: '累计开票 2,580 万 · 占合同总额 70%（不含已作废发票）',
+        cols: ['发票号码', '合同', '客户', '开票金额（万）', '开票日期'],
+        rows: [
+          ['FP-2026-0088', 'HT-2026-0012', '远洋航运', '120', '2026-08-01'],
+          ['FP-2026-0071', 'HT-2026-0012', '远洋航运', '300', '2026-06-15'],
+          ['FP-2026-0058', 'HT-2026-0008', '港联物流', '860', '2026-05-20']
+        ],
+        note: '完整清单见开票记录。'
+      },
+      invoicePending: {
+        title: '待开票明细',
+        sub: '待开票 1,100 万 = 合同总额 3,680 万 − 累计开票 2,580 万',
+        cols: ['合同', '客户', '合同额（万）', '已开票（万）', '待开票（万）'],
+        rows: [
+          ['HT-2026-0012 装卸服务', '远洋航运', '1,200', '900', '300'],
+          ['HT-2026-0015 设备维保', '港机装备', '420', '280', '140'],
+          ['HT-2026-0020 堆场延伸', '东海代理', '380', '0', '380']
+        ]
+      },
       remaining: {
         title: '剩余收款明细',
         sub: '剩余收款 1,535 万 · 待收合同 5 笔',
@@ -434,6 +500,45 @@
       }
     };
 
+    const PERIOD_PRESETS = {
+      '2026 年|Q3|全部部门': { goals: 5, nodes: 4, plans: 22, pending: 31, risk: 7, supervise: 9, funnelLabel: '2026-Q3 汇总', goalYear: '3 · 正常 2 · 需关注 1', goalQuarter: '5 · 正常 3 · 需关注 2', goalMonth: '6 · 正常 4 · 需关注 2', planActive: 22, planSpecial: 6, planNodes: 5, taskActive: 86, taskSupervise: 9, taskDelayed: 5 },
+      '2026 年|Q2|全部部门': { goals: 4, nodes: 3, plans: 18, pending: 24, risk: 5, supervise: 7, funnelLabel: '2026-Q2 汇总', goalYear: '3 · 正常 2 · 需关注 1', goalQuarter: '4 · 正常 3 · 需关注 1', goalMonth: '5 · 正常 3 · 需关注 2', planActive: 18, planSpecial: 5, planNodes: 4, taskActive: 72, taskSupervise: 7, taskDelayed: 3 },
+      '2026 年|Q3|装卸队': { goals: 2, nodes: 2, plans: 6, pending: 8, risk: 3, supervise: 2, funnelLabel: '2026-Q3 · 装卸队', goalYear: '1 · 正常 0 · 需关注 1', goalQuarter: '2 · 正常 0 · 需关注 2', goalMonth: '2 · 正常 0 · 需关注 2', planActive: 6, planSpecial: 2, planNodes: 2, taskActive: 12, taskSupervise: 2, taskDelayed: 2 }
+    };
+
+    function periodKey() {
+      const y = document.getElementById('filterYear').value;
+      const q = document.getElementById('filterQuarter').value;
+      const d = document.getElementById('filterDept').value;
+      return y + '|' + q + '|' + d;
+    }
+
+    function onPeriodFilterChange() {
+      const y = document.getElementById('filterYear').value;
+      const q = document.getElementById('filterQuarter').value;
+      const d = document.getElementById('filterDept').value;
+      const key = periodKey();
+      const data = PERIOD_PRESETS[key] || PERIOD_PRESETS['2026 年|Q3|全部部门'];
+      document.getElementById('periodFilterHint').innerHTML = '当前范围：<strong class="text-slate-700">' + y + ' · ' + q + ' · ' + d + '</strong> · 数据截止 2026-08-26';
+      document.getElementById('kpiGoals').textContent = data.goals;
+      document.getElementById('kpiNodes').textContent = data.nodes;
+      document.getElementById('kpiPlans').textContent = data.plans;
+      document.getElementById('kpiPending').textContent = data.pending;
+      document.getElementById('kpiRisk').textContent = data.risk;
+      document.getElementById('kpiSupervise').textContent = data.supervise;
+      document.getElementById('funnelScopeLabel').textContent = data.funnelLabel;
+      document.getElementById('funnelGoalYear').textContent = data.goalYear;
+      document.getElementById('funnelGoalQuarter').textContent = data.goalQuarter;
+      document.getElementById('funnelGoalMonth').textContent = data.goalMonth;
+      document.getElementById('funnelPlanActive').textContent = data.planActive;
+      document.getElementById('funnelPlanSpecial').textContent = data.planSpecial;
+      document.getElementById('funnelPlanNodes').textContent = data.planNodes;
+      document.getElementById('funnelTaskActive').textContent = data.taskActive;
+      document.getElementById('funnelTaskSupervise').textContent = data.taskSupervise;
+      document.getElementById('funnelTaskDelayed').textContent = data.taskDelayed;
+      document.getElementById('deptScopeLabel').textContent = y.replace(' 年', '') + '-' + q + ' · ' + d;
+    }
+
     function openSummary(key) {
       const d = SUMMARY_DATA[key];
       if (!d) return;
@@ -478,6 +583,8 @@
       }).join('');
       BMS.openModal('modal-special');
     }
+
+    document.addEventListener('DOMContentLoaded', onPeriodFilterChange);
   </script>
 </body>
 </html>

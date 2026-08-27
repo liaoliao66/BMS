@@ -1,0 +1,1144 @@
+/* 经营管理系统 · 企业微信内嵌 H5 · v1.0.0 */
+:root {
+  --wx-bg: #ededed;
+  --wx-panel: #ffffff;
+  --wx-primary: #0082ef;
+  --wx-primary-press: #0069c2;
+  --wx-text: #191919;
+  --wx-text-sec: #888888;
+  --wx-text-tips: #b2b2b2;
+  --wx-line: rgba(0, 0, 0, 0.08);
+  --wx-danger: #fa5151;
+  --wx-warn: #ffc300;
+  --wx-success: #07c160;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  font-size: 16px;
+}
+
+body.wecom-body,
+body.wecom-entry {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--wx-bg);
+  color: var(--wx-text);
+  line-height: 1.5;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 顶栏 */
+.wecom-nav {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--wx-panel);
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-nav-bar {
+  position: relative;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  justify-content: center;
+  height: 44px;
+  padding: 0 48px;
+}
+
+.wecom-back {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--wx-text);
+  font-size: 18px;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  justify-content: center;
+}
+
+.wecom-back:active {
+  opacity: 0.55;
+}
+
+.wecom-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--wx-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wecom-tabs {
+  display: -webkit-box;
+  display: flex;
+  background: var(--wx-panel);
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-tab {
+  -webkit-box-flex: 1;
+  flex: 1;
+  text-align: center;
+  padding: 11px 4px 10px;
+  font-size: 14px;
+  color: var(--wx-text-sec);
+  text-decoration: none;
+  position: relative;
+  border: none;
+  background: transparent;
+}
+
+.wecom-tab.on {
+  color: var(--wx-primary);
+  font-weight: 600;
+}
+
+.wecom-tab.on::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  -webkit-transform: translateX(-50%);
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--wx-primary);
+}
+
+.wecom-tab:active {
+  opacity: 0.7;
+}
+
+.wecom-main {
+  padding: 0;
+  min-height: calc(100vh - 44px);
+}
+
+.device-screen-body .wecom-main {
+  min-height: auto;
+}
+
+.wecom-hd {
+  padding: 12px 16px 6px;
+  font-size: 13px;
+  color: var(--wx-text-sec);
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: justify;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wecom-hd strong {
+  color: var(--wx-text);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.wecom-tag {
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #f0f0f0;
+  color: var(--wx-text-sec);
+}
+
+.wecom-tag-blue {
+  background: #e8f3ff;
+  color: var(--wx-primary);
+}
+
+.wecom-tips {
+  padding: 0 16px 8px;
+  font-size: 12px;
+  color: var(--wx-text-tips);
+  line-height: 1.45;
+}
+
+.wecom-panel {
+  background: var(--wx-panel);
+  margin-bottom: 8px;
+}
+
+.wecom-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--wx-line);
+  border-top: 1px solid var(--wx-line);
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-kpi-grid.cols-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.wecom-kpi-item {
+  background: var(--wx-panel);
+  border: none;
+  padding: 14px 12px;
+  text-align: left;
+  min-height: 72px;
+}
+
+.wecom-kpi-item:active {
+  background: #f7f7f7;
+}
+
+.wecom-kpi-item.span-2 {
+  grid-column: span 2;
+}
+
+.wecom-kpi-label {
+  font-size: 12px;
+  color: var(--wx-text-sec);
+}
+
+.wecom-kpi-val {
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+.wecom-kpi-sub {
+  font-size: 12px;
+  color: var(--wx-text-tips);
+  margin-top: 4px;
+}
+
+.wecom-kpi-val.warn {
+  color: var(--wx-warn);
+}
+
+.wecom-kpi-val.danger {
+  color: var(--wx-danger);
+}
+
+.wecom-kpi-val.primary {
+  color: var(--wx-primary);
+}
+
+.wecom-form {
+  background: var(--wx-panel);
+  padding: 0 16px;
+  margin-bottom: 8px;
+  border-top: 1px solid var(--wx-line);
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-form-row {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  min-height: 48px;
+  border-bottom: 1px solid var(--wx-line);
+  font-size: 15px;
+}
+
+.wecom-form-row:last-child {
+  border-bottom: none;
+}
+
+.wecom-form-label {
+  width: 72px;
+  flex-shrink: 0;
+  color: var(--wx-text);
+  font-size: 14px;
+}
+
+.wecom-select {
+  -webkit-box-flex: 1;
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--wx-text);
+  padding: 12px 0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='12' viewBox='0 0 8 12'%3E%3Cpath fill='%23b2b2b2' d='M1 1l5 5-5 5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  padding-right: 16px;
+}
+
+.wecom-cells {
+  background: var(--wx-panel);
+  border-top: 1px solid var(--wx-line);
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-cell {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  min-height: 56px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--wx-line);
+  background: var(--wx-panel);
+  width: 100%;
+  text-align: left;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wecom-cell:last-child {
+  border-bottom: none;
+}
+
+.wecom-cell:active {
+  background: #ececec;
+}
+
+.wecom-cell-bd {
+  -webkit-box-flex: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.wecom-cell-title {
+  font-size: 15px;
+  color: var(--wx-text);
+  line-height: 1.35;
+}
+
+.wecom-cell-desc {
+  font-size: 12px;
+  color: var(--wx-text-sec);
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.wecom-cell-ft {
+  flex-shrink: 0;
+  margin-left: 8px;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-align: center;
+  align-items: center;
+  gap: 6px;
+}
+
+.wecom-cell-val {
+  font-size: 14px;
+  color: var(--wx-text-sec);
+}
+
+.wecom-cell-arrow {
+  color: #c7c7cc;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.wecom-cell-title.link {
+  color: var(--wx-primary);
+}
+
+.wecom-seg {
+  display: -webkit-box;
+  display: flex;
+  background: var(--wx-panel);
+  border-bottom: 1px solid var(--wx-line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.wecom-seg::-webkit-scrollbar {
+  display: none;
+}
+
+.wecom-seg-btn {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--wx-text-sec);
+  border: none;
+  background: transparent;
+  position: relative;
+}
+
+.wecom-seg-btn.on {
+  color: var(--wx-primary);
+  font-weight: 600;
+}
+
+.wecom-seg-btn.on::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 2px;
+  background: var(--wx-primary);
+  border-radius: 1px;
+}
+
+.wecom-progress {
+  margin-top: 10px;
+}
+
+.wecom-progress-hd {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-pack: justify;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--wx-text-sec);
+  margin-bottom: 4px;
+}
+
+.wecom-progress-bar {
+  height: 4px;
+  background: #ebebeb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.wecom-progress-inner {
+  height: 100%;
+  background: var(--wx-primary);
+  border-radius: 2px;
+}
+
+.wecom-status {
+  font-size: 12px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.wecom-status-warn {
+  background: #fff7e6;
+  color: #d48806;
+}
+
+.wecom-status-danger {
+  background: #fff1f0;
+  color: var(--wx-danger);
+}
+
+.wecom-status-ok {
+  background: #f6ffed;
+  color: var(--wx-success);
+}
+
+.wecom-status-info {
+  background: #e8f3ff;
+  color: var(--wx-primary);
+}
+
+.btn-cta,
+.wecom-btn-primary {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  background: var(--wx-primary);
+  color: #fff;
+  font-size: 16px;
+  padding: 12px 16px;
+  text-align: center;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-cta:active,
+.wecom-btn-primary:active {
+  background: var(--wx-primary-press);
+}
+
+.wecom-btn-area {
+  padding: 16px;
+}
+
+.wecom-btn-secondary {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  background: #64748b;
+  color: #fff;
+  font-size: 14px;
+  padding: 10px 16px;
+  text-align: center;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+[data-modal] {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  -webkit-box-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  justify-content: center;
+  padding: 24px 28px;
+}
+
+[data-modal].wecom-open {
+  display: -webkit-box !important;
+  display: flex !important;
+}
+
+.wecom-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.wecom-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  max-height: 80vh;
+  background: var(--wx-panel);
+  border-radius: 8px;
+  overflow: hidden;
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  flex-direction: column;
+}
+
+.wecom-dialog-hd {
+  padding: 20px 20px 8px;
+  text-align: center;
+}
+
+.wecom-dialog-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.wecom-dialog-sub {
+  font-size: 13px;
+  color: var(--wx-text-sec);
+  margin-top: 6px;
+}
+
+.wecom-dialog-bd {
+  -webkit-box-flex: 1;
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.wecom-dialog-row {
+  display: -webkit-box;
+  display: flex;
+  -webkit-box-pack: justify;
+  justify-content: space-between;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-dialog-row:last-child {
+  border-bottom: none;
+}
+
+.wecom-dialog-row .lbl {
+  color: var(--wx-text-sec);
+}
+
+.wecom-dialog-row .val {
+  font-weight: 500;
+  text-align: right;
+  max-width: 58%;
+}
+
+.wecom-dialog-ft {
+  display: -webkit-box;
+  display: flex;
+  border-top: 1px solid var(--wx-line);
+}
+
+.wecom-dialog-btn {
+  -webkit-box-flex: 1;
+  flex: 1;
+  border: none;
+  background: var(--wx-panel);
+  padding: 14px;
+  font-size: 16px;
+  color: var(--wx-text);
+  cursor: pointer;
+}
+
+.wecom-dialog-btn.primary {
+  color: var(--wx-primary);
+  font-weight: 600;
+}
+
+.wecom-dialog-btn:active {
+  background: #f7f7f7;
+}
+
+.wecom-dialog-btn + .wecom-dialog-btn {
+  border-left: 1px solid var(--wx-line);
+}
+
+.wecom-toast {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 14px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  -webkit-transition: opacity 0.2s;
+  transition: opacity 0.2s;
+  max-width: calc(100vw - 48px);
+  text-align: center;
+  line-height: 1.45;
+}
+
+.wecom-toast.show {
+  opacity: 1;
+}
+
+.wecom-entry {
+  padding: 0;
+  min-height: 100vh;
+}
+
+.wecom-entry-banner {
+  background: var(--wx-panel);
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-entry-banner h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--wx-text);
+}
+
+.wecom-entry-banner p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--wx-text-sec);
+  line-height: 1.5;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.wecom-state {
+  padding: 40px 24px;
+  text-align: center;
+  background: var(--wx-panel);
+  border-top: 1px solid var(--wx-line);
+  border-bottom: 1px solid var(--wx-line);
+}
+
+.wecom-state-icon {
+  font-size: 32px;
+  color: var(--wx-text-tips);
+  margin-bottom: 12px;
+}
+
+.wecom-state-title {
+  font-size: 15px;
+  color: var(--wx-text);
+  font-weight: 500;
+}
+
+.wecom-state-desc {
+  font-size: 13px;
+  color: var(--wx-text-sec);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.wecom-state-btn {
+  margin-top: 16px;
+  display: inline-block;
+  padding: 8px 20px;
+  border: 1px solid var(--wx-primary);
+  color: var(--wx-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.wecom-spinner {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto 12px;
+  border: 2px solid #ebebeb;
+  border-top-color: var(--wx-primary);
+  border-radius: 50%;
+  -webkit-animation: wecom-spin 0.8s linear infinite;
+  animation: wecom-spin 0.8s linear infinite;
+}
+
+@-webkit-keyframes wecom-spin {
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wecom-spin {
+  to {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.wecom-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--wx-primary);
+  color: #fff;
+  font-size: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 30;
+  cursor: pointer;
+}
+
+.wecom-fab:active {
+  background: var(--wx-primary-press);
+}
+
+.wecom-field-label {
+  font-size: 13px;
+  color: var(--wx-text-sec);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.wecom-input {
+  width: 100%;
+  border: 1px solid var(--wx-line);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+}
+
+.wecom-input:focus {
+  border-color: var(--wx-primary);
+}
+
+.wecom-footer-link {
+  text-align: center;
+  padding: 24px 16px;
+  font-size: 12px;
+  color: var(--wx-text-tips);
+}
+
+.wecom-footer-link a {
+  color: var(--wx-primary);
+  text-decoration: none;
+}
+
+/* 原型预览 · iPhone 16 外框（对齐 prototype_mobile.mdc · 桌面预览专用） */
+body.wecom-preview-host {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #e2e8f0 0%, #f8fafc 45%, #eef2ff 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.wecom-preview-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+
+.wecom-preview-hint {
+  margin: 20px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* iPhone 16 机身 */
+.device-shell {
+  width: 390px;
+  height: 844px;
+  padding: 11px;
+  border-radius: 52px;
+  background: linear-gradient(155deg, #4a4a4c 0%, #2c2c2e 38%, #1c1c1e 100%);
+  border: 1px solid #636366;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 32px 64px rgba(15, 23, 42, 0.22),
+    0 12px 24px rgba(15, 23, 42, 0.1);
+  position: relative;
+  flex-shrink: 0;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.device-shell::before {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 172px;
+  width: 3px;
+  height: 72px;
+  background: linear-gradient(180deg, #5a5a5c, #3a3a3c);
+  border-radius: 0 2px 2px 0;
+}
+
+.device-shell::after {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 132px;
+  width: 3px;
+  height: 36px;
+  background: linear-gradient(180deg, #5a5a5c, #3a3a3c);
+  border-radius: 2px 0 0 2px;
+  box-shadow: 0 52px 0 0 #3a3a3c;
+}
+
+.device-shell-bezel {
+  width: 100%;
+  height: 100%;
+  border-radius: 42px;
+  overflow: hidden;
+  background: #000;
+  border: 2px solid #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* iOS 状态栏 */
+.device-status-bar {
+  height: 54px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 26px 10px;
+  background: var(--wx-panel);
+  position: relative;
+  z-index: 50;
+}
+
+.device-time {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: #000;
+  line-height: 1;
+  min-width: 56px;
+}
+
+.device-island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  transform: translateX(-50%);
+  width: 120px;
+  height: 32px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 60;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.device-status-icons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #000;
+  min-width: 64px;
+  justify-content: flex-end;
+}
+
+.device-status-icons .fa-battery-full {
+  font-size: 14px;
+}
+
+/* 屏幕内容区 */
+.device-screen-body {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--wx-bg);
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+.device-screen-body.wecom-entry,
+.device-screen-body.wecom-body {
+  padding-bottom: 0;
+}
+
+/* Home 指示条 */
+.device-home-bar {
+  height: 30px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--wx-panel);
+}
+
+.device-home-bar span {
+  width: 134px;
+  height: 5px;
+  background: #1c1c1e;
+  border-radius: 3px;
+  opacity: 0.22;
+}
+
+/* 壳内 fixed/弹窗约束 */
+.device-shell .wecom-fab,
+.device-shell [data-modal],
+.device-shell .wecom-toast {
+  position: absolute;
+}
+
+.device-shell .wecom-nav {
+  position: sticky;
+  top: 0;
+  padding-top: 0;
+}
+
+/* 迷你机（入口页三窗格） */
+.device-shell.is-mini {
+  width: 286px;
+  height: 620px;
+  padding: 8px;
+  border-radius: 38px;
+}
+
+.device-shell.is-mini::before {
+  top: 126px;
+  height: 52px;
+}
+
+.device-shell.is-mini::after {
+  top: 96px;
+  height: 28px;
+  box-shadow: 0 38px 0 0 #3a3a3c;
+}
+
+.device-shell.is-mini .device-shell-bezel {
+  border-radius: 31px;
+}
+
+.device-shell.is-mini .device-status-bar {
+  height: 44px;
+  padding: 0 18px 8px;
+}
+
+.device-shell.is-mini .device-island {
+  width: 90px;
+  height: 24px;
+  top: 9px;
+}
+
+.device-shell.is-mini .device-time {
+  font-size: 12px;
+  min-width: 44px;
+}
+
+.device-shell.is-mini .device-home-bar {
+  height: 24px;
+}
+
+.device-shell.is-mini .device-home-bar span {
+  width: 96px;
+  height: 4px;
+}
+
+.device-shell.is-mini .wecom-nav-bar {
+  height: 40px;
+  padding: 0 40px;
+}
+
+.device-shell.is-mini .wecom-title {
+  font-size: 14px;
+}
+
+.device-shell.is-mini .wecom-kpi-val {
+  font-size: 17px;
+}
+
+/* 入口页 · 三窗格 */
+body.wecom-index-host {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(160deg, #e2e8f0 0%, #f8fafc 45%, #eef2ff 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--wx-text);
+}
+
+.wecom-index-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px 56px;
+}
+
+.wecom-index-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.wecom-index-header h1 {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+}
+
+.wecom-index-header p {
+  margin: 10px auto 0;
+  max-width: 480px;
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.wecom-index-grid {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.wecom-phone-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.wecom-phone-link:hover {
+  transform: translateY(-6px);
+  filter: drop-shadow(0 16px 24px rgba(15, 23, 42, 0.12));
+}
+
+.wecom-phone-caption {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.wecom-phone-caption span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.wecom-index-extra {
+  margin-top: 48px;
+  text-align: center;
+}
+
+.wecom-index-extra-title {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.wecom-index-extra-links {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wecom-index-extra-links a {
+  font-size: 13px;
+  color: var(--wx-primary);
+  text-decoration: none;
+  padding: 10px 18px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.wecom-index-extra-links a:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.wecom-index-back {
+  display: block;
+  margin-top: 28px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.wecom-index-back a {
+  color: var(--wx-primary);
+  text-decoration: none;
+}
+
+.wecom-mini-preview {
+  pointer-events: none;
+  user-select: none;
+}

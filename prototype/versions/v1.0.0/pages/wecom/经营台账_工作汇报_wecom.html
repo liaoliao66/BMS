@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>工作周报 · 企微</title>
+  <link rel="stylesheet" href="../../assets/wecom-common.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body data-page="reports" data-title="工作周报">
+  <div id="app-root"></div>
+  <main id="page-main" class="wecom-main">
+
+    <div class="wecom-form">
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">周期</span>
+        <select id="periodSelect" class="wecom-select" onchange="renderPeriod()">
+          <option value="W34">2026-W34（08-18 ~ 08-24）</option>
+          <option value="W33">2026-W33（08-11 ~ 08-17）</option>
+        </select>
+      </div>
+    </div>
+    <p class="wecom-tips" id="periodDesc">周报快照 · 周日 23:59 截止 · 次日 08:00 生成</p>
+
+    <div class="wecom-panel">
+      <div class="wecom-kpi-grid">
+        <button type="button" class="wecom-kpi-item" onclick="openSummary('goals')">
+          <div class="wecom-kpi-label">目标（本周）</div>
+          <div class="wecom-kpi-val" id="sumGoals">5</div>
+          <div class="wecom-kpi-sub" style="color:var(--wx-warn)">需关注 2</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openSummary('plans')">
+          <div class="wecom-kpi-label">计划进展</div>
+          <div class="wecom-kpi-val" id="sumPlans">6</div>
+          <div class="wecom-kpi-sub">节点到期 4</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openSummary('tasks')">
+          <div class="wecom-kpi-label">本周任务</div>
+          <div class="wecom-kpi-val" id="sumTasks">18</div>
+          <div class="wecom-kpi-sub" style="color:var(--wx-danger)">滞后 3</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openSummary('next')">
+          <div class="wecom-kpi-label">下周计划</div>
+          <div class="wecom-kpi-val" id="sumNext">12</div>
+          <div class="wecom-kpi-sub">协同 2 项</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="wecom-seg">
+      <button type="button" data-sec="goals" class="wecom-seg-btn on" onclick="switchSec('goals')">目标完成</button>
+      <button type="button" data-sec="plans" class="wecom-seg-btn" onclick="switchSec('plans')">计划进展</button>
+      <button type="button" data-sec="tasks" class="wecom-seg-btn" onclick="switchSec('tasks')">本周任务</button>
+      <button type="button" data-sec="next" class="wecom-seg-btn" onclick="switchSec('next')">下周计划</button>
+    </div>
+
+    <div id="sec-goals" class="wecom-cells"></div>
+    <div id="sec-plans" class="wecom-cells hidden"></div>
+    <div id="sec-tasks" class="wecom-cells hidden"></div>
+    <div id="sec-next" class="wecom-cells hidden"></div>
+  </main>
+
+  <div id="modal-summary" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-summary')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title" id="sTitle">明细</div></div>
+      <div class="wecom-dialog-bd" id="sBody"></div>
+      <div class="wecom-dialog-ft"><button type="button" class="wecom-dialog-btn primary" onclick="BMS.closeModal('modal-summary')">知道了</button></div>
+    </div>
+  </div>
+
+  <div id="modal-item" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-item')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title" id="iTitle">—</div></div>
+      <div class="wecom-dialog-bd" id="iBody"></div>
+      <div class="wecom-dialog-ft"><button type="button" class="wecom-dialog-btn primary" onclick="BMS.closeModal('modal-item')">知道了</button></div>
+    </div>
+  </div>
+
+  <script src="../../assets/wecom-common.js"></script>
+  <script>
+    const WEEK = {
+      W34: {
+        goals: [{ name: '桥吊作业效率提升 15%', dept: '装卸队', rate: '+12% / +15%', health: '需关注', st: 'warn', cmp: '正常→需关注' }, { name: '堆场周转优化', dept: '调度中心', rate: '82 / 100', health: '需关注', st: 'warn', cmp: '持平' }],
+        plans: [{ name: '8 月装卸效率提升计划', goal: '桥吊效率', nodes: '2/4', cmp: '+1 节点按期', lag: '滞后 1' }, { name: '堆场周转优化计划', goal: '堆场周转', nodes: '3/4', cmp: '持平', lag: '正常' }],
+        tasks: [{ name: '桥吊夜班流程复盘', plan: '8月装卸效率', owner: '刘强', fill: '未填', status: '本月未更新', st: 'warn' }, { name: '钢丝绳点检整改', plan: '8月装卸效率', owner: '周杰', fill: '已填', status: '进行中', st: 'info' }],
+        next: [{ name: '效率中期复核准备', plan: '8月装卸效率', owner: '刘强', time: '08-25 ~ 08-28', desc: '整理复核材料' }, { name: '周转日报核对', plan: '堆场周转', owner: '陈敏', time: '08-26 ~ 08-30', desc: '每日核对周转指标' }]
+      },
+      W33: {
+        goals: [{ name: '桥吊作业效率提升 15%', dept: '装卸队', rate: '+11% / +15%', health: '正常', st: 'ok', cmp: '改善' }],
+        plans: [{ name: '8 月装卸效率提升计划', goal: '桥吊效率', nodes: '1/4', cmp: '—', lag: '正常' }],
+        tasks: [{ name: '桥吊夜班流程复盘', plan: '8月装卸效率', owner: '刘强', fill: '已填', status: '进行中', st: 'info' }],
+        next: [{ name: '点检整改闭环', plan: '8月装卸效率', owner: '周杰', time: '08-18 ~ 08-22', desc: '闭环剩余 3 项' }]
+      }
+    };
+
+    function renderLists() {
+      const w = WEEK[document.getElementById('periodSelect').value];
+      document.getElementById('sec-goals').innerHTML = w.goals.map((g, i) =>
+        WECOM.cell({ title: g.name, desc: g.dept + ' · ' + g.rate + ' · 较上期 ' + g.cmp, ft: WECOM.statusBadge(g.health, g.st), onclick: 'openItem("goal",' + i + ')' })
+      ).join('');
+      document.getElementById('sec-plans').innerHTML = w.plans.map((p, i) =>
+        WECOM.cell({ title: p.name, link: true, desc: p.goal + ' · 节点 ' + p.nodes + ' · ' + p.lag, onclick: 'openItem("plan",' + i + ')' })
+      ).join('');
+      document.getElementById('sec-tasks').innerHTML = w.tasks.map((t, i) =>
+        WECOM.cell({ title: t.name, desc: t.plan + ' · ' + t.owner + ' · 本周' + t.fill, ft: WECOM.statusBadge(t.status, t.st), onclick: 'openItem("task",' + i + ')' })
+      ).join('');
+      document.getElementById('sec-next').innerHTML = w.next.map((n, i) =>
+        WECOM.cell({ title: n.name, link: true, desc: n.plan + ' · ' + n.time, onclick: 'openItem("next",' + i + ')' })
+      ).join('');
+      document.getElementById('sumGoals').textContent = w.goals.length;
+      document.getElementById('sumPlans').textContent = w.plans.length;
+      document.getElementById('sumTasks').textContent = w.tasks.length;
+      document.getElementById('sumNext').textContent = w.next.length;
+    }
+
+    function renderPeriod() {
+      const v = document.getElementById('periodSelect').value;
+      document.getElementById('periodDesc').textContent = '周报快照 · 2026-' + v + ' · 周日 23:59 截止 · 次日 08:00 生成';
+      renderLists();
+    }
+
+    function switchSec(sec) {
+      document.querySelectorAll('.wecom-seg-btn').forEach(b => b.classList.remove('on'));
+      document.querySelector('[data-sec="' + sec + '"]').classList.add('on');
+      ['goals', 'plans', 'tasks', 'next'].forEach(s => {
+        document.getElementById('sec-' + s).classList.toggle('hidden', s !== sec);
+      });
+    }
+
+    function openSummary(key) {
+      const titles = { goals: '目标摘要', plans: '计划摘要', tasks: '任务摘要', next: '下周计划摘要' };
+      document.getElementById('sTitle').textContent = titles[key] || '明细';
+      document.getElementById('sBody').innerHTML = '<div class="wecom-dialog-row"><span class="lbl">说明</span><span class="val">点击列表项查看详情</span></div>';
+      BMS.openModal('modal-summary');
+    }
+
+    function openItem(type, i) {
+      const w = WEEK[document.getElementById('periodSelect').value];
+      let item, rows;
+      if (type === 'goal') { item = w.goals[i]; rows = [['部门', item.dept], ['量化', item.rate], ['健康', item.health], ['较上期', item.cmp]]; }
+      else if (type === 'plan') { item = w.plans[i]; rows = [['关联目标', item.goal], ['节点', item.nodes], ['较上期', item.cmp], ['滞后', item.lag]]; }
+      else if (type === 'task') { item = w.tasks[i]; rows = [['计划', item.plan], ['责任人', item.owner], ['本周填报', item.fill], ['状态', item.status]]; }
+      else { item = w.next[i]; rows = [['计划', item.plan], ['责任人', item.owner], ['时间', item.time], ['概述', item.desc]]; }
+      document.getElementById('iTitle').textContent = item.name;
+      document.getElementById('iBody').innerHTML = rows.map(r =>
+        `<div class="wecom-dialog-row"><span class="lbl">${r[0]}</span><span class="val">${r[1]}</span></div>`
+      ).join('');
+      BMS.openModal('modal-item');
+    }
+
+    renderPeriod();
+  </script>
+</body>
+</html>

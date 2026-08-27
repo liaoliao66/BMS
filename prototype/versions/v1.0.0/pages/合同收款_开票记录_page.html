@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>开票记录 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="invoices" data-title="开票记录">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">记录已开具发票及金额；开票<strong>必须关联合同</strong>。作废仅标记状态为「已作废」，<strong>不计入</strong>累计开票；超额开票时提示确认。开票与收款<strong>无强关联</strong>，可先收款后开票。</p>
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>2026 年</option><option>2025 年</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部合同</option><option>HT-2026-0012</option><option>HT-2026-0008</option><option>HT-2026-0015</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部类型</option><option>增值税专用发票</option><option>增值税普通发票</option></select>
+        <select id="filterStatus" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderInvoiceTable()"><option value="">全部状态</option><option value="active">已开票</option><option value="void">已作废</option></select>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <a href="合同收款_合同管理_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">合同管理</a>
+        <a href="合同收款_收款记录_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">收款记录</a>
+        <button type="button" onclick="openInvoiceForm()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>登记开票</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">累计开票（万元）</div>
+        <div class="text-2xl font-semibold mt-1 text-violet-700">2,580</div>
+        <div class="text-xs text-slate-400 mt-1">不含已作废 · 占合同总额 70%</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">本月开票（万元）</div>
+        <div class="text-2xl font-semibold mt-1">320</div>
+        <div class="text-xs text-slate-400 mt-1">2026 年 8 月</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">待开票（万元）</div>
+        <div class="text-2xl font-semibold mt-1 text-amber-600">1,100</div>
+        <div class="text-xs text-slate-400 mt-1">= 合同总额 − 累计开票（不含已作废）</div>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+        <div class="text-sm text-slate-500">开票笔数</div>
+        <div class="text-2xl font-semibold mt-1">36</div>
+        <div class="text-xs text-slate-400 mt-1">含专票 28 · 普票 8</div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">开票日期</th>
+            <th class="px-4 py-3 text-left">发票号码</th>
+            <th class="px-4 py-3 text-left">关联合同</th>
+            <th class="px-4 py-3 text-left">客户</th>
+            <th class="px-4 py-3 text-left">开票金额</th>
+            <th class="px-4 py-3 text-left">发票类型</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceTableBody"></tbody>
+      </table>
+      <div id="invoiceTableFoot" class="px-5 py-3 border-t text-sm text-slate-500">共 36 笔开票记录</div>
+    </div>
+
+    <div id="modal-invoice" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-invoice')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between">
+          <h3 class="text-lg font-semibold">登记开票</h3>
+          <button type="button" onclick="BMS.closeModal('modal-invoice')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">关联合同 <span class="text-red-500">*</span></label>
+            <select id="iContract" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="onInvoiceContractChange()">
+              <option value="">请选择合同</option>
+              <option value="HT-2026-0012" data-total="1200" data-invoiced="900" selected>HT-2026-0012 · 装卸服务 · 待开票 300 万</option>
+              <option value="HT-2026-0015" data-total="420" data-invoiced="280">HT-2026-0015 · 设备维保 · 待开票 140 万</option>
+            </select>
+          </div>
+          <div id="invoiceContractHint" class="bg-slate-50 rounded-xl p-3 text-sm text-slate-600">合同金额 1,200 万 · 已开票 900 万 · 待开票 300 万</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">发票号码 <span class="text-red-500">*</span></label><input id="iNo" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="如 FP-2026-0099" value="FP-2026-0099" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">开票日期 <span class="text-red-500">*</span></label><input id="iDate" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-25" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">开票金额（万元） <span class="text-red-500">*</span></label><input id="iAmount" type="number" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="150" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">发票类型 <span class="text-red-500">*</span></label><select id="iType" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>增值税专用发票</option><option>增值税普通发票</option></select></div>
+          </div>
+          <div><label class="block text-sm text-slate-600 mb-1">备注</label><textarea id="iNote" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-20" placeholder="可选">Q3 装卸服务费</textarea></div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveInvoice()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存开票</button>
+          <button type="button" onclick="BMS.closeModal('modal-invoice')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-void-invoice" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-void-invoice')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+        <h3 class="text-lg font-semibold mb-2">作废发票</h3>
+        <p class="text-sm text-slate-600 leading-relaxed mb-1">确认将发票 <strong id="voidInvoiceNo">—</strong> 标记为「已作废」？</p>
+        <p class="text-xs text-slate-500 mb-4">仅更新状态，不涉及红冲流程；作废后不计入累计开票与待开票。</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="confirmVoidInvoice()" class="bg-slate-700 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm">确认作废</button>
+          <button type="button" onclick="BMS.closeModal('modal-void-invoice')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-over-invoice" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-over-invoice')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+        <h3 class="text-lg font-semibold mb-2">超额开票提示</h3>
+        <p class="text-sm text-slate-600 leading-relaxed mb-4" id="overInvoiceText">累计开票将超过合同金额，是否仍要保存？</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="confirmOverInvoice()" class="btn-cta text-white px-5 py-2.5 rounded-xl text-sm">仍要保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-over-invoice')" class="text-sm text-slate-500 px-3">返回修改</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    const INVOICES = [
+      { id: '1', date: '2026-08-01', no: 'FP-2026-0088', contract: 'HT-2026-0012', customer: '远洋航运有限公司', amount: 120, type: '增值税专用发票', status: 'active' },
+      { id: '2', date: '2026-07-18', no: 'FP-2026-0075', contract: 'HT-2026-0015', customer: '港机装备股份', amount: 100, type: '增值税专用发票', status: 'active' },
+      { id: '3', date: '2026-06-15', no: 'FP-2026-0071', contract: 'HT-2026-0012', customer: '远洋航运有限公司', amount: 300, type: '增值税专用发票', status: 'active' },
+      { id: '4', date: '2026-05-20', no: 'FP-2026-0058', contract: 'HT-2026-0008', customer: '港联物流集团', amount: 860, type: '增值税普通发票', status: 'active' },
+      { id: '5', date: '2026-04-10', no: 'FP-2026-0042', contract: 'HT-2026-0015', customer: '港机装备股份', amount: 50, type: '增值税专用发票', status: 'void' }
+    ];
+    let voidTargetId = null;
+
+    function statusBadge(status) {
+      if (status === 'void') return '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">已作废</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">已开票</span>';
+    }
+
+    function renderInvoiceTable() {
+      const filter = document.getElementById('filterStatus').value;
+      const rows = INVOICES.filter(i => !filter || i.status === filter);
+      const tbody = document.getElementById('invoiceTableBody');
+      tbody.innerHTML = rows.map(i => {
+        const amountCls = i.status === 'void' ? 'font-medium text-slate-400 line-through' : 'font-medium';
+        let ops = '';
+        if (i.status === 'active') {
+          ops = '<button type="button" onclick="openInvoiceForm()" class="hover:text-teal-700">编辑</button> '
+            + '<button type="button" onclick="openVoidModal(\'' + i.id + '\')" class="text-slate-500 hover:text-slate-700">作废</button> '
+            + '<a href="合同收款_收款记录_page.html?open=modal-receipt&contract=' + i.contract + '" class="text-teal-700">登记收款</a>';
+        } else {
+          ops = '<span class="text-slate-400">—</span>';
+        }
+        return '<tr class="border-t row-hover' + (i.status === 'void' ? ' opacity-75' : '') + '">'
+          + '<td class="px-5 py-3">' + i.date + '</td>'
+          + '<td class="px-4 py-3 font-medium">' + i.no + '</td>'
+          + '<td class="px-4 py-3"><a href="合同收款_合同管理_page.html" class="text-teal-700">' + i.contract + '</a></td>'
+          + '<td class="px-4 py-3">' + i.customer + '</td>'
+          + '<td class="px-4 py-3 ' + amountCls + '">' + i.amount + ' 万</td>'
+          + '<td class="px-4 py-3">' + i.type + '</td>'
+          + '<td class="px-4 py-3">' + statusBadge(i.status) + '</td>'
+          + '<td class="px-5 py-3 space-x-2">' + ops + '</td></tr>';
+      }).join('');
+      const activeCount = INVOICES.filter(i => i.status === 'active').length;
+      const voidCount = INVOICES.filter(i => i.status === 'void').length;
+      document.getElementById('invoiceTableFoot').textContent = '共 ' + INVOICES.length + ' 笔（有效 ' + activeCount + ' · 已作废 ' + voidCount + '）';
+    }
+
+    function openVoidModal(id) {
+      const inv = INVOICES.find(i => i.id === id);
+      if (!inv || inv.status === 'void') return;
+      voidTargetId = id;
+      document.getElementById('voidInvoiceNo').textContent = inv.no;
+      BMS.openModal('modal-void-invoice');
+    }
+
+    function confirmVoidInvoice() {
+      const inv = INVOICES.find(i => i.id === voidTargetId);
+      if (!inv) return;
+      inv.status = 'void';
+      voidTargetId = null;
+      BMS.closeModal('modal-void-invoice');
+      renderInvoiceTable();
+      BMS.toast('发票已标记为已作废');
+    }
+
+    function onInvoiceContractChange() {
+      const sel = document.getElementById('iContract');
+      const opt = sel.options[sel.selectedIndex];
+      const hint = document.getElementById('invoiceContractHint');
+      if (!opt.value) { hint.textContent = '请先选择关联合同'; return; }
+      const total = Number(opt.getAttribute('data-total'));
+      const invoiced = Number(opt.getAttribute('data-invoiced'));
+      hint.textContent = '合同金额 ' + total.toLocaleString() + ' 万 · 已开票 ' + invoiced.toLocaleString() + ' 万 · 待开票 ' + (total - invoiced).toLocaleString() + ' 万';
+    }
+
+    function openInvoiceForm() {
+      onInvoiceContractChange();
+      BMS.openModal('modal-invoice');
+    }
+
+    function saveInvoice() {
+      const contract = document.getElementById('iContract').value;
+      const no = document.getElementById('iNo').value.trim();
+      const amount = Number(document.getElementById('iAmount').value);
+      const date = document.getElementById('iDate').value;
+      if (!contract) { BMS.toast('请选择关联合同', 'error'); return; }
+      if (!no) { BMS.toast('请填写发票号码', 'error'); return; }
+      if (!amount || amount <= 0) { BMS.toast('请填写有效开票金额', 'error'); return; }
+      if (!date) { BMS.toast('请填写开票日期', 'error'); return; }
+      const opt = document.getElementById('iContract').options[document.getElementById('iContract').selectedIndex];
+      const total = Number(opt.getAttribute('data-total'));
+      const invoiced = Number(opt.getAttribute('data-invoiced'));
+      if (invoiced + amount > total) {
+        document.getElementById('overInvoiceText').textContent = '本次开票 ' + amount + ' 万后，累计开票将达 ' + (invoiced + amount) + ' 万，超过合同金额 ' + total + ' 万。是否仍要保存？';
+        BMS.openModal('modal-over-invoice');
+        return;
+      }
+      finishInvoiceSave();
+    }
+
+    function confirmOverInvoice() {
+      BMS.closeModal('modal-over-invoice');
+      finishInvoiceSave();
+    }
+
+    function finishInvoiceSave() {
+      BMS.toast('开票记录已保存');
+      BMS.closeModal('modal-invoice');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderInvoiceTable();
+      const params = new URLSearchParams(location.search);
+      if (params.get('open') === 'modal-invoice') {
+        const c = params.get('contract');
+        if (c) {
+          const sel = document.getElementById('iContract');
+          const hit = Array.from(sel.options).find(o => o.value === c);
+          if (hit) sel.value = c;
+        }
+        setTimeout(openInvoiceForm, 60);
+      }
+    });
+  </script>
+</body>
+</html>

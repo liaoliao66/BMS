@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>我的任务 · 企微</title>
+  <link rel="stylesheet" href="../../assets/wecom-common.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body data-module="tasks" data-page="my-tasks" data-title="我的任务">
+  <div id="app-root"></div>
+  <main id="page-main" class="wecom-main">
+
+    <div class="wecom-panel">
+      <div class="wecom-kpi-grid cols-3">
+        <div class="wecom-kpi-item">
+          <div class="wecom-kpi-label">进行中</div>
+          <div class="wecom-kpi-val primary" id="kDoing">0</div>
+        </div>
+        <div class="wecom-kpi-item">
+          <div class="wecom-kpi-label">待填报</div>
+          <div class="wecom-kpi-val warn" id="kPending">0</div>
+        </div>
+        <div class="wecom-kpi-item">
+          <div class="wecom-kpi-label">已延期</div>
+          <div class="wecom-kpi-val danger" id="kDelay">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wecom-form">
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">周期</span>
+        <select id="periodSelect" class="wecom-select" onchange="renderTasks()">
+          <option value="2026-W34">2026-W34（本周）08-24 ~ 08-30</option>
+          <option value="2026-W33">2026-W33（上周）08-17 ~ 08-23</option>
+        </select>
+      </div>
+    </div>
+    <p class="wecom-tips">周初创建任务，周末填写完成情况；本期未操作自动标为「已延期」</p>
+
+    <div class="wecom-seg" id="filters">
+      <button type="button" data-f="all" class="wecom-seg-btn on" onclick="filterTasks('all')">全部</button>
+      <button type="button" data-f="doing" class="wecom-seg-btn" onclick="filterTasks('doing')">进行中</button>
+      <button type="button" data-f="done" class="wecom-seg-btn" onclick="filterTasks('done')">已完成</button>
+      <button type="button" data-f="delay" class="wecom-seg-btn" onclick="filterTasks('delay')">已延期</button>
+    </div>
+
+    <div class="wecom-cells" id="taskList"></div>
+    <p class="wecom-tips" id="footerHint" style="padding-bottom:72px">共 0 条</p>
+  </main>
+
+  <button type="button" class="wecom-fab" onclick="openCreate()" aria-label="新建任务"><i class="fa-solid fa-plus"></i></button>
+
+  <!-- 详情 -->
+  <div id="modal-view" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-view')"></div>
+    <div class="wecom-dialog" style="max-width:340px">
+      <div class="wecom-dialog-hd">
+        <div class="wecom-dialog-title" id="vTitle">—</div>
+        <div class="wecom-dialog-sub" id="vMeta">—</div>
+      </div>
+      <div class="wecom-dialog-bd" id="vBody"></div>
+      <div class="wecom-dialog-ft" id="vActions"></div>
+    </div>
+  </div>
+
+  <!-- 新建 -->
+  <div id="modal-create" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-create')"></div>
+    <div class="wecom-dialog" style="max-width:340px">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title">新建任务</div></div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <label class="wecom-field-label">任务名称 *</label>
+        <input id="cName" class="wecom-input" placeholder="请输入任务名称" />
+        <label class="wecom-field-label" style="margin-top:12px">关联计划 *</label>
+        <select id="cPlan" class="wecom-input">
+          <option>8 月装卸效率提升计划</option>
+          <option>夜班协同保障计划</option>
+          <option>Q3 桥吊点检专项计划</option>
+        </select>
+        <label class="wecom-field-label" style="margin-top:12px">起止时间 *</label>
+        <div style="display:flex;gap:8px">
+          <input id="cStart" type="date" class="wecom-input" value="2026-08-24" />
+          <input id="cEnd" type="date" class="wecom-input" value="2026-08-30" />
+        </div>
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-create')">取消</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="saveCreate()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 完成情况 -->
+  <div id="modal-complete" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-complete')"></div>
+    <div class="wecom-dialog" style="max-width:340px">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title">填写完成情况</div></div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <p style="font-size:14px;margin:0 0 12px" id="cpName">—</p>
+        <label class="wecom-field-label">情况概述（选填）</label>
+        <textarea id="cpSummary" class="wecom-input" style="min-height:80px;resize:vertical" placeholder="简述本周完成情况"></textarea>
+        <label class="wecom-field-label" style="margin-top:12px">完成时间 *</label>
+        <input id="cpDoneAt" type="datetime-local" class="wecom-input" value="2026-08-29T17:30" />
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-complete')">取消</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="saveComplete()">标为已完成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 转派 -->
+  <div id="modal-transfer" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-transfer')"></div>
+    <div class="wecom-dialog" style="max-width:340px">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title">任务转派</div></div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <label class="wecom-field-label">新责任人 *</label>
+        <select id="tfOwner" class="wecom-input"><option>孙伟</option><option>马超</option><option>王芳</option></select>
+        <label class="wecom-field-label" style="margin-top:12px">转派原因 *（至少 10 字）</label>
+        <textarea id="tfReason" class="wecom-input" style="min-height:72px;resize:vertical" placeholder="说明转派背景"></textarea>
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-transfer')">取消</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="saveTransfer()">确认转派</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/wecom-common.js"></script>
+  <script>
+    const SELF = '刘强';
+    const CURRENT = '2026-W34';
+    let currentFilter = 'all';
+    let viewIdx = -1;
+    let completeIdx = -1;
+    let transferIdx = -1;
+
+    let ROWS = [
+      { id: 1, period: '2026-W34', name: '桥吊夜班流程复盘', plan: '8 月装卸效率提升计划', owner: '刘强', start: '08-24', end: '08-28', status: '进行中', filled: false, src: '自建' },
+      { id: 2, period: '2026-W34', name: '班前会标准化宣贯', plan: '8 月装卸效率提升计划', owner: '刘强', start: '08-25', end: '08-30', status: '进行中', filled: false, src: '自建' },
+      { id: 3, period: '2026-W34', name: 'Q3 安全隐患现场复核', plan: 'Q3 桥吊点检专项计划', owner: '刘强', start: '08-24', end: '08-27', status: '进行中', filled: true, src: '督办下达' },
+      { id: 4, period: '2026-W33', name: '堆场周转异常复盘', plan: '堆场周转优化计划', owner: '刘强', start: '08-17', end: '08-22', status: '已完成', filled: true, src: '自建' },
+      { id: 5, period: '2026-W33', name: '夜班交接问题闭环', plan: '夜班协同保障计划', owner: '刘强', start: '08-18', end: '08-23', status: '已延期', filled: false, src: '自建' }
+    ];
+
+    function displayStatus(r) {
+      if (r.status === '已完成') return '已完成';
+      if (r.period !== CURRENT && r.status !== '已完成') return '已延期';
+      return r.status;
+    }
+
+    function stType(s) {
+      if (s === '已完成') return 'ok';
+      if (s === '已延期') return 'danger';
+      return 'info';
+    }
+
+    function mineInPeriod() {
+      const p = document.getElementById('periodSelect').value;
+      return ROWS.filter(r => r.period === p && r.owner === SELF);
+    }
+
+    function filteredRows() {
+      return mineInPeriod().filter(r => {
+        const s = displayStatus(r);
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'doing') return s === '进行中';
+        if (currentFilter === 'done') return s === '已完成';
+        if (currentFilter === 'delay') return s === '已延期';
+        return true;
+      });
+    }
+
+    function updateKpi() {
+      const rows = mineInPeriod();
+      document.getElementById('kDoing').textContent = rows.filter(r => displayStatus(r) === '进行中').length;
+      document.getElementById('kPending').textContent = rows.filter(r => !r.filled && displayStatus(r) === '进行中').length;
+      document.getElementById('kDelay').textContent = rows.filter(r => displayStatus(r) === '已延期').length;
+    }
+
+    function renderTasks() {
+      const rows = filteredRows();
+      const el = document.getElementById('taskList');
+      if (!rows.length) {
+        el.innerHTML = WECOM.emptyState({ title: '暂无任务', desc: '当前周期与筛选条件下没有任务，可点击右下角新建' });
+      } else {
+        el.innerHTML = rows.map((r, i) => {
+          const s = displayStatus(r);
+          const fillHint = !r.filled && s === '进行中' ? ' · 待填报' : (r.filled ? ' · 已填报' : '');
+          return WECOM.cell({
+            title: r.name,
+            link: true,
+            desc: r.plan + ' · ' + r.start + '~' + r.end + fillHint,
+            ft: WECOM.statusBadge(s, stType(s)),
+            onclick: 'openView(' + ROWS.indexOf(r) + ')'
+          });
+        }).join('');
+      }
+      document.getElementById('footerHint').textContent = '共 ' + rows.length + ' 条 · 本人任务';
+      updateKpi();
+    }
+
+    function filterTasks(f) {
+      currentFilter = f;
+      document.querySelectorAll('#filters .wecom-seg-btn').forEach(b => b.classList.toggle('on', b.getAttribute('data-f') === f));
+      renderTasks();
+    }
+
+    function openView(idx) {
+      viewIdx = idx;
+      const r = ROWS[idx];
+      const s = displayStatus(r);
+      document.getElementById('vTitle').textContent = r.name;
+      document.getElementById('vMeta').textContent = r.plan + ' · ' + s;
+      document.getElementById('vBody').innerHTML = [
+        ['来源', r.src], ['责任人', r.owner], ['起止', r.start + ' ~ ' + r.end],
+        ['本周期填报', r.filled ? '已填' : '未填']
+      ].map(row => `<div class="wecom-dialog-row"><span class="lbl">${row[0]}</span><span class="val">${row[1]}</span></div>`).join('');
+      let actions = '<button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal(\'modal-view\')">关闭</button>';
+      if (s === '进行中') {
+        if (!r.filled) actions += '<button type="button" class="wecom-dialog-btn primary" onclick="goFill()">去填报</button>';
+        actions += '<button type="button" class="wecom-dialog-btn primary" onclick="openComplete()">标完成</button>';
+        actions += '<button type="button" class="wecom-dialog-btn" onclick="openTransfer()">转派</button>';
+      }
+      document.getElementById('vActions').innerHTML = actions;
+      BMS.openModal('modal-view');
+    }
+
+    function goFill() {
+      BMS.closeModal('modal-view');
+      location.href = '任务中心_周期填报_wecom.html?task=' + ROWS[viewIdx].id;
+    }
+
+    function openCreate() {
+      document.getElementById('cName').value = '';
+      BMS.openModal('modal-create');
+    }
+
+    function saveCreate() {
+      const name = document.getElementById('cName').value.trim();
+      if (!name) { WECOM.toast('请填写任务名称'); return; }
+      ROWS.unshift({
+        id: Date.now(), period: document.getElementById('periodSelect').value, name,
+        plan: document.getElementById('cPlan').value, owner: SELF,
+        start: '08-24', end: '08-30', status: '进行中', filled: false, src: '自建'
+      });
+      WECOM.toast('任务已保存');
+      BMS.closeModal('modal-create');
+      filterTasks('all');
+    }
+
+    function openComplete() {
+      completeIdx = viewIdx;
+      document.getElementById('cpName').textContent = ROWS[viewIdx].name;
+      BMS.closeModal('modal-view');
+      BMS.openModal('modal-complete');
+    }
+
+    function saveComplete() {
+      ROWS[completeIdx].status = '已完成';
+      ROWS[completeIdx].filled = true;
+      WECOM.toast('已标为已完成');
+      BMS.closeModal('modal-complete');
+      renderTasks();
+    }
+
+    function openTransfer() {
+      transferIdx = viewIdx;
+      document.getElementById('tfReason').value = '';
+      BMS.closeModal('modal-view');
+      BMS.openModal('modal-transfer');
+    }
+
+    function saveTransfer() {
+      if ((document.getElementById('tfReason').value.trim().length || 0) < 10) {
+        WECOM.toast('转派原因至少 10 字'); return;
+      }
+      ROWS[transferIdx].owner = document.getElementById('tfOwner').value;
+      WECOM.toast('转派成功');
+      BMS.closeModal('modal-transfer');
+      renderTasks();
+    }
+
+    renderTasks();
+  </script>
+</body>
+</html>

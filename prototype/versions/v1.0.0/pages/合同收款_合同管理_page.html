@@ -22,19 +22,21 @@
         <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>商务部</option><option>调度中心</option></select>
       </div>
       <div class="flex gap-2">
-        <a href="合同收款_收款管理_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">收款管理</a>
+        <a href="合同收款_开票记录_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">开票记录</a>
+        <a href="合同收款_收款记录_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">收款记录</a>
         <button type="button" onclick="openContractForm('create')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建合同</button>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
       <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总数</div><div class="text-2xl font-semibold mt-1">12</div></div>
       <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总额（万元）</div><div class="text-2xl font-semibold mt-1">3,680</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">累计开票（万元）</div><div class="text-2xl font-semibold mt-1 text-violet-700">2,580</div></div>
       <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">回款总额（万元）</div><div class="text-2xl font-semibold mt-1 text-emerald-600">2,145</div></div>
-      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">剩余收款（万元）</div><div class="text-2xl font-semibold mt-1 text-amber-600">1,535</div><div class="text-xs text-slate-400 mt-1">= 合同总额 − 回款总额</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">剩余收款（万元）</div><div class="text-2xl font-semibold mt-1 text-amber-600">1,535</div></div>
     </div>
 
-    <p class="text-xs text-slate-500 mb-3">客户选自 CRM（本模块不维护客户档案）。剩余收款口径：合同总额 − 累计回款。</p>
+    <p class="text-xs text-slate-500 mb-3">客户选自 CRM。合同 → <a href="合同收款_开票记录_page.html" class="text-teal-700">开票记录</a> / <a href="合同收款_收款记录_page.html" class="text-teal-700">收款记录</a>（无强制先后顺序、无强关联）。剩余收款 = 合同总额 − 累计收款；待开票 = 合同总额 − 累计开票（不含已作废发票）。</p>
 
     <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
       <table class="w-full text-sm">
@@ -44,6 +46,7 @@
             <th class="px-4 py-3 text-left">合同编号</th>
             <th class="px-4 py-3 text-left">客户（CRM）</th>
             <th class="px-4 py-3 text-left">合同金额</th>
+            <th class="px-4 py-3 text-left">已开票</th>
             <th class="px-4 py-3 text-left">已回款</th>
             <th class="px-4 py-3 text-left">剩余收款</th>
             <th class="px-4 py-3 text-left">状态</th>
@@ -56,30 +59,33 @@
             <td class="px-4 py-3">HT-2026-0012</td>
             <td class="px-4 py-3">远洋航运有限公司</td>
             <td class="px-4 py-3">1,200 万</td>
+            <td class="px-4 py-3 text-violet-700">900 万</td>
             <td class="px-4 py-3">680 万</td>
             <td class="px-4 py-3 text-amber-600">520 万</td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">执行中</span></td>
-            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0012" class="text-teal-700">登记收款</a></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_开票记录_page.html?open=modal-invoice&contract=HT-2026-0012" class="text-teal-700">登记开票</a><a href="合同收款_收款记录_page.html?open=modal-receipt&contract=HT-2026-0012" class="text-teal-700">登记收款</a></td>
           </tr>
           <tr class="border-t row-hover">
             <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">堆场仓储服务合同</button></td>
             <td class="px-4 py-3">HT-2026-0008</td>
             <td class="px-4 py-3">港联物流集团</td>
             <td class="px-4 py-3">860 万</td>
+            <td class="px-4 py-3 text-violet-700">860 万</td>
             <td class="px-4 py-3">860 万</td>
             <td class="px-4 py-3 text-emerald-600">0 万</td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">已完成</span></td>
-            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0008" class="text-teal-700">登记收款</a></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_开票记录_page.html?open=modal-invoice&contract=HT-2026-0008" class="text-teal-700">登记开票</a><a href="合同收款_收款记录_page.html?open=modal-receipt&contract=HT-2026-0008" class="text-teal-700">登记收款</a></td>
           </tr>
           <tr class="border-t row-hover">
             <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">设备维保年度合同</button></td>
             <td class="px-4 py-3">HT-2026-0015</td>
             <td class="px-4 py-3">港机装备股份</td>
             <td class="px-4 py-3">420 万</td>
+            <td class="px-4 py-3 text-violet-700">280 万</td>
             <td class="px-4 py-3">150 万</td>
             <td class="px-4 py-3 text-amber-600">270 万</td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">执行中</span></td>
-            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0015" class="text-teal-700">登记收款</a></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_开票记录_page.html?open=modal-invoice&contract=HT-2026-0015" class="text-teal-700">登记开票</a><a href="合同收款_收款记录_page.html?open=modal-receipt&contract=HT-2026-0015" class="text-teal-700">登记收款</a></td>
           </tr>
         </tbody>
       </table>
@@ -145,9 +151,20 @@
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">合同金额</div><div class="mt-1 font-medium">1,200 万</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">已开票</div><div class="mt-1 font-medium text-violet-700">900 万</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">已回款</div><div class="mt-1 font-medium text-emerald-600">680 万</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">剩余收款</div><div class="mt-1 font-medium text-amber-600">520 万</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">签订日</div><div class="mt-1 font-medium">2026-01-15</div></div>
+        </div>
+        <div class="text-sm font-medium mb-2">近期开票</div>
+        <div class="border border-slate-100 rounded-2xl overflow-hidden mb-4">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">开票日期</th><th class="text-left px-4 py-2.5">发票号</th><th class="text-left px-4 py-2.5">金额</th></tr></thead>
+            <tbody>
+              <tr class="border-t"><td class="px-4 py-2.5">2026-08-01</td><td class="px-4 py-2.5">FP-2026-0088</td><td class="px-4 py-2.5">120 万</td></tr>
+              <tr class="border-t"><td class="px-4 py-2.5">2026-06-15</td><td class="px-4 py-2.5">FP-2026-0071</td><td class="px-4 py-2.5">300 万</td></tr>
+            </tbody>
+          </table>
         </div>
         <div class="text-sm font-medium mb-2">近期收款</div>
         <div class="border border-slate-100 rounded-2xl overflow-hidden mb-4">
@@ -159,8 +176,9 @@
             </tbody>
           </table>
         </div>
-        <div class="flex gap-2">
-          <a href="合同收款_收款管理_page.html?open=modal-receipt&contract=HT-2026-0012" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">登记收款</a>
+        <div class="flex gap-2 flex-wrap">
+          <a href="合同收款_开票记录_page.html?open=modal-invoice&contract=HT-2026-0012" class="border px-4 py-2 rounded-xl text-sm">登记开票</a>
+          <a href="合同收款_收款记录_page.html?open=modal-receipt&contract=HT-2026-0012" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">登记收款</a>
           <button type="button" onclick="BMS.closeModal('modal-contract-detail');openContractForm('edit')" class="border px-4 py-2 rounded-xl text-sm">编辑</button>
         </div>
       </div>

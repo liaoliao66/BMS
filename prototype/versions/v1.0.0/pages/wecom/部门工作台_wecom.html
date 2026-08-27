@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>工作台 · 企微</title>
+  <link rel="stylesheet" href="../../assets/wecom-common.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body data-page="depts" data-title="工作台">
+  <div id="app-root"></div>
+  <main id="page-main" class="wecom-main">
+
+    <div class="wecom-form">
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">部门</span>
+        <select id="deptSelect" class="wecom-select" onchange="switchDept()">
+          <option value="装卸队">装卸队（我的部门）</option>
+          <option value="调度中心">调度中心</option>
+          <option value="设备部">设备部</option>
+        </select>
+      </div>
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">周期</span>
+        <select class="wecom-select"><option>2026-Q3</option><option>2026 年</option></select>
+      </div>
+    </div>
+
+    <div class="wecom-panel">
+      <div class="wecom-kpi-grid">
+        <div class="wecom-kpi-item">
+          <div class="wecom-kpi-label">部门健康</div>
+          <div class="wecom-kpi-sub" style="margin-top:8px;font-size:13px;color:var(--wx-text)" id="kpiHealth">正常 1 · 需关注 1 · 风险 1</div>
+        </div>
+        <div class="wecom-kpi-item">
+          <div class="wecom-kpi-label">目标 / 计划</div>
+          <div class="wecom-kpi-val"><span id="kpiGoals">3</span><span style="font-size:14px;color:var(--wx-text-sec)"> / </span><span id="kpiPlans">6</span></div>
+        </div>
+        <div class="wecom-kpi-item span-2">
+          <div class="wecom-kpi-label">任务 / 待填报</div>
+          <div class="wecom-kpi-val"><span id="kpiTasks">12</span><span style="font-size:14px;font-weight:400;color:var(--wx-warn)"> / 待填 4</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="wecom-seg" id="tabs">
+      <button type="button" data-tab="goals" class="wecom-seg-btn on" onclick="switchTab('goals')">目标</button>
+      <button type="button" data-tab="plans" class="wecom-seg-btn" onclick="switchTab('plans')">计划</button>
+      <button type="button" data-tab="tasks" class="wecom-seg-btn" onclick="switchTab('tasks')">任务</button>
+    </div>
+
+    <div id="pane-goals" class="wecom-cells"></div>
+    <div id="pane-plans" class="wecom-cells hidden"></div>
+    <div id="pane-tasks" class="hidden">
+      <div class="wecom-hd" style="padding-top:8px">
+        <span>本部门任务</span>
+        <span style="color:var(--wx-primary);font-size:13px"><a href="任务中心_我的任务_wecom.html" style="color:inherit;text-decoration:none">任务清单 ›</a></span>
+      </div>
+      <div class="wecom-cells" id="tasksList"></div>
+    </div>
+  </main>
+
+  <div id="modal-goal" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-goal')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title" id="gTitle">—</div><div class="wecom-dialog-sub" id="gMeta">—</div></div>
+      <div class="wecom-dialog-bd" id="gPlans"></div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-goal')">关闭</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="BMS.closeModal('modal-goal');BMS.openModal('modal-plan-form')">新增计划</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-plan" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-plan')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title" id="pTitle">—</div></div>
+      <div class="wecom-dialog-bd" id="pBody"></div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-plan')">关闭</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="BMS.closeModal('modal-plan');BMS.openModal('modal-task-form')">新增任务</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-task" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-task')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title" id="tTitle">—</div><div class="wecom-dialog-sub" id="tMeta">—</div></div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <textarea class="wecom-select" style="width:100%;border:1px solid var(--wx-line);border-radius:6px;padding:10px;min-height:80px;background:#fff" placeholder="跟踪评论"></textarea>
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-task')">关闭</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="BMS.closeModal('modal-task');location.href='任务中心_周期填报_wecom.html'">去填报</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-fill" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-fill')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title">周期填报</div></div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <textarea style="width:100%;border:1px solid var(--wx-line);border-radius:6px;padding:10px;min-height:96px;font-size:14px" placeholder="进展说明（必填）"></textarea>
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-fill')">取消</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="WECOM.toast('填报已提交');BMS.closeModal('modal-fill')">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-plan-form" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-plan-form')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title">新增计划</div></div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <input style="width:100%;border:1px solid var(--wx-line);border-radius:6px;padding:10px;font-size:14px" placeholder="计划名称" />
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-plan-form')">取消</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="WECOM.toast('计划已保存');BMS.closeModal('modal-plan-form')">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-task-form" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-task-form')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd"><div class="wecom-dialog-title">新增任务</div></div>
+      <div class="wecom-dialog-bd" style="padding:12px 16px">
+        <input id="taskName" style="width:100%;border:1px solid var(--wx-line);border-radius:6px;padding:10px;font-size:14px;margin-bottom:10px" placeholder="任务名称 *" />
+        <select style="width:100%;border:1px solid var(--wx-line);border-radius:6px;padding:10px;font-size:14px;margin-bottom:10px"><option>刘强</option><option>周杰</option></select>
+        <label style="display:inline-block;padding:8px 12px;background:#e8f3ff;color:var(--wx-primary);border-radius:6px;font-size:13px">
+          添加图片<input type="file" accept="image/*" multiple class="hidden" onchange="WECOM.toast('已选择图片')" style="display:none" />
+        </label>
+      </div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-task-form')">取消</button>
+        <button type="button" class="wecom-dialog-btn primary" onclick="WECOM.toast('任务已保存');BMS.closeModal('modal-task-form')">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/wecom-common.js"></script>
+  <script>
+    const DATA = {
+      '装卸队': {
+        health: '正常 1 · 需关注 1 · 风险 1', goals: 3, plans: 6, tasks: 12,
+        goalsList: [
+          { name: '桥吊作业效率提升 15%', period: '2026-Q3', rate: '+12% / +15%', status: '需关注', st: 'warn', plans: ['8 月装卸效率提升计划', 'Q3 桥吊点检专项计划'] },
+          { name: '班组准点出勤率', period: '2026 年', rate: '91% / 90%', status: '正常', st: 'ok', plans: [] }
+        ],
+        plansList: [
+          { name: '8 月装卸效率提升计划', goal: '桥吊作业效率提升 15%', nodes: '2/4 按期', tasks: [{ n: '桥吊夜班流程复盘', s: '未更新' }, { n: '钢丝绳点检整改', s: '进行中' }] },
+          { name: 'Q3 桥吊点检专项计划', goal: '桥吊作业效率提升 15%', nodes: '2/4 按期', tasks: [{ n: '岸桥对位训练', s: '进行中' }] }
+        ],
+        tasksList: [
+          { name: '桥吊夜班流程复盘', plan: '8 月装卸效率提升计划', owner: '刘强', update: '未更新', status: '本月未更新', st: 'warn' },
+          { name: '钢丝绳点检整改', plan: '8 月装卸效率提升计划', owner: '周杰', update: '已更新', status: '进行中', st: 'info' }
+        ]
+      },
+      '调度中心': {
+        health: '正常 2 · 需关注 0 · 风险 0', goals: 2, plans: 4, tasks: 8,
+        goalsList: [{ name: '堆场周转优化', period: '2026-Q3', rate: '82 / 100', status: '需关注', st: 'warn', plans: ['堆场周转优化计划'] }],
+        plansList: [{ name: '堆场周转优化计划', goal: '堆场周转优化', nodes: '3/4 按期', tasks: [{ n: '堆场周转异常复盘', s: '已完成' }] }],
+        tasksList: [{ name: '堆场周转异常复盘', plan: '堆场周转优化计划', owner: '陈敏', update: '已更新', status: '进行中', st: 'info' }]
+      },
+      '设备部': {
+        health: '正常 2 · 需关注 0 · 风险 0', goals: 2, plans: 5, tasks: 10,
+        goalsList: [{ name: 'Q3 桥吊完好率', period: '2026-Q3', rate: '97% / 98%', status: '风险', st: 'danger', plans: ['设备点检达标计划'] }],
+        plansList: [{ name: '设备点检达标计划', goal: 'Q3 桥吊完好率', nodes: '4/5 按期', tasks: [{ n: '点检报告归档', s: '已完成' }] }],
+        tasksList: [{ name: '点检报告归档', plan: '设备点检达标计划', owner: '周杰', update: '已更新', status: '已完成', st: 'ok' }]
+      }
+    };
+
+    function stType(s) {
+      if (/风险|延期|未更新/.test(s)) return 'danger';
+      if (/需关注|临期/.test(s)) return 'warn';
+      if (/进行/.test(s)) return 'info';
+      return 'ok';
+    }
+
+    function renderAll() {
+      const dept = document.getElementById('deptSelect').value;
+      const d = DATA[dept];
+      document.getElementById('kpiHealth').textContent = d.health;
+      document.getElementById('kpiGoals').textContent = d.goals;
+      document.getElementById('kpiPlans').textContent = d.plans;
+      document.getElementById('kpiTasks').textContent = d.tasks;
+      document.getElementById('pane-goals').innerHTML = d.goalsList.map((g, i) =>
+        WECOM.cell({ title: g.name, link: true, desc: g.period + ' · ' + g.rate, ft: WECOM.statusBadge(g.status, g.st), onclick: 'openGoal(' + i + ')' })
+      ).join('');
+      document.getElementById('pane-plans').innerHTML = d.plansList.map((p, i) =>
+        WECOM.cell({ title: p.name, link: true, desc: p.goal + ' · 节点 ' + p.nodes, onclick: 'openPlan(' + i + ')' })
+      ).join('');
+      document.getElementById('tasksList').innerHTML = d.tasksList.map((t, i) =>
+        WECOM.cell({ title: t.name, link: true, desc: t.plan + ' · ' + t.owner + ' · ' + t.update, ft: WECOM.statusBadge(t.status, t.st), onclick: 'openTask(' + i + ')' })
+      ).join('');
+    }
+
+    function switchDept() { renderAll(); }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.wecom-seg-btn').forEach(b => b.classList.remove('on'));
+      document.querySelector('[data-tab="' + tab + '"]').classList.add('on');
+      document.getElementById('pane-goals').classList.toggle('hidden', tab !== 'goals');
+      document.getElementById('pane-plans').classList.toggle('hidden', tab !== 'plans');
+      document.getElementById('pane-tasks').classList.toggle('hidden', tab !== 'tasks');
+    }
+
+    function openGoal(i) {
+      const g = DATA[document.getElementById('deptSelect').value].goalsList[i];
+      document.getElementById('gTitle').textContent = g.name;
+      document.getElementById('gMeta').textContent = g.period + ' · ' + g.rate;
+      document.getElementById('gPlans').innerHTML = (g.plans.length ? g.plans : ['暂无下属计划']).map(p =>
+        `<div class="wecom-dialog-row"><span class="lbl">计划</span><span class="val">${p}</span></div>`
+      ).join('');
+      BMS.openModal('modal-goal');
+    }
+
+    function openPlan(i) {
+      const p = DATA[document.getElementById('deptSelect').value].plansList[i];
+      document.getElementById('pTitle').textContent = p.name;
+      document.getElementById('pBody').innerHTML =
+        `<div class="wecom-dialog-row"><span class="lbl">关联目标</span><span class="val">${p.goal}</span></div>
+         <div class="wecom-dialog-row"><span class="lbl">节点达成</span><span class="val">${p.nodes}</span></div>` +
+        p.tasks.map(t => `<div class="wecom-dialog-row"><span class="lbl">${t.n}</span><span class="val">${t.s}</span></div>`).join('');
+      BMS.openModal('modal-plan');
+    }
+
+    function openTask(i) {
+      const t = DATA[document.getElementById('deptSelect').value].tasksList[i];
+      document.getElementById('tTitle').textContent = t.name;
+      document.getElementById('tMeta').textContent = t.owner + ' · ' + t.status;
+      BMS.openModal('modal-task');
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>

@@ -34,7 +34,8 @@
       group: "合同收款",
       items: [
         { id: "contracts", name: "合同管理", href: "合同收款_合同管理_page.html", icon: "fa-file-signature" },
-        { id: "receipts", name: "收款管理", href: "合同收款_收款管理_page.html", icon: "fa-yen-sign" },
+        { id: "invoices", name: "开票记录", href: "合同收款_开票记录_page.html", icon: "fa-file-invoice" },
+        { id: "receipts", name: "收款记录", href: "合同收款_收款记录_page.html", icon: "fa-yen-sign" },
       ],
     },
   ];
