@@ -6,7 +6,7 @@
       items: [
         { id: "dashboard", name: "经营总览", href: "经营台账_总览_page.html", icon: "fa-chart-line" },
         { id: "depts", name: "工作台", href: "部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
-        { id: "reports", name: "工作汇报", href: "经营台账_工作汇报_page.html", icon: "fa-file-lines" },
+        { id: "reports", name: "工作周报", href: "经营台账_工作汇报_page.html", icon: "fa-file-lines" },
       ],
     },
     {

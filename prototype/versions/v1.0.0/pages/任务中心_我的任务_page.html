@@ -15,6 +15,10 @@
     .cal-bar-doing { background:#e0f2fe; border:1px solid #7dd3fc; color:#0369a1; }
     .cal-bar-done { background:#d1fae5; border:1px solid #6ee7b7; color:#047857; }
     .detail-tab-on { background:#0f766e; color:#fff; }
+    .img-preview-grid { display:flex; flex-wrap:wrap; gap:10px; }
+    .img-preview-item { position:relative; width:88px; height:88px; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; }
+    .img-preview-item img { width:100%; height:100%; object-fit:cover; }
+    .img-preview-remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:9999px; background:rgba(15,23,42,.72); color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="my-tasks" data-title="任务清单">
@@ -154,9 +158,15 @@
             <p class="text-xs text-slate-400 mt-1">限本部门人员；不可选责任人本人；配合人员可查看任务，填报仍由责任人负责</p>
           </div>
           <div>
-            <label class="block text-sm text-slate-600 mb-1">附件 <span class="text-slate-400 font-normal">（选填，不限制大小）</span></label>
-            <input id="ctFiles" type="file" multiple class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm" />
-            <p class="text-xs text-slate-400 mt-1" id="ctFileHint">未选择文件</p>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label class="block text-sm text-slate-600">图片 <span class="text-slate-400 font-normal">（选填，支持 JPG/PNG/GIF/WebP，单张 ≤ 20MB）</span></label>
+              <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-image"></i>添加图片
+                <input id="ctImages" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple class="hidden" onchange="addTaskImages(event)" />
+              </label>
+            </div>
+            <div id="ctImagePreview" class="img-preview-grid min-h-[44px]"></div>
+            <p class="text-xs text-slate-400 mt-2" id="ctImageHint">未添加图片</p>
           </div>
         </div>
         <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
@@ -298,7 +308,71 @@
       return displayStatus(r) !== '已完成';
     }
 
-    function canComplete(r) {
+    let taskCreateImages = [];
+
+    function renderTaskImagePreviews() {
+      const box = document.getElementById('ctImagePreview');
+      const hint = document.getElementById('ctImageHint');
+      box.innerHTML = taskCreateImages.map((img, i) => `
+        <div class="img-preview-item">
+          ${img.url ? `<img src="${img.url}" alt="${img.name}" />` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[10px] text-slate-500 px-1 text-center leading-tight">${img.name}</div>`}
+          <button type="button" class="img-preview-remove" onclick="removeTaskImage(${i})" title="移除"><i class="fa-solid fa-xmark"></i></button>
+        </div>`).join('');
+      hint.textContent = taskCreateImages.length
+        ? ('已添加 ' + taskCreateImages.length + ' 张图片')
+        : '未添加图片';
+    }
+
+    function clearTaskImages() {
+      taskCreateImages.forEach(img => { if (img.url) URL.revokeObjectURL(img.url); });
+      taskCreateImages = [];
+      const input = document.getElementById('ctImages');
+      if (input) input.value = '';
+      renderTaskImagePreviews();
+    }
+
+    function addTaskImages(e) {
+      const files = Array.from(e.target.files || []);
+      const max = 20 * 1024 * 1024;
+      let added = 0;
+      files.forEach(f => {
+        if (!f.type.startsWith('image/')) {
+          BMS.toast('仅支持图片：' + f.name, 'error');
+          return;
+        }
+        if (f.size > max) {
+          BMS.toast('图片超过 20MB：' + f.name, 'error');
+          return;
+        }
+        taskCreateImages.push({ name: f.name, url: URL.createObjectURL(f), file: f });
+        added++;
+      });
+      e.target.value = '';
+      renderTaskImagePreviews();
+      if (added) BMS.toast('已添加 ' + added + ' 张图片');
+    }
+
+    function removeTaskImage(idx) {
+      const img = taskCreateImages[idx];
+      if (img && img.url) URL.revokeObjectURL(img.url);
+      taskCreateImages.splice(idx, 1);
+      renderTaskImagePreviews();
+    }
+
+    function taskImageNames() {
+      return taskCreateImages.map(img => img.name).join('、');
+    }
+
+    function renderTaskImagesView(filesText) {
+      if (!filesText || filesText === '无') return viewField('图片', '无');
+      const names = filesText.split('、').filter(Boolean);
+      const thumbs = names.map(n => `
+        <div class="img-preview-item w-16 h-16">
+          <div class="w-full h-full flex items-center justify-center bg-slate-100 text-[10px] text-slate-500 px-1 text-center leading-tight">${n.replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')}</div>
+        </div>`).join('');
+      return `<div class="py-2 border-b border-slate-100 last:border-0"><div class="text-slate-500 text-xs mb-1">图片</div><div class="img-preview-grid">${thumbs}</div><div class="text-xs text-slate-400 mt-1">${filesText}</div></div>`;
+    }
+
       return displayStatus(r) === '进行中' && r.owner === SELF && r.period === CURRENT_PERIOD;
     }
 
@@ -360,7 +434,7 @@
         ${viewField('起止时间', r.start + ' ~ ' + r.end)}
         ${viewField('归属周期', r.period)}
         ${viewField('任务概述', r.summary || '—')}
-        ${viewField('附件', r.files || '无')}
+        ${renderTaskImagesView(r.files || '')}
       `;
       if (st === '已完成') {
         html += viewField('完成时间', r.doneAt);
@@ -583,8 +657,7 @@
       document.getElementById('ctSummary').value = '';
       document.getElementById('ctPlan').value = '';
       document.getElementById('ctOwner').value = SELF;
-      document.getElementById('ctFiles').value = '';
-      document.getElementById('ctFileHint').textContent = '未选择文件';
+      clearTaskImages();
       updateCount('ctSummary', 'ctSummaryCount');
       syncProxyHint();
       setSelectedHelpers([]);
@@ -632,7 +705,14 @@
       document.getElementById('ctSummary').value = r.summary || '';
       document.getElementById('ctPlan').value = r.plan;
       document.getElementById('ctOwner').value = r.owner;
-      document.getElementById('ctFileHint').textContent = r.files ? ('已有：' + r.files) : '未选择文件';
+      clearTaskImages();
+      if (r.files) {
+        r.files.split('、').filter(Boolean).forEach(name => {
+          taskCreateImages.push({ name, url: '', file: null });
+        });
+        renderTaskImagePreviews();
+        document.getElementById('ctImageHint').textContent = '已有图片：' + r.files + '（重新选择可追加）';
+      }
       setSelectedHelpers(r.helpers || []);
       syncHelperOptions();
       updateCount('ctSummary', 'ctSummaryCount');
@@ -647,10 +727,7 @@
       const summary = document.getElementById('ctSummary').value.trim();
       const plan = document.getElementById('ctPlan').value;
       const owner = document.getElementById('ctOwner').value;
-      const fileInput = document.getElementById('ctFiles');
-      const fileNames = fileInput.files && fileInput.files.length
-        ? Array.from(fileInput.files).map(f => f.name).join('、')
-        : '';
+      const imageNames = taskImageNames();
 
       if (!name) { BMS.toast('请填写任务名称', 'error'); return; }
       if (!start || !end) { BMS.toast('请填写开始与结束时间', 'error'); return; }
@@ -674,7 +751,7 @@
           doneOp: false,
           doneAt: '',
           completeSummary: '',
-          files: fileNames
+          files: imageNames
         });
         BMS.toast(isProxy ? '已代建，完成情况由「' + owner + '」填写' : '任务已创建（进行中）');
       } else {
@@ -685,11 +762,12 @@
         r.summary = summary;
         r.plan = plan;
         r.helpers = helpers;
-        if (fileNames) r.files = fileNames;
+        if (imageNames) r.files = imageNames;
         if (displayStatus(r) === '已延期') r.status = '已延期';
         BMS.toast('任务已更新');
       }
       BMS.closeModal('modal-form-task');
+      clearTaskImages();
       renderCurrentView();
     }
 
@@ -785,10 +863,6 @@
 
     document.getElementById('ctOwner').addEventListener('change', syncProxyHint);
 
-    document.getElementById('ctFiles').addEventListener('change', function () {
-      const n = this.files ? this.files.length : 0;
-      document.getElementById('ctFileHint').textContent = n ? ('已选 ' + n + ' 个文件') : '未选择文件';
-    });
     document.getElementById('cpFiles').addEventListener('change', function () {
       const n = this.files ? this.files.length : 0;
       document.getElementById('cpFileHint').textContent = n ? ('已选 ' + n + ' 个文件') : '未选择文件';

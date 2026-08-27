@@ -13,6 +13,10 @@
     .btn-cta:hover { background:#0d9488; }
     .btn-cta:active { transform: scale(.95); }
     .row-hover:hover { background:#f8fafc; }
+    .img-preview-grid { display:flex; flex-wrap:wrap; gap:10px; }
+    .img-preview-item { position:relative; width:88px; height:88px; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; }
+    .img-preview-item img { width:100%; height:100%; object-fit:cover; }
+    .img-preview-remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:9999px; background:rgba(15,23,42,.72); color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="tasks" data-title="任务列表">
@@ -43,20 +47,54 @@
     <!-- 新建/编辑（常规弹窗） -->
     <div id="modal-task" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task')"></div>
-      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-xl p-6 space-y-3">
-        <div class="flex justify-between"><h3 class="text-lg font-semibold">新建 / 编辑任务</h3><button type="button" onclick="BMS.closeModal('modal-task')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
-        <input id="taskName" class="w-full border rounded-xl px-3 py-2.5 text-sm" value="桥吊夜班流程复盘" />
-        <select class="w-full border rounded-xl px-3 py-2.5 text-sm"><option>8 月装卸效率提升计划</option><option>Q3 桥吊点检专项计划</option><option>夜班协同保障计划</option></select>
-        <div class="grid grid-cols-2 gap-3"><select class="border rounded-xl px-3 py-2.5 text-sm"><option>装卸队</option><option>调度中心</option><option>设备部</option></select><select class="border rounded-xl px-3 py-2.5 text-sm"><option>刘强</option><option>孙伟</option><option>马超</option></select></div>
-        <div>
-          <label class="block text-sm text-slate-600 mb-2">配合人员 <span class="text-slate-400 font-normal">（选填，可多选）</span></label>
-          <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-            <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />孙伟</label>
-            <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />马超</label>
-            <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />王芳</label>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between">
+          <h3 class="text-lg font-semibold">新建 / 编辑任务</h3>
+          <button type="button" onclick="BMS.closeModal('modal-task')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">任务名称 <span class="text-red-500">*</span></label>
+            <input id="taskName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="桥吊夜班流程复盘" />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">关联计划</label>
+            <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>8 月装卸效率提升计划</option><option>Q3 桥吊点检专项计划</option><option>夜班协同保障计划</option></select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">责任部门</label>
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">责任人</label>
+              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>刘强</option><option>孙伟</option><option>马超</option></select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-2">配合人员 <span class="text-slate-400 font-normal">（选填，可多选）</span></label>
+            <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+              <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />孙伟</label>
+              <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />马超</label>
+              <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />王芳</label>
+            </div>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label class="block text-sm text-slate-600">图片 <span class="text-slate-400 font-normal">（选填，JPG/PNG/GIF/WebP，单张 ≤ 20MB）</span></label>
+              <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-image"></i>添加图片
+                <input id="taskImages" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple class="hidden" onchange="addTaskListImages(event)" />
+              </label>
+            </div>
+            <div id="taskImagePreview" class="img-preview-grid min-h-[44px]"></div>
+            <p class="text-xs text-slate-400 mt-2" id="taskImageHint">未添加图片</p>
           </div>
         </div>
-        <div class="flex gap-2"><button type="button" onclick="(function(){if(!document.getElementById('taskName').value.trim()){BMS.toast('请填写任务名称','error');return;}BMS.toast('任务已保存');BMS.closeModal('modal-task');})()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button><button type="button" onclick="BMS.closeModal('modal-task')" class="text-sm text-slate-500">取消</button></div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2">
+          <button type="button" onclick="saveTaskForm()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-task')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
       </div>
     </div>
 
@@ -263,12 +301,72 @@
       BMS.toast("已添加 " + files.length + " 个附件");
     }
 
+    let taskListImages = [];
+
+    function renderTaskListImagePreviews() {
+      const box = document.getElementById("taskImagePreview");
+      const hint = document.getElementById("taskImageHint");
+      if (!box) return;
+      box.innerHTML = taskListImages.map((img, i) => `
+        <div class="img-preview-item">
+          ${img.url ? `<img src="${img.url}" alt="${img.name}" />` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[10px] text-slate-500 px-1 text-center leading-tight">${img.name}</div>`}
+          <button type="button" class="img-preview-remove" onclick="removeTaskListImage(${i})" title="移除"><i class="fa-solid fa-xmark"></i></button>
+        </div>`).join('');
+      hint.textContent = taskListImages.length ? ("已添加 " + taskListImages.length + " 张图片") : "未添加图片";
+    }
+
+    function clearTaskListImages() {
+      taskListImages.forEach(img => { if (img.url) URL.revokeObjectURL(img.url); });
+      taskListImages = [];
+      const input = document.getElementById("taskImages");
+      if (input) input.value = "";
+      renderTaskListImagePreviews();
+    }
+
+    function addTaskListImages(e) {
+      const files = Array.from(e.target.files || []);
+      const max = 20 * 1024 * 1024;
+      let added = 0;
+      files.forEach(f => {
+        if (!f.type.startsWith("image/")) {
+          BMS.toast("仅支持图片：" + f.name, "error");
+          return;
+        }
+        if (f.size > max) {
+          BMS.toast("图片超过 20MB：" + f.name, "error");
+          return;
+        }
+        taskListImages.push({ name: f.name, url: URL.createObjectURL(f), file: f });
+        added++;
+      });
+      e.target.value = "";
+      renderTaskListImagePreviews();
+      if (added) BMS.toast("已添加 " + added + " 张图片");
+    }
+
+    function removeTaskListImage(idx) {
+      const img = taskListImages[idx];
+      if (img && img.url) URL.revokeObjectURL(img.url);
+      taskListImages.splice(idx, 1);
+      renderTaskListImagePreviews();
+    }
+
+    function saveTaskForm() {
+      const name = document.getElementById("taskName").value.trim();
+      if (!name) { BMS.toast("请填写任务名称", "error"); return; }
+      const n = taskListImages.length;
+      BMS.toast(n ? ("任务已保存（含 " + n + " 张图片）") : "任务已保存");
+      clearTaskListImages();
+      BMS.closeModal("modal-task");
+    }
+
     // 首次打开详情时渲染评论
     const _open = window.BMS && BMS.openModal;
     document.addEventListener("DOMContentLoaded", () => {
       const rawOpen = BMS.openModal.bind(BMS);
       BMS.openModal = function(id) {
         rawOpen(id);
+        if (id === "modal-task") clearTaskListImages();
         if (id === "modal-task-detail") setTimeout(renderComments, 0);
       };
       if (new URLSearchParams(location.search).get("open") === "modal-task-detail") {

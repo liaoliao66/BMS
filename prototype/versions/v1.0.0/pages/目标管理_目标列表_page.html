@@ -33,7 +33,7 @@
           <option value="all">全部部门</option><option>调度中心</option><option>装卸队</option><option>设备部</option><option>安全环保部</option><option>商务部</option>
         </select>
         <select id="filterStatus" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderGoalTree()">
-          <option value="all">全部状态</option><option>正常</option><option>需关注</option><option>风险</option>
+          <option value="all">全部健康状态</option><option>正常</option><option>需关注</option><option>风险</option>
         </select>
         <button type="button" onclick="expandAll()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600">全部展开</button>
         <button type="button" onclick="collapseToYear()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600">仅看年</button>
@@ -111,11 +111,25 @@
     <div id="modal-status" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-status')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
-        <div class="flex justify-between"><h3 class="text-lg font-semibold">修改目标状态</h3><button type="button" onclick="BMS.closeModal('modal-status')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
-        <p class="text-sm text-slate-500">目标：桥吊作业效率提升 15%</p>
-        <div><label class="block text-sm text-slate-600 mb-1">新状态 <span class="text-red-500">*</span></label><select id="newStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>进行中</option><option>已完成</option><option selected>已延期</option><option>已取消</option><option>草稿</option></select></div>
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">修改业务状态</h3><button type="button" onclick="BMS.closeModal('modal-status')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-500">目标：<span id="bizStatusGoalName" class="text-slate-800 font-medium">—</span></p>
+        <p class="text-xs text-slate-400">业务状态指目标生命周期：草稿 / 进行中 / 已完成等，与健康状态（正常 / 需关注 / 风险）相互独立。</p>
+        <div><label class="block text-sm text-slate-600 mb-1">新业务状态 <span class="text-red-500">*</span></label><select id="newStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>进行中</option><option>已完成</option><option selected>已延期</option><option>已取消</option><option>草稿</option></select></div>
         <div><label class="block text-sm text-slate-600 mb-1">变更原因 <span class="text-red-500">*</span></label><textarea id="statusReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="必须填写原因，例如：台风影响作业天数，进度滞后"></textarea></div>
-        <div class="flex gap-2"><button type="button" onclick="saveStatus()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认修改</button><button type="button" onclick="BMS.closeModal('modal-status')" class="text-sm text-slate-500">取消</button></div>
+        <div class="flex gap-2"><button type="button" onclick="saveBizStatus()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认修改</button><button type="button" onclick="BMS.closeModal('modal-status')" class="text-sm text-slate-500">取消</button></div>
+      </div>
+    </div>
+
+    <div id="modal-health" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-health')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">修改健康状态</h3><button type="button" onclick="BMS.closeModal('modal-health')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-500">目标：<span id="healthStatusGoalName" class="text-slate-800 font-medium">—</span></p>
+        <p class="text-xs text-slate-400">健康状态由系统按量化达成、节点与任务填报计算；负责人可人工 override，变更须留原因。</p>
+        <div><label class="block text-sm text-slate-600 mb-1">当前健康状态</label><div id="healthStatusCurrent" class="text-sm font-medium text-amber-600">需关注</div></div>
+        <div><label class="block text-sm text-slate-600 mb-1">新健康状态 <span class="text-red-500">*</span></label><select id="newHealthStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>正常</option><option selected>需关注</option><option>风险</option></select></div>
+        <div><label class="block text-sm text-slate-600 mb-1">变更原因 <span class="text-red-500">*</span></label><textarea id="healthStatusReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="必须填写原因，例如：连续阴雨影响夜班作业，进度滞后"></textarea></div>
+        <div class="flex gap-2"><button type="button" onclick="saveHealthStatus()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认修改</button><button type="button" onclick="BMS.closeModal('modal-health')" class="text-sm text-slate-500">取消</button></div>
       </div>
     </div>
 
@@ -128,7 +142,7 @@
             <div class="flex flex-wrap items-center gap-2">
               <h3 id="detailTitle" class="text-xl font-semibold text-slate-900">桥吊作业效率提升 15%</h3>
               <span id="detailTypeBadge" class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">季目标</span>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span>
+              <span id="detailHealthBadge" class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span>
             </div>
             <p id="detailPath" class="text-sm text-slate-500 mt-1">年：全年集装箱吞吐量目标 → 季：桥吊作业效率提升 15%</p>
             <p id="detailMeta" class="text-sm text-slate-500 mt-1">装卸队 · 周期 2026-Q3 · 截止 2026-09-30 · 量化 +12% / +15%</p>
@@ -136,7 +150,8 @@
           <div class="flex flex-wrap gap-2">
             <button type="button" id="btnBreakDown" onclick="breakFromDetail()" class="border text-sm px-4 py-2 rounded-xl">拆解下级</button>
             <button type="button" onclick="BMS.closeModal('modal-goal-detail');openGoalForm('edit', currentDetailType)" class="border text-sm px-4 py-2 rounded-xl">编辑目标</button>
-            <button type="button" onclick="BMS.closeModal('modal-goal-detail');BMS.openModal('modal-status')" class="border text-sm px-4 py-2 rounded-xl">改状态</button>
+            <button type="button" onclick="BMS.closeModal('modal-goal-detail');openHealthStatusFromDetail()" class="border text-sm px-4 py-2 rounded-xl">改健康状态</button>
+            <button type="button" onclick="BMS.closeModal('modal-goal-detail');openBizStatusFromDetail()" class="border text-sm px-4 py-2 rounded-xl">改业务状态</button>
             <a id="btnAddPlan" href="计划管理_计划列表_page.html?open=modal-plan&goal=%E6%A1%A5%E5%90%8A%E4%BD%9C%E4%B8%9A%E6%95%88%E7%8E%87%E6%8F%90%E5%8D%87%2015%25" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">新增计划</a>
             <button type="button" id="btnYearNoPlan" onclick="BMS.toast('年目标禁止挂计划，请先拆解到季/月后再建计划','error')" class="hidden border text-sm px-4 py-2 rounded-xl text-slate-400">不可挂计划</button>
             <button type="button" onclick="BMS.closeModal('modal-goal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
@@ -145,7 +160,7 @@
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">量化达成</div><div class="mt-1 font-medium" id="detailValue">+15%</div></div>
-            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">健康状态</div><div class="mt-1 font-medium text-amber-600" id="detailRate">需关注</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">健康状态</div><button type="button" id="detailRateBtn" onclick="openHealthStatusFromDetail()" class="mt-1 font-medium text-amber-600 hover:underline text-left">需关注</button></div>
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">下级目标</div><div class="mt-1 font-medium" id="detailChildCount">3</div></div>
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联计划 / 任务</div><div class="mt-1 font-medium" id="detailPlanTask">2 / 5</div></div>
           </div>
@@ -240,7 +255,38 @@
 
     <script>
       let currentDetailType = 'quarter';
+      let currentEditNodeId = null;
       const expandedIds = new Set();
+
+      function healthStatusClass(status) {
+        if (status === '风险') return 'bg-red-50 text-red-600';
+        if (status === '需关注') return 'bg-amber-50 text-amber-700';
+        return 'bg-emerald-50 text-emerald-700';
+      }
+
+      function healthStatusTextClass(status) {
+        if (status === '风险') return 'text-red-600';
+        if (status === '需关注') return 'text-amber-600';
+        return 'text-emerald-600';
+      }
+
+      function findGoalNode(id, nodes) {
+        for (const n of (nodes || [])) {
+          if (n.id === id) return n;
+          const found = findGoalNode(id, n.children);
+          if (found) return found;
+        }
+        return null;
+      }
+
+      function findGoalNodeByDetailKey(key, nodes) {
+        for (const n of (nodes || [])) {
+          if (n.detailKey === key) return n;
+          const found = findGoalNodeByDetailKey(key, n.children);
+          if (found) return found;
+        }
+        return null;
+      }
 
       const GOAL_TREE = [
         {
@@ -334,8 +380,9 @@
             <button type="button" class="text-slate-500 text-xs px-2 py-1.5 rounded-lg border border-slate-200" onclick="toggleMore(event, this)">更多</button>
             <div class="more-menu py-1">
               <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openGoalForm('edit','${node.type}')">编辑</button>
-              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="BMS.openModal('modal-status')">改状态</button>
-              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openGoalDetail('${node.detailKey}')">详情</button>
+              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openHealthStatus('${node.id}')">改健康状态</button>
+              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openBizStatus('${node.id}')">改业务状态</button>
+              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openGoalDetail('${node.detailKey}', '${node.id}')">详情</button>
             </div>
           </div>
         </div>`;
@@ -362,7 +409,7 @@
             <td class="px-5 py-3">
               <div class="flex items-center gap-1.5" style="padding-left:${pad}px">
                 ${toggle}
-                <button type="button" class="text-teal-700 hover:underline text-left font-medium" onclick="openGoalDetail('${node.detailKey}')">${node.name}</button>
+                <button type="button" class="text-teal-700 hover:underline text-left font-medium" onclick="openGoalDetail('${node.detailKey}', '${node.id}')">${node.name}</button>
               </div>
             </td>
             <td class="px-4 py-3">${typeBadge(node.type)}</td>
@@ -556,23 +603,92 @@
         BMS.closeModal('modal-goal');
       }
 
-      function saveStatus() {
+      function syncDetailHealthDisplay(rate) {
+        const badge = document.getElementById('detailHealthBadge');
+        const btn = document.getElementById('detailRateBtn');
+        badge.textContent = rate;
+        badge.className = 'text-xs px-2 py-0.5 rounded-full ' + healthStatusClass(rate);
+        btn.textContent = rate;
+        btn.className = 'mt-1 font-medium hover:underline text-left ' + healthStatusTextClass(rate);
+      }
+
+      function openHealthStatus(nodeId) {
+        const node = findGoalNode(nodeId, GOAL_TREE);
+        if (!node) return;
+        currentEditNodeId = nodeId;
+        document.getElementById('healthStatusGoalName').textContent = node.name;
+        document.getElementById('healthStatusCurrent').textContent = node.status;
+        document.getElementById('healthStatusCurrent').className = 'text-sm font-medium ' + healthStatusTextClass(node.status);
+        document.getElementById('newHealthStatus').value = node.status;
+        document.getElementById('healthStatusReason').value = '';
+        BMS.openModal('modal-health');
+      }
+
+      function openBizStatus(nodeId) {
+        const node = findGoalNode(nodeId, GOAL_TREE);
+        if (!node) return;
+        currentEditNodeId = nodeId;
+        document.getElementById('bizStatusGoalName').textContent = node.name;
+        document.getElementById('statusReason').value = '';
+        BMS.openModal('modal-status');
+      }
+
+      function openHealthStatusFromDetail() {
+        const node = currentEditNodeId ? findGoalNode(currentEditNodeId, GOAL_TREE) : findGoalNodeByDetailKey(currentDetailType, GOAL_TREE);
+        if (!node) { BMS.toast('未找到目标节点', 'error'); return; }
+        openHealthStatus(node.id);
+      }
+
+      function openBizStatusFromDetail() {
+        const node = currentEditNodeId ? findGoalNode(currentEditNodeId, GOAL_TREE) : findGoalNodeByDetailKey(currentDetailType, GOAL_TREE);
+        if (!node) { BMS.toast('未找到目标节点', 'error'); return; }
+        openBizStatus(node.id);
+      }
+
+      function saveHealthStatus() {
+        const reason = document.getElementById('healthStatusReason').value.trim();
+        const next = document.getElementById('newHealthStatus').value;
+        if (!reason) { BMS.toast('修改健康状态必须填写变更原因', 'error'); return; }
+        const node = findGoalNode(currentEditNodeId, GOAL_TREE);
+        if (!node) return;
+        const prev = node.status;
+        node.status = next;
+        node.statusClass = healthStatusClass(next);
+        if (DETAIL[node.detailKey]) DETAIL[node.detailKey].rate = next;
+        syncDetailHealthDisplay(next);
+        renderGoalTree();
+        BMS.toast('健康状态已更新：' + prev + ' → ' + next);
+        document.getElementById('healthStatusReason').value = '';
+        BMS.closeModal('modal-health');
+      }
+
+      function saveBizStatus() {
         const reason = document.getElementById('statusReason').value.trim();
-        if (!reason) { BMS.toast('修改状态必须填写变更原因', 'error'); return; }
-        BMS.toast('状态已更新：' + document.getElementById('newStatus').value);
+        if (!reason) { BMS.toast('修改业务状态必须填写变更原因', 'error'); return; }
+        const node = findGoalNode(currentEditNodeId, GOAL_TREE);
+        BMS.toast('业务状态已更新：' + document.getElementById('newStatus').value + (node ? '（' + node.name + '）' : ''));
         document.getElementById('statusReason').value = '';
         BMS.closeModal('modal-status');
       }
 
-      function openGoalDetail(type) {
+      function saveStatus() { saveBizStatus(); }
+
+      function openGoalDetail(type, nodeId) {
         currentDetailType = type;
+        if (nodeId) currentEditNodeId = nodeId;
+        else {
+          const n = findGoalNodeByDetailKey(type, GOAL_TREE);
+          if (n) currentEditNodeId = n.id;
+        }
         const d = DETAIL[type];
-        document.getElementById('detailTitle').textContent = d.title;
+        const node = currentEditNodeId ? findGoalNode(currentEditNodeId, GOAL_TREE) : null;
+        const rate = node ? node.status : d.rate;
+        document.getElementById('detailTitle').textContent = node ? node.name : d.title;
         document.getElementById('detailTypeBadge').textContent = d.typeLabel;
         document.getElementById('detailPath').textContent = d.path;
         document.getElementById('detailMeta').textContent = d.meta;
         document.getElementById('detailValue').textContent = d.value;
-        document.getElementById('detailRate').textContent = d.rate;
+        syncDetailHealthDisplay(rate);
         document.getElementById('detailChildCount').textContent = d.childCount;
         document.getElementById('detailPlanTask').textContent = d.planTask;
         document.getElementById('detailIntro').textContent = d.intro;

@@ -10,6 +10,10 @@
     .btn-cta { background:#0f766e; }
     .btn-cta:hover { background:#0d9488; }
     .row-hover:hover { background:#f8fafc; }
+    .img-preview-grid { display:flex; flex-wrap:wrap; gap:10px; }
+    .img-preview-item { position:relative; width:88px; height:88px; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; }
+    .img-preview-item img { width:100%; height:100%; object-fit:cover; }
+    .img-preview-remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:9999px; background:rgba(15,23,42,.72); color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="supervise" data-title="任务督办">
@@ -144,6 +148,17 @@
               <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" class="rounded border-slate-300" value="王芳" />王芳</label>
             </div>
           </div>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label class="block text-sm text-slate-600">图片 <span class="text-slate-400 font-normal">（选填，JPG/PNG/GIF/WebP，单张 ≤ 20MB）</span></label>
+              <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-image"></i>添加图片
+                <input id="assignImages" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple class="hidden" onchange="addAssignImages(event)" />
+              </label>
+            </div>
+            <div id="assignImagePreview" class="img-preview-grid min-h-[44px]"></div>
+            <p class="text-xs text-slate-400 mt-2" id="assignImageHint">未添加图片</p>
+          </div>
         </div>
         <div class="shrink-0 px-6 py-4 border-t flex gap-3">
           <button type="button" onclick="saveAssign()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认下达</button>
@@ -164,7 +179,60 @@
   </div>
   <script src="../assets/common.js"></script>
   <script>
-    function openAssign() { BMS.openModal('modal-assign'); }
+    let assignImages = [];
+
+    function renderAssignImagePreviews() {
+      const box = document.getElementById('assignImagePreview');
+      const hint = document.getElementById('assignImageHint');
+      box.innerHTML = assignImages.map((img, i) => `
+        <div class="img-preview-item">
+          ${img.url ? `<img src="${img.url}" alt="${img.name}" />` : `<div class="w-full h-full flex items-center justify-center bg-slate-100 text-[10px] text-slate-500 px-1 text-center leading-tight">${img.name}</div>`}
+          <button type="button" class="img-preview-remove" onclick="removeAssignImage(${i})" title="移除"><i class="fa-solid fa-xmark"></i></button>
+        </div>`).join('');
+      hint.textContent = assignImages.length ? ('已添加 ' + assignImages.length + ' 张图片') : '未添加图片';
+    }
+
+    function clearAssignImages() {
+      assignImages.forEach(img => { if (img.url) URL.revokeObjectURL(img.url); });
+      assignImages = [];
+      const input = document.getElementById('assignImages');
+      if (input) input.value = '';
+      renderAssignImagePreviews();
+    }
+
+    function addAssignImages(e) {
+      const files = Array.from(e.target.files || []);
+      const max = 20 * 1024 * 1024;
+      let added = 0;
+      files.forEach(f => {
+        if (!f.type.startsWith('image/')) {
+          BMS.toast('仅支持图片：' + f.name, 'error');
+          return;
+        }
+        if (f.size > max) {
+          BMS.toast('图片超过 20MB：' + f.name, 'error');
+          return;
+        }
+        assignImages.push({ name: f.name, url: URL.createObjectURL(f), file: f });
+        added++;
+      });
+      e.target.value = '';
+      renderAssignImagePreviews();
+      if (added) BMS.toast('已添加 ' + added + ' 张图片');
+    }
+
+    function removeAssignImage(idx) {
+      const img = assignImages[idx];
+      if (img && img.url) URL.revokeObjectURL(img.url);
+      assignImages.splice(idx, 1);
+      renderAssignImagePreviews();
+    }
+
+    function openAssign() {
+      clearAssignImages();
+      BMS.openModal('modal-assign');
+    }
+
     function saveAssign() {
       const n = document.getElementById('aName').value.trim();
       const d = document.getElementById('aDesc').value.trim();
@@ -175,7 +243,9 @@
       if (!p) { BMS.toast('请选择关联计划', 'error'); return; }
       if (!o) { BMS.toast('请选择责任人', 'error'); return; }
       if (!dl) { BMS.toast('请填写截止日期', 'error'); return; }
-      BMS.toast('督办任务已下达，责任人「任务清单」可见');
+      const imgN = assignImages.length;
+      BMS.toast(imgN ? ('督办任务已下达（含 ' + imgN + ' 张图片），责任人「任务清单」可见') : '督办任务已下达，责任人「任务清单」可见');
+      clearAssignImages();
       BMS.closeModal('modal-assign');
     }
   </script>
