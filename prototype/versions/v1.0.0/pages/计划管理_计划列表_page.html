@@ -205,21 +205,19 @@
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">起止时间</div><div class="mt-1 font-medium">08-01 ~ 08-31</div></div>
-            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">节点达成</div><div class="mt-1 font-medium">2/4 按期</div></div>
-            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">下一节点</div><div class="mt-1 font-medium">效率复核 · 3天</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">节点达成</div><div class="mt-1 font-medium" id="planDetailNodeRate">2/4 按期</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">下一节点</div><div class="mt-1 font-medium" id="planDetailNextNode">效率复核 · 3天</div></div>
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">任务概况</div><div class="mt-1 font-medium">0完成/2进行/1滞后</div></div>
           </div>
           <div>
-            <div class="text-sm font-medium mb-2">关键节点</div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium">关键节点</div>
+              <span class="text-xs text-slate-400">计划负责人可在此更新节点状态 · 变更须填写原因</span>
+            </div>
             <div class="border border-slate-100 rounded-2xl overflow-hidden">
               <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">节点日期</th><th class="text-left px-4 py-2.5">节点名称</th><th class="text-left px-4 py-2.5">说明</th></tr></thead>
-                <tbody>
-                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-08</td><td class="px-4 py-2.5">夜班流程复盘完成</td><td class="px-4 py-2.5 text-slate-500">形成整改清单</td></tr>
-                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-15</td><td class="px-4 py-2.5">班前会标准化落地</td><td class="px-4 py-2.5 text-slate-500">全班组宣贯</td></tr>
-                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-25</td><td class="px-4 py-2.5">效率中期复核</td><td class="px-4 py-2.5 text-slate-500">对照目标值</td></tr>
-                  <tr class="border-t"><td class="px-4 py-2.5">2026-08-31</td><td class="px-4 py-2.5">月度总结闭环</td><td class="px-4 py-2.5 text-slate-500">输出下月计划输入</td></tr>
-                </tbody>
+                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">节点日期</th><th class="text-left px-4 py-2.5">节点名称</th><th class="text-left px-4 py-2.5">说明</th><th class="text-left px-4 py-2.5">节点状态</th><th class="text-left px-4 py-2.5 w-24">操作</th></tr></thead>
+                <tbody id="planDetailMilestones"></tbody>
               </table>
             </div>
           </div>
@@ -252,15 +250,140 @@
         </div>
       </div>
     </div>
+
+    <!-- 关键节点 · 改状态 -->
+    <div id="modal-node-status" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-node-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">更新节点状态</h3><button type="button" onclick="BMS.closeModal('modal-node-status')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-500">节点：<span id="nodeStatusName" class="text-slate-800 font-medium">—</span></p>
+        <p class="text-sm text-slate-500">当前状态：<span id="nodeStatusCurrent" class="font-medium">—</span></p>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">新状态 <span class="text-red-500">*</span></label>
+          <select id="nodeNewStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="toggleNodeCompleteNote()">
+            <option value="未开始">未开始</option>
+            <option value="进行中">进行中</option>
+            <option value="已完成">已完成</option>
+            <option value="已逾期">已逾期</option>
+          </select>
+        </div>
+        <div id="nodeCompleteNoteWrap" class="hidden">
+          <label class="block text-sm text-slate-600 mb-1">完成说明</label>
+          <textarea id="nodeCompleteNote" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-20" placeholder="可选：简述节点产出或闭环情况"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">变更原因 <span class="text-red-500">*</span></label>
+          <textarea id="nodeStatusReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="必须填写原因，例如：整改清单已输出并经班组确认"></textarea>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="saveNodeStatus()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认更新</button>
+          <button type="button" onclick="BMS.closeModal('modal-node-status')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
   </div>
   <script src="../assets/common.js"></script>
   <script>
     const DEFAULT_MILESTONES = [
-      { date: '2026-08-08', name: '夜班流程复盘完成', note: '形成整改清单' },
-      { date: '2026-08-15', name: '班前会标准化落地', note: '全班组宣贯' },
-      { date: '2026-08-25', name: '效率中期复核', note: '对照目标值' },
-      { date: '2026-08-31', name: '月度总结闭环', note: '输出下月计划输入' }
+      { date: '2026-08-08', name: '夜班流程复盘完成', note: '形成整改清单', status: '已完成', completeNote: '整改清单已输出', onTime: true },
+      { date: '2026-08-15', name: '班前会标准化落地', note: '全班组宣贯', status: '已完成', completeNote: '全班组宣贯完成', onTime: true },
+      { date: '2026-08-25', name: '效率中期复核', note: '对照目标值', status: '已逾期', completeNote: '', onTime: false },
+      { date: '2026-08-31', name: '月度总结闭环', note: '输出下月计划输入', status: '未开始', completeNote: '', onTime: false }
     ];
+
+    let planMilestones = DEFAULT_MILESTONES.map(m => ({ ...m }));
+    let editingNodeIdx = -1;
+    const PROTOTYPE_TODAY = '2026-08-27';
+
+    function displayNodeStatus(m) {
+      if (m.status === '已完成') return '已完成';
+      if (m.status === '已逾期') return '已逾期';
+      if (m.status === '进行中') return '进行中';
+      const days = Math.ceil((new Date(m.date + 'T00:00:00') - new Date(PROTOTYPE_TODAY + 'T00:00:00')) / 86400000);
+      if (days < 0) return '已逾期';
+      if (days <= 7) return '临期';
+      return '未开始';
+    }
+
+    function nodeStatusBadge(m) {
+      const s = displayNodeStatus(m);
+      if (s === '已完成') return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">已完成</span>';
+      if (s === '已逾期') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已逾期</span>';
+      if (s === '临期') return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">临期</span>';
+      if (s === '进行中') return '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">未开始</span>';
+    }
+
+    function calcNodeRate() {
+      const total = planMilestones.length;
+      const onTime = planMilestones.filter(m => m.status === '已完成' && m.onTime !== false).length;
+      return onTime + '/' + total + ' 按期';
+    }
+
+    function calcNextNode() {
+      const pending = planMilestones
+        .filter(m => m.status !== '已完成')
+        .map(m => ({ ...m, days: Math.ceil((new Date(m.date + 'T00:00:00') - new Date(PROTOTYPE_TODAY + 'T00:00:00')) / 86400000) }))
+        .sort((a, b) => a.days - b.days);
+      if (!pending.length) return '全部完成';
+      const n = pending[0];
+      if (n.days < 0) return n.name + ' · 逾期' + Math.abs(n.days) + '天';
+      if (n.days === 0) return n.name + ' · 今日到期';
+      return n.name + ' · ' + n.days + '天';
+    }
+
+    function renderPlanDetailMilestones() {
+      const tbody = document.getElementById('planDetailMilestones');
+      tbody.innerHTML = planMilestones.map((m, i) => `
+        <tr class="border-t row-hover">
+          <td class="px-4 py-2.5">${m.date}</td>
+          <td class="px-4 py-2.5 font-medium text-slate-900">${m.name}</td>
+          <td class="px-4 py-2.5 text-slate-500">${m.note || '—'}</td>
+          <td class="px-4 py-2.5">${nodeStatusBadge(m)}</td>
+          <td class="px-4 py-2.5"><button type="button" onclick="openNodeStatusModal(${i})" class="text-teal-700 hover:underline">${m.status === '已完成' ? '改状态' : '更新'}</button></td>
+        </tr>`).join('');
+      document.getElementById('planDetailNodeRate').textContent = calcNodeRate();
+      document.getElementById('planDetailNextNode').textContent = calcNextNode();
+    }
+
+    function openNodeStatusModal(idx) {
+      editingNodeIdx = idx;
+      const m = planMilestones[idx];
+      if (!m) return;
+      document.getElementById('nodeStatusName').textContent = m.name;
+      document.getElementById('nodeStatusCurrent').textContent = displayNodeStatus(m);
+      const sel = document.getElementById('nodeNewStatus');
+      const stored = m.status === '未开始' && displayNodeStatus(m) === '临期' ? '进行中' : m.status;
+      sel.value = ['未开始', '进行中', '已完成', '已逾期'].includes(stored) ? stored : '未开始';
+      document.getElementById('nodeCompleteNote').value = m.completeNote || '';
+      document.getElementById('nodeStatusReason').value = '';
+      toggleNodeCompleteNote();
+      BMS.openModal('modal-node-status');
+    }
+
+    function toggleNodeCompleteNote() {
+      const show = document.getElementById('nodeNewStatus').value === '已完成';
+      document.getElementById('nodeCompleteNoteWrap').classList.toggle('hidden', !show);
+    }
+
+    function saveNodeStatus() {
+      if (editingNodeIdx < 0) return;
+      const m = planMilestones[editingNodeIdx];
+      const next = document.getElementById('nodeNewStatus').value;
+      const reason = document.getElementById('nodeStatusReason').value.trim();
+      if (!reason) { BMS.toast('更新节点状态必须填写变更原因', 'error'); return; }
+      m.status = next;
+      if (next === '已完成') {
+        m.completeNote = document.getElementById('nodeCompleteNote').value.trim();
+        m.onTime = PROTOTYPE_TODAY <= m.date;
+      } else {
+        m.completeNote = '';
+        m.onTime = false;
+      }
+      renderPlanDetailMilestones();
+      BMS.toast('节点状态已更新');
+      BMS.closeModal('modal-node-status');
+    }
 
     const YEAR_GOAL_NAMES = ['全年集装箱吞吐量目标', '安全生产零事故'];
 
@@ -313,12 +436,15 @@
       if (mode === 'create' && !opts.keepMilestones) {
         renderMilestones(opts.milestones || [{ date: '', name: '', note: '' }]);
       } else if (mode === 'edit') {
-        renderMilestones(DEFAULT_MILESTONES);
+        renderMilestones(planMilestones.map(m => ({ date: m.date, name: m.name, note: m.note })));
       }
       BMS.openModal('modal-plan');
       toggleSpecial();
     }
-    function openPlanDetail() { BMS.openModal('modal-plan-detail'); }
+    function openPlanDetail() {
+      renderPlanDetailMilestones();
+      BMS.openModal('modal-plan-detail');
+    }
     function toggleSpecial() {
       const yes = document.querySelector('input[name="isSpecial"]:checked')?.value === 'yes';
       document.getElementById('specialWrap').classList.toggle('hidden', !yes);

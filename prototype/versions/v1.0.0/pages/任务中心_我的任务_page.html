@@ -14,13 +14,13 @@
     .view-tab-on { background:#fff; color:#0f766e; box-shadow:0 1px 3px rgba(0,0,0,.08); }
     .cal-bar-doing { background:#e0f2fe; border:1px solid #7dd3fc; color:#0369a1; }
     .cal-bar-done { background:#d1fae5; border:1px solid #6ee7b7; color:#047857; }
-    .cal-bar-delay { background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; }
+    .detail-tab-on { background:#0f766e; color:#fff; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="my-tasks" data-title="任务清单">
   <div id="app-root"></div>
   <div id="page-main">
-    <p class="text-xs text-slate-500 mb-4">周初创建任务（须填起止时间，默认「进行中」），周末由责任人填写完成情况；本期未操作自动「已延期」。支持列表与周历两种视角。</p>
+    <p class="text-xs text-slate-500 mb-4">周初创建任务（须填起止时间，默认「进行中」），周末由责任人填写完成情况；本期未操作自动「已延期」。支持列表与周历视角；**进行中/已延期**任务可<strong>转派</strong>（须填写原因并留转派记录）。</p>
 
     <div class="flex flex-wrap gap-3 justify-between mb-4">
       <div class="inline-flex p-1 bg-slate-100 rounded-xl">
@@ -77,11 +77,15 @@
     <div id="modal-view" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-view')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center gap-3">
           <h3 class="text-lg font-semibold">任务详情</h3>
-          <button type="button" onclick="BMS.closeModal('modal-view')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          <div class="flex gap-2" id="viewTabs">
+            <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on" data-vtab="info" onclick="switchViewTab('info')">基本信息</button>
+            <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600" data-vtab="transfer" onclick="switchViewTab('transfer')">转派记录</button>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-view')" class="w-9 h-9 rounded-xl border text-slate-400 shrink-0"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm" id="viewContent"></div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 text-sm" id="viewContent"></div>
         <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end" id="viewActions"></div>
       </div>
     </div>
@@ -129,15 +133,25 @@
             </select>
             <p class="text-xs text-slate-400 mt-1">仅可关联本部门计划</p>
           </div>
-          <div>
+          <div id="ownerFieldWrap">
             <label class="block text-sm text-slate-600 mb-1">责任人 <span class="text-red-500">*</span></label>
-            <select id="ctOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="syncProxyHint()">
+            <select id="ctOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
               <option value="刘强" selected>刘强（本人）</option>
               <option value="孙伟">孙伟 · 装卸队</option>
               <option value="马超">马超 · 装卸队</option>
               <option value="陈敏">陈敏 · 调度中心</option>
             </select>
             <p id="ctProxyHint" class="text-xs text-slate-400 mt-1 hidden">代建后由责任人本人填写完成情况</p>
+            <p id="ctOwnerLockedHint" class="text-xs text-amber-700 mt-1 hidden bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">任务已发布，变更责任人请使用「转派」（须留转派记录）</p>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-2">配合人员 <span class="text-slate-400 font-normal">（选填，可多选）</span></label>
+            <div id="ctHelpers" class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" class="ct-helper rounded border-slate-300" value="孙伟" />孙伟</label>
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" class="ct-helper rounded border-slate-300" value="马超" />马超</label>
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="checkbox" class="ct-helper rounded border-slate-300" value="王芳" />王芳</label>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">限本部门人员；不可选责任人本人；配合人员可查看任务，填报仍由责任人负责</p>
           </div>
           <div>
             <label class="block text-sm text-slate-600 mb-1">附件 <span class="text-slate-400 font-normal">（选填，不限制大小）</span></label>
@@ -184,10 +198,51 @@
         </div>
       </div>
     </div>
+
+    <!-- 转派 -->
+    <div id="modal-transfer" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-transfer')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">任务转派</h3>
+          <button type="button" onclick="BMS.closeModal('modal-transfer')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm">
+          <p class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-2">转派将变更主责责任人，并写入不可删改的转派记录；新责任人限本部门人员。</p>
+          <div>
+            <label class="block text-slate-500 mb-1">任务名称</label>
+            <div id="tfTaskName" class="font-medium text-slate-900">—</div>
+          </div>
+          <div>
+            <label class="block text-slate-500 mb-1">当前责任人</label>
+            <div id="tfFromOwner" class="font-medium text-slate-900">—</div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">新责任人 <span class="text-red-500">*</span></label>
+            <select id="tfNewOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></select>
+            <p class="text-xs text-slate-400 mt-1">仅本部门（装卸队）在职人员；不可选本人</p>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">转派原因 <span class="text-red-500">*</span> <span class="text-slate-400 font-normal">（至少 10 字）</span></label>
+            <textarea id="tfReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="说明转派背景与期望" maxlength="500" oninput="updateCount('tfReason','tfReasonCount')"></textarea>
+            <div class="text-xs text-slate-400 mt-1 text-right"><span id="tfReasonCount">0</span>/500</div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">备注 <span class="text-slate-400 font-normal">（选填）</span></label>
+            <textarea id="tfNote" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-16" placeholder="补充说明" maxlength="200"></textarea>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-transfer')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveTransfer()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确认转派</button>
+        </div>
+      </div>
+    </div>
   </div>
   <script src="../assets/common.js"></script>
   <script>
     const SELF = '刘强';
+    const DEPT_MEMBERS = ['孙伟', '马超', '王芳'];
     const CURRENT_PERIOD = '2026-W34';
     const PERIODS = {
       '2026-W34': { start: '2026-08-24', end: '2026-08-30', days: ['2026-08-24','2026-08-25','2026-08-26','2026-08-27','2026-08-28','2026-08-29','2026-08-30'] },
@@ -203,16 +258,24 @@
     let formIndex = -1;
     let completeIndex = -1;
     let viewIndex = -1;
+    let transferIndex = -1;
+    let viewTab = 'info';
+
+    const TRANSFERS = {
+      4: [
+        { at: '2026-08-24 14:20', operator: '张总', from: '王工', to: '刘强', reason: '装卸队现场跟进更合适，需本周末完成复核并提交进展。', note: '督办任务交接' }
+      ]
+    };
 
     let ROWS = [
-      { id: 1, period: '2026-W34', name: '桥吊夜班流程复盘', summary: '梳理夜班交接与点检流程，输出整改清单。', plan: '8 月装卸效率提升计划', owner: '刘强', src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '流程图_v1.pdf' },
-      { id: 2, period: '2026-W34', name: '班前会标准化宣贯', summary: '落实班前会标准话术与记录模板。', plan: '8 月装卸效率提升计划', owner: '刘强', src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 3, period: '2026-W34', name: '岸桥对位训练跟进', summary: '跟进对位训练排班与考核。', plan: '夜班协同保障计划', owner: '孙伟', src: '代建', start: '2026-08-26', end: '2026-08-29', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 4, period: '2026-W34', name: 'Q3 安全隐患现场复核', summary: '对装卸作业区隐患现场复核。', plan: 'Q3 桥吊点检专项计划', owner: '刘强', src: '督办下达', start: '2026-08-24', end: '2026-08-27', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 5, period: '2026-W33', name: '堆场周转异常复盘', summary: '复盘上周周转异常节点。', plan: '堆场周转优化计划', owner: '刘强', src: '自建', start: '2026-08-17', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 16:20', completeSummary: '已形成复盘纪要并同步调度。', files: '复盘纪要.docx' },
-      { id: 6, period: '2026-W33', name: '夜班交接问题闭环', summary: '跟踪交接问题整改进度。', plan: '夜班协同保障计划', owner: '刘强', src: '自建', start: '2026-08-18', end: '2026-08-23', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 7, period: '2026-W33', name: '点检整改跟踪', summary: '点检发现问题整改跟踪。', plan: 'Q3 桥吊点检专项计划', owner: '刘强', src: '督办下达', start: '2026-08-19', end: '2026-08-21', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 8, period: '2026-W32', name: '泊位准点核查清单', summary: '整理泊位准点核查清单。', plan: '8 月装卸效率提升计划', owner: '刘强', src: '自建', start: '2026-08-10', end: '2026-08-15', status: '已完成', doneOp: true, doneAt: '2026-08-15 18:00', completeSummary: '清单已提交设备部。', files: '' }
+      { id: 1, period: '2026-W34', name: '桥吊夜班流程复盘', summary: '梳理夜班交接与点检流程，输出整改清单。', plan: '8 月装卸效率提升计划', owner: '刘强', creator: '刘强', helpers: ['孙伟'], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '流程图_v1.pdf' },
+      { id: 2, period: '2026-W34', name: '班前会标准化宣贯', summary: '落实班前会标准话术与记录模板。', plan: '8 月装卸效率提升计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
+      { id: 3, period: '2026-W34', name: '岸桥对位训练跟进', summary: '跟进对位训练排班与考核。', plan: '夜班协同保障计划', owner: '孙伟', creator: '刘强', helpers: ['马超'], src: '代建', start: '2026-08-26', end: '2026-08-29', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
+      { id: 4, period: '2026-W34', name: 'Q3 安全隐患现场复核', summary: '对装卸作业区隐患现场复核。', plan: 'Q3 桥吊点检专项计划', owner: '刘强', creator: '张总', helpers: ['王芳'], src: '督办下达', start: '2026-08-24', end: '2026-08-27', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
+      { id: 5, period: '2026-W33', name: '堆场周转异常复盘', summary: '复盘上周周转异常节点。', plan: '堆场周转优化计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-17', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 16:20', completeSummary: '已形成复盘纪要并同步调度。', files: '复盘纪要.docx' },
+      { id: 6, period: '2026-W33', name: '夜班交接问题闭环', summary: '跟踪交接问题整改进度。', plan: '夜班协同保障计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-23', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
+      { id: 7, period: '2026-W33', name: '点检整改跟踪', summary: '点检发现问题整改跟踪。', plan: 'Q3 桥吊点检专项计划', owner: '刘强', creator: '张总', helpers: [], src: '督办下达', start: '2026-08-19', end: '2026-08-21', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
+      { id: 8, period: '2026-W32', name: '泊位准点核查清单', summary: '整理泊位准点核查清单。', plan: '8 月装卸效率提升计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-10', end: '2026-08-15', status: '已完成', doneOp: true, doneAt: '2026-08-15 18:00', completeSummary: '清单已提交设备部。', files: '' }
     ];
 
     function findRowIndex(id) {
@@ -237,6 +300,74 @@
 
     function canComplete(r) {
       return displayStatus(r) === '进行中' && r.owner === SELF && r.period === CURRENT_PERIOD;
+    }
+
+    function canTransfer(r) {
+      const st = displayStatus(r);
+      if (st === '已完成') return false;
+      if (r.owner === SELF) return true;
+      if (r.creator === SELF) return true;
+      return true;
+    }
+
+    function getTransfers(taskId) {
+      return TRANSFERS[taskId] || [];
+    }
+
+    function renderTransferTimeline(taskId) {
+      const list = getTransfers(taskId);
+      if (!list.length) {
+        return '<p class="text-slate-400 text-center py-8">暂无转派记录</p>';
+      }
+      return '<div class="space-y-3">' + list.slice().reverse().map(t => `
+        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+          <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-500 mb-2">
+            <span>${t.at}</span>
+            <span>操作人：${t.operator}</span>
+          </div>
+          <div class="text-sm font-medium text-slate-900">${t.from} → ${t.to}</div>
+          <div class="text-sm text-slate-600 mt-2"><span class="text-slate-500">原因：</span>${t.reason}</div>
+          ${t.note ? '<div class="text-xs text-slate-500 mt-1">备注：' + t.note + '</div>' : ''}
+        </div>`).join('') + '</div>';
+    }
+
+    function switchViewTab(tab) {
+      viewTab = tab;
+      document.querySelectorAll('.detail-tab').forEach(b => {
+        const on = b.getAttribute('data-vtab') === tab;
+        b.className = on ? 'detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on' : 'detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600';
+      });
+      renderViewContent();
+    }
+
+    function renderViewContent() {
+      const r = ROWS[viewIndex];
+      if (!r) return;
+      if (viewTab === 'transfer') {
+        document.getElementById('viewContent').innerHTML = renderTransferTimeline(r.id);
+        return;
+      }
+      const st = displayStatus(r);
+      let html = `
+        <div class="space-y-4">
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <h4 class="text-base font-semibold text-slate-900">${r.name}</h4>
+          ${statusBadge(st)}
+        </div>
+        ${viewField('所属计划', r.plan)}
+        ${viewField('责任人', r.owner + ' · 来源：' + r.src)}
+        ${viewField('配合人员', (r.helpers && r.helpers.length) ? r.helpers.join('、') : '—')}
+        ${viewField('起止时间', r.start + ' ~ ' + r.end)}
+        ${viewField('归属周期', r.period)}
+        ${viewField('任务概述', r.summary || '—')}
+        ${viewField('附件', r.files || '无')}
+      `;
+      if (st === '已完成') {
+        html += viewField('完成时间', r.doneAt);
+        html += viewField('情况概述', r.completeSummary || '—');
+      }
+      html += '</div>';
+      document.getElementById('viewContent').innerHTML = html;
     }
 
     function statusBadge(s) {
@@ -326,6 +457,9 @@
         if (canComplete(r)) {
           actions.push(`<button type="button" class="text-teal-700" onclick="openComplete(${r.idx})">填写完成情况</button>`);
         }
+        if (canTransfer(r)) {
+          actions.push(`<button type="button" class="text-amber-700" onclick="openTransfer(${r.idx})">转派</button>`);
+        }
         return `
         <tr class="border-t row-hover">
           <td class="px-5 py-3 font-medium">${r.name}</td>
@@ -399,27 +533,18 @@
     function openViewModal() {
       const r = ROWS[viewIndex];
       if (!r) return;
-      const st = displayStatus(r);
-      let html = `
-        <div class="flex flex-wrap items-center gap-2 mb-2">
-          <h4 class="text-base font-semibold text-slate-900">${r.name}</h4>
-          ${statusBadge(st)}
-        </div>
-        ${viewField('所属计划', r.plan)}
-        ${viewField('责任人', r.owner + ' · 来源：' + r.src)}
-        ${viewField('起止时间', r.start + ' ~ ' + r.end)}
-        ${viewField('归属周期', r.period)}
-        ${viewField('任务概述', r.summary || '—')}
-        ${viewField('附件', r.files || '无')}
-      `;
-      if (st === '已完成') {
-        html += viewField('完成时间', r.doneAt);
-        html += viewField('情况概述', r.completeSummary || '—');
-      }
-      document.getElementById('viewContent').innerHTML = html;
+      viewTab = 'info';
+      document.querySelectorAll('.detail-tab').forEach(b => {
+        const on = b.getAttribute('data-vtab') === 'info';
+        b.className = on ? 'detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on' : 'detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600';
+      });
+      renderViewContent();
 
       let actions = `<button type="button" onclick="BMS.AI.run('F14')" class="bms-ai-page-btn border-0 text-sm px-3 py-2">AI 摘要评论</button>`;
       actions += `<button type="button" onclick="BMS.closeModal('modal-view')" class="border text-sm px-4 py-2 rounded-xl">关闭</button>`;
+      if (canTransfer(r)) {
+        actions = `<button type="button" onclick="BMS.closeModal('modal-view');openTransfer(${viewIndex})" class="border text-sm px-4 py-2 rounded-xl text-amber-700 border-amber-200 bg-amber-50">转派</button>` + actions;
+      }
       if (canEdit(r)) {
         actions = `<button type="button" onclick="BMS.closeModal('modal-view');openEdit(${viewIndex})" class="border text-sm px-4 py-2 rounded-xl">编辑</button>` + actions;
       }
@@ -428,6 +553,27 @@
       }
       document.getElementById('viewActions').innerHTML = actions;
       BMS.openModal('modal-view');
+    }
+
+    function getSelectedHelpers() {
+      return Array.from(document.querySelectorAll('.ct-helper:checked')).map(el => el.value);
+    }
+
+    function setSelectedHelpers(list) {
+      const set = new Set(list || []);
+      document.querySelectorAll('.ct-helper').forEach(el => {
+        el.checked = set.has(el.value);
+        el.disabled = el.value === document.getElementById('ctOwner').value;
+      });
+    }
+
+    function syncHelperOptions() {
+      const owner = document.getElementById('ctOwner').value;
+      document.querySelectorAll('.ct-helper').forEach(el => {
+        if (el.value === owner && el.checked) el.checked = false;
+        el.disabled = el.value === owner;
+        el.parentElement.classList.toggle('opacity-40', el.value === owner);
+      });
     }
 
     function resetForm() {
@@ -441,6 +587,18 @@
       document.getElementById('ctFileHint').textContent = '未选择文件';
       updateCount('ctSummary', 'ctSummaryCount');
       syncProxyHint();
+      setSelectedHelpers([]);
+      syncHelperOptions();
+    }
+
+    function syncOwnerFieldLock() {
+      const isEdit = formMode === 'edit';
+      const sel = document.getElementById('ctOwner');
+      sel.disabled = isEdit;
+      sel.classList.toggle('bg-slate-100', isEdit);
+      sel.classList.toggle('text-slate-500', isEdit);
+      document.getElementById('ctOwnerLockedHint').classList.toggle('hidden', !isEdit);
+      document.getElementById('ctProxyHint').classList.toggle('hidden', isEdit || sel.value === SELF);
     }
 
     function openCreateTask() {
@@ -454,6 +612,7 @@
       document.getElementById('formPeriodHint').classList.remove('hidden');
       document.getElementById('ctPeriodLabel').textContent = periodLabel(CURRENT_PERIOD);
       resetForm();
+      syncOwnerFieldLock();
       BMS.openModal('modal-form-task');
     }
 
@@ -474,8 +633,10 @@
       document.getElementById('ctPlan').value = r.plan;
       document.getElementById('ctOwner').value = r.owner;
       document.getElementById('ctFileHint').textContent = r.files ? ('已有：' + r.files) : '未选择文件';
+      setSelectedHelpers(r.helpers || []);
+      syncHelperOptions();
       updateCount('ctSummary', 'ctSummaryCount');
-      syncProxyHint();
+      syncOwnerFieldLock();
       BMS.openModal('modal-form-task');
     }
 
@@ -497,12 +658,16 @@
       if (!plan) { BMS.toast('请选择关联计划', 'error'); return; }
       if (summary.length > 500) { BMS.toast('概述不能超过 500 字', 'error'); return; }
 
+      const helpers = getSelectedHelpers().filter(h => h !== owner);
+
       if (formMode === 'create') {
         const isProxy = owner !== SELF;
         ROWS.unshift({
           id: Date.now(),
           period: CURRENT_PERIOD,
           name, summary, plan, owner,
+          creator: SELF,
+          helpers,
           src: isProxy ? '代建' : '自建',
           start, end,
           status: '进行中',
@@ -519,7 +684,7 @@
         r.end = end;
         r.summary = summary;
         r.plan = plan;
-        r.owner = owner;
+        r.helpers = helpers;
         if (fileNames) r.files = fileNames;
         if (displayStatus(r) === '已延期') r.status = '已延期';
         BMS.toast('任务已更新');
@@ -544,6 +709,55 @@
       BMS.openModal('modal-complete');
     }
 
+    function openTransfer(idx) {
+      const r = ROWS[idx];
+      if (!r || !canTransfer(r)) {
+        BMS.toast('已完成任务不可转派', 'error');
+        return;
+      }
+      transferIndex = idx;
+      document.getElementById('tfTaskName').textContent = r.name;
+      document.getElementById('tfFromOwner').textContent = r.owner;
+      document.getElementById('tfReason').value = '';
+      document.getElementById('tfNote').value = '';
+      updateCount('tfReason', 'tfReasonCount');
+      const sel = document.getElementById('tfNewOwner');
+      const candidates = DEPT_MEMBERS.filter(m => m !== r.owner);
+      sel.innerHTML = candidates.length
+        ? candidates.map(m => `<option value="${m}">${m} · 装卸队</option>`).join('')
+        : '<option value="">无可选人员</option>';
+      BMS.openModal('modal-transfer');
+    }
+
+    function saveTransfer() {
+      if (transferIndex < 0) return;
+      const r = ROWS[transferIndex];
+      const to = document.getElementById('tfNewOwner').value;
+      const reason = document.getElementById('tfReason').value.trim();
+      const note = document.getElementById('tfNote').value.trim();
+      if (!to) { BMS.toast('请选择新责任人', 'error'); return; }
+      if (to === r.owner) { BMS.toast('新责任人不能与当前相同', 'error'); return; }
+      if (reason.length < 10) { BMS.toast('转派原因至少 10 字', 'error'); return; }
+      const record = {
+        at: '2026-08-27 09:50',
+        operator: SELF,
+        from: r.owner,
+        to,
+        reason,
+        note
+      };
+      if (!TRANSFERS[r.id]) TRANSFERS[r.id] = [];
+      TRANSFERS[r.id].push(record);
+      const fromOwner = r.owner;
+      r.owner = to;
+      BMS.closeModal('modal-transfer');
+      BMS.toast('已转派给「' + to + '」；已通知新旧责任人');
+      renderCurrentView();
+      if (fromOwner === SELF && to !== SELF) {
+        BMS.toast('任务已从您的清单移出', 'warn');
+      }
+    }
+
     function saveComplete() {
       if (completeIndex < 0) return;
       const summary = document.getElementById('cpSummary').value.trim();
@@ -566,7 +780,10 @@
 
     function syncProxyHint() {
       document.getElementById('ctProxyHint').classList.toggle('hidden', document.getElementById('ctOwner').value === SELF);
+      syncHelperOptions();
     }
+
+    document.getElementById('ctOwner').addEventListener('change', syncProxyHint);
 
     document.getElementById('ctFiles').addEventListener('change', function () {
       const n = this.files ? this.files.length : 0;

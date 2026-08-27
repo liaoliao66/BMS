@@ -48,6 +48,14 @@
         <input id="taskName" class="w-full border rounded-xl px-3 py-2.5 text-sm" value="桥吊夜班流程复盘" />
         <select class="w-full border rounded-xl px-3 py-2.5 text-sm"><option>8 月装卸效率提升计划</option><option>Q3 桥吊点检专项计划</option><option>夜班协同保障计划</option></select>
         <div class="grid grid-cols-2 gap-3"><select class="border rounded-xl px-3 py-2.5 text-sm"><option>装卸队</option><option>调度中心</option><option>设备部</option></select><select class="border rounded-xl px-3 py-2.5 text-sm"><option>刘强</option><option>孙伟</option><option>马超</option></select></div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-2">配合人员 <span class="text-slate-400 font-normal">（选填，可多选）</span></label>
+          <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+            <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />孙伟</label>
+            <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />马超</label>
+            <label class="inline-flex items-center gap-2"><input type="checkbox" class="rounded border-slate-300" />王芳</label>
+          </div>
+        </div>
         <div class="flex gap-2"><button type="button" onclick="(function(){if(!document.getElementById('taskName').value.trim()){BMS.toast('请填写任务名称','error');return;}BMS.toast('任务已保存');BMS.closeModal('modal-task');})()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button><button type="button" onclick="BMS.closeModal('modal-task')" class="text-sm text-slate-500">取消</button></div>
       </div>
     </div>
