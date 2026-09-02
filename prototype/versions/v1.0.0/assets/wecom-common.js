@@ -2,7 +2,7 @@
 (function () {
   const LEDGER = [
     { id: "dashboard", name: "经营总览", href: "经营台账_总览_wecom.html" },
-    { id: "depts", name: "工作台", href: "部门工作台_wecom.html" },
+    { id: "depts", name: "任务台账", href: "部门工作台_wecom.html" },
     { id: "reports", name: "工作周报", href: "经营台账_工作汇报_wecom.html" },
   ];
 

@@ -19,6 +19,7 @@
       <div class="flex flex-wrap gap-2">
         <input class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-48" placeholder="搜索合同名称/编号" />
         <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>执行中</option><option>已完成</option><option>已终止</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部类型</option><option>综合</option><option>装卸服务</option><option>堆存</option><option>铁水联运框架</option></select>
         <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>商务部</option><option>调度中心</option></select>
       </div>
       <div class="flex gap-2">
@@ -29,14 +30,14 @@
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
-      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总数</div><div class="text-2xl font-semibold mt-1">12</div></div>
-      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总额（万元）</div><div class="text-2xl font-semibold mt-1">3,680</div></div>
-      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">累计开票（万元）</div><div class="text-2xl font-semibold mt-1 text-violet-700">2,580</div></div>
-      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">回款总额（万元）</div><div class="text-2xl font-semibold mt-1 text-emerald-600">2,145</div></div>
-      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">剩余收款（万元）</div><div class="text-2xl font-semibold mt-1 text-amber-600">1,535</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总数</div><div class="text-2xl font-semibold mt-1">13</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总额（万元）</div><div class="text-2xl font-semibold mt-1">4,540</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">累计开票（万元）</div><div class="text-2xl font-semibold mt-1 text-violet-700">2,900</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">回款总额（万元）</div><div class="text-2xl font-semibold mt-1 text-emerald-600">2,385</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">剩余收款（万元）</div><div class="text-2xl font-semibold mt-1 text-amber-600">2,155</div></div>
     </div>
 
-    <p class="text-xs text-slate-500 mb-3">客户选自 CRM。合同 → <a href="合同收款_开票记录_page.html" class="text-teal-700">开票记录</a> / <a href="合同收款_收款记录_page.html" class="text-teal-700">收款记录</a>（无强制先后顺序、无强关联）。剩余收款 = 合同总额 − 累计收款；待开票 = 合同总额 − 累计开票（不含已作废发票）。</p>
+    <p class="text-xs text-slate-500 mb-3">客户选自 <a href="CRM_客户列表_page.html" class="text-teal-700">客户管理</a>。合同类型含 CRM 合并项「铁水联运框架」。合同 → <a href="合同收款_开票记录_page.html" class="text-teal-700">开票记录</a> / <a href="合同收款_收款记录_page.html" class="text-teal-700">收款记录</a>。剩余收款 = 合同总额 − 累计收款；待开票 = 合同总额 − 累计开票（不含已作废发票）。</p>
 
     <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
       <table class="w-full text-sm">
@@ -44,6 +45,7 @@
           <tr>
             <th class="px-5 py-3 text-left">合同名称</th>
             <th class="px-4 py-3 text-left">合同编号</th>
+            <th class="px-4 py-3 text-left">合同类型</th>
             <th class="px-4 py-3 text-left">客户（CRM）</th>
             <th class="px-4 py-3 text-left">合同金额</th>
             <th class="px-4 py-3 text-left">已开票</th>
@@ -55,8 +57,21 @@
         </thead>
         <tbody>
           <tr class="border-t row-hover">
+            <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">宝钢铁矿铁水联运框架合同</button></td>
+            <td class="px-4 py-3">HT-2026-0076</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">铁水联运框架</span></td>
+            <td class="px-4 py-3">宝钢股份有限公司</td>
+            <td class="px-4 py-3">860 万</td>
+            <td class="px-4 py-3 text-violet-700">320 万</td>
+            <td class="px-4 py-3">240 万</td>
+            <td class="px-4 py-3 text-amber-600">620 万</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">执行中</span></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="openContractForm('edit')" class="hover:text-teal-700">编辑</button><a href="合同收款_开票记录_page.html?open=modal-invoice&contract=HT-2026-0076" class="text-teal-700">登记开票</a><a href="合同收款_收款记录_page.html?open=modal-receipt&contract=HT-2026-0076" class="text-teal-700">登记收款</a></td>
+          </tr>
+          <tr class="border-t row-hover">
             <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">2026 年度集装箱装卸服务合同</button></td>
             <td class="px-4 py-3">HT-2026-0012</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">装卸服务</span></td>
             <td class="px-4 py-3">远洋航运有限公司</td>
             <td class="px-4 py-3">1,200 万</td>
             <td class="px-4 py-3 text-violet-700">900 万</td>
@@ -68,6 +83,7 @@
           <tr class="border-t row-hover">
             <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">堆场仓储服务合同</button></td>
             <td class="px-4 py-3">HT-2026-0008</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">堆存</span></td>
             <td class="px-4 py-3">港联物流集团</td>
             <td class="px-4 py-3">860 万</td>
             <td class="px-4 py-3 text-violet-700">860 万</td>
@@ -79,6 +95,7 @@
           <tr class="border-t row-hover">
             <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail()">设备维保年度合同</button></td>
             <td class="px-4 py-3">HT-2026-0015</td>
+            <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">综合</span></td>
             <td class="px-4 py-3">港机装备股份</td>
             <td class="px-4 py-3">420 万</td>
             <td class="px-4 py-3 text-violet-700">280 万</td>
@@ -89,7 +106,7 @@
           </tr>
         </tbody>
       </table>
-      <div class="px-5 py-3 border-t text-sm text-slate-500">共 12 条合同</div>
+      <div class="px-5 py-3 border-t text-sm text-slate-500">共 13 条合同</div>
     </div>
 
     <!-- 新建/编辑 -->
@@ -108,27 +125,62 @@
           <div>
             <label class="block text-sm text-slate-600 mb-1">客户 <span class="text-red-500">*</span></label>
             <select id="cCustomer" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-              <option value="">请从 CRM 选择客户</option>
+              <option value="">请从客户管理选择</option>
+              <option>宝钢股份有限公司</option>
+              <option>首钢集团有限公司</option>
+              <option>中远海运散货运输有限公司</option>
               <option selected>远洋航运有限公司</option>
               <option>港联物流集团</option>
               <option>港机装备股份</option>
               <option>东海集装箱代理</option>
             </select>
-            <p class="text-xs text-slate-400 mt-1">客户主数据在 CRM 维护；此处仅选择，不可新建客户。</p>
+            <p class="text-xs text-slate-400 mt-1">客户主数据在 <a href="CRM_客户列表_page.html" class="text-teal-700">客户管理</a> 维护；此处仅选择，不可新建客户。</p>
           </div>
           <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">合同类型 <span class="text-red-500">*</span></label>
+              <select id="cType" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>综合</option>
+                <option selected>装卸服务</option>
+                <option>堆存</option>
+                <option>铁水联运框架</option>
+              </select>
+            </div>
             <div><label class="block text-sm text-slate-600 mb-1">合同金额（万元） <span class="text-red-500">*</span></label><input id="cAmount" type="number" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="1200" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
             <div><label class="block text-sm text-slate-600 mb-1">签订日期 <span class="text-red-500">*</span></label><input id="cSign" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-01-15" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">责任部门 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>商务部</option><option>调度中心</option><option>设备部</option></select></div>
+          </div>
+          <div id="billingBlock" class="hidden border border-teal-100 bg-teal-50/40 rounded-2xl p-4 space-y-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-sm font-medium text-slate-800">计费明细（铁水联运框架）</p>
+                <p class="text-xs text-slate-500 mt-0.5">装卸 / 堆存 / 联运代理等费项，可多行</p>
+              </div>
+              <button type="button" onclick="addContractBillingRow()" class="text-xs text-teal-700 hover:underline">+ 增行</button>
+            </div>
+            <table class="w-full text-xs">
+              <thead class="text-slate-500"><tr><th class="text-left py-1">费项</th><th class="text-left py-1">计价</th><th class="text-left py-1">单价</th><th class="text-left py-1">说明</th><th></th></tr></thead>
+              <tbody id="billingBody">
+                <tr class="border-t border-teal-100/80">
+                  <td class="py-1.5 pr-1"><select class="border border-slate-200 rounded-lg px-2 py-1 w-full"><option>装卸费</option><option>堆存费</option><option>铁水联运代理费</option><option>铁路衔接费</option></select></td>
+                  <td class="py-1.5 pr-1"><select class="border border-slate-200 rounded-lg px-2 py-1 w-full"><option>元/吨</option><option>元/吨/天</option><option>包干</option></select></td>
+                  <td class="py-1.5 pr-1"><input type="number" value="18.5" class="border border-slate-200 rounded-lg px-2 py-1 w-full" /></td>
+                  <td class="py-1.5 pr-1"><input class="border border-slate-200 rounded-lg px-2 py-1 w-full" placeholder="免费天数等" /></td>
+                  <td class="py-1.5"><button type="button" class="text-red-400" onclick="this.closest('tr').remove()"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div><label class="block text-sm text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label><input id="cStart" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-01-01" /></div>
             <div><label class="block text-sm text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label><input id="cEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-12-31" /></div>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <div><label class="block text-sm text-slate-600 mb-1">责任部门 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>商务部</option><option>调度中心</option><option>设备部</option></select></div>
-            <div><label class="block text-sm text-slate-600 mb-1">负责人 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>陈敏</option><option>刘强</option><option>周杰</option></select></div>
+            <div><label class="block text-sm text-slate-600 mb-1">负责人 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>陈敏</option><option>刘强</option><option>周杰</option><option>张明</option></select></div>
+            <div><label class="block text-sm text-slate-600 mb-1">合同状态 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option selected>执行中</option><option>已完成</option><option>已终止</option><option>已作废</option></select></div>
           </div>
-          <div><label class="block text-sm text-slate-600 mb-1">合同状态 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option selected>执行中</option><option>已完成</option><option>已终止</option><option>已作废</option></select></div>
           <div><label class="block text-sm text-slate-600 mb-1">合同说明</label><textarea class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-20" placeholder="可选">含桥吊装卸、堆场周转相关服务条款。</textarea></div>
         </div>
         <div class="shrink-0 px-6 py-4 border-t flex gap-3">
@@ -145,7 +197,7 @@
         <div class="flex justify-between mb-4">
           <div>
             <h3 class="text-lg font-semibold">2026 年度集装箱装卸服务合同</h3>
-            <p class="text-sm text-slate-500 mt-1">HT-2026-0012 · 远洋航运有限公司 · 执行中</p>
+            <p class="text-sm text-slate-500 mt-1">HT-2026-0012 · 装卸服务 · 远洋航运有限公司 · 执行中</p>
           </div>
           <button type="button" onclick="BMS.closeModal('modal-contract-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
         </div>
@@ -186,8 +238,22 @@
   </div>
   <script src="../assets/common.js"></script>
   <script>
+    function syncBillingVisibility() {
+      const type = document.getElementById('cType').value;
+      const block = document.getElementById('billingBlock');
+      if (block) block.classList.toggle('hidden', type !== '铁水联运框架');
+    }
+    function addContractBillingRow() {
+      const tbody = document.getElementById('billingBody');
+      if (!tbody) return;
+      const tr = document.createElement('tr');
+      tr.className = 'border-t border-teal-100/80';
+      tr.innerHTML = `<td class="py-1.5 pr-1"><select class="border border-slate-200 rounded-lg px-2 py-1 w-full"><option>装卸费</option><option>堆存费</option><option>铁水联运代理费</option><option>铁路衔接费</option></select></td><td class="py-1.5 pr-1"><select class="border border-slate-200 rounded-lg px-2 py-1 w-full"><option>元/吨</option><option>元/吨/天</option><option>包干</option></select></td><td class="py-1.5 pr-1"><input type="number" class="border border-slate-200 rounded-lg px-2 py-1 w-full" /></td><td class="py-1.5 pr-1"><input class="border border-slate-200 rounded-lg px-2 py-1 w-full" placeholder="免费天数等" /></td><td class="py-1.5"><button type="button" class="text-red-400" onclick="this.closest('tr').remove()"><i class="fa-solid fa-trash"></i></button></td>`;
+      tbody.appendChild(tr);
+    }
     function openContractForm(mode) {
       document.getElementById('contractFormTitle').textContent = mode === 'create' ? '新建合同' : '编辑合同';
+      syncBillingVisibility();
       BMS.openModal('modal-contract');
     }
     function openContractDetail() { BMS.openModal('modal-contract-detail'); }
@@ -197,11 +263,37 @@
       const cust = document.getElementById('cCustomer').value.trim();
       const amt = Number(document.getElementById('cAmount').value);
       if (!name || !code) { BMS.toast('请填写合同名称与编号', 'error'); return; }
-      if (!cust) { BMS.toast('请从 CRM 选择客户', 'error'); return; }
+      if (!cust) { BMS.toast('请从客户管理选择客户', 'error'); return; }
       if (!amt || amt <= 0) { BMS.toast('请填写有效合同金额', 'error'); return; }
       BMS.toast('合同已保存');
       BMS.closeModal('modal-contract');
     }
+    document.getElementById('cType').addEventListener('change', syncBillingVisibility);
+    (function applyQueryPrefill() {
+      const p = new URLSearchParams(location.search);
+      const type = p.get('type');
+      const customer = p.get('customer');
+      if (type) {
+        const sel = document.getElementById('cType');
+        const opt = Array.from(sel.options).find(o => o.value === type || o.textContent === type);
+        if (opt) sel.value = opt.value;
+        if (type === '铁水联运框架') {
+          document.getElementById('cName').value = '宝钢铁矿铁水联运框架合同';
+          document.getElementById('cCode').value = 'HT-2026-0076';
+          document.getElementById('cAmount').value = '860';
+        }
+      }
+      if (customer) {
+        const sel = document.getElementById('cCustomer');
+        const opt = Array.from(sel.options).find(o => o.textContent === customer || o.value === customer);
+        if (opt) { sel.value = opt.value; } else {
+          const o = document.createElement('option');
+          o.value = customer; o.textContent = customer; o.selected = true;
+          sel.appendChild(o);
+        }
+      }
+      syncBillingVisibility();
+    })();
   </script>
 </body>
 </html>

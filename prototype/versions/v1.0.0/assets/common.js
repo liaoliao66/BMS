@@ -5,7 +5,7 @@
       group: "经营台账",
       items: [
         { id: "dashboard", name: "经营总览", href: "经营台账_总览_page.html", icon: "fa-chart-line" },
-        { id: "depts", name: "工作台", href: "部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
+        { id: "depts", name: "任务台账", href: "部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
         { id: "reports", name: "工作周报", href: "经营台账_工作汇报_page.html", icon: "fa-file-lines" },
       ],
     },
@@ -28,6 +28,15 @@
       group: "专项",
       items: [
         { id: "projects", name: "专项管理", href: "专项管理_专项列表_page.html", icon: "fa-folder-open" },
+      ],
+    },
+    {
+      group: "客户",
+      items: [
+        { id: "crm-overview", name: "客户概览", href: "CRM_客户概览_page.html", icon: "fa-gauge-high" },
+        { id: "crm-groups", name: "分组管理", href: "CRM_分组管理_page.html", icon: "fa-layer-group" },
+        { id: "crm-customers", name: "客户管理", href: "CRM_客户列表_page.html", icon: "fa-building" },
+        { id: "crm-talks", name: "洽谈记录", href: "CRM_洽谈列表_page.html", icon: "fa-comments" },
       ],
     },
     {
@@ -218,6 +227,7 @@
   enhanceAllModals();
 
   window.BMS = {
+    currentUser: { name: "刘强", dept: "装卸队", title: "装卸队负责人", role: "dept_head", subordinates: ["孙伟", "马超", "王芳"] },
     toast(msg, type) {
       const el = document.createElement("div");
       el.className =

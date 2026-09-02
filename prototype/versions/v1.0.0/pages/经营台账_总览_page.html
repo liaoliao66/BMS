@@ -9,242 +9,1033 @@
   <style>
     .card-hover { transition: transform .2s, box-shadow .2s; }
     .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-    .btn-cta { background:#0f766e; }
-    .btn-cta:hover { background:#0d9488; }
-    .btn-cta:active { transform: scale(.95); }
-    .row-hover:hover { background:#f8fafc; }
     .clickable { cursor: pointer; }
     .clickable:hover { background: #f8fafc; }
-    .kpi-card { cursor: pointer; text-align: left; width: 100%; border: none; }
+    .kpi-card { cursor: pointer; text-align: left; width: 100%; border: none; background: #f8fafc; display: flex; flex-direction: column; }
+    .kpi-card-body { flex: 1; }
+    .kpi-ie-bar { margin-top: auto; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }
+    .kpi-ie-track { display: flex; height: 4px; border-radius: 9999px; overflow: hidden; background: #f1f5f9; }
+    .kpi-ie-import { background: #64748b; height: 100%; }
+    .kpi-ie-export { background: #0f766e; height: 100%; }
+    .kpi-ie-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: 10px; color: #94a3b8; }
+    .kpi-ie-foot {
+      margin-top: 4px;
+      font-size: 10px;
+      color: #94a3b8;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .kpi-card:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
     .kpi-section { border: 1px solid #e2e8f0; border-radius: 1rem; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.04); }
     .kpi-section-head { padding: 1rem 1.25rem; border-bottom: 1px solid #f1f5f9; }
-    .scope-badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #f1f5f9; color: #64748b; }
+    .scope-badge { font-size: 11px; padding: 2px 8px; border-radius: 9999px; }
+    .scope-badge-time { background: #ecfdf5; color: #0f766e; border: 1px solid #99f6e4; }
     .scope-badge-fixed { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
-    .scope-badge-filter { background: #ecfdf5; color: #0f766e; border: 1px solid #99f6e4; }
+    .chart-bar { border-radius: 4px 4px 0 0; transition: height .3s; min-height: 4px; }
+    .rev-trend-wrap { display: flex; flex-direction: column; flex: 1; min-height: 220px; }
+    .rev-trend-legend {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+      font-size: 11px; color: #64748b; margin-bottom: 0.5rem;
+    }
+    .rev-trend-legend i {
+      display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+      margin-right: 0.35rem; vertical-align: -1px;
+    }
+    .rev-trend-legend .lg-act { background: #475569; }
+    .rev-trend-legend .lg-tgt {
+      width: 12px; height: 3px; border-radius: 1px; background: #64748b;
+      border: none; vertical-align: 3px;
+    }
+    .rev-trend-svg { width: 100%; height: auto; display: block; flex: 1; }
+    .rev-bar-rev { fill: #7c3aed; }
+    .rev-bar-inv { fill: #64748b; }
+    .rev-bar-paid { fill: #0f766e; }
+    .rev-bar-recv { fill: #d97706; }
+    .rev-bar-hit .rev-bar-act { fill: #0f766e; }
+    .rev-tgt-mark { fill: #64748b; }
+    .rev-val-label { fill: #475569; font-size: 9px; font-weight: 600; }
+    .rev-pct-label { fill: #94a3b8; font-size: 8px; font-weight: 500; }
+    .rev-pct-hit { fill: #0f766e; }
+    .rev-pct-miss { fill: #b45309; }
+    .rev-axis-label { fill: #94a3b8; font-size: 10px; }
+    .cash-trend-wrap { display: flex; flex-direction: column; flex: 1; min-height: 200px; }
+    .cash-trend-legend {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;
+      font-size: 11px; color: #64748b; margin-bottom: 0.5rem;
+    }
+    .cash-trend-legend i {
+      display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+      margin-right: 0.35rem; vertical-align: -1px;
+    }
+    .cash-trend-legend .lg-inv { background: #64748b; }
+    .cash-trend-legend .lg-paid { background: #0f766e; }
+    .cash-trend-svg { width: 100%; height: auto; display: block; flex: 1; }
+    .cash-bar-inv { fill: #64748b; }
+    .cash-bar-paid { fill: #0f766e; }
+    .cash-val-label { fill: #64748b; font-size: 8px; font-weight: 500; }
+    .cash-pct-label { fill: #0f766e; font-size: 8px; font-weight: 600; }
+    .layer-hint { font-size: 11px; color: #94a3b8; margin: -0.25rem 0 0.75rem; text-align: center; }
+    .scope-badge-period {
+      background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;
+      font-size: 10px; padding: 1px 6px; border-radius: 9999px;
+    }
+    .cust-money-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .cust-money-table { width: 100%; min-width: 1280px; border-collapse: collapse; font-size: 13px; }
+    .cust-money-table th {
+      text-align: left; padding: 0.625rem 0.75rem; font-size: 11px; font-weight: 600;
+      color: #64748b; background: #f8fafc; border-bottom: 1px solid #e2e8f0; white-space: nowrap;
+      cursor: pointer; user-select: none;
+    }
+    .cust-money-table th:hover { color: #0f766e; }
+    .cust-money-table th .sort-ind { margin-left: 0.25rem; color: #cbd5e1; font-size: 10px; }
+    .cust-money-table th.active .sort-ind { color: #0f766e; }
+    .cust-money-table td {
+      padding: 0.7rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; white-space: nowrap;
+    }
+    .cust-money-table tbody tr:hover { background: #f8fafc; }
+    .cust-money-table .col-name {
+      position: sticky; left: 0; background: #fff; z-index: 1; font-weight: 600; color: #0f172a;
+      box-shadow: 4px 0 8px -6px rgba(15, 23, 42, 0.12);
+    }
+    .cust-money-table thead .col-name { background: #f8fafc; z-index: 2; }
+    .cust-money-table .num { font-variant-numeric: tabular-nums; text-align: right; }
+    .cust-money-table th.num { text-align: right; }
+    .cust-st {
+      display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 9999px; font-weight: 500;
+    }
+    .cust-st-ok { background: #ecfdf5; color: #047857; }
+    .cust-st-watch { background: #fffbeb; color: #b45309; }
+    .cust-st-urge { background: #fef2f2; color: #b91c1c; }
+    .cust-vol-empty { color: #cbd5e1; }
+    .donut-seg { transition: opacity .2s; }
+    .donut-seg:hover { opacity: .85; }
+    .line-chart-svg { width: 100%; height: auto; display: block; }
+    .line-chart-grid { stroke: #f1f5f9; stroke-width: 1; }
+    .line-chart-axis { font-size: 10px; fill: #94a3b8; }
+    .line-chart-path { fill: none; stroke-width: 2.25; stroke-linecap: round; stroke-linejoin: round; }
+    .line-chart-path-bold { stroke-width: 3.5; }
+    .line-chart-path-soft { stroke-width: 1.75; stroke-dasharray: 5 4; opacity: 0.9; }
+    .trend-legend {
+      display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin-top: 0.5rem;
+      justify-content: center; font-size: 11px; color: #64748b;
+    }
+    .trend-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .trend-legend .swatch {
+      width: 14px; height: 3px; border-radius: 2px; display: inline-block;
+    }
+    .trend-legend .swatch.bold { height: 4px; }
+    .trend-legend .swatch.dashed {
+      background: repeating-linear-gradient(90deg, currentColor 0 3px, transparent 3px 6px);
+      height: 2px;
+    }
+    .trend-axis-tag {
+      font-size: 10px; color: #94a3b8; letter-spacing: 0.02em;
+    }
+    .stack-seg { transition: opacity .2s; }
+    .stack-seg:hover { opacity: .88; }
+    .kpi-highlight { background: linear-gradient(135deg, #f0fdfa 0%, #ecfdf5 100%); border-color: #99f6e4 !important; }
+    .kpi-highlight-rev { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); border-color: #c4b5fd !important; }
+    .scope-badge-baseline { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .period-shell {
+      border: 1px solid #99f6e4;
+      border-radius: 1.25rem;
+      background: #f8fffd;
+      padding: 1rem 1rem 0.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .period-shell-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.875rem;
+      padding: 0 0.25rem;
+    }
+    .tag-baseline {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 9999px;
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      margin-left: 0.35rem;
+      vertical-align: middle;
+    }
+    .conv-tip {
+      font-size: 10px;
+      color: #0f766e;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: help;
+    }
+    .dual-rank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 0; }
+    @media (max-width: 768px) { .dual-rank-grid { grid-template-columns: 1fr; } }
+    .dual-rank-col { display: flex; flex-direction: column; min-height: 260px; }
+    .dual-rank-col + .dual-rank-col { border-left: 1px solid #f1f5f9; }
+    .cust-tag {
+      font-size: 10px;
+      padding: 0 4px;
+      border-radius: 4px;
+      margin-left: 4px;
+    }
+    .cust-tag.vol-high { background: #fff7ed; color: #c2410c; }
+    .cust-tag.rev-high { background: #ecfdf5; color: #047857; }
+    .action-list button {
+      width: 100%;
+      text-align: left;
+      padding: 0.5rem 0.625rem;
+      border-radius: 0.5rem;
+      border: 1px solid #f1f5f9;
+      background: #fff;
+      margin-top: 0.35rem;
+    }
+    .action-list button:hover { background: #f8fafc; }
+    .focus-recv-kpi {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    @media (max-width: 768px) {
+      .focus-recv-kpi { grid-template-columns: 1fr; }
+    }
+    .focus-recv-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 1rem;
+      padding: 0.875rem 1rem;
+      background: #fff;
+      text-align: left;
+      width: 100%;
+    }
+    .focus-recv-card.warn {
+      border-color: #fed7aa;
+      background: linear-gradient(135deg, #fff7ed 0%, #fff 55%);
+    }
+    .focus-recv-card.ok {
+      border-color: #bbf7d0;
+      background: linear-gradient(135deg, #f0fdf4 0%, #fff 55%);
+    }
+    .focus-recv-card .lbl { font-size: 12px; color: #64748b; }
+    .focus-recv-card .val { font-size: 1.5rem; font-weight: 600; margin-top: 0.25rem; color: #0f172a; }
+    .focus-recv-card.warn .val { color: #c2410c; }
+    .focus-recv-card.ok .val { color: #047857; }
+    .focus-recv-card .sub { font-size: 11px; color: #94a3b8; margin-top: 0.25rem; }
+    .overdue-table-wrap { overflow: auto; max-height: 320px; }
+    .overdue-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .overdue-table th {
+      text-align: left; padding: 0.55rem 0.75rem; color: #64748b; font-weight: 500;
+      background: #f8fafc; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; white-space: nowrap;
+    }
+    .overdue-table td {
+      padding: 0.55rem 0.75rem; border-bottom: 1px solid #f1f5f9; color: #334155; white-space: nowrap;
+    }
+    .overdue-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .overdue-table tr:hover td { background: #f8fafc; }
+    .overdue-days { color: #c2410c; font-weight: 600; }
+    .calib-note {
+      font-size: 11px; color: #94a3b8; margin-top: 0.75rem;
+      padding: 0.5rem 0.75rem; background: #f8fafc; border-radius: 0.75rem; border: 1px solid #f1f5f9;
+    }
+    .rank-row:hover { background: #f8fafc; }
+    .rank-bars { display: flex; flex-direction: column; gap: 0.75rem; padding: 1rem; }
+    .rank-bar-row { display: grid; grid-template-columns: 1.1rem 4.5rem 1fr auto; gap: 0.5rem; align-items: center; }
+    .rank-bar-idx { font-size: 11px; color: #94a3b8; text-align: right; }
+    .rank-bar-name { font-size: 12px; color: #334155; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-bar-track { height: 8px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; min-width: 0; }
+    .rank-bar-fill { height: 100%; border-radius: 9999px; background: #0f766e; transition: width .3s ease; }
+    .rank-bar-fill.alt { background: #64748b; }
+    .rank-bar-meta { font-size: 11px; color: #64748b; white-space: nowrap; text-align: right; min-width: 4.5rem; }
+    .rank-bar-meta strong { color: #0f172a; font-weight: 600; }
+    .rank-dim-picker {
+      display: inline-flex; gap: 0; padding: 2px; background: #f1f5f9; border-radius: 0.5rem; border: 1px solid #e2e8f0;
+    }
+    .rank-dim-btn {
+      font-size: 11px; padding: 0.2rem 0.55rem; border-radius: 0.375rem; border: none; background: transparent;
+      color: #64748b; cursor: pointer; transition: background .15s, color .15s;
+    }
+    .rank-dim-btn:hover { color: #0f766e; }
+    .rank-dim-btn.active { background: #fff; color: #0f766e; font-weight: 600; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+    .baseline-sync-label { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+    .baseline-strip .kpi-section-head { padding: 0.75rem 1.25rem; }
+    .baseline-strip .p-4 { padding: 0.65rem 1rem 0.85rem; }
+    .vol-charts-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      align-items: stretch;
+    }
+    @media (min-width: 1024px) {
+      .vol-charts-row { grid-template-columns: 2fr 1fr; }
+    }
+    .vol-trend-panel,
+    .vol-pie-panel {
+      border: 1px solid #e2e8f0;
+      border-radius: 0.875rem;
+      padding: 0.65rem 0.75rem 0.6rem;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      height: 100%;
+    }
+    .vol-chart-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.35rem 0.75rem;
+      margin-bottom: 0.35rem;
+      min-height: 1.35rem;
+    }
+    .vol-chart-head .title { font-size: 13px; font-weight: 600; color: #334155; }
+    .vol-chart-body {
+      flex: 1;
+      display: flex;
+      align-items: stretch;
+      min-height: 180px;
+    }
+    .vol-chart-svg,
+    .vol-pie-svg {
+      width: 100%;
+      height: 180px;
+      display: block;
+      flex: 1;
+    }
+    .vol-chart-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem 0.75rem;
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.2;
+    }
+    .vol-chart-legend--inline {
+      margin-top: 0;
+      justify-content: flex-end;
+    }
+    .vol-chart-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .vol-chart-legend i {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .vol-bar-loose { fill: #64748b; }
+    .vol-bar-piece { fill: #94a3b8; }
+    .vol-bar-teu { fill: #0f766e; }
+    .teu-bar-imp { fill: #64748b; }
+    .teu-bar-exp { fill: #0f766e; }
+    .vol-compose-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f766e;
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.02em;
+    }
+    .vol-kpi-grid .kpi-card { padding: 0.65rem 0.75rem; border-radius: 0.75rem; }
+    .vol-kpi-grid .kpi-vol-head { gap: 0.35rem; }
+    .vol-kpi-grid .vol-ring-meta { font-size: 8px; }
+    .rev-compose-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6d28d9;
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.02em;
+    }
+    .rev-charts-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      align-items: stretch;
+    }
+    @media (min-width: 1024px) {
+      .rev-charts-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    .rev-rank-body {
+      flex: 1;
+      min-height: 180px;
+      max-height: 180px;
+      overflow: auto;
+    }
+    .rev-rank-body .rank-bars { padding: 0.35rem 0.5rem; gap: 0.55rem; }
+    .rev-progress-panel { min-height: 0; }
+    .kpi-vol-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .vol-ring-wrap {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      line-height: 1.2;
+      margin-top: 0.1rem;
+    }
+    .vol-ring-svg { display: block; }
+    .vol-ring-meta {
+      margin-top: 2px;
+      font-size: 9px;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .vol-ring-meta strong { font-weight: 500; color: #64748b; }
+    .period-divider { display: flex; align-items: center; gap: 1rem; margin: 1.25rem 0; color: #94a3b8; font-size: 12px; }
+    .period-divider::before, .period-divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+    .date-range-picker {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .date-preset {
+      font-size: 12px;
+      padding: 0.3rem 0.65rem;
+      border-radius: 9999px;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      color: #64748b;
+      cursor: pointer;
+    }
+    .date-preset:hover { border-color: #99f6e4; color: #0f766e; }
+    .date-preset.active {
+      background: #ecfdf5;
+      border-color: #99f6e4;
+      color: #0f766e;
+      font-weight: 500;
+    }
   </style>
 </head>
 <body class="bg-slate-50" data-page="dashboard" data-title="经营总览">
   <div id="app-root"></div>
   <div id="page-main">
-    <!-- 一、合同 · 开票 · 收款（全量累计，不随时间筛选） -->
-    <section class="kpi-section mb-6">
+
+    <!-- 开累锚点 · 固定口径 · 单行 4 卡 -->
+    <section class="kpi-section mb-3 baseline-strip" aria-label="开累经营指标">
       <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
         <div>
           <div class="flex flex-wrap items-center gap-2">
-            <h2 class="font-medium text-slate-800">合同 · 开票 · 收款</h2>
-            <span class="scope-badge scope-badge-fixed">全量累计 · 不随年度/季度变化</span>
+            <h2 class="font-medium text-slate-800">开累底盘</h2>
+            <span class="scope-badge scope-badge-baseline">固定口径</span>
           </div>
-          <p class="text-xs text-slate-400 mt-1">口径为全部有效合同及开票/收款记录；点击数字查看明细</p>
+          <p class="text-xs text-slate-400 mt-1">不受期间筛选影响 · 散货/件杂拆分见吞吐量明细</p>
         </div>
-        <span class="text-xs text-slate-400">数据截止：2026-08-26</span>
+        <span class="baseline-sync-label" id="baselineSyncAt">最近同步 2026-08-26</span>
+      </div>
+      <div class="p-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 vol-kpi-grid">
+          <button type="button" onclick="openSummary('volTotalAll')" class="card-hover kpi-card border kpi-highlight">
+            <div class="kpi-card-body">
+              <div class="text-[11px] text-teal-700 font-medium">吞吐量汇总（万吨）</div>
+              <div class="mt-0.5 text-xl font-semibold text-teal-800 leading-tight" id="baseTotalTon">2,118</div>
+              <div class="mt-0.5 text-[10px] text-slate-400">散货+件杂+箱折合 · 开累</div>
+            </div>
+          </button>
+          <button type="button" onclick="openSummary('volTeuAll')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="text-[11px] text-slate-500">集装箱（TEU）</div>
+              <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="baseTeu">42,000</div>
+              <div class="mt-0.5 text-[10px] text-slate-400">折合 <span id="baseTeuConv">42</span> 万吨 · 开累</div>
+            </div>
+          </button>
+          <button type="button" onclick="openSummary('revAll')" class="card-hover kpi-card border kpi-highlight-rev">
+            <div class="kpi-card-body">
+              <div class="text-[11px] text-violet-700 font-medium">开累营收（万元）</div>
+              <div class="mt-0.5 text-xl font-semibold text-violet-800 leading-tight" id="baseRevAll">4,120</div>
+              <div class="mt-0.5 text-[10px] text-slate-400">经营登记 · 开累</div>
+            </div>
+          </button>
+          <button type="button" onclick="openSummary('receivable')" class="card-hover kpi-card border border-amber-100 bg-amber-50/40">
+            <div class="kpi-card-body">
+              <div class="text-[11px] text-amber-800 font-medium">应收总额（万元）</div>
+              <div class="mt-0.5 text-xl font-semibold text-amber-900 leading-tight" id="baseReceivable">1,975</div>
+              <div class="mt-0.5 text-[10px] text-slate-400" id="baseRecvSub">营收 − 回款 · 开累</div>
+            </div>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 期间经营壳 -->
+    <div class="period-shell">
+      <div class="period-shell-head">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="scope-badge scope-badge-time">期间经营</span>
+          <span class="text-sm font-medium text-slate-800">下方作业量 / 营收财务共用：本年 · 本季 · 本月</span>
+        </div>
+      </div>
+
+    <!-- 一、作业量（期间） -->
+    <section class="kpi-section mb-4">
+      <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="font-medium text-slate-800">作业量</h2>
+            <span class="scope-badge scope-badge-time" id="volumeScopeBadge">本年</span>
+            <span class="scope-badge scope-badge-fixed">手动录入</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">期间作业量 · 开累见上方底盘 · 吞吐量构成与集装箱进出口分模块展示</p>
+        </div>
+        <div class="date-range-picker shrink-0" title="与营收财务共用">
+          <button type="button" class="date-preset active" data-preset="year" onclick="applyDatePreset('year')">本年</button>
+          <button type="button" class="date-preset" data-preset="quarter" onclick="applyDatePreset('quarter')">本季</button>
+          <button type="button" class="date-preset" data-preset="month" onclick="applyDatePreset('month')">本月</button>
+        </div>
       </div>
       <div class="p-5">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-          <button type="button" onclick="openSummary('contractRate')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">合同回款率</div>
-            <div class="mt-1 text-2xl font-semibold">58%</div>
-            <div class="mt-1 text-xs text-slate-400">回款 2,145 / 总额 3,680 万</div>
+        <!-- 吞吐量：散货 + 件杂 + 集装箱总量 -->
+        <div class="vol-compose-label">吞吐量 · 散货 + 件杂货 + 集装箱总量</div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-2.5 vol-kpi-grid">
+          <button type="button" onclick="openSummary('volTotal')" class="card-hover kpi-card border kpi-highlight">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-teal-700 font-medium" id="kpiTotalTonLabel">吞吐量汇总（万吨）</div>
+                  <div class="mt-0.5 text-xl font-semibold text-teal-800 leading-tight" id="kpiTotalTon">552</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400 leading-snug">
+                    <span class="text-emerald-600" id="kpiTotalYoY">同比 +5.6%</span>
+                    <span class="mx-1 text-slate-300">·</span>
+                    <span id="kpiTotalMoM">环比 +1.2%</span>
+                  </div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiTotalTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarTotal"></div>
           </button>
-          <button type="button" onclick="openSummary('invoiceTotal')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">累计开票（万）</div>
-            <div class="mt-1 text-2xl font-semibold text-violet-700">2,580</div>
-            <div class="mt-1 text-xs text-slate-400">开票率 70% · 待开 1,100 万 · 不含已作废</div>
+          <button type="button" onclick="openSummary('volLoose')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-slate-500" id="kpiLooseLabel">散货（万吨·含粮食）</div>
+                  <div class="mt-0.5 text-lg font-semibold leading-tight" id="kpiLoose">486</div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiLooseTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarLoose"></div>
           </button>
-          <button type="button" onclick="openSummary('remaining')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">剩余收款（万）</div>
-            <div class="mt-1 text-2xl font-semibold text-amber-600">1,535</div>
-            <div class="mt-1 text-xs text-slate-400">待收合同 5 笔</div>
+          <button type="button" onclick="openSummary('volPiece')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-slate-500" id="kpiPieceLabel">件杂货（万吨）</div>
+                  <div class="mt-0.5 text-lg font-semibold leading-tight" id="kpiPiece">55</div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiPieceTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarPiece"></div>
+          </button>
+          <button type="button" onclick="openSummary('volTeu')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-slate-500" id="kpiTeuLabel">集装箱（TEU）</div>
+                  <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiTeu">12,000</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400">折合 <span id="kpiTeuConv">11</span> 万吨</div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiTeuTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarTeuCard"></div>
           </button>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div class="border border-slate-100 rounded-2xl p-4">
-            <div class="text-sm font-medium mb-3 text-slate-700">合同与收付明细</div>
-            <div class="space-y-1 text-sm">
-              <button type="button" onclick="openSummary('contractCount')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">合同总数</span><span class="font-medium">12</span></button>
-              <button type="button" onclick="openSummary('contractTotal')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">合同总额</span><span class="font-medium">3,680 万</span></button>
-              <button type="button" onclick="openSummary('invoiceTotal')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">累计开票</span><span class="font-medium text-violet-700">2,580 万</span></button>
-              <button type="button" onclick="openSummary('invoicePending')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">待开票</span><span class="font-medium text-amber-600">1,100 万</span></button>
-              <button type="button" onclick="openSummary('contractPaid')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">回款总额</span><span class="font-medium text-emerald-600">2,145 万</span></button>
-              <button type="button" onclick="openSummary('remaining')" class="w-full flex justify-between px-2 py-2 rounded-lg clickable"><span class="text-slate-500">剩余收款</span><span class="font-medium text-amber-600">1,535 万</span></button>
+
+        <!-- 吞吐量趋势 + 货类占比 -->
+        <div class="vol-charts-row">
+          <div class="vol-trend-panel">
+            <div class="vol-chart-head">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="title">吞吐量趋势</span>
+                <span class="text-[11px] text-slate-400 truncate">万吨</span>
+                <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline" id="trendScopeLabel">2026/01/01 – 2026/12/31</span>
+              </div>
+              <div class="vol-chart-legend vol-chart-legend--inline">
+                <span><i style="background:#64748b"></i>散货</span>
+                <span><i style="background:#94a3b8"></i>件杂货</span>
+                <span><i style="background:#0f766e"></i>集装箱</span>
+              </div>
+            </div>
+            <div class="vol-chart-body">
+              <svg id="volumeTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="吞吐量趋势柱状图"></svg>
             </div>
           </div>
-          <div class="border border-slate-100 rounded-2xl p-4">
-            <div class="text-sm font-medium mb-3 text-slate-700">开票 / 回款进度</div>
-            <div class="space-y-4 px-1">
-              <div>
-                <div class="flex justify-between text-xs text-slate-500 mb-1"><span>开票进度</span><span>70%</span></div>
-                <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-violet-600" style="width:70%"></div></div>
-              </div>
-              <div>
-                <div class="flex justify-between text-xs text-slate-500 mb-1"><span>回款进度</span><span>58%</span></div>
-                <div class="h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600" style="width:58%"></div></div>
+          <div class="vol-pie-panel">
+            <div class="vol-chart-head">
+              <span class="title">货类总量占比</span>
+              <span class="text-[11px] text-slate-400">含箱折合</span>
+            </div>
+            <div class="vol-chart-body">
+              <svg id="cargoPieChart" viewBox="0 0 300 180" preserveAspectRatio="xMinYMid meet" class="vol-pie-svg" role="img" aria-label="货类总量占比"></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- 集装箱 · 与吞吐量同布局 -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <div class="vol-compose-label mb-0">集装箱 · 总数 / 进口 / 出口</div>
+          <button type="button" onclick="openSummary('volTeuIe')" class="text-xs text-teal-700 hover:underline shrink-0">进出口明细</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2.5 mb-2.5 vol-kpi-grid">
+          <button type="button" onclick="openSummary('volTeu')" class="card-hover kpi-card border kpi-highlight">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-teal-700 font-medium">总数（TEU）</div>
+                  <div class="mt-0.5 text-lg font-semibold text-teal-800 leading-tight" id="kpiTeuModTotal">12,000</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400">折合 <span id="kpiTeuModConv">11</span> 万吨</div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiTeuModTotalTarget"></div>
               </div>
             </div>
-            <p class="text-xs text-slate-400 mt-4">本年计划收款见<a href="合同收款_收款记录_page.html" class="text-teal-700">收款记录</a>独立配置。明细分别见<a href="合同收款_合同管理_page.html" class="text-teal-700">合同管理</a>、<a href="合同收款_开票记录_page.html" class="text-teal-700">开票记录</a>。</p>
+          </button>
+          <button type="button" onclick="openSummary('volTeuIe')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-slate-500">进口（TEU）</div>
+                  <div class="mt-0.5 text-lg font-semibold leading-tight" id="kpiTeuImp">7,680</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuImpShare">64%</span></div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiTeuModImpTarget"></div>
+              </div>
+            </div>
+          </button>
+          <button type="button" onclick="openSummary('volTeuIe')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-slate-500">出口（TEU）</div>
+                  <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiTeuExp">4,320</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuExpShare">36%</span></div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiTeuModExpTarget"></div>
+              </div>
+            </div>
+          </button>
+        </div>
+        <div class="vol-trend-panel mb-2.5">
+          <div class="vol-chart-head">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="title">集装箱趋势</span>
+              <span class="text-[11px] text-slate-400 truncate">TEU</span>
+              <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline" id="teuTrendScopeLabel">2026/01/01 – 2026/12/31</span>
+            </div>
+            <div class="vol-chart-legend vol-chart-legend--inline">
+              <span><i style="background:#64748b"></i>进口</span>
+              <span><i style="background:#0f766e"></i>出口</span>
+            </div>
+          </div>
+          <div class="vol-chart-body">
+            <svg id="teuTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="集装箱趋势柱状图：进口与出口"></svg>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-400 mb-3" id="volumePeriodHint">当前范围：<strong class="text-slate-600">2026/01/01 – 2026/12/31</strong></p>
+
+        <!-- 第二排：货种排行 + 客户作业量排行 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-1">
+          <div class="border border-slate-100 rounded-2xl overflow-hidden flex flex-col min-h-[240px]">
+            <div class="px-4 py-3 border-b flex justify-between items-center bg-slate-50 shrink-0">
+              <span class="text-sm font-medium">货种排行 <span class="text-xs text-slate-400 font-normal">条形 · 降序 · 万吨</span></span>
+              <button type="button" onclick="openSummary('cargoRankBulk')" class="text-xs text-teal-700 hover:underline">全部</button>
+            </div>
+            <div class="flex-1 overflow-auto" id="cargoRankBars"></div>
+          </div>
+          <div class="border border-slate-100 rounded-2xl overflow-hidden flex flex-col min-h-[240px]">
+            <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2 bg-slate-50 shrink-0">
+              <div class="flex flex-wrap items-center gap-2 min-w-0">
+                <span class="text-sm font-medium" id="customerRankTitle">客户作业量排行</span>
+                <span class="text-xs text-slate-400 font-normal shrink-0">条形 · 降序</span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="rank-dim-picker" title="切换统计维度">
+                  <button type="button" class="rank-dim-btn active" data-dim="customer" onclick="setCustomerRankDim('customer')">客户</button>
+                  <button type="button" class="rank-dim-btn" data-dim="group" onclick="setCustomerRankDim('group')">分组</button>
+                </div>
+                <button type="button" onclick="openCustomerRankSummary()" class="text-xs text-teal-700 hover:underline">全部</button>
+              </div>
+            </div>
+            <div class="flex-1 overflow-auto" id="customerRankBars"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 二、目标 · 计划 · 任务（随年度/季度/部门筛选） -->
-    <section class="kpi-section mb-6">
+    <!-- 二、营业收入与财务 -->
+    <section class="kpi-section mb-4">
       <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
         <div>
           <div class="flex flex-wrap items-center gap-2">
-            <h2 class="font-medium text-slate-800">目标 · 计划 · 任务</h2>
-            <span class="scope-badge scope-badge-filter">随筛选变化</span>
+            <h2 class="font-medium text-slate-800">营业收入与财务</h2>
+            <span class="scope-badge scope-badge-time" id="revenueFinanceScopeBadge">本年</span>
+            <span class="scope-badge scope-badge-fixed">经营登记口径</span>
           </div>
-          <p class="text-xs text-slate-400 mt-1">切换年度、季度或部门后，本区 KPI 与链路摘要同步刷新</p>
+          <p class="text-xs text-slate-400 mt-1">期间营收结构随筛选；开票回款进度为开累 · 非财报口径</p>
         </div>
-        <div class="flex flex-wrap gap-2 items-center">
-          <select id="filterYear" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodFilterChange()"><option>2026 年</option><option>2025 年</option></select>
-          <select id="filterQuarter" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodFilterChange()"><option selected>Q3</option><option>Q2</option><option>Q4</option></select>
-          <select id="filterDept" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodFilterChange()"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option></select>
+        <div class="date-range-picker shrink-0" title="与作业量共用">
+          <button type="button" class="date-preset active" data-preset="year" onclick="applyDatePreset('year')">本年</button>
+          <button type="button" class="date-preset" data-preset="quarter" onclick="applyDatePreset('quarter')">本季</button>
+          <button type="button" class="date-preset" data-preset="month" onclick="applyDatePreset('month')">本月</button>
         </div>
       </div>
       <div class="p-5">
-        <p class="text-xs text-slate-500 mb-4" id="periodFilterHint">当前范围：<strong class="text-slate-700">2026 年 · Q3 · 全部部门</strong> · 数据截止 2026-08-26</p>
-        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
-          <button type="button" onclick="openSummary('goals')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">需关注目标</div>
-            <div class="mt-1 text-2xl font-semibold text-amber-600" id="kpiGoals">5</div>
-            <div class="mt-1 text-xs text-slate-400">正常 9 · 风险 2</div>
+        <div class="rev-compose-label">营收 · 开票 · 回款 · 应收</div>
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-2.5 vol-kpi-grid">
+          <button type="button" onclick="openSummary('revPeriod')" class="card-hover kpi-card border kpi-highlight-rev">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-violet-700 font-medium">营收（万元）</div>
+                  <div class="mt-0.5 text-xl font-semibold text-violet-800 leading-tight" id="kpiRevPeriod">986</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400 leading-snug">
+                    <span class="text-emerald-600" id="kpiRevYoY">同比 +4.8%</span>
+                    <span class="mx-1 text-slate-300">·</span>
+                    <span id="kpiRevMoM">环比 +2.1%</span>
+                  </div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiRevPeriodTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarRevPeriod"></div>
           </button>
-          <button type="button" onclick="openSummary('nodes')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">本周到期节点</div>
-            <div class="mt-1 text-2xl font-semibold" id="kpiNodes">4</div>
-            <div class="mt-1 text-xs text-amber-600">临期 2 · 逾期 1</div>
+          <button type="button" onclick="openSummary('invoicePeriod')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-slate-500">开票（万元）</div>
+                  <div class="mt-0.5 text-lg font-semibold leading-tight" id="kpiInvoicePeriod">820</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400" id="kpiInvoiceSub">期间 · 随筛选</div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiInvoicePeriodTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarInvoicePeriod"></div>
           </button>
-          <button type="button" onclick="openSummary('plans')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">进行中计划</div>
-            <div class="mt-1 text-2xl font-semibold" id="kpiPlans">22</div>
-            <div class="mt-1 text-xs text-slate-400">含专项计划 6</div>
+          <button type="button" onclick="openSummary('paidPeriod')" class="card-hover kpi-card border border-slate-100">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-slate-500">回款（万元）</div>
+                  <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiPaidPeriod">680</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400" id="kpiPaidSub">期间 · 随筛选</div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiPaidPeriodTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarPaidPeriod"></div>
           </button>
-          <button type="button" onclick="openSummary('pendingReport')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">本周待汇报</div>
-            <div class="mt-1 text-2xl font-semibold text-amber-600" id="kpiPending">31</div>
-            <div class="mt-1 text-xs text-slate-400">未填 8 人</div>
-          </button>
-          <button type="button" onclick="openSummary('risk')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">风险 / 滞后</div>
-            <div class="mt-1 text-2xl font-semibold text-red-500" id="kpiRisk">7</div>
-            <div class="mt-1 text-xs text-slate-400">任务 5 · 目标 2</div>
-          </button>
-          <button type="button" onclick="openSummary('supervise')" class="bg-slate-50 rounded-2xl p-4 card-hover kpi-card border border-slate-100">
-            <div class="text-xs text-slate-500">督办中</div>
-            <div class="mt-1 text-2xl font-semibold" id="kpiSupervise">9</div>
-            <div class="mt-1 text-xs text-slate-400">督办下达任务</div>
+          <button type="button" onclick="openSummary('receivable')" class="card-hover kpi-card border border-amber-100 bg-amber-50/40">
+            <div class="kpi-card-body">
+              <div class="kpi-vol-head">
+                <div class="flex-1 min-w-0">
+                  <div class="text-[11px] text-amber-800 font-medium">应收（万元）</div>
+                  <div class="mt-0.5 text-lg font-semibold text-amber-900 leading-tight" id="kpiReceivable">1,975</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400" id="kpiReceivableSub">开累 · 营收−回款</div>
+                </div>
+                <div class="vol-ring-wrap" id="kpiReceivableTarget"></div>
+              </div>
+            </div>
+            <div class="kpi-ie-bar" id="ieBarReceivable"></div>
           </button>
         </div>
 
-        <!-- 目标—计划—任务链路 -->
-        <div class="bg-slate-50 border border-slate-100 rounded-2xl overflow-hidden mb-5">
-          <div class="px-5 py-3 border-b border-slate-100 flex justify-between items-center bg-white">
-            <h3 class="text-sm font-medium">目标 · 计划 · 任务链路</h3>
-            <span class="text-xs text-slate-400" id="funnelScopeLabel">2026-Q3 汇总</span>
+        <!-- 营收趋势 + 货类占比 -->
+        <div class="vol-charts-row mb-2.5">
+          <div class="vol-trend-panel">
+            <div class="vol-chart-head">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="title">营收趋势</span>
+                <span class="text-[11px] text-slate-400 truncate">万元</span>
+                <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline" id="revTrendScopeLabel">2026/01/01 – 2026/12/31</span>
+              </div>
+              <div class="vol-chart-legend vol-chart-legend--inline">
+                <span><i style="background:#7c3aed"></i>营收</span>
+                <span><i style="background:#d97706"></i>应收</span>
+              </div>
+            </div>
+            <div class="vol-chart-body">
+              <svg id="revenueTrendChart" viewBox="0 0 640 180" preserveAspectRatio="xMinYMid meet" class="vol-chart-svg" role="img" aria-label="营收趋势柱状图：营收、应收"></svg>
+            </div>
           </div>
-          <div class="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-white border border-slate-100 rounded-2xl p-4">
-              <div class="text-sm font-medium mb-3">目标</div>
-              <div class="space-y-1 text-sm">
-                <button type="button" onclick="openSummary('goalYear')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">年目标</span><span id="funnelGoalYear">3 · 正常 2 · 需关注 1</span></button>
-                <button type="button" onclick="openSummary('goalQuarter')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">季目标</span><span id="funnelGoalQuarter">5 · 正常 3 · 需关注 2</span></button>
-                <button type="button" onclick="openSummary('goalMonth')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">月目标</span><span id="funnelGoalMonth">6 · 正常 4 · 需关注 2</span></button>
+          <div class="vol-pie-panel">
+            <div class="vol-chart-head">
+              <span class="title">货类营收占比</span>
+              <button type="button" onclick="openSummary('revStruct')" class="text-[11px] text-teal-700 hover:underline shrink-0">明细</button>
+            </div>
+            <div class="vol-chart-body">
+              <svg id="revCargoPieChart" viewBox="0 0 300 180" preserveAspectRatio="xMinYMid meet" class="vol-pie-svg" role="img" aria-label="货类营收占比"></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="period-divider"><span>开票 · 回款</span></div>
+        <p class="layer-hint">开累开票回款闭环 · 未回款催收见下方「回款重点关注」</p>
+
+        <div class="vol-charts-row mb-2.5">
+          <div class="vol-trend-panel">
+            <div class="vol-chart-head">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="title">月度开票 / 回款趋势</span>
+                <span class="text-[11px] text-slate-400">万元</span>
+                <span class="tag-baseline text-[10px] shrink-0">开累 · 当年</span>
+              </div>
+              <div class="vol-chart-legend vol-chart-legend--inline">
+                <span><i style="background:#64748b"></i>开票</span>
+                <span><i style="background:#0f766e"></i>回款</span>
               </div>
             </div>
-            <div class="bg-white border border-slate-100 rounded-2xl p-4">
-              <div class="text-sm font-medium mb-3">计划</div>
-              <div class="space-y-1 text-sm">
-                <button type="button" onclick="openSummary('planActive')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">进行中</span><span id="funnelPlanActive">22</span></button>
-                <button type="button" onclick="openSummary('planSpecial')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">专项计划</span><span id="funnelPlanSpecial">6</span></button>
-                <button type="button" onclick="openSummary('planNodesDue')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">本月节点到期</span><span class="text-amber-600" id="funnelPlanNodes">5</span></button>
+            <div class="vol-chart-body">
+              <svg id="cashTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="月度开票与回款并排双柱图"></svg>
+            </div>
+          </div>
+          <div class="vol-pie-panel rev-progress-panel">
+            <div class="vol-chart-head">
+              <span class="title">开票 / 回款达成</span>
+              <span class="tag-baseline text-[10px]">开累</span>
+            </div>
+            <div class="px-1 pb-1 flex-1 flex flex-col justify-between">
+              <div class="space-y-3">
+                <div>
+                  <div class="flex justify-between text-[10px] text-slate-500 mb-1"><span>开票进度</span><span id="progressInvoicePct">63%</span></div>
+                  <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-slate-500" id="progressInvoiceBar" style="width:63%"></div></div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[10px] text-slate-500 mb-1"><span>回款进度</span><span id="progressPaidPct">52%</span></div>
+                  <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-teal-600" id="progressPaidBar" style="width:52%"></div></div>
+                </div>
+              </div>
+              <div class="mt-3 space-y-0.5 text-[11px]">
+                <button type="button" onclick="openSummary('invoicePending')" class="w-full flex justify-between px-1 py-1.5 rounded-lg clickable"><span class="text-slate-500">待开票</span><span class="font-medium text-amber-600" id="kpiPendingInvoice">1,540 万</span></button>
+                <button type="button" onclick="openSummary('remaining')" class="w-full flex justify-between px-1 py-1.5 rounded-lg clickable"><span class="text-slate-500">待回款合计</span><span class="font-medium text-amber-600" id="kpiRemaining">1,975 万</span></button>
               </div>
             </div>
-            <div class="bg-white border border-slate-100 rounded-2xl p-4">
-              <div class="text-sm font-medium mb-3">任务</div>
-              <div class="space-y-1 text-sm">
-                <button type="button" onclick="openSummary('taskActive')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">进行中</span><span id="funnelTaskActive">86</span></button>
-                <button type="button" onclick="openSummary('taskSupervise')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">督办下达</span><span id="funnelTaskSupervise">9</span></button>
-                <button type="button" onclick="openSummary('taskDelayed')" class="w-full flex justify-between px-2 py-1.5 rounded-lg clickable"><span class="text-slate-500">已延期</span><span class="text-red-500" id="funnelTaskDelayed">5</span></button>
+          </div>
+        </div>
+
+        <!-- 客户 / 货种 -->
+        <div class="rev-charts-row">
+          <div class="vol-pie-panel">
+            <div class="vol-chart-head">
+              <span class="title" id="revCustomerRankTitle">客户营收排行榜</span>
+              <div class="flex items-center gap-1.5 shrink-0">
+                <div class="rank-dim-picker" title="切换统计维度">
+                  <button type="button" class="rank-dim-btn rev-rank-dim-btn active" data-dim="customer" onclick="setRevCustomerRankDim('customer')">客户</button>
+                  <button type="button" class="rank-dim-btn rev-rank-dim-btn" data-dim="group" onclick="setRevCustomerRankDim('group')">分组</button>
+                </div>
+                <button type="button" onclick="openRevCustomerRankSummary()" class="text-[11px] text-teal-700 hover:underline shrink-0">全部</button>
               </div>
             </div>
+            <div class="rev-rank-body" id="revCustomerRankCompactBars"></div>
+          </div>
+          <div class="vol-pie-panel">
+            <div class="vol-chart-head">
+              <span class="title">货种营收排行</span>
+              <button type="button" onclick="openSummary('revCargoRank')" class="text-[11px] text-teal-700 hover:underline shrink-0">全部</button>
+            </div>
+            <div class="rev-rank-body" id="revCargoRankBars"></div>
           </div>
         </div>
       </div>
     </section>
+    </div><!-- /.period-shell -->
 
-    <!-- 部门达成 + 重点专项（随筛选） -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-      <div class="lg:col-span-2 bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
-        <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">各部门达成一览</h2><span class="text-xs text-slate-400" id="deptScopeLabel">2026-Q3 · 全部部门</span></div>
-        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <button type="button" onclick="openDept('装卸队','正常 1 · 需关注 1 · 风险 1','2','需关注')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
-            <div class="flex justify-between"><div class="font-medium">装卸队</div><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span></div>
-            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">1</span> · 需关注 <span class="font-medium text-amber-600">1</span> · 风险 <span class="font-medium text-red-500">1</span></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 3 · 计划 6</span><span>滞后 2</span></div>
+    <!-- 回款重点关注：钱没收回来 -->
+    <section class="kpi-section mb-4" aria-label="回款重点关注">
+      <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="font-medium text-slate-800">回款重点关注</h2>
+            <span class="scope-badge scope-badge-fixed">开累</span>
+            <span class="scope-badge" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa">钱没收回来</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">聚焦超期与未回款 · 超期按<strong class="text-slate-600">合同约定付款条件</strong>判定 · 账龄为欠款天数辅助视图</p>
+        </div>
+        <button type="button" onclick="openSummary('receivable')" class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 bg-white">应收明细</button>
+      </div>
+      <div class="p-5">
+        <div class="focus-recv-kpi">
+          <button type="button" class="focus-recv-card warn" onclick="openSummary('overdueRecv')">
+            <div class="lbl">超期应收</div>
+            <div class="val" id="kpiOverdueRecv">1,185</div>
+            <div class="sub">万元 · 占应收 60% · 合同应付日已过</div>
           </button>
-          <button type="button" onclick="openDept('调度中心','正常 2 · 需关注 0 · 风险 0','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
-            <div class="flex justify-between"><div class="font-medium">调度中心</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
-            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">2</span> · 需关注 <span class="font-medium">0</span> · 风险 <span class="font-medium">0</span></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 2 · 计划 4</span><span>滞后 0</span></div>
+          <button type="button" class="focus-recv-card ok" onclick="openSummary('notOverdueRecv')">
+            <div class="lbl">未超期应收</div>
+            <div class="val" id="kpiNotOverdueRecv">790</div>
+            <div class="sub">万元 · 占应收 40% · 应付日未到</div>
           </button>
-          <button type="button" onclick="openDept('设备部','正常 2 · 需关注 0 · 风险 0','1','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
-            <div class="flex justify-between"><div class="font-medium">设备部</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
-            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">2</span> · 需关注 <span class="font-medium">0</span> · 风险 <span class="font-medium">0</span></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 2 · 计划 5</span><span>滞后 1</span></div>
-          </button>
-          <button type="button" onclick="openDept('安全环保部','正常 2 · 需关注 0 · 风险 0','0','正常')" class="text-left border border-slate-100 rounded-2xl p-4 card-hover">
-            <div class="flex justify-between"><div class="font-medium">安全环保部</div><span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span></div>
-            <div class="mt-3 text-sm text-slate-600">正常 <span class="font-medium">2</span> · 需关注 <span class="font-medium">0</span> · 风险 <span class="font-medium">0</span></div>
-            <div class="mt-2 flex justify-between text-xs text-slate-500"><span>目标 2 · 计划 3</span><span>滞后 0</span></div>
+          <button type="button" class="focus-recv-card" onclick="openSummary('receivable')">
+            <div class="lbl">应收总额</div>
+            <div class="val" id="kpiRecvFocusTotal">1,975</div>
+            <div class="sub">万元 · 营收 − 回款 · 超期 + 未超期</div>
           </button>
         </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
-        <div class="px-5 py-4 border-b flex justify-between"><h2 class="font-medium">重点专项</h2><span class="text-xs text-slate-400">点击查看</span></div>
-        <ul class="divide-y">
-          <li><button type="button" onclick="openSpecial('桥吊效能提升专项')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">桥吊效能提升专项</div><div class="text-xs text-slate-500 mt-1">装卸队 · 2 个计划 · 滞后 2</div></div><span class="text-sm text-amber-600">节点 2/4</span></button></li>
-          <li><button type="button" onclick="openSpecial('堆场周转优化专项')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">堆场周转优化专项</div><div class="text-xs text-slate-500 mt-1">调度中心 · 1 个计划</div></div><span class="text-sm text-teal-700">节点 3/4</span></button></li>
-          <li><button type="button" onclick="openSpecial('设备点检达标专项')" class="w-full text-left flex justify-between px-5 py-4 hover:bg-slate-50"><div><div class="text-sm font-medium">设备点检达标专项</div><div class="text-xs text-slate-500 mt-1">设备部 · 1 个计划</div></div><span class="text-sm text-teal-700">节点 4/5</span></button></li>
-        </ul>
-      </div>
-    </div>
 
-    <!-- 风险与待办 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-2">
-      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
-        <div class="px-5 py-4 border-b flex justify-between">
-          <h2 class="font-medium">风险 / 滞后任务</h2>
-          <button type="button" onclick="openSummary('risk')" class="text-xs text-teal-700 hover:underline">查看全部</button>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+          <div class="border border-slate-100 rounded-2xl p-4 flex flex-col">
+            <div class="flex justify-between items-center gap-2 mb-3">
+              <div class="text-sm font-medium text-slate-700">应收账龄分布</div>
+              <span class="tag-baseline">开累 · 欠款天数</span>
+            </div>
+            <div class="space-y-3 flex-1" id="agingBars">
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-slate-500">0–30 天</span><span>530 万 · 27%</span></div><div class="h-2 bg-slate-100 rounded-full"><div class="h-full bg-slate-400 rounded-full" style="width:27%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-slate-500">31–90 天</span><span>750 万 · 38%</span></div><div class="h-2 bg-slate-100 rounded-full"><div class="h-full bg-slate-500 rounded-full" style="width:38%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-slate-500">91–180 天</span><span>495 万 · 25%</span></div><div class="h-2 bg-slate-100 rounded-full"><div class="h-full bg-amber-600 rounded-full" style="width:25%"></div></div></div>
+              <div><div class="flex justify-between text-xs mb-1"><span class="text-slate-500">180 天以上</span><span>200 万 · 10%</span></div><div class="h-2 bg-slate-100 rounded-full"><div class="h-full bg-orange-700 rounded-full" style="width:10%"></div></div></div>
+            </div>
+            <button type="button" onclick="openSummary('receivable')" class="mt-3 text-xs text-teal-700 self-start">查看应收明细</button>
+          </div>
+          <div class="border border-slate-100 rounded-2xl overflow-hidden flex flex-col min-h-[260px]">
+            <div class="px-4 py-3 border-b flex justify-between items-center bg-slate-50 shrink-0">
+              <span class="text-sm font-medium">客户应收压力 <span class="text-xs text-slate-400 font-normal">欠款降序</span></span>
+              <div class="flex items-center gap-2">
+                <span class="tag-baseline">开累</span>
+                <button type="button" onclick="openSummary('recvCustomerRank')" class="text-xs text-teal-700">全部</button>
+              </div>
+            </div>
+            <div class="flex-1 overflow-auto" id="recvCustomerRankBars"></div>
+          </div>
+          <div class="border border-slate-100 rounded-2xl overflow-hidden flex flex-col">
+            <div class="px-4 py-3 border-b flex justify-between items-center bg-slate-50 shrink-0">
+              <span class="text-sm font-medium">催收优先 Top3</span>
+              <span class="tag-baseline">开累</span>
+            </div>
+            <div class="action-list text-sm flex-1 p-2" id="recvActionList">
+              <button type="button" onclick="openSummary('overdueCustomers')"><div class="flex justify-between"><span>中谷物流 · 粮食装卸</span><span class="text-amber-600 font-medium">340 万</span></div><div class="text-xs text-slate-400 mt-0.5">超期 42 天 · 月结 30 天</div></button>
+              <button type="button" onclick="openSummary('overdueCustomers')"><div class="flex justify-between"><span>远洋货运 · 堆场仓储</span><span class="text-amber-600 font-medium">310 万</span></div><div class="text-xs text-slate-400 mt-0.5">超期 56 天 · 货到后 45 天</div></button>
+              <button type="button" onclick="openSummary('overdueCustomers')"><div class="flex justify-between"><span>港机粮贸 · 设备维保</span><span class="text-red-500 font-medium">220 万</span></div><div class="text-xs text-slate-400 mt-0.5">超期 148 天 · 季度结算</div></button>
+            </div>
+          </div>
         </div>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-5 py-2.5">任务</th><th class="text-left px-4 py-2.5">部门</th><th class="text-left px-4 py-2.5">状态</th><th class="text-left px-5 py-2.5">操作</th></tr></thead>
-          <tbody>
-            <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" onclick="openSummary('riskTask1')" class="text-teal-700 hover:underline text-left">岸桥对位训练</button></td><td class="px-4 py-3">装卸队</td><td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td><td class="px-5 py-3"><button type="button" onclick="openSummary('riskTask1')" class="text-teal-700">详情</button></td></tr>
-            <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" onclick="openSummary('riskTask2')" class="text-teal-700 hover:underline text-left">堆场周转异常复盘纪要</button></td><td class="px-4 py-3">调度中心</td><td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td><td class="px-5 py-3"><button type="button" onclick="openSummary('riskTask2')" class="text-teal-700">详情</button></td></tr>
-            <tr class="border-t row-hover"><td class="px-5 py-3"><button type="button" onclick="openSummary('riskTask3')" class="text-teal-700 hover:underline text-left">桥吊夜班流程复盘</button></td><td class="px-4 py-3">装卸队</td><td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span></td><td class="px-5 py-3"><button type="button" onclick="openSummary('riskTask3')" class="text-teal-700">详情</button></td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,.05)] overflow-hidden">
-        <div class="px-5 py-4 border-b flex justify-between">
-          <h2 class="font-medium">待汇报人员（本周）</h2>
-          <button type="button" onclick="openSummary('pendingReport')" class="text-xs text-teal-700 hover:underline">查看全部</button>
-        </div>
-        <table class="w-full text-sm">
-          <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-5 py-2.5">人员</th><th class="text-left px-4 py-2.5">部门</th><th class="text-left px-4 py-2.5">待报任务</th><th class="text-left px-5 py-2.5">操作</th></tr></thead>
-          <tbody>
-            <tr class="border-t row-hover"><td class="px-5 py-3">刘强</td><td class="px-4 py-3">装卸队</td><td class="px-4 py-3">2</td><td class="px-5 py-3"><button type="button" onclick="openSummary('pendingPerson1')" class="text-teal-700">详情</button></td></tr>
-            <tr class="border-t row-hover"><td class="px-5 py-3">陈敏</td><td class="px-4 py-3">调度中心</td><td class="px-4 py-3">1</td><td class="px-5 py-3"><button type="button" onclick="openSummary('pendingPerson2')" class="text-teal-700">详情</button></td></tr>
-            <tr class="border-t row-hover"><td class="px-5 py-3">周杰</td><td class="px-4 py-3">设备部</td><td class="px-4 py-3">3</td><td class="px-5 py-3"><button type="button" onclick="openSummary('pendingPerson3')" class="text-teal-700">详情</button></td></tr>
-          </tbody>
-        </table>
-        <div class="px-5 py-3 border-t text-xs text-slate-400">共 8 人未交本周汇报 · 点击数字或「查看全部」打开明细</div>
-      </div>
-    </div>
 
-    <!-- 汇总明细弹窗（通用） -->
+        <div class="border border-orange-100 rounded-2xl overflow-hidden">
+          <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2" style="background:linear-gradient(90deg,#fff7ed 0%,#fff 60%)">
+            <div>
+              <div class="text-sm font-medium text-slate-800">超期客户 · 合同付款条件</div>
+              <div class="text-xs text-slate-400 mt-0.5">相对约定应付日逾期未回 · 未约定付款条件不列入本表</div>
+            </div>
+            <button type="button" onclick="openSummary('overdueCustomers')" class="text-xs text-teal-700">全部超期明细</button>
+          </div>
+          <div class="overdue-table-wrap">
+            <table class="overdue-table">
+              <thead>
+                <tr>
+                  <th>客户</th>
+                  <th>合同 / 业务</th>
+                  <th>约定付款条件</th>
+                  <th>应付日</th>
+                  <th class="num">超期天数</th>
+                  <th class="num">超期金额（万）</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>中谷物流</td>
+                  <td>粮食装卸 · HT-2026-0015</td>
+                  <td>月结 30 天</td>
+                  <td>2026-07-15</td>
+                  <td class="num overdue-days">42</td>
+                  <td class="num font-medium text-amber-700">340</td>
+                </tr>
+                <tr>
+                  <td>远洋货运</td>
+                  <td>堆场仓储 · HT-2026-0018</td>
+                  <td>货到后 45 天</td>
+                  <td>2026-07-01</td>
+                  <td class="num overdue-days">56</td>
+                  <td class="num font-medium text-amber-700">310</td>
+                </tr>
+                <tr>
+                  <td>港机粮贸</td>
+                  <td>设备维保 · HT-2025-0088</td>
+                  <td>季度结算（季末）</td>
+                  <td>2026-03-31</td>
+                  <td class="num overdue-days">148</td>
+                  <td class="num font-medium text-red-600">220</td>
+                </tr>
+                <tr>
+                  <td>中粮储运</td>
+                  <td>粮食装卸 · HT-2026-0012</td>
+                  <td>月结 60 天</td>
+                  <td>2026-06-30</td>
+                  <td class="num overdue-days">57</td>
+                  <td class="num font-medium text-amber-700">180</td>
+                </tr>
+                <tr>
+                  <td>港联贸易</td>
+                  <td>件杂货 · HT-2026-0021</td>
+                  <td>月结 30 天</td>
+                  <td>2026-07-20</td>
+                  <td class="num overdue-days">37</td>
+                  <td class="num font-medium text-amber-700">130</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="calib-note mx-4 mb-4">口径说明：超期 = 相对合同约定应付日逾期；账龄 = 欠款天数分层。二者辅助视图，数值可能不完全一一对应。数据截止 2026-08-26。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 客户明细（执行管理之上） -->
+    <section class="kpi-section mb-4">
+      <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="font-medium text-slate-800">客户明细</h2>
+            <span class="scope-badge scope-badge-period">作业量·营收随筛选</span>
+            <span class="scope-badge scope-badge-fixed">开票/回款/应收为开累 · 超期=合同应付日</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">一行一客户 · 作业量按散货/件杂/集装箱分列 · 默认按营收降序 · 点击表头切换排序</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400" id="custMoneyScopeLabel">2026/01/01 – 2026/12/31</span>
+          <a href="部门工作台_部门工作台_page.html" class="text-sm px-3 py-1.5 rounded-xl text-white shrink-0" style="background:#0f766e">任务台账</a>
+        </div>
+      </div>
+      <div class="p-0">
+        <div class="cust-money-wrap">
+          <table class="cust-money-table" id="custMoneyTable">
+            <thead>
+              <tr>
+                <th class="col-name" data-sort="name" onclick="sortCustomerMoney('name')">客户<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="volLoose" onclick="sortCustomerMoney('volLoose')">散货（万吨）<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="volPiece" onclick="sortCustomerMoney('volPiece')">件杂货（万吨）<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="volTeu" onclick="sortCustomerMoney('volTeu')">集装箱（TEU）<span class="sort-ind">↕</span></th>
+                <th class="num active" data-sort="rev" onclick="sortCustomerMoney('rev')">营收（万）<span class="sort-ind">↓</span></th>
+                <th class="num" data-sort="invoice" onclick="sortCustomerMoney('invoice')">开票（万）<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="paid" onclick="sortCustomerMoney('paid')">回款（万）<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="recv" onclick="sortCustomerMoney('recv')">应收（万）<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="paidRate" onclick="sortCustomerMoney('paidRate')">回款率<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="overdueAmt" onclick="sortCustomerMoney('overdueAmt')">超期金额（万）<span class="sort-ind">↕</span></th>
+                <th class="num" data-sort="overdueDays" onclick="sortCustomerMoney('overdueDays')">超期天数<span class="sort-ind">↕</span></th>
+              </tr>
+            </thead>
+            <tbody id="custMoneyBody"></tbody>
+          </table>
+        </div>
+        <div class="px-4 py-2.5 border-t bg-slate-50 text-xs text-slate-400 flex flex-wrap justify-between gap-2">
+          <span id="custMoneyFoot">共 — 家客户</span>
+          <span>作业量：散货/件杂单位为万吨 · 集装箱为 TEU · 超期天数按合同约定应付日</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 明细弹窗 -->
     <div id="modal-summary" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-summary')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -256,7 +1047,6 @@
           <button type="button" onclick="BMS.closeModal('modal-summary')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-5">
-          <div id="summaryExtra" class="hidden grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm"></div>
           <div class="border border-slate-100 rounded-2xl overflow-hidden">
             <table class="w-full text-sm">
               <thead class="bg-slate-50 text-slate-500" id="summaryThead"></thead>
@@ -271,272 +1061,1106 @@
       </div>
     </div>
 
-    <!-- 部门详情弹窗 -->
     <div id="modal-dept" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-dept')"></div>
-      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6">
         <div class="flex justify-between mb-4">
-          <div>
-            <h3 class="text-lg font-semibold" id="deptTitle">装卸队 · 经营详情</h3>
-            <p class="text-sm text-slate-500 mt-1" id="deptSub">健康分布 正常 1 · 需关注 1 · 风险 1 · 滞后任务 2</p>
-          </div>
+          <h3 class="text-lg font-semibold" id="deptTitle">部门详情</h3>
           <button type="button" onclick="BMS.closeModal('modal-dept')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
         </div>
-        <div class="grid grid-cols-3 gap-3 mb-4 text-sm">
-          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">目标</div><div class="mt-1 font-medium">3</div></div>
-          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">计划</div><div class="mt-1 font-medium">6</div></div>
-          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">任务</div><div class="mt-1 font-medium">12</div></div>
-        </div>
-        <h4 class="text-sm font-medium mb-2">重点目标</h4>
-        <ul class="text-sm space-y-2 mb-4">
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>桥吊作业效率提升 15%</span><span class="text-amber-600">需关注 · 12% / 15%</span></li>
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>班组准点出勤率</span><span class="text-emerald-600">正常 · 91% / 90%</span></li>
-        </ul>
-        <h4 class="text-sm font-medium mb-2">关联计划 / 滞后任务</h4>
-        <ul class="text-sm space-y-2 mb-5">
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>8 月装卸效率提升计划</span><span class="text-amber-600">节点 2/4 · 滞后 1</span></li>
-          <li class="border rounded-xl px-3 py-2 flex justify-between"><span>岸桥对位训练（已延期）</span><span class="text-red-500">未更新</span></li>
-        </ul>
-        <button type="button" onclick="BMS.closeModal('modal-dept')" class="text-sm text-slate-500 px-2">关闭</button>
-      </div>
-    </div>
-
-    <!-- 专项详情弹窗 -->
-    <div id="modal-special" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special')"></div>
-      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-        <div class="flex justify-between mb-4">
-          <div>
-            <h3 class="text-lg font-semibold" id="specialTitle">桥吊效能提升专项</h3>
-            <p class="text-sm text-slate-500 mt-1" id="specialSub">装卸队 · 负责人 刘强 · 节点 2/4 · 滞后 2</p>
-          </div>
-          <button type="button" onclick="BMS.closeModal('modal-special')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
-        </div>
-        <h4 class="text-sm font-medium mb-2">关联计划</h4>
-        <ul class="text-sm space-y-2 mb-4" id="specialPlans"></ul>
-        <h4 class="text-sm font-medium mb-2">关键任务</h4>
-        <ul class="text-sm space-y-2 mb-5" id="specialTasks"></ul>
-        <button type="button" onclick="BMS.closeModal('modal-special')" class="text-sm text-slate-500 px-2">关闭</button>
+        <p class="text-sm text-slate-500 mb-4" id="deptSub">目标/计划/任务明细请在任务台账查看</p>
+        <a href="部门工作台_部门工作台_page.html" class="inline-block text-sm px-4 py-2 rounded-xl text-white" style="background:#0f766e">进入任务台账</a>
+        <button type="button" onclick="BMS.closeModal('modal-dept')" class="ml-2 text-sm text-slate-500 px-3">关闭</button>
       </div>
     </div>
   </div>
+
   <script src="../assets/common.js"></script>
   <script>
-    const SUMMARY_DATA = {
-      goals: {
-        title: '需关注目标明细',
-        sub: '2026-Q3 · 共 5 项需关注（含风险 2 项）',
-        cols: ['目标名称', '周期', '部门', '健康状态', '量化达成'],
-        rows: [
-          ['桥吊作业效率提升 15%', '季', '装卸队', '需关注', '+12% / +15%'],
-          ['8 月桥吊效率月目标', '月', '装卸队', '需关注', '+3% / +5%'],
-          ['Q3 桥吊完好率', '季', '设备部', '风险', '97% / 98%'],
-          ['堆场周转优化', '月', '调度中心', '需关注', '82 / 100'],
-          ['设备点检达标', '季', '设备部', '风险', '节点 2/5 滞后']
-        ],
-        note: '健康状态由量化达成、节点与任务填报综合计算。'
-      },
-      nodes: {
-        title: '本周到期关键节点',
-        sub: '自然周 W34 · 共 4 个节点（临期 2 · 逾期 1）',
-        cols: ['计划', '节点名称', '节点日期', '状态', '负责人'],
-        rows: [
-          ['8 月装卸效率提升计划', '效率中期复核', '2026-08-25', '已逾期', '刘强'],
-          ['堆场周转优化计划', '周转复盘', '2026-08-28', '临期', '陈敏'],
-          ['Q3 桥吊点检专项计划', '季度点检节点', '2026-08-29', '临期', '周杰'],
-          ['设备点检达标专项', '点检报告归档', '2026-08-30', '未开始', '李芳']
-        ]
-      },
-      plans: {
-        title: '进行中计划明细',
-        sub: '本季共 22 条进行中计划（含专项 6 条）',
-        cols: ['计划名称', '关联目标', '节点达成', '任务概况', '负责人'],
-        rows: [
-          ['8 月装卸效率提升计划', '8 月桥吊效率月目标', '2/4 按期', '3完成/1滞后', '刘强'],
-          ['Q3 桥吊点检专项计划', '桥吊效率提升 15%', '2/4 按期', '2进行/0滞后', '周杰'],
-          ['堆场周转优化计划', '8 月堆场周转月目标', '3/4 按期', '4完成/1滞后', '陈敏']
-        ],
-        note: '列表展示前 3 条，完整清单可在计划管理中查看。'
-      },
-      pendingReport: {
-        title: '本周待汇报人员',
-        sub: 'W34 · 应填 39 人 · 已填 31 人 · 未填 8 人',
-        cols: ['人员', '部门', '待报任务数', '最近截止'],
-        rows: [
-          ['刘强', '装卸队', '2', '2026-08-24'],
-          ['陈敏', '调度中心', '1', '2026-08-24'],
-          ['周杰', '设备部', '3', '2026-08-24'],
-          ['马超', '装卸队', '1', '2026-08-24'],
-          ['王磊', '调度中心', '1', '2026-08-24']
-        ],
-        note: '共 8 人未交本周汇报。'
-      },
-      risk: {
-        title: '风险 / 滞后明细',
-        sub: '共 7 项（任务 5 · 目标 2）',
-        cols: ['对象', '类型', '部门', '状态', '说明'],
-        rows: [
-          ['岸桥对位训练', '任务', '装卸队', '已延期', '超期 3 天未更新'],
-          ['堆场周转异常复盘纪要', '任务', '调度中心', '已延期', '纪要未提交'],
-          ['桥吊夜班流程复盘', '任务', '装卸队', '本月未更新', '连续 1 周期未填'],
-          ['Q3 桥吊完好率', '目标', '设备部', '风险', '量化未达预期'],
-          ['设备点检达标', '目标', '设备部', '风险', '关键节点逾期']
-        ]
-      },
-      supervise: {
-        title: '督办中任务',
-        sub: '共 9 项督办下达任务',
-        cols: ['任务', '下达人', '责任人', '部门', '状态'],
-        rows: [
-          ['桥吊点检隐患闭环', '张港长', '周杰', '设备部', '进行中'],
-          ['夜班安全整改复核', '张港长', '刘强', '装卸队', '进行中'],
-          ['堆场消防通道整治', '李副总', '陈敏', '调度中心', '已延期']
-        ],
-        note: '督办任务来源标记为「督办下达」。'
-      },
-      contractRate: {
-        title: '合同回款明细',
-        sub: '回款率 58% · 回款 2,145 万 / 合同总额 3,680 万',
-        cols: ['合同名称', '客户', '合同额（万）', '已回款（万）', '回款率'],
-        rows: [
-          ['2026 集装箱装卸服务合同', '华东物流', '1,200', '820', '68%'],
-          ['设备维保年度合同', '港机设备公司', '680', '420', '62%'],
-          ['堆场仓储服务合同', '远洋货运', '900', '505', '56%']
-        ]
-      },
-      invoiceTotal: {
-        title: '累计开票明细',
-        sub: '累计开票 2,580 万 · 占合同总额 70%（不含已作废发票）',
-        cols: ['发票号码', '合同', '客户', '开票金额（万）', '开票日期'],
-        rows: [
-          ['FP-2026-0088', 'HT-2026-0012', '远洋航运', '120', '2026-08-01'],
-          ['FP-2026-0071', 'HT-2026-0012', '远洋航运', '300', '2026-06-15'],
-          ['FP-2026-0058', 'HT-2026-0008', '港联物流', '860', '2026-05-20']
-        ],
-        note: '完整清单见开票记录。'
-      },
-      invoicePending: {
-        title: '待开票明细',
-        sub: '待开票 1,100 万 = 合同总额 3,680 万 − 累计开票 2,580 万',
-        cols: ['合同', '客户', '合同额（万）', '已开票（万）', '待开票（万）'],
-        rows: [
-          ['HT-2026-0012 装卸服务', '远洋航运', '1,200', '900', '300'],
-          ['HT-2026-0015 设备维保', '港机装备', '420', '280', '140'],
-          ['HT-2026-0020 堆场延伸', '东海代理', '380', '0', '380']
-        ]
-      },
-      remaining: {
-        title: '剩余收款明细',
-        sub: '剩余收款 1,535 万 · 待收合同 5 笔',
-        cols: ['合同名称', '客户', '剩余（万）', '计划收款日', '负责人'],
-        rows: [
-          ['2026 集装箱装卸服务合同', '华东物流', '380', '2026-09-15', '商务部·赵敏'],
-          ['设备维保年度合同', '港机设备公司', '260', '2026-09-30', '商务部·赵敏'],
-          ['堆场仓储服务合同', '远洋货运', '395', '2026-10-10', '商务部·王芳']
-        ]
-      },
-      goalYear: {
-        title: '年目标明细',
-        sub: '共 3 项 · 正常 2 · 需关注 1',
-        cols: ['目标名称', '部门', '健康状态', '量化达成'],
-        rows: [
-          ['全年集装箱吞吐量目标', '商务部', '正常', '86万/120万TEU'],
-          ['安全生产零事故', '安全环保部', '正常', '达成'],
-          ['桥吊综合效率提升', '装卸队', '需关注', '进行中']
-        ]
-      },
-      goalQuarter: {
-        title: '季目标明细',
-        sub: '共 5 项 · 正常 3 · 需关注 2',
-        cols: ['目标名称', '部门', '健康状态', '量化达成'],
-        rows: [
-          ['桥吊作业效率提升 15%', '装卸队', '需关注', '+12%/+15%'],
-          ['Q3 桥吊完好率', '设备部', '风险', '97%/98%'],
-          ['Q3 堆场周转率', '调度中心', '正常', '达标']
-        ]
-      },
-      goalMonth: {
-        title: '月目标明细',
-        sub: '共 6 项 · 正常 4 · 需关注 2',
-        cols: ['目标名称', '部门', '健康状态', '量化达成'],
-        rows: [
-          ['8 月桥吊效率月目标', '装卸队', '需关注', '+3%/+5%'],
-          ['8 月堆场周转月目标', '调度中心', '正常', '82/100'],
-          ['8 月设备完好率月目标', '设备部', '正常', '97%/98%']
-        ]
-      },
-      planActive: { title: '进行中计划', sub: '22 条', cols: ['计划', '节点', '任务概况'], rows: [['8 月装卸效率提升计划', '2/4', '3/1滞后'], ['堆场周转优化计划', '3/4', '4/1滞后']] },
-      planSpecial: { title: '专项计划', sub: '6 条', cols: ['计划', '专项', '节点'], rows: [['Q3 桥吊点检专项计划', '桥吊效能提升', '2/4'], ['设备点检达标计划', '设备点检达标', '4/5']] },
-      planNodesDue: { title: '本月节点到期', sub: '5 个节点', cols: ['计划', '节点', '日期', '状态'], rows: [['8 月装卸效率提升计划', '效率复核', '08-25', '已逾期'], ['堆场周转优化', '月度复盘', '08-31', '未开始']] },
-      taskActive: { title: '进行中任务', sub: '86 条', cols: ['任务', '计划', '责任人'], rows: [['班前会标准化宣贯', '8月装卸效率提升', '孙伟'], ['箱位周转日报核对', '堆场周转优化', '陈敏']] },
-      taskSupervise: { title: '督办下达任务', sub: '9 条', cols: ['任务', '下达人', '状态'], rows: [['桥吊点检隐患闭环', '张港长', '进行中'], ['夜班安全整改复核', '张港长', '进行中']] },
-      taskDelayed: { title: '已延期任务', sub: '5 条', cols: ['任务', '部门', '延期天数'], rows: [['岸桥对位训练', '装卸队', '3天'], ['堆场协同会议跟进', '调度中心', '5天']] },
-      contractCount: { title: '合同清单', sub: '共 12 份', cols: ['合同', '客户', '状态'], rows: [['装卸服务合同', '华东物流', '执行中'], ['维保合同', '港机设备', '执行中']] },
-      contractTotal: { title: '合同总额构成', sub: '3,680 万', cols: ['类型', '金额（万）', '占比'], rows: [['装卸服务', '2,100', '57%'], ['维保', '680', '18%'], ['仓储', '900', '25%']] },
-      contractPaid: { title: '已回款明细', sub: '2,145 万', cols: ['合同', '本次回款（万）', '日期'], rows: [['装卸服务合同', '120', '2026-08-10'], ['仓储合同', '80', '2026-08-15']] },
-      riskTask1: { title: '任务详情 · 岸桥对位训练', sub: '装卸队 · 马超 · 已延期', cols: ['字段', '内容'], rows: [['所属计划', '8 月装卸效率提升计划'], ['结束日期', '2026-08-22'], ['本周期填报', '未填'], ['进展说明', '训练排班待确认']] },
-      riskTask2: { title: '任务详情 · 堆场周转异常复盘纪要', sub: '调度中心 · 陈敏 · 已延期', cols: ['字段', '内容'], rows: [['所属计划', '堆场周转优化计划'], ['结束日期', '2026-08-20'], ['本周期填报', '未填']] },
-      riskTask3: { title: '任务详情 · 桥吊夜班流程复盘', sub: '装卸队 · 刘强 · 本月未更新', cols: ['字段', '内容'], rows: [['所属计划', '8 月装卸效率提升计划'], ['本周期填报', '未填'], ['最近更新', '2026-08-10']] },
-      pendingPerson1: { title: '刘强 · 待汇报任务', sub: '装卸队 · 2 项待报', cols: ['任务', '计划', '截止'], rows: [['桥吊夜班流程复盘', '8月装卸效率提升', '08-24'], ['岸桥对位训练', '8月装卸效率提升', '08-24']] },
-      pendingPerson2: { title: '陈敏 · 待汇报任务', sub: '调度中心 · 1 项待报', cols: ['任务', '计划', '截止'], rows: [['堆场周转异常复盘', '堆场周转优化', '08-24']] },
-      pendingPerson3: { title: '周杰 · 待汇报任务', sub: '设备部 · 3 项待报', cols: ['任务', '计划', '截止'], rows: [['钢丝绳点检整改', 'Q3桥吊点检', '08-24'], ['季度点检报告', 'Q3桥吊点检', '08-24']] }
+    const CARGO_RANK_BULK = [
+      ['粮食', '散货', '312 万吨', '58%'],
+      ['煤炭', '散货', '68 万吨', '13%'],
+      ['铁矿石', '散货', '42 万吨', '8%'],
+      ['钢材', '件杂货', '38 万吨', '7%'],
+      ['木片', '散货', '28 万吨', '5%']
+    ];
+    const CARGO_RANK_TEU = [
+      ['内贸集装箱', '集装箱', '6,800 TEU', '55%'],
+      ['外贸集装箱', '集装箱', '3,600 TEU', '29%'],
+      ['空箱调运', '集装箱', '1,200 TEU', '10%'],
+      ['冷藏箱', '集装箱', '500 TEU', '4%'],
+      ['特种箱', '集装箱', '300 TEU', '2%']
+    ];
+    const CUSTOMER_RANK = [
+      ['中粮储运', '散货·粮食', '186 万吨', '34%'],
+      ['中谷物流', '散货·粮食', '98 万吨', '18%'],
+      ['远洋货运', '散货', '62 万吨', '11%'],
+      ['中远散运', '散货', '55 万吨', '10%'],
+      ['港联贸易', '件杂货', '38 万吨', '7%']
+    ];
+    /** 客户分组作业量 · 按 CRM 分组维度汇总（演示） */
+    const CUSTOMER_GROUP_RANK = [
+      ['散货潜力', '散货·粮食', '284 万吨', '52%'],
+      ['船东重点', '散货', '117 万吨', '21%'],
+      ['战略钢厂', '件杂货', '38 万吨', '7%'],
+      ['未分组', '—', '15 万吨', '3%']
+    ];
+    const CARGO_RANK_VOL = [
+      ['粮食', '散货', '312 万吨', '58%'],
+      ['煤炭', '散货', '68 万吨', '13%'],
+      ['铁矿石', '散货', '42 万吨', '8%'],
+      ['钢材', '件杂货', '38 万吨', '7%'],
+      ['木片', '散货', '28 万吨', '5%']
+    ];
+    let customerRankDim = 'customer';
+    /* 客户双维标签：量大钱少 / 量少钱多 */
+    const CUSTOMER_DUAL_TAGS = {
+      '中谷物流': 'vol-high',
+      '远洋货运': 'vol-high',
+      '中粮储运': 'rev-high',
+      '港机粮贸': 'rev-high'
+    };
+    /* 营收排行 · 粮食/散货为主，集装箱占比很低 */
+    const REV_CARGO_RANK = [
+      ['粮食', '散货', '486 万', '49%'],
+      ['煤炭', '散货', '128 万', '13%'],
+      ['铁矿石', '散货', '98 万', '10%'],
+      ['钢材', '件杂货', '88 万', '9%'],
+      ['木片', '散货', '62 万', '6%']
+    ];
+    const REV_CUSTOMER_RANK = [
+      ['中粮储运', '散货·粮食', '312 万', '32%'],
+      ['中谷物流', '散货·粮食', '168 万', '17%'],
+      ['远洋货运', '散货', '142 万', '14%'],
+      ['中远散运', '散货', '96 万', '10%'],
+      ['港联贸易', '件杂货', '88 万', '9%']
+    ];
+    /** 客户分组营收 · 按 CRM 分组维度汇总（演示） */
+    const REV_CUSTOMER_GROUP_RANK = [
+      ['散货潜力', '散货·粮食', '512 万', '52%'],
+      ['船东重点', '散货', '207 万', '21%'],
+      ['战略钢厂', '件杂货', '69 万', '7%'],
+      ['未分组', '—', '30 万', '3%']
+    ];
+    let revCustomerRankDim = 'customer';
+    let revCustomerRankScale = 1;
+    /* 客户明细 · 作业量按货类 · 超期=合同应付日；应收=max(0,开累营收−回款) */
+    const CUSTOMER_MONEY = [
+      { name: '中粮储运', vol: { loose: 186, piece: 0, teu: 0 }, rev: 312, revAll: 980, invoice: 850, paid: 720, overdueDays: 57, overdueAmt: 180 },
+      { name: '中谷物流', vol: { loose: 98, piece: 0, teu: 0 }, rev: 168, revAll: 720, invoice: 480, paid: 380, overdueDays: 42, overdueAmt: 340 },
+      { name: '远洋货运', vol: { loose: 62, piece: 0, teu: 0 }, rev: 142, revAll: 650, invoice: 420, paid: 340, overdueDays: 56, overdueAmt: 310 },
+      { name: '中远散运', vol: { loose: 55, piece: 0, teu: 0 }, rev: 96, revAll: 380, invoice: 320, paid: 300, overdueDays: 0, overdueAmt: 0 },
+      { name: '港联贸易', vol: { loose: 0, piece: 38, teu: 0 }, rev: 88, revAll: 310, invoice: 220, paid: 180, overdueDays: 37, overdueAmt: 130 },
+      { name: '港机粮贸', vol: { loose: 28, piece: 5, teu: 0 }, rev: 72, revAll: 420, invoice: 280, paid: 200, overdueDays: 148, overdueAmt: 220 },
+      { name: '粮港代理', vol: { loose: 12, piece: 0, teu: 420 }, rev: 54, revAll: 180, invoice: 150, paid: 140, overdueDays: 0, overdueAmt: 0 },
+      { name: '海河储运', vol: { loose: 10, piece: 0, teu: 680 }, rev: 46, revAll: 160, invoice: 110, paid: 90, overdueDays: 0, overdueAmt: 0 }
+    ].map(function (r) {
+      return Object.assign({}, r, { recv: Math.max(0, r.revAll - r.paid) });
+    });
+    let custMoneySort = { key: 'rev', dir: 'desc' };
+    let custMoneyScale = 1;
+    /* 客户应收排行 · 谁欠得最多（万元）· 口径营收−回款 */
+    const RECV_CUSTOMER_RANK = [
+      ['中谷物流', '粮食装卸', '340 万', '17%'],
+      ['远洋货运', '堆场仓储', '310 万', '16%'],
+      ['中粮储运', '粮食装卸', '260 万', '13%'],
+      ['港机粮贸', '设备维保', '220 万', '11%'],
+      ['港联贸易', '件杂货', '130 万', '7%']
+    ];
+    const REV_STRUCT = { teu: 28, loose: 820, piece: 138 }; /* 箱约 3% 营收，量约 2% */
+    /* 进出口营收占比演示：进口 72% / 出口 28%（粮食港特征） */
+    const REV_IE_RATIO = { import: 0.72, export: 0.28 };
+
+    const BASELINE = {
+      loose: 1680, piece: 396, teu: 4.2, teuTonWan: 42, teuImp: 2.9, teuExp: 1.3,
+      revAll: 4120, invoice: 2580, paid: 2145,
+      overdue: 1185, notOverdue: 790,
+      targetRecv: 1500,
+      syncAt: '2026-08-26'
     };
 
-    const SPECIAL_DATA = {
-      '桥吊效能提升专项': {
-        sub: '装卸队 · 负责人 刘强 · 节点 2/4 · 滞后 2',
-        plans: [['Q3 桥吊点检专项计划', '节点 2/4 · 3天后到期'], ['8 月装卸效率提升计划', '节点 2/4 · 滞后 1']],
-        tasks: [['桥吊夜班流程复盘', '本月未更新'], ['钢丝绳点检整改', '进行中'], ['岸桥对位训练', '已延期']]
+    function calcBaselineRecv() {
+      return Math.max(0, BASELINE.revAll - BASELINE.paid);
+    }
+
+    const SUMMARY_DATA = {
+      volTotalAll: { title: '开累吞吐量汇总', sub: '万吨 · 散货 + 件杂货 + 集装箱折合', cols: ['货类', '开累作业量', '计入汇总（万吨）'], rows: [['散货（含粮食）', '1,680 万吨', '1,680'], ['件杂货', '396 万吨', '396'], ['集装箱总量', '42,000 TEU', '42（手工折合）'], ['合计', '—', '2,118']] },
+      volLooseAll: { title: '开累散货作业量', sub: '1,680 万吨 · 以粮食为主', cols: ['年度', '进口（万吨）', '出口（万吨）'], rows: [['2024', '520', '280'], ['2025', '580', '320'], ['2026（至今）', '310', '190']] },
+      volPieceAll: { title: '开累件杂货作业量', sub: '396 万吨', cols: ['年度', '进口（万吨）', '出口（万吨）'], rows: [['2024', '130', '98'], ['2025', '150', '112'], ['2026（至今）', '74', '56']] },
+      volTeuAll: { title: '开累集装箱总量', sub: '42,000 TEU · 折合 42 万吨', cols: ['年度', 'TEU', '折合（万吨·手工）'], rows: [['2024', '14,000', '14'], ['2025', '16,000', '16'], ['2026（至今）', '12,000', '12']] },
+      volTeuIeAll: { title: '开累集装箱进出口', sub: 'TEU · 进口主导', cols: ['方向', '开累（TEU）', '占比', '折合（万吨）'], rows: [['进口', '29,000', '69%', '29'], ['出口', '13,000', '31%', '13'], ['合计', '42,000', '100%', '42']] },
+      volTotal: { title: '期间吞吐量汇总明细', sub: '随时间筛选 · 万吨 · 散货+件杂+箱折合', cols: ['货类', '原值', '计入汇总（万吨）', '占比'], rows: [['散货（含粮食）', '486 万吨', '486', '88%'], ['件杂货', '55 万吨', '55', '10%'], ['集装箱总量', '12,000 TEU', '11（手工折合）', '2%'], ['合计', '—', '552', '100%']], note: '吞吐量 = 散货 + 件杂货 + 集装箱折合万吨。' },
+      volLoose: { title: '散货作业量', sub: '万吨 · 粮食为主', cols: ['月份', '进口（万吨）', '出口（万吨）', '合计'], rows: [['2026-06', '42', '22', '64'], ['2026-07', '48', '24', '72'], ['2026-08', '46', '23', '69']] },
+      volPiece: { title: '件杂货作业量', sub: '万吨 · 手动录入', cols: ['月份', '进口（万吨）', '出口（万吨）', '合计'], rows: [['2026-06', '4', '3', '7'], ['2026-07', '5', '3', '8'], ['2026-08', '4', '3', '7']] },
+      volTeu: { title: '集装箱总量', sub: 'TEU · 期间合计', cols: ['月份', 'TEU', '折合（万吨·手工）'], rows: [['2026-06', '1,200', '1.2'], ['2026-07', '1,400', '1.4'], ['2026-08', '1,300', '1.3']] },
+      volTeuIe: { title: '集装箱进出口明细', sub: 'TEU · 期间', cols: ['月份', '进口（TEU）', '出口（TEU）', '合计'], rows: [['2026-06', '800', '400', '1,200'], ['2026-07', '900', '500', '1,400'], ['2026-08', '800', '500', '1,300']] },
+      cargoRankBulk: { title: '散杂货种排行', sub: '万吨口径 · 粮食为主 · 降序', cols: ['货种', '货类', '作业量', '占比'], rows: CARGO_RANK_BULK.concat([['矿砂', '散货', '22 万吨', '4%']]) },
+      cargoRankTeu: { title: '集装箱货种排行', sub: 'TEU · 体量很小 · 降序', cols: ['货种', '货类', '作业量', '占比'], rows: CARGO_RANK_TEU },
+      customerRank: { title: '客户作业量排行', sub: '粮食客户为主 · 降序', cols: ['客户', '主要货类', '作业量', '占比'], rows: CUSTOMER_RANK },
+      groupRank: { title: '客户分组作业量排行', sub: '按 CRM 客户组汇总 · 降序', cols: ['分组', '主要货类', '作业量', '占比'], rows: CUSTOMER_GROUP_RANK },
+      revAll: { title: '开累营收明细', sub: '经营登记 · 万元', cols: ['年度', '营收（万）', '登记人'], rows: [['2024', '1,280', '财务部'], ['2025', '1,854', '财务部'], ['2026（至今）', '986', '财务部']] },
+      revPeriod: { title: '期间营收明细', sub: '按货类 · 万元 · 粮食为主', cols: ['货类', '营收（万）', '占比'], rows: [['散货（含粮食）', '820', '83%'], ['件杂货', '138', '14%'], ['集装箱', '28', '3%']] },
+      revMonth: { title: '本月营收登记', sub: '2026-08', cols: ['客户', '货类', '金额（万）', '登记日期'], rows: [['中粮储运', '粮食', '52', '2026-08-05'], ['中谷物流', '粮食', '38', '2026-08-12'], ['港联贸易', '件杂货', '18', '2026-08-18']] },
+      invoicePeriod: { title: '期间开票明细', sub: '随时间筛选 · 万元', cols: ['月份', '开票（万）', '累计'], rows: [['2026-06', '280', '1,415'], ['2026-07', '310', '1,725'], ['2026-08', '320', '2,045']] },
+      paidPeriod: { title: '期间回款明细', sub: '随时间筛选 · 万元', cols: ['月份', '回款（万）', '累计'], rows: [['2026-06', '240', '1,180'], ['2026-07', '260', '1,440'], ['2026-08', '280', '1,720']] },
+      revStruct: { title: '货类营收占比明细', sub: '经营登记口径', cols: ['货类', '营收（万）', '占比', '主要客户'], rows: [['散货（含粮食）', '820', '83%', '中粮储运、中谷物流'], ['件杂货', '138', '14%', '港联贸易'], ['集装箱', '28', '3%', '少量代理']] },
+      revIeShare: { title: '进出口营收占比明细', sub: '经营登记口径 · 粮食港进口主导', cols: ['方向', '营收（万）', '占比', '说明'], rows: [['进口', '710', '72%', '粮食等散货进口为主'], ['出口', '276', '28%', '件杂与部分散货出口'], ['合计', '986', '100%', '—']] },
+      revCargoRank: { title: '货种营收占比排行', sub: '按营收占比降序 · 粮食主导', cols: ['货种', '货类', '营收（万）', '占比'], rows: REV_CARGO_RANK.concat([['集装箱（合计）', '集装箱', '28 万', '3%']]) },
+      revCustomerRank: { title: '客户营收排行', sub: '粮食客户为主 · 降序', cols: ['客户', '主要货类', '营收（万）', '占比'], rows: REV_CUSTOMER_RANK },
+      revGroupCustomerRank: { title: '客户分组营收排行', sub: '按 CRM 客户组汇总 · 降序', cols: ['分组', '主要货类', '营收（万）', '占比'], rows: REV_CUSTOMER_GROUP_RANK },
+      recvCustomerRank: { title: '客户应收排行', sub: '谁欠得多 · 按应收降序', cols: ['客户', '业务', '应收（万）', '占应收比'], rows: RECV_CUSTOMER_RANK },
+      invoiceTotal: { title: '累计开票明细', sub: '不含已作废 · 开票率相对开累营收', cols: ['发票号', '客户', '金额（万）', '日期'], rows: [['FP-2026-0088', '中粮储运', '120', '2026-08-01'], ['FP-2026-0071', '中谷物流', '300', '2026-06-15']] },
+      contractPaid: { title: '累计回款明细', sub: '收款记录汇总 · 回款率相对开累营收', cols: ['客户', '业务', '回款（万）', '日期'], rows: [['中粮储运', '粮食装卸', '120', '2026-08-10'], ['远洋货运', '堆场仓储', '80', '2026-08-15']] },
+      receivable: { title: '应收明细 · 按客户欠款', sub: '口径：营收 − 回款 = 1,975 万 · 封顶不小于 0', cols: ['客户', '业务', '开累营收（万）', '已回款（万）', '应收（万）'], rows: [['中谷物流', '粮食装卸', '720', '380', '340'], ['远洋货运', '堆场仓储', '650', '340', '310'], ['中粮储运', '粮食装卸', '980', '720', '260'], ['港机粮贸', '设备维保', '420', '200', '220'], ['港联贸易', '件杂货', '310', '180', '130']] },
+      overdueRecv: { title: '超期应收构成', sub: '1,185 万 · 占应收 60% · 合同约定应付日已过', cols: ['客户', '合同', '约定付款条件', '应付日', '超期天数', '金额（万）'], rows: [['中谷物流', 'HT-2026-0015', '月结 30 天', '2026-07-15', '42', '340'], ['远洋货运', 'HT-2026-0018', '货到后 45 天', '2026-07-01', '56', '310'], ['港机粮贸', 'HT-2025-0088', '季度结算', '2026-03-31', '148', '220'], ['中粮储运', 'HT-2026-0012', '月结 60 天', '2026-06-30', '57', '180'], ['港联贸易', 'HT-2026-0021', '月结 30 天', '2026-07-20', '37', '130'], ['其他（汇总）', '—', '—', '—', '—', '5']] },
+      notOverdueRecv: { title: '未超期应收构成', sub: '790 万 · 占应收 40% · 约定应付日未到', cols: ['客户', '业务', '约定付款条件', '应付日', '金额（万）'], rows: [['中远散运', '散货装卸', '月结 30 天', '2026-09-15', '80'], ['粮港代理', '代理服务', '月结 45 天', '2026-09-20', '40'], ['海河储运', '仓储', '月结 30 天', '2026-09-10', '70'], ['中粮储运', '粮食装卸（未到期部分）', '月结 60 天', '2026-09-30', '80'], ['其他未到期', '—', '各合同条件', '—', '520']] },
+      overdueCustomers: { title: '超期客户明细 · 合同付款条件', sub: '相对约定应付日逾期 · 未约定条件不列入', cols: ['客户', '合同/业务', '约定付款条件', '应付日', '超期天数', '超期金额（万）'], rows: [['中谷物流', '粮食装卸 · HT-2026-0015', '月结 30 天', '2026-07-15', '42', '340'], ['远洋货运', '堆场仓储 · HT-2026-0018', '货到后 45 天', '2026-07-01', '56', '310'], ['港机粮贸', '设备维保 · HT-2025-0088', '季度结算（季末）', '2026-03-31', '148', '220'], ['中粮储运', '粮食装卸 · HT-2026-0012', '月结 60 天', '2026-06-30', '57', '180'], ['港联贸易', '件杂货 · HT-2026-0021', '月结 30 天', '2026-07-20', '37', '130']], note: '超期口径与账龄口径不同：前者看合同应付日，后者看欠款天数。' },
+      invoicePending: { title: '待开票明细', sub: '开累营收 − 累计开票', cols: ['客户', '待开（万）'], rows: [['中谷物流', '240'], ['远洋货运', '230'], ['港机粮贸', '140']] },
+      remaining: { title: '待回款明细', sub: '与应收总额一致 · 按欠款降序', cols: ['业务', '客户', '待回（万）', '计划收款日'], rows: [['粮食装卸服务', '中谷物流', '340', '2026-09-10'], ['堆场仓储', '远洋货运', '310', '2026-09-15'], ['粮食装卸服务', '中粮储运', '260', '2026-09-20'], ['设备维保', '港机粮贸', '220', '2026-09-30'], ['件杂货装卸', '港联贸易', '130', '2026-10-08']] }
+    };
+
+    const PERIOD_DATA = {
+      year: {
+        label: '今年', loose: 486, piece: 55, teu: 1.2, teuTonWan: 11,
+        targetTotal: 600, targetLoose: 530, targetPiece: 58, targetTeu: 1.5,
+        totalYoY: '同比 +5.6%', totalMoM: '环比 +1.2%', revYoY: '同比 +4.8%', revMoM: '环比 +2.1%',
+        revPeriod: 986, revMonth: 128, revMonthSub: '较上月 +12 万',
+        targetRev: 1200, targetRevMonth: 150, periodInvoice: 820, targetPeriodInvoice: 1000, periodPaid: 680, targetPeriodPaid: 850,
+        unitRevYoY: '同比 +2.1%',
+        scopeShort: '2026 年',
+        ieStack: { loose: [310, 176], piece: [32, 23], teu: [7, 4] },
+        ieNote: '以粮食进口为主；集装箱仅约 2%，进出口结构影响有限。'
       },
-      '堆场周转优化专项': {
-        sub: '调度中心 · 负责人 陈敏 · 节点 3/4',
-        plans: [['堆场周转优化计划', '节点 3/4 · 正常']],
-        tasks: [['堆场周转异常复盘', '已完成'], ['箱位周转日报核对', '进行中']]
+      quarter: {
+        label: '本季', loose: 138, piece: 16, teu: 0.35, teuTonWan: 3.2,
+        targetTotal: 180, targetLoose: 160, targetPiece: 17, targetTeu: 0.4,
+        totalYoY: '较上季 +3.1%', totalMoM: '环比 +0.8%', revYoY: '较上季 +2.4%', revMoM: '环比 +1.0%',
+        revPeriod: 286, revMonth: 128, revMonthSub: '—',
+        targetRev: 365, targetRevMonth: 150, periodInvoice: 240, targetPeriodInvoice: 300, periodPaid: 200, targetPeriodPaid: 250,
+        unitRevYoY: '较上季 +1.5%',
+        scopeShort: '2026-Q3',
+        ieStack: { loose: [88, 50], piece: [9, 7], teu: [2, 1.2] },
+        ieNote: '本季仍以粮食散货进口为主，集装箱体量可忽略。'
       },
-      '设备点检达标专项': {
-        sub: '设备部 · 负责人 周杰 · 节点 4/5',
-        plans: [['设备点检达标计划', '节点 4/5 · 正常']],
-        tasks: [['点检报告归档', '已完成'], ['隐患整改闭环', '进行中']]
+      month: {
+        label: '本月', loose: 46, piece: 5, teu: 0.12, teuTonWan: 1.1,
+        targetTotal: 55, targetLoose: 49, targetPiece: 5.2, targetTeu: 0.14,
+        totalYoY: '较上月 +4%', totalMoM: '环比 +4%', revYoY: '较上月 +3%', revMoM: '环比 +3%',
+        revPeriod: 128, revMonth: 128, revMonthSub: '较上月 +12 万',
+        targetRev: 130, targetRevMonth: 130, periodInvoice: 320, targetPeriodInvoice: 350, periodPaid: 280, targetPeriodPaid: 300,
+        unitRevYoY: '较上月 +1%',
+        scopeShort: '2026-08',
+        ieStack: { loose: [30, 16], piece: [3, 2], teu: [0.7, 0.4] },
+        ieNote: '本月粮食进口旺季特征明显；集装箱占比约 2%。'
       }
     };
 
-    const PERIOD_PRESETS = {
-      '2026 年|Q3|全部部门': { goals: 5, nodes: 4, plans: 22, pending: 31, risk: 7, supervise: 9, funnelLabel: '2026-Q3 汇总', goalYear: '3 · 正常 2 · 需关注 1', goalQuarter: '5 · 正常 3 · 需关注 2', goalMonth: '6 · 正常 4 · 需关注 2', planActive: 22, planSpecial: 6, planNodes: 5, taskActive: 86, taskSupervise: 9, taskDelayed: 5 },
-      '2026 年|Q2|全部部门': { goals: 4, nodes: 3, plans: 18, pending: 24, risk: 5, supervise: 7, funnelLabel: '2026-Q2 汇总', goalYear: '3 · 正常 2 · 需关注 1', goalQuarter: '4 · 正常 3 · 需关注 1', goalMonth: '5 · 正常 3 · 需关注 2', planActive: 18, planSpecial: 5, planNodes: 4, taskActive: 72, taskSupervise: 7, taskDelayed: 3 },
-      '2026 年|Q3|装卸队': { goals: 2, nodes: 2, plans: 6, pending: 8, risk: 3, supervise: 2, funnelLabel: '2026-Q3 · 装卸队', goalYear: '1 · 正常 0 · 需关注 1', goalQuarter: '2 · 正常 0 · 需关注 2', goalMonth: '2 · 正常 0 · 需关注 2', planActive: 6, planSpecial: 2, planNodes: 2, taskActive: 12, taskSupervise: 2, taskDelayed: 2 }
-    };
+    const TREND_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月'];
+    const TREND_LOOSE = [52, 55, 58, 60, 62, 64, 72, 69]; /* 散货含粮食 · 万吨 */
+    const TREND_PIECE = [6, 6, 7, 7, 7, 7, 8, 7];
+    const TREND_TEU_TON = [1.1, 1.2, 1.3, 1.3, 1.4, 1.2, 1.4, 1.3]; /* 约占总吞吐量 2% · 折合万吨 */
+    /* 集装箱趋势 · TEU（非万）· 进口主导约 63% */
+    const TREND_TEU_IMP = [760, 820, 880, 890, 950, 760, 880, 820];
+    const TREND_TEU_EXP = [440, 480, 520, 510, 550, 440, 520, 480];
+    const TREND_TEU_TOTAL = TREND_TEU_IMP.map(function (v, i) { return v + TREND_TEU_EXP[i]; });
+    /* 营收趋势全年 12 月演示数据 · 万元 */
+    const REV_TREND_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const REVENUE_MONTHLY = [98, 102, 110, 118, 125, 132, 138, 128, 135, 142, 148, 156];
+    const REV_INVOICE_MONTHLY = REVENUE_MONTHLY.map(function (v) { return Math.round(v * 0.83); });
+    const REV_PAID_MONTHLY = REVENUE_MONTHLY.map(function (v) { return Math.round(v * 0.69); });
+    const REV_RECV_MONTHLY = (function () {
+      var open = 1460, cr = 0, cp = 0;
+      return REVENUE_MONTHLY.map(function (r, i) {
+        cr += r;
+        cp += REV_PAID_MONTHLY[i];
+        return open + cr - cp;
+      });
+    })();
+    const INVOICE_MONTHLY = [180, 195, 210, 240, 260, 280, 310, 320, 300, 290, 310, 330];
+    const PAID_MONTHLY = [150, 165, 180, 200, 220, 240, 260, 280, 270, 265, 285, 300];
+    const CASH_TREND_MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
 
-    function periodKey() {
-      const y = document.getElementById('filterYear').value;
-      const q = document.getElementById('filterQuarter').value;
-      const d = document.getElementById('filterDept').value;
-      return y + '|' + q + '|' + d;
+    function renderRankBars(containerId, rows, opts) {
+      opts = opts || {};
+      const sorted = rows.slice().sort(function (a, b) {
+        return parseFloat(b[b.length - 1]) - parseFloat(a[a.length - 1]);
+      });
+      const maxPct = Math.max.apply(null, sorted.map(function (r) { return parseFloat(r[r.length - 1]) || 0; }).concat([1]));
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      const tags = opts.tags || {};
+      const nameCol = opts.nameCol || '4.5rem';
+      el.innerHTML = '<div class="rank-bars">' + sorted.map(function (r, i) {
+        const pct = parseFloat(r[r.length - 1]) || 0;
+        const w = Math.max(6, Math.round(pct / maxPct * 100));
+        const fillCls = i === 0 ? 'rank-bar-fill' : 'rank-bar-fill alt';
+        const title = r[0] + ' · ' + r[1] + ' · ' + r[2] + ' · ' + r[3];
+        const tagKey = tags[r[0]];
+        const tagHtml = tagKey === 'vol-high' ? '<span class="cust-tag vol-high">量大钱少</span>'
+          : (tagKey === 'rev-high' ? '<span class="cust-tag rev-high">量少钱多</span>' : '');
+        return '<div class="rank-bar-row" style="grid-template-columns:1.1rem ' + nameCol + ' 1fr auto" title="' + title + '">' +
+          '<span class="rank-bar-idx">' + (i + 1) + '</span>' +
+          '<span class="rank-bar-name">' + r[0] + tagHtml + '</span>' +
+          '<div class="rank-bar-track"><div class="' + fillCls + '" style="width:' + w + '%"></div></div>' +
+          '<span class="rank-bar-meta"><strong>' + r[3] + '</strong> · ' + r[2] + '</span>' +
+          '</div>';
+      }).join('') + '</div>';
     }
 
-    function onPeriodFilterChange() {
-      const y = document.getElementById('filterYear').value;
-      const q = document.getElementById('filterQuarter').value;
-      const d = document.getElementById('filterDept').value;
-      const key = periodKey();
-      const data = PERIOD_PRESETS[key] || PERIOD_PRESETS['2026 年|Q3|全部部门'];
-      document.getElementById('periodFilterHint').innerHTML = '当前范围：<strong class="text-slate-700">' + y + ' · ' + q + ' · ' + d + '</strong> · 数据截止 2026-08-26';
-      document.getElementById('kpiGoals').textContent = data.goals;
-      document.getElementById('kpiNodes').textContent = data.nodes;
-      document.getElementById('kpiPlans').textContent = data.plans;
-      document.getElementById('kpiPending').textContent = data.pending;
-      document.getElementById('kpiRisk').textContent = data.risk;
-      document.getElementById('kpiSupervise').textContent = data.supervise;
-      document.getElementById('funnelScopeLabel').textContent = data.funnelLabel;
-      document.getElementById('funnelGoalYear').textContent = data.goalYear;
-      document.getElementById('funnelGoalQuarter').textContent = data.goalQuarter;
-      document.getElementById('funnelGoalMonth').textContent = data.goalMonth;
-      document.getElementById('funnelPlanActive').textContent = data.planActive;
-      document.getElementById('funnelPlanSpecial').textContent = data.planSpecial;
-      document.getElementById('funnelPlanNodes').textContent = data.planNodes;
-      document.getElementById('funnelTaskActive').textContent = data.taskActive;
-      document.getElementById('funnelTaskSupervise').textContent = data.taskSupervise;
-      document.getElementById('funnelTaskDelayed').textContent = data.taskDelayed;
-      document.getElementById('deptScopeLabel').textContent = y.replace(' 年', '') + '-' + q + ' · ' + d;
+    function renderCustomerRankBars() {
+      const isGroup = customerRankDim === 'group';
+      const rows = isGroup ? CUSTOMER_GROUP_RANK : CUSTOMER_RANK;
+      const titleEl = document.getElementById('customerRankTitle');
+      if (titleEl) titleEl.textContent = isGroup ? '客户分组作业量排行' : '客户作业量排行';
+      renderRankBars('customerRankBars', rows, {
+        tags: isGroup ? {} : CUSTOMER_DUAL_TAGS,
+        nameCol: isGroup ? '5.25rem' : '4.5rem'
+      });
+    }
+
+    function setCustomerRankDim(dim) {
+      customerRankDim = dim === 'group' ? 'group' : 'customer';
+      document.querySelectorAll('.rank-dim-btn:not(.rev-rank-dim-btn)').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-dim') === customerRankDim);
+      });
+      renderCustomerRankBars();
+    }
+
+    function openCustomerRankSummary() {
+      openSummary(customerRankDim === 'group' ? 'groupRank' : 'customerRank');
+    }
+
+    function renderRevCustomerRankBars() {
+      const isGroup = revCustomerRankDim === 'group';
+      const base = isGroup ? REV_CUSTOMER_GROUP_RANK : REV_CUSTOMER_RANK;
+      const rows = base.map(function (r) {
+        const amt = Math.max(1, Math.round(parseFloat(r[2]) * revCustomerRankScale));
+        return [r[0], r[1], amt + ' 万', r[3]];
+      });
+      const titleEl = document.getElementById('revCustomerRankTitle');
+      if (titleEl) titleEl.textContent = isGroup ? '客户分组营收排行榜' : '客户营收排行榜';
+      renderRankBars('revCustomerRankCompactBars', rows, {
+        nameCol: isGroup ? '5.25rem' : '4.5rem'
+      });
+    }
+
+    function setRevCustomerRankDim(dim) {
+      revCustomerRankDim = dim === 'group' ? 'group' : 'customer';
+      document.querySelectorAll('.rev-rank-dim-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-dim') === revCustomerRankDim);
+      });
+      renderRevCustomerRankBars();
+    }
+
+    function openRevCustomerRankSummary() {
+      openSummary(revCustomerRankDim === 'group' ? 'revGroupCustomerRank' : 'revCustomerRank');
+    }
+
+    function renderBarChart(containerId, values, colors, maxH) {
+      const max = Math.max(...values, 1);
+      const el = document.getElementById(containerId);
+      if (!el || el.tagName === 'svg' || el.tagName === 'SVG') return;
+      el.innerHTML = values.map((v, i) => {
+        const h = Math.round((v / max) * maxH);
+        const c = colors[i % colors.length];
+        return '<div class="flex-1 flex flex-col items-center justify-end gap-0.5" title="' + v + '">' +
+          '<div class="chart-bar w-full ' + c + '" style="height:' + h + 'px"></div></div>';
+      }).join('');
+    }
+
+    /** 月度开票 / 回款：并排双柱 · 万元 */
+    function renderCashTrendDual(svgId, invoices, paids, months) {
+      const el = document.getElementById(svgId);
+      if (!el) return;
+      const W = 640, H = 180;
+      const pad = { l: 38, r: 4, t: 14, b: 28 };
+      const plotW = W - pad.l - pad.r;
+      const plotH = H - pad.t - pad.b;
+      const n = Math.max(invoices.length, 1);
+      const maxV = Math.max.apply(null, invoices.concat(paids).concat([1])) * 1.16;
+      const groupW = plotW / n;
+      const barW = Math.min(12, Math.max(6, groupW * 0.28));
+      const gap = 2;
+      const y = function (v) { return pad.t + plotH - (v / maxV) * plotH; };
+
+      let svg = '<rect width="' + W + '" height="' + H + '" fill="transparent"/>';
+      for (let g = 0; g <= 3; g++) {
+        const gy = pad.t + (plotH / 3) * g;
+        const gv = Math.round(maxV * (1 - g / 3));
+        svg += '<line class="line-chart-grid" x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '"/>';
+        if (g < 3) {
+          svg += '<text class="rev-axis-label" x="' + (pad.l - 5) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10">' + gv + '</text>';
+        }
+      }
+
+      for (let i = 0; i < n; i++) {
+        const inv = invoices[i];
+        const paid = paids[i];
+        const cx = pad.l + groupW * i + groupW / 2;
+        const xInv = cx - barW - gap / 2;
+        const xPaid = cx + gap / 2;
+        const rate = inv ? Math.round(paid / inv * 100) : null;
+        const tip = months[i] + ' · 开票 ' + inv + ' 万 / 回款 ' + paid + ' 万' +
+          (rate != null ? ' · 回款率 ' + rate + '%' : '');
+
+        svg += '<g><title>' + tip + '</title>';
+        svg += '<rect class="cash-bar-inv" x="' + xInv + '" y="' + y(inv) + '" width="' + barW +
+          '" height="' + Math.max(2, plotH - (y(inv) - pad.t)) + '" rx="2"/>';
+        svg += '<rect class="cash-bar-paid" x="' + xPaid + '" y="' + y(paid) + '" width="' + barW +
+          '" height="' + Math.max(2, plotH - (y(paid) - pad.t)) + '" rx="2"/>';
+        if (n <= 8 && rate != null) {
+          const labelY = Math.min(y(inv), y(paid)) - 3;
+          svg += '<text class="cash-pct-label" x="' + cx + '" y="' + labelY +
+            '" text-anchor="middle" font-size="8">' + rate + '%</text>';
+        }
+        svg += '</g>';
+        svg += '<text class="rev-axis-label" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10">' + months[i] + '</text>';
+      }
+      el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      el.innerHTML = svg;
+    }
+
+    /** 按当前档位裁剪营收趋势月份 */
+    function getRevTrendSlice() {
+      let from = 0;
+      let to = 11;
+      if (currentScope === 'quarter') { from = 6; to = 8; }
+      else if (currentScope === 'month') { from = 7; to = 7; }
+      return {
+        months: REV_TREND_MONTHS.slice(from, to + 1),
+        rev: REVENUE_MONTHLY.slice(from, to + 1),
+        recv: REV_RECV_MONTHLY.slice(from, to + 1)
+      };
+    }
+
+    /** 营收趋势 · 双柱 · 营收 / 应收 */
+    function renderRevTrendBars(svgId, rev, recv, months) {
+      const el = document.getElementById(svgId);
+      if (!el) return;
+      const H = 180;
+      const W = Math.max(480, el.clientWidth || (el.parentElement && el.parentElement.clientWidth) || 640);
+      const pad = { l: 32, r: 8, t: 14, b: 28 };
+      const plotW = W - pad.l - pad.r;
+      const plotH = H - pad.t - pad.b;
+      const n = Math.max(rev.length, 1);
+      const maxMain = Math.max.apply(null, rev.concat([1])) * 1.06;
+      const maxRecv = Math.max.apply(null, recv.concat([1])) * 1.04;
+      const slotW = plotW / n;
+      const gap = 3;
+      const barW = Math.max(6, Math.min(22, (slotW * 0.88 - gap) / 2));
+      const clusterW = barW * 2 + gap;
+      const yMain = function (v) { return pad.t + plotH - (v / maxMain) * plotH; };
+      const yRecv = function (v) { return pad.t + plotH - (v / maxRecv) * plotH * 0.55; };
+      const series = [
+        { data: rev, cls: 'rev-bar-rev', name: '营收', yFn: yMain },
+        { data: recv, cls: 'rev-bar-recv', name: '应收', yFn: yRecv }
+      ];
+
+      let svg = '<rect width="' + W + '" height="' + H + '" fill="transparent"/>';
+      for (let g = 0; g <= 3; g++) {
+        const gy = pad.t + (plotH / 3) * g;
+        const gv = Math.round(maxMain * (1 - g / 3));
+        svg += '<line class="line-chart-grid" x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '"/>';
+        if (g < 3) {
+          svg += '<text class="line-chart-axis" x="' + (pad.l - 4) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10">' + gv + '</text>';
+        }
+      }
+
+      for (let i = 0; i < n; i++) {
+        const slotX = pad.l + i * slotW;
+        const x0 = slotX + (slotW - clusterW) / 2;
+        const cx = slotX + slotW / 2;
+        series.forEach(function (s, si) {
+          const v = s.data[i] || 0;
+          const x = x0 + si * (barW + gap);
+          const barTop = s.yFn(v);
+          const tip = months[i] + ' · ' + s.name + ' ' + v + ' 万元';
+          svg += '<rect class="' + s.cls + '" x="' + x + '" y="' + barTop + '" width="' + barW +
+            '" height="' + Math.max(2, pad.t + plotH - barTop) + '" rx="1.5"><title>' + tip + '</title></rect>';
+        });
+        svg += '<text class="line-chart-axis" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10">' + months[i] + '</text>';
+      }
+      el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      el.setAttribute('preserveAspectRatio', 'xMinYMid meet');
+      el.innerHTML = svg;
+    }
+
+    function calcTotalTon(d) { return d.loose + d.piece + d.teuTonWan; }
+
+    /** 内部数据为万 TEU，展示统一为 TEU */
+    function wanTeuToTeu(wan) { return Math.round(Number(wan) * 10000); }
+    function fmtTeu(wan) { return wanTeuToTeu(wan).toLocaleString(); }
+    function fmtTeuNum(teu) { return Math.round(Number(teu)).toLocaleString(); }
+
+    function volRingColor(pct) {
+      if (pct >= 100) return '#059669';
+      if (pct >= 85) return '#64748b';
+      if (pct >= 70) return '#d97706';
+      return '#dc2626';
+    }
+
+    function renderVolRing(el, actual, target, unit, fixed, size) {
+      if (!el) return;
+      size = size || 40;
+      const stroke = size <= 36 ? 3.5 : 4;
+      if (!target) {
+        el.innerHTML = '<span class="vol-ring-meta">目标 —</span>';
+        el.removeAttribute('title');
+        return;
+      }
+      const pct = Math.round((actual / target) * 100);
+      const color = volRingColor(pct);
+      const cx = size / 2;
+      const r = (size - stroke) / 2;
+      const circ = 2 * Math.PI * r;
+      const fillPct = Math.min(pct, 100);
+      const offset = circ * (1 - fillPct / 100);
+      const fmt = function (n) { return fixed ? Number(n).toFixed(1) : Number(n).toLocaleString(); };
+      const fs = pct >= 100 ? 8 : 9;
+      el.innerHTML =
+        '<svg class="vol-ring-svg" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" role="img" aria-label="目标完成率 ' + pct + '%">' +
+          '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="#f1f5f9" stroke-width="' + stroke + '"/>' +
+          '<circle cx="' + cx + '" cy="' + cx + '" r="' + r + '" fill="none" stroke="' + color + '" stroke-width="' + stroke + '"' +
+            ' stroke-dasharray="' + circ.toFixed(2) + '" stroke-dashoffset="' + offset.toFixed(2) + '"' +
+            ' stroke-linecap="round" transform="rotate(-90 ' + cx + ' ' + cx + ')"/>' +
+          '<text x="' + cx + '" y="' + cx + '" text-anchor="middle" dominant-baseline="central"' +
+            ' font-size="' + fs + '" font-weight="600" fill="' + color + '">' + pct + '%</text>' +
+        '</svg>' +
+        '<div class="vol-ring-meta">目标 <strong>' + fmt(target) + '</strong></div>';
+      el.setAttribute('title', '目标 ' + fmt(target) + ' ' + unit + '，达成 ' + pct + '%');
+    }
+
+    function setRevTargets(data) {
+      const size = 34;
+      const recv = calcBaselineRecv();
+      const map = [
+        ['RevPeriod', data.revPeriod, data.targetRev],
+        ['InvoicePeriod', data.periodInvoice, data.targetPeriodInvoice],
+        ['PaidPeriod', data.periodPaid, data.targetPeriodPaid],
+        ['Receivable', recv, BASELINE.targetRecv]
+      ];
+      map.forEach(function (m) {
+        renderVolRing(document.getElementById('kpi' + m[0] + 'Target'), m[1], m[2], '万元', false, size);
+      });
+    }
+
+    function setVolTargets(actual, targets) {
+      const size = 34;
+      const map = [
+        ['Total', actual.total, targets.total, '万吨', false],
+        ['Loose', actual.loose, targets.loose, '万吨', false],
+        ['Piece', actual.piece, targets.piece, '万吨', false],
+        ['Teu', wanTeuToTeu(actual.teu), wanTeuToTeu(targets.teu), 'TEU', false]
+      ];
+      map.forEach(function (m) {
+        renderVolRing(document.getElementById('kpi' + m[0] + 'Target'), m[1], m[2], m[3], m[4], size);
+      });
+    }
+
+    /** 集装箱模块三卡 · 目标完成率（与吞吐量卡片同环） */
+    function setTeuModTargets(totalTeu, impTeu, expTeu, targetTeuWan, impPct) {
+      const size = 34;
+      const targetTotal = wanTeuToTeu(targetTeuWan);
+      const targetImp = Math.round(targetTotal * impPct / 100);
+      const targetExp = Math.max(0, targetTotal - targetImp);
+      renderVolRing(document.getElementById('kpiTeuModTotalTarget'), totalTeu, targetTotal, 'TEU', false, size);
+      renderVolRing(document.getElementById('kpiTeuModImpTarget'), impTeu, targetImp, 'TEU', false, size);
+      renderVolRing(document.getElementById('kpiTeuModExpTarget'), expTeu, targetExp, 'TEU', false, size);
+    }
+
+    function renderLineChart(svgId, series, opts) {
+      opts = opts || {};
+      const W = opts.width || 400, H = opts.height || 180;
+      const pad = { l: opts.padL || 42, r: opts.dualAxis ? 40 : (opts.padR || 16), t: 16, b: 30 };
+      const plotW = W - pad.l - pad.r, plotH = H - pad.t - pad.b;
+      const months = opts.months || TREND_MONTHS;
+      const n = series[0].data.length;
+      const allLeft = series.filter(function (s) { return !s.axis || s.axis === 'left'; }).flatMap(function (s) { return s.data; });
+      const allRight = series.filter(function (s) { return s.axis === 'right'; }).flatMap(function (s) { return s.data; });
+      const maxL = Math.max.apply(null, allLeft.concat([1])) * 1.12;
+      const maxR = allRight.length ? Math.max.apply(null, allRight.concat([1])) * 1.12 : maxL;
+      const x = function (i) { return pad.l + (i / Math.max(n - 1, 1)) * plotW; };
+      const yL = function (v) { return pad.t + plotH - (v / maxL) * plotH; };
+      const yR = function (v) { return pad.t + plotH - (v / maxR) * plotH; };
+      const fmtAxis = opts.axisFmt || function (v) { return Math.round(v).toLocaleString(); };
+
+      let svg = '<rect width="' + W + '" height="' + H + '" fill="transparent"/>';
+      for (let g = 0; g <= 4; g++) {
+        const gy = pad.t + (plotH / 4) * g;
+        svg += '<line class="line-chart-grid" x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '"/>';
+        if (g < 4) {
+          const gv = maxL * (1 - g / 4);
+          svg += '<text class="line-chart-axis" x="' + (pad.l - 6) + '" y="' + (gy + 3) + '" text-anchor="end">' + fmtAxis(gv) + '</text>';
+        }
+      }
+      months.forEach(function (m, i) {
+        svg += '<text class="line-chart-axis" x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + m + '</text>';
+      });
+      if (opts.dualAxis) {
+        svg += '<text class="line-chart-axis" x="' + (W - 4) + '" y="' + (pad.t + 4) + '" text-anchor="end">' + fmtAxis(maxR) + '</text>';
+      }
+      if (opts.yLabel) {
+        svg += '<text class="line-chart-axis" x="' + 10 + '" y="' + (pad.t - 4) + '">' + opts.yLabel + '</text>';
+      }
+
+      series.forEach(function (s) {
+        const yFn = s.axis === 'right' ? yR : yL;
+        const pts = s.data.map(function (v, i) { return x(i) + ',' + yFn(v); }).join(' ');
+        let cls = 'line-chart-path';
+        if (s.bold) cls += ' line-chart-path-bold';
+        if (s.dashed) cls += ' line-chart-path-soft';
+        const strokeW = s.width ? (' stroke-width="' + s.width + '"') : '';
+        svg += '<polyline class="' + cls + '" stroke="' + s.color + '"' + strokeW + ' points="' + pts + '"/>';
+        if (!s.noDots) {
+          const r = s.bold ? 4 : 3;
+          s.data.forEach(function (v, i) {
+            svg += '<circle cx="' + x(i) + '" cy="' + yFn(v) + '" r="' + r + '" fill="#fff" stroke="' + s.color + '" stroke-width="' + (s.bold ? 2.5 : 2) + '"/>';
+          });
+        }
+      });
+      const el = document.getElementById(svgId);
+      if (el) el.innerHTML = svg;
+    }
+
+    function calcIePct(pair) {
+      const sum = pair[0] + pair[1];
+      return sum ? Math.round(pair[0] / sum * 100) : 50;
+    }
+
+    function calcTotalIePct(ie) {
+      const imp = ie.loose[0] + ie.piece[0] + ie.teu[0];
+      const exp = ie.loose[1] + ie.piece[1] + ie.teu[1];
+      const sum = imp + exp;
+      return sum ? Math.round(imp / sum * 100) : 50;
+    }
+
+    function renderCardIeBar(elId, importPct, footText) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const exportPct = 100 - importPct;
+      let html =
+        '<div class="kpi-ie-track">' +
+        '<div class="kpi-ie-import" style="width:' + importPct + '%"></div>' +
+        '<div class="kpi-ie-export" style="width:' + exportPct + '%"></div>' +
+        '</div>' +
+        '<div class="kpi-ie-labels"><span>进口 ' + importPct + '%</span><span>出口 ' + exportPct + '%</span></div>';
+      if (footText) html += '<div class="kpi-ie-foot" title="' + footText + '">' + footText + '</div>';
+      el.innerHTML = html;
+    }
+
+    function renderCardIeBars(data) {
+      const ie = data.ieStack;
+      const teuPct = calcIePct(ie.teu);
+      renderCardIeBar('ieBarTotal', calcTotalIePct(ie));
+      renderCardIeBar('ieBarLoose', calcIePct(ie.loose));
+      renderCardIeBar('ieBarPiece', calcIePct(ie.piece));
+      renderCardIeBar('ieBarTeuCard', teuPct);
+    }
+
+    /** 营收四卡 · 进出口占比横条（期间三项随筛选，应收为开累口径） */
+    function renderRevCardIeBars(data) {
+      const periodPct = calcTotalIePct(data.ieStack || PERIOD_DATA.year.ieStack);
+      const recvPct = Math.round(REV_IE_RATIO.import * 100);
+      renderCardIeBar('ieBarRevPeriod', periodPct);
+      renderCardIeBar('ieBarInvoicePeriod', Math.max(48, Math.min(92, periodPct - 1)));
+      renderCardIeBar('ieBarPaidPeriod', Math.max(48, Math.min(92, periodPct + 1)));
+      renderCardIeBar('ieBarReceivable', recvPct);
+    }
+
+    /** 集装箱趋势 · 双柱 · 进口 / 出口（TEU） */
+    function renderTeuTrendBars(svgId, imp, exp, months) {
+      const el = document.getElementById(svgId);
+      if (!el) return;
+      const W = 640, H = 180;
+      const pad = { l: 38, r: 4, t: 14, b: 28 };
+      const plotW = W - pad.l - pad.r;
+      const plotH = H - pad.t - pad.b;
+      const n = Math.max(imp.length, 1);
+      const maxV = Math.max.apply(null, imp.concat(exp).concat([1])) * 1.08;
+      const barW = Math.min(22, Math.max(10, (plotW / n) * 0.22));
+      const gap = 4;
+      const clusterW = barW * 2 + gap;
+      const step = n > 1 ? (plotW - clusterW) / (n - 1) : 0;
+      const y = function (v) { return pad.t + plotH - (v / maxV) * plotH; };
+      const series = [
+        { data: imp, cls: 'teu-bar-imp', name: '进口' },
+        { data: exp, cls: 'teu-bar-exp', name: '出口' }
+      ];
+
+      let svg = '<rect width="' + W + '" height="' + H + '" fill="transparent"/>';
+      for (let g = 0; g <= 3; g++) {
+        const gy = pad.t + (plotH / 3) * g;
+        const gv = Math.round(maxV * (1 - g / 3));
+        svg += '<line class="line-chart-grid" x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '"/>';
+        if (g < 3) {
+          svg += '<text class="line-chart-axis" x="' + (pad.l - 5) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10">' + gv.toLocaleString() + '</text>';
+        }
+      }
+
+      for (let i = 0; i < n; i++) {
+        const x0 = pad.l + i * step;
+        const cx = x0 + clusterW / 2;
+        series.forEach(function (s, si) {
+          const v = s.data[i] || 0;
+          const x = x0 + si * (barW + gap);
+          const barTop = y(v);
+          const tip = months[i] + ' · ' + s.name + ' ' + fmtTeuNum(v) + ' TEU';
+          svg += '<rect class="' + s.cls + '" x="' + x + '" y="' + barTop + '" width="' + barW +
+            '" height="' + Math.max(2, pad.t + plotH - barTop) + '" rx="2"><title>' + tip + '</title></rect>';
+        });
+        svg += '<text class="line-chart-axis" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10">' + months[i] + '</text>';
+      }
+      el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      el.innerHTML = svg;
+    }
+
+    function initBaseline() {
+      const b = BASELINE;
+      const total = b.loose + b.piece + b.teuTonWan;
+      const recv = Math.max(0, b.revAll - b.paid);
+      const invRate = b.revAll ? Math.round(b.invoice / b.revAll * 100) : 0;
+      const paidRate = b.revAll ? Math.round(b.paid / b.revAll * 100) : 0;
+      const syncEl = document.getElementById('baselineSyncAt');
+      if (syncEl) syncEl.textContent = '最近同步 ' + (b.syncAt || '—');
+      document.getElementById('baseTotalTon').textContent = total.toLocaleString();
+      document.getElementById('baseTeu').textContent = fmtTeu(b.teu);
+      document.getElementById('baseTeuConv').textContent = b.teuTonWan.toLocaleString();
+      document.getElementById('baseRevAll').textContent = b.revAll.toLocaleString();
+      document.getElementById('baseReceivable').textContent = recv.toLocaleString();
+      const recvSub = document.getElementById('baseRecvSub');
+      if (recvSub) {
+        const od = b.overdue != null ? b.overdue : 0;
+        recvSub.textContent = od > 0 ? '超期 ' + od.toLocaleString() + ' 万 · 开累' : '营收 − 回款 · 开累';
+      }
+      document.getElementById('kpiPendingInvoice').textContent = Math.max(0, b.revAll - b.invoice).toLocaleString() + ' 万';
+      document.getElementById('kpiRemaining').textContent = recv.toLocaleString() + ' 万';
+      document.getElementById('progressInvoicePct').textContent = invRate + '%';
+      document.getElementById('progressPaidPct').textContent = paidRate + '%';
+      document.getElementById('progressInvoiceBar').style.width = invRate + '%';
+      document.getElementById('progressPaidBar').style.width = paidRate + '%';
+      const overdue = b.overdue != null ? b.overdue : Math.round(recv * 0.6);
+      const notOverdue = b.notOverdue != null ? b.notOverdue : Math.max(0, recv - overdue);
+      const elOd = document.getElementById('kpiOverdueRecv');
+      const elNod = document.getElementById('kpiNotOverdueRecv');
+      const elTot = document.getElementById('kpiRecvFocusTotal');
+      if (elOd) elOd.textContent = overdue.toLocaleString();
+      if (elNod) elNod.textContent = notOverdue.toLocaleString();
+      if (elTot) elTot.textContent = recv.toLocaleString();
+    }
+
+    function renderPie(svgId, segs) {
+      const total = segs.reduce(function (s, x) { return s + x.v; }, 0) || 1;
+      const W = 260, H = 220, cx = 130, cy = 110, r = 68;
+      const rad = function (d) { return d * Math.PI / 180; };
+      let angle = -90, html = '';
+      const labelItems = [];
+      segs.forEach(function (s) {
+        const pct = s.v / total;
+        const pctNum = Math.round(pct * 100);
+        const a1 = angle, a2 = angle + pct * 360;
+        const mid = (a1 + a2) / 2;
+        angle = a2;
+        const x1 = cx + r * Math.cos(rad(a1)), y1 = cy + r * Math.sin(rad(a1));
+        const x2 = cx + r * Math.cos(rad(a2)), y2 = cy + r * Math.sin(rad(a2));
+        const large = pct > 0.5 ? 1 : 0;
+        html += '<path d="M' + cx + ',' + cy + ' L' + x1 + ',' + y1 + ' A' + r + ',' + r + ' 0 ' + large + ',1 ' + x2 + ',' + y2 + ' Z" fill="' + s.c + '" class="donut-seg" stroke="#fff" stroke-width="1.5"/>';
+        if (pctNum < 2) return;
+        labelItems.push({ mid: mid, pctNum: pctNum, label: s.label || '', sub: s.sub || '', color: s.c });
+      });
+      labelItems.forEach(function (item) {
+        const cos = Math.cos(rad(item.mid));
+        const sin = Math.sin(rad(item.mid));
+        const x0 = cx + r * cos;
+        const y0 = cy + r * sin;
+        const x1 = cx + (r + 12) * cos;
+        const y1 = cy + (r + 12) * sin;
+        const right = cos >= 0;
+        const x2 = right ? Math.min(W - 10, x1 + 22) : Math.max(10, x1 - 22);
+        const y2 = y1;
+        html += '<polyline fill="none" stroke="' + item.color + '" stroke-width="1" points="' +
+          x0.toFixed(1) + ',' + y0.toFixed(1) + ' ' +
+          x1.toFixed(1) + ',' + y1.toFixed(1) + ' ' +
+          x2.toFixed(1) + ',' + y2.toFixed(1) + '"/>';
+        html += '<circle cx="' + x0.toFixed(1) + '" cy="' + y0.toFixed(1) + '" r="1.5" fill="' + item.color + '"/>';
+        const tx = right ? x2 + 3 : x2 - 3;
+        const anchor = right ? 'start' : 'end';
+        const main = (item.label ? item.label + ' ' : '') + item.pctNum + '%';
+        html += '<text x="' + tx + '" y="' + (y2 - (item.sub ? 3 : 0)) + '" text-anchor="' + anchor + '" dominant-baseline="central" fill="#334155" font-size="11" font-weight="600">' + main + '</text>';
+        if (item.sub) {
+          html += '<text x="' + tx + '" y="' + (y2 + 10) + '" text-anchor="' + anchor + '" dominant-baseline="central" fill="#94a3b8" font-size="9">' + item.sub + '</text>';
+        }
+      });
+      document.getElementById(svgId).setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      document.getElementById(svgId).innerHTML = html;
+    }
+
+    function renderCompactDonutPie(svgId, segs, unit) {
+      const total = segs.reduce(function (s, x) { return s + x.v; }, 0) || 1;
+      const W = 300, H = 180, cx = 68, cy = 90, r = 58, ir = 31;
+      const rad = function (d) { return d * Math.PI / 180; };
+      let angle = -90, html = '';
+      segs.forEach(function (s) {
+        const pct = s.v / total;
+        const a1 = angle, a2 = angle + pct * 360;
+        angle = a2;
+        const x1 = cx + r * Math.cos(rad(a1)), y1 = cy + r * Math.sin(rad(a1));
+        const x2 = cx + r * Math.cos(rad(a2)), y2 = cy + r * Math.sin(rad(a2));
+        const xi1 = cx + ir * Math.cos(rad(a1)), yi1 = cy + ir * Math.sin(rad(a1));
+        const xi2 = cx + ir * Math.cos(rad(a2)), yi2 = cy + ir * Math.sin(rad(a2));
+        const large = pct > 0.5 ? 1 : 0;
+        html += '<path d="M' + x1 + ',' + y1 + ' A' + r + ',' + r + ' 0 ' + large + ',1 ' + x2 + ',' + y2 +
+          ' L' + xi2 + ',' + yi2 + ' A' + ir + ',' + ir + ' 0 ' + large + ',0 ' + xi1 + ',' + yi1 + ' Z" fill="' + s.c + '" stroke="#fff" stroke-width="1.5"/>';
+      });
+      const step = segs.length > 2 ? 42 : 52;
+      const startY = segs.length > 2 ? 48 : 58;
+      segs.forEach(function (s, i) {
+        const pct = Math.round(s.v / total * 100);
+        const ly = startY + i * step;
+        html += '<rect x="168" y="' + (ly - 8) + '" width="9" height="9" rx="1.5" fill="' + s.c + '"/>';
+        html += '<text x="184" y="' + ly + '" font-size="12" fill="#334155" font-weight="600">' + s.label + '</text>';
+        html += '<text x="184" y="' + (ly + 15) + '" font-size="11" fill="#64748b">' + pct + '% · ' + s.v + unit + '</text>';
+      });
+      const el = document.getElementById(svgId);
+      if (el) {
+        el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        el.innerHTML = html;
+      }
+    }
+
+    function renderCargoPie(loose, piece, teuConv) {
+      const segs = [
+        { v: loose, c: '#64748b', label: '散货' },
+        { v: piece, c: '#94a3b8', label: '件杂' },
+        { v: teuConv, c: '#0f766e', label: '集装箱' }
+      ];
+      const total = segs.reduce(function (s, x) { return s + x.v; }, 0) || 1;
+      const W = 300, H = 180, cx = 68, cy = 90, r = 58, ir = 31;
+      const rad = function (d) { return d * Math.PI / 180; };
+      let angle = -90, html = '';
+      segs.forEach(function (s) {
+        const pct = s.v / total;
+        const a1 = angle, a2 = angle + pct * 360;
+        angle = a2;
+        const x1 = cx + r * Math.cos(rad(a1)), y1 = cy + r * Math.sin(rad(a1));
+        const x2 = cx + r * Math.cos(rad(a2)), y2 = cy + r * Math.sin(rad(a2));
+        const xi1 = cx + ir * Math.cos(rad(a1)), yi1 = cy + ir * Math.sin(rad(a1));
+        const xi2 = cx + ir * Math.cos(rad(a2)), yi2 = cy + ir * Math.sin(rad(a2));
+        const large = pct > 0.5 ? 1 : 0;
+        html += '<path d="M' + x1 + ',' + y1 + ' A' + r + ',' + r + ' 0 ' + large + ',1 ' + x2 + ',' + y2 +
+          ' L' + xi2 + ',' + yi2 + ' A' + ir + ',' + ir + ' 0 ' + large + ',0 ' + xi1 + ',' + yi1 + ' Z" fill="' + s.c + '" stroke="#fff" stroke-width="1.5"/>';
+      });
+      segs.forEach(function (s, i) {
+        const pct = Math.round(s.v / total * 100);
+        const ly = 48 + i * 42;
+        html += '<rect x="168" y="' + (ly - 8) + '" width="9" height="9" rx="1.5" fill="' + s.c + '"/>';
+        html += '<text x="184" y="' + ly + '" font-size="12" fill="#334155" font-weight="600">' + s.label + '</text>';
+        html += '<text x="184" y="' + (ly + 15) + '" font-size="11" fill="#64748b">' + pct + '% · ' + s.v + ' 万吨</text>';
+      });
+      const el = document.getElementById('cargoPieChart');
+      if (el) {
+        el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        el.innerHTML = html;
+      }
+    }
+
+    /** 吞吐量趋势 · 分组柱状图 · 散货 / 件杂货 / 集装箱折合 */
+    function renderVolTrendBars(svgId, loose, piece, teuTon, months) {
+      const el = document.getElementById(svgId);
+      if (!el) return;
+      const W = 640, H = 180;
+      const pad = { l: 34, r: 4, t: 14, b: 28 };
+      const plotW = W - pad.l - pad.r;
+      const plotH = H - pad.t - pad.b;
+      const n = Math.max(loose.length, 1);
+      const maxMain = Math.max.apply(null, loose.concat(piece).concat([1])) * 1.06;
+      const maxTeu = Math.max.apply(null, teuTon.concat([0.1])) * 1.15;
+      const groupW = plotW / n;
+      const barW = Math.min(20, Math.max(9, groupW * 0.28));
+      const gap = 3;
+      const clusterW = barW * 3 + gap * 2;
+      const step = n > 1 ? (plotW - clusterW) / (n - 1) : 0;
+      const yMain = function (v) { return pad.t + plotH - (v / maxMain) * plotH; };
+      const yTeu = function (v) { return pad.t + plotH - (v / maxTeu) * plotH * 0.62; };
+      const series = [
+        { data: loose, cls: 'vol-bar-loose', name: '散货', yFn: yMain },
+        { data: piece, cls: 'vol-bar-piece', name: '件杂货', yFn: yMain },
+        { data: teuTon, cls: 'vol-bar-teu', name: '集装箱', yFn: yTeu }
+      ];
+
+      let svg = '<rect width="' + W + '" height="' + H + '" fill="transparent"/>';
+      for (let g = 0; g <= 3; g++) {
+        const gy = pad.t + (plotH / 3) * g;
+        const gv = Math.round(maxMain * (1 - g / 3));
+        svg += '<line class="line-chart-grid" x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '"/>';
+        if (g < 3) {
+          svg += '<text class="line-chart-axis" x="' + (pad.l - 5) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10">' + gv + '</text>';
+        }
+      }
+
+      for (let i = 0; i < n; i++) {
+        const x0 = pad.l + i * step;
+        const cx = x0 + clusterW / 2;
+        series.forEach(function (s, si) {
+          const v = s.data[i] || 0;
+          const x = x0 + si * (barW + gap);
+          const barTop = s.yFn(v);
+          const tip = months[i] + ' · ' + s.name + ' ' + v + ' 万吨';
+          svg += '<rect class="' + s.cls + '" x="' + x + '" y="' + barTop + '" width="' + barW +
+            '" height="' + Math.max(2, pad.t + plotH - barTop) + '" rx="2"><title>' + tip + '</title></rect>';
+        });
+        svg += '<text class="line-chart-axis" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10">' + months[i] + '</text>';
+      }
+      el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      el.innerHTML = svg;
+    }
+
+    function renderVolumeCharts(data) {
+      const teuConv = data.teuTonWan;
+
+      renderVolTrendBars('volumeTrendChart', TREND_LOOSE, TREND_PIECE, TREND_TEU_TON, TREND_MONTHS);
+      renderCargoPie(data.loose, data.piece, teuConv);
+
+      renderTeuTrendBars('teuTrendChart', TREND_TEU_IMP, TREND_TEU_EXP, TREND_MONTHS);
+
+      renderCardIeBars(data);
+      renderRankBars('cargoRankBars', CARGO_RANK_VOL);
+      renderCustomerRankBars();
+      renderRankBars('recvCustomerRankBars', RECV_CUSTOMER_RANK);
+    }
+
+    function rangeLabelForScope(scope) {
+      const r = presetRange(scope);
+      return r.start.replace(/-/g, '/') + ' – ' + r.end.replace(/-/g, '/');
+    }
+    function scopeBadgeText(scope) {
+      return scope === 'month' ? '本月' : (scope === 'quarter' ? '本季' : '本年');
+    }
+    function presetRange(key) {
+      const y = 2026;
+      if (key === 'month') return { start: '2026-08-01', end: '2026-08-31' };
+      if (key === 'quarter') return { start: '2026-07-01', end: '2026-09-30' };
+      return { start: y + '-01-01', end: y + '-12-31' };
+    }
+    let currentScope = 'year';
+    function setPresetActive(key) {
+      document.querySelectorAll('.date-preset').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-preset') === key);
+      });
+    }
+    function applyDatePreset(key) {
+      currentScope = key === 'month' || key === 'quarter' ? key : 'year';
+      setPresetActive(currentScope);
+      onTimeFilterChange();
+    }
+
+    function onTimeFilterChange() {
+      const scope = currentScope === 'month' || currentScope === 'quarter' ? currentScope : 'year';
+      const data = Object.assign({}, PERIOD_DATA[scope] || PERIOD_DATA.year);
+      const label = rangeLabelForScope(scope);
+      data.label = label;
+      data.scopeShort = label;
+
+      const badge = scopeBadgeText(scope);
+      document.getElementById('volumeScopeBadge').textContent = badge;
+      document.getElementById('revenueFinanceScopeBadge').textContent = badge;
+
+      const totalTon = calcTotalTon(data);
+      document.getElementById('kpiTotalTon').textContent = totalTon.toLocaleString();
+      document.getElementById('kpiTotalYoY').textContent = data.totalYoY || '—';
+      document.getElementById('kpiTotalMoM').textContent = data.totalMoM || '—';
+      document.getElementById('kpiLooseLabel').textContent = '散货（万吨·含粮食）';
+      document.getElementById('kpiLoose').textContent = data.loose.toLocaleString();
+      document.getElementById('kpiPieceLabel').textContent = '件杂货（万吨）';
+      document.getElementById('kpiPiece').textContent = data.piece.toLocaleString();
+      document.getElementById('kpiTeuLabel').textContent = '集装箱（TEU）';
+      document.getElementById('kpiTeu').textContent = fmtTeu(data.teu);
+      document.getElementById('kpiTeuConv').textContent = data.teuTonWan;
+
+      const teuPair = (data.ieStack && data.ieStack.teu) ? data.ieStack.teu : [7, 4];
+      const teuPairSum = teuPair[0] + teuPair[1] || 1;
+      const teuImpPct = Math.round(teuPair[0] / teuPairSum * 100);
+      const teuExpPct = 100 - teuImpPct;
+      const teuTotalTeu = wanTeuToTeu(data.teu);
+      const teuImpTeu = Math.round(teuTotalTeu * teuImpPct / 100);
+      const teuExpTeu = teuTotalTeu - teuImpTeu;
+      const modTotal = document.getElementById('kpiTeuModTotal');
+      const modConv = document.getElementById('kpiTeuModConv');
+      const kpiImp = document.getElementById('kpiTeuImp');
+      const kpiExp = document.getElementById('kpiTeuExp');
+      const kpiImpShare = document.getElementById('kpiTeuImpShare');
+      const kpiExpShare = document.getElementById('kpiTeuExpShare');
+      if (modTotal) modTotal.textContent = fmtTeu(data.teu);
+      if (modConv) modConv.textContent = data.teuTonWan;
+      if (kpiImp) kpiImp.textContent = fmtTeuNum(teuImpTeu);
+      if (kpiExp) kpiExp.textContent = fmtTeuNum(teuExpTeu);
+      if (kpiImpShare) kpiImpShare.textContent = teuImpPct + '%';
+      if (kpiExpShare) kpiExpShare.textContent = teuExpPct + '%';
+
+      setTeuModTargets(teuTotalTeu, teuImpTeu, teuExpTeu, data.targetTeu, teuImpPct);
+
+      setVolTargets({
+        total: totalTon,
+        loose: data.loose,
+        piece: data.piece,
+        teu: data.teu
+      }, {
+        total: data.targetTotal,
+        loose: data.targetLoose,
+        piece: data.targetPiece,
+        teu: data.targetTeu
+      });
+
+      document.getElementById('volumePeriodHint').innerHTML = '当前范围：<strong class="text-slate-600">' + badge + ' · ' + label + '</strong>';
+      document.getElementById('trendScopeLabel').textContent = badge + ' · ' + label;
+      const teuScope = document.getElementById('teuTrendScopeLabel');
+      if (teuScope) teuScope.textContent = badge + ' · ' + label;
+
+      document.getElementById('kpiRevPeriod').textContent = data.revPeriod.toLocaleString();
+      document.getElementById('kpiRevYoY').textContent = data.revYoY || '—';
+      document.getElementById('kpiRevMoM').textContent = data.revMoM || '—';
+      document.getElementById('kpiInvoicePeriod').textContent = data.periodInvoice.toLocaleString();
+      document.getElementById('kpiPaidPeriod').textContent = data.periodPaid.toLocaleString();
+      const recv = calcBaselineRecv();
+      const recvEl = document.getElementById('kpiReceivable');
+      const recvSub = document.getElementById('kpiReceivableSub');
+      if (recvEl) recvEl.textContent = recv.toLocaleString();
+      if (recvSub) {
+        const od = BASELINE.overdue != null ? BASELINE.overdue : 0;
+        recvSub.textContent = '开累 · 超期 ' + od.toLocaleString() + ' 万';
+      }
+
+      setRevTargets(data);
+      renderRevCardIeBars(data);
+      renderRevenueCharts(data, label);
+      renderVolumeCharts(data);
+    }
+
+    function renderRevenueCharts(data, label) {
+      const scale = data.revPeriod / PERIOD_DATA.year.revPeriod;
+      const struct = {
+        teu: Math.round(REV_STRUCT.teu * scale),
+        loose: Math.round(REV_STRUCT.loose * scale),
+        piece: Math.round(REV_STRUCT.piece * scale)
+      };
+      renderCompactDonutPie('revCargoPieChart', [
+        { v: struct.loose, c: '#64748b', label: '散货' },
+        { v: struct.piece, c: '#94a3b8', label: '件杂' },
+        { v: struct.teu, c: '#0f766e', label: '集装箱' }
+      ], ' 万');
+      const cargoRows = REV_CARGO_RANK.map(function (r) {
+        const amt = Math.max(1, Math.round(parseFloat(r[2]) * scale));
+        return [r[0], r[1], amt + ' 万', r[3]];
+      });
+      renderRankBars('revCargoRankBars', cargoRows);
+      revCustomerRankScale = scale;
+      renderRevCustomerRankBars();
+      const scopeEl = document.getElementById('revTrendScopeLabel');
+      if (scopeEl) scopeEl.textContent = label || '';
+      const custScope = document.getElementById('custMoneyScopeLabel');
+      if (custScope) custScope.textContent = label || '';
+      custMoneyScale = scale;
+      renderCustomerMoneyTable();
+      const slice = getRevTrendSlice();
+      renderRevTrendBars('revenueTrendChart', slice.rev, slice.recv, slice.months);
+    }
+
+    function customerMoneySortValue(row, key) {
+      if (key === 'name') return row.name;
+      if (key === 'volLoose') return (row.vol && row.vol.loose ? row.vol.loose : 0) * custMoneyScale;
+      if (key === 'volPiece') return (row.vol && row.vol.piece ? row.vol.piece : 0) * custMoneyScale;
+      if (key === 'volTeu') return (row.vol && row.vol.teu ? row.vol.teu : 0) * custMoneyScale;
+      if (key === 'rev') return row.rev * custMoneyScale;
+      if (key === 'paidRate') {
+        const base = row.revAll || row.rev || 0;
+        return base ? row.paid / base : 0;
+      }
+      if (key === 'overdueDays') return row.overdueDays || 0;
+      if (key === 'overdueAmt') return row.overdueAmt || 0;
+      return row[key];
+    }
+
+    function sortCustomerMoney(key) {
+      if (custMoneySort.key === key) {
+        custMoneySort.dir = custMoneySort.dir === 'desc' ? 'asc' : 'desc';
+      } else {
+        custMoneySort.key = key;
+        custMoneySort.dir = key === 'name' ? 'asc' : 'desc';
+      }
+      renderCustomerMoneyTable();
+    }
+
+    function formatOverdueAging(days) {
+      if (!days || days <= 0) return { text: '未超期', cls: 'text-slate-400' };
+      if (days >= 90) return { text: days + ' 天', cls: 'text-red-600 font-medium' };
+      return { text: days + ' 天', cls: 'text-amber-700 font-medium' };
+    }
+
+    function scaledCustomerVol(row, scale) {
+      const v = row.vol || {};
+      return {
+        loose: Math.max(0, Math.round((v.loose || 0) * scale)),
+        piece: Math.max(0, Math.round((v.piece || 0) * scale * 10) / 10),
+        teu: Math.max(0, Math.round((v.teu || 0) * scale))
+      };
+    }
+
+    function formatCustomerVolNum(val, isTeu) {
+      if (!val || val <= 0) return '<span class="cust-vol-empty">—</span>';
+      return isTeu ? val.toLocaleString() : String(val);
+    }
+
+    function renderCustomerMoneyTable() {
+      const body = document.getElementById('custMoneyBody');
+      if (!body) return;
+      const rows = CUSTOMER_MONEY.slice().map(function (r) {
+        return Object.assign({}, r, {
+          revShow: Math.max(1, Math.round(r.rev * custMoneyScale)),
+          recv: Math.max(0, (r.revAll || r.rev) - r.paid)
+        });
+      });
+      const key = custMoneySort.key;
+      const dir = custMoneySort.dir === 'asc' ? 1 : -1;
+      rows.sort(function (a, b) {
+        const va = customerMoneySortValue(a, key);
+        const vb = customerMoneySortValue(b, key);
+        if (typeof va === 'string') return va.localeCompare(vb, 'zh') * dir;
+        return (va - vb) * dir;
+      });
+
+      body.innerHTML = rows.map(function (r) {
+        const base = r.revAll || r.rev || 0;
+        const paidRate = base ? Math.round(r.paid / base * 100) : 0;
+        const rateCls = paidRate < 60 ? 'text-amber-700' : 'text-slate-700';
+        const od = formatOverdueAging(r.overdueDays);
+        const amt = r.overdueAmt || 0;
+        const amtCls = amt > 0 ? (r.overdueDays >= 90 ? 'text-red-600 font-medium' : 'text-amber-700 font-medium') : 'text-slate-400';
+        const vol = scaledCustomerVol(r, custMoneyScale);
+        return '<tr>' +
+          '<td class="col-name">' + r.name + '</td>' +
+          '<td class="num">' + formatCustomerVolNum(vol.loose, false) + '</td>' +
+          '<td class="num">' + formatCustomerVolNum(vol.piece, false) + '</td>' +
+          '<td class="num">' + formatCustomerVolNum(vol.teu, true) + '</td>' +
+          '<td class="num">' + r.revShow.toLocaleString() + '</td>' +
+          '<td class="num">' + r.invoice.toLocaleString() + '</td>' +
+          '<td class="num">' + r.paid.toLocaleString() + '</td>' +
+          '<td class="num font-medium ' + (r.recv >= 300 ? 'text-amber-700' : '') + '">' + r.recv.toLocaleString() + '</td>' +
+          '<td class="num ' + rateCls + '">' + paidRate + '%</td>' +
+          '<td class="num ' + amtCls + '">' + amt.toLocaleString() + '</td>' +
+          '<td class="num ' + od.cls + '">' + od.text + '</td>' +
+          '</tr>';
+      }).join('');
+
+      const foot = document.getElementById('custMoneyFoot');
+      if (foot) foot.textContent = '共 ' + rows.length + ' 家客户 · 期间营收合计 ' +
+        rows.reduce(function (s, r) { return s + r.revShow; }, 0).toLocaleString() + ' 万';
+
+      document.querySelectorAll('#custMoneyTable th[data-sort]').forEach(function (th) {
+        const k = th.getAttribute('data-sort');
+        const active = k === custMoneySort.key;
+        th.classList.toggle('active', active);
+        const ind = th.querySelector('.sort-ind');
+        if (ind) ind.textContent = active ? (custMoneySort.dir === 'desc' ? '↓' : '↑') : '↕';
+      });
     }
 
     function openSummary(key) {
@@ -552,39 +2176,18 @@
       BMS.openModal('modal-summary');
     }
 
-    function openDept(name, health, lag, tag) {
-      document.getElementById('deptTitle').textContent = name + ' · 经营详情';
-      document.getElementById('deptSub').textContent = '健康分布 ' + health + ' · 滞后任务 ' + lag + ' · ' + tag;
+    function openDept(name) {
+      document.getElementById('deptTitle').textContent = name + ' · 经营摘要';
+      document.getElementById('deptSub').textContent = '目标、计划、任务明细已整合至任务台账，此处仅展示健康摘要。';
       BMS.openModal('modal-dept');
     }
 
-    const SPECIAL_ID_MAP = {
-      '桥吊效能提升专项': 'sp1',
-      '堆场周转优化专项': 'sp2',
-      '设备点检达标专项': 'sp3'
-    };
-
-    function openSpecial(name) {
-      const id = SPECIAL_ID_MAP[name];
-      if (id) {
-        location.href = '专项管理_专项列表_page.html?id=' + id;
-        return;
-      }
-      const d = SPECIAL_DATA[name];
-      if (!d) return;
-      document.getElementById('specialTitle').textContent = name;
-      document.getElementById('specialSub').textContent = d.sub;
-      document.getElementById('specialPlans').innerHTML = d.plans.map(p =>
-        '<li class="border rounded-xl px-3 py-2 flex justify-between"><span>' + p[0] + '</span><span>' + p[1] + '</span></li>'
-      ).join('');
-      document.getElementById('specialTasks').innerHTML = d.tasks.map(t => {
-        const cls = t[1].includes('延期') || t[1].includes('未更新') ? 'text-red-500' : (t[1].includes('进行') || t[1].includes('未') ? 'text-amber-600' : 'text-emerald-600');
-        return '<li class="border rounded-xl px-3 py-2 flex justify-between"><span>' + t[0] + '</span><span class="' + cls + '">' + t[1] + '</span></li>';
-      }).join('');
-      BMS.openModal('modal-special');
-    }
-
-    document.addEventListener('DOMContentLoaded', onPeriodFilterChange);
+    document.addEventListener('DOMContentLoaded', function () {
+      initBaseline();
+      renderCashTrendDual('cashTrendChart', INVOICE_MONTHLY, PAID_MONTHLY, CASH_TREND_MONTHS);
+      setPresetActive(currentScope);
+      onTimeFilterChange();
+    });
   </script>
 </body>
 </html>

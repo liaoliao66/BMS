@@ -14,6 +14,7 @@
     .view-tab-on { background:#fff; color:#0f766e; box-shadow:0 1px 3px rgba(0,0,0,.08); }
     .cal-bar-doing { background:#e0f2fe; border:1px solid #7dd3fc; color:#0369a1; }
     .cal-bar-done { background:#d1fae5; border:1px solid #6ee7b7; color:#047857; }
+    .cal-bar-delay { background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; }
     .detail-tab-on { background:#0f766e; color:#fff; }
     .img-preview-grid { display:flex; flex-wrap:wrap; gap:10px; }
     .img-preview-item { position:relative; width:88px; height:88px; border-radius:12px; overflow:hidden; border:1px solid #e2e8f0; background:#f8fafc; }
@@ -24,12 +25,13 @@
 <body class="bg-slate-50" data-page="my-tasks" data-title="任务清单">
   <div id="app-root"></div>
   <div id="page-main">
-    <p class="text-xs text-slate-500 mb-4">周初创建任务（须填起止时间，默认「进行中」），周末由责任人填写完成情况；本期未操作自动「已延期」。支持列表与周历视角；**进行中/已延期**任务可<strong>转派</strong>（须填写原因并留转派记录）。</p>
+    <p class="text-xs text-slate-500 mb-3">周初创建任务（须填起止时间，默认「进行中」），周期内由责任人<strong>跟进</strong>并可标记完成/延期；本期未完成自动「已延期」。支持列表与周历视角；**进行中/已延期**任务可<strong>转派</strong>（须填写原因并留转派记录）。</p>
+    <div id="permHint" class="mb-4 text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 hidden"></div>
 
     <div class="flex flex-wrap gap-3 justify-between mb-4">
       <div class="inline-flex p-1 bg-slate-100 rounded-xl">
-        <button type="button" id="viewListBtn" class="view-tab px-4 py-1.5 rounded-lg text-sm font-medium view-tab-on" onclick="switchView('list')"><i class="fa-solid fa-list mr-1.5"></i>列表</button>
-        <button type="button" id="viewCalBtn" class="view-tab px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500" onclick="switchView('calendar')"><i class="fa-solid fa-calendar-week mr-1.5"></i>周历</button>
+        <button type="button" id="viewListBtn" class="view-tab px-4 py-1.5 rounded-lg text-sm font-medium view-tab-on"><i class="fa-solid fa-list mr-1.5"></i>列表</button>
+        <button type="button" id="viewCalBtn" class="view-tab px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500"><i class="fa-solid fa-calendar-week mr-1.5"></i>周历</button>
       </div>
       <button type="button" id="btnCreate" onclick="openCreateTask()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建任务</button>
     </div>
@@ -47,6 +49,13 @@
         <button type="button" class="filter-btn px-3 py-1.5 rounded-xl text-sm bg-white border border-slate-200" data-f="doing" onclick="filterTasks('doing')">进行中</button>
         <button type="button" class="filter-btn px-3 py-1.5 rounded-xl text-sm bg-white border border-slate-200" data-f="done" onclick="filterTasks('done')">已完成</button>
         <button type="button" class="filter-btn px-3 py-1.5 rounded-xl text-sm bg-white border border-slate-200" data-f="delay" onclick="filterTasks('delay')">已延期</button>
+        <span id="ownerScopeWrap" class="hidden inline-flex items-center gap-2 ml-1 pl-3 border-l border-slate-200">
+          <label class="text-sm text-slate-500">责任人</label>
+          <select id="ownerScope" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onOwnerScopeChange()">
+            <option value="all">全部（本人+下级）</option>
+            <option value="self">仅本人</option>
+          </select>
+        </span>
       </div>
     </div>
 
@@ -82,9 +91,15 @@
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-view')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center gap-3">
-          <h3 class="text-lg font-semibold">任务详情</h3>
-          <div class="flex gap-2" id="viewTabs">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-lg font-semibold truncate" id="viewModalTitle">任务详情</h3>
+              <span id="viewModalStatus"></span>
+            </div>
+          </div>
+          <div class="flex gap-2 shrink-0" id="viewTabs">
             <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on" data-vtab="info" onclick="switchViewTab('info')">基本信息</button>
+            <button type="button" id="viewTabFollow" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600 hidden" data-vtab="follow" onclick="switchViewTab('follow')">跟进结果</button>
             <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600" data-vtab="transfer" onclick="switchViewTab('transfer')">转派记录</button>
           </div>
           <button type="button" onclick="BMS.closeModal('modal-view')" class="w-9 h-9 rounded-xl border text-slate-400 shrink-0"><i class="fa-solid fa-xmark"></i></button>
@@ -108,6 +123,17 @@
             · 默认状态 <span class="font-medium text-sky-700">进行中</span>
           </div>
           <div>
+            <label class="block text-sm text-slate-600 mb-1">关联计划 <span class="text-red-500">*</span></label>
+            <select id="ctPlan" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+              <option value="">请选择本部门计划</option>
+              <option>8 月装卸效率提升计划</option>
+              <option>夜班协同保障计划</option>
+              <option>Q3 桥吊点检专项计划</option>
+              <option>堆场周转优化计划</option>
+            </select>
+            <p class="text-xs text-slate-400 mt-1">仅可关联本部门计划</p>
+          </div>
+          <div>
             <label class="block text-sm text-slate-600 mb-1">任务名称 <span class="text-red-500">*</span></label>
             <input id="ctName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="请输入任务名称" maxlength="100" />
           </div>
@@ -127,15 +153,27 @@
             <div class="text-xs text-slate-400 mt-1 text-right"><span id="ctSummaryCount">0</span>/500</div>
           </div>
           <div>
-            <label class="block text-sm text-slate-600 mb-1">关联计划 <span class="text-red-500">*</span></label>
-            <select id="ctPlan" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-              <option value="">请选择本部门计划</option>
-              <option>8 月装卸效率提升计划</option>
-              <option>夜班协同保障计划</option>
-              <option>Q3 桥吊点检专项计划</option>
-              <option>堆场周转优化计划</option>
-            </select>
-            <p class="text-xs text-slate-400 mt-1">仅可关联本部门计划</p>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label class="block text-sm text-slate-600">图片 <span class="text-slate-400 font-normal">（选填，支持 JPG/PNG/GIF/WebP，单张 ≤ 20MB）</span></label>
+              <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-image"></i>添加图片
+                <input id="ctImages" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple class="hidden" onchange="addTaskImages(event)" />
+              </label>
+            </div>
+            <div id="ctImagePreview" class="img-preview-grid min-h-[44px]"></div>
+            <p class="text-xs text-slate-400 mt-2" id="ctImageHint">未添加图片</p>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <label class="block text-sm text-slate-600">附件 <span class="text-slate-400 font-normal">（选填，文档/PDF/图片，单文件 ≤ 20MB）</span></label>
+              <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1.5">
+                <i class="fa-solid fa-upload"></i>上传附件
+                <input id="ctFileInput" type="file" class="hidden" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,image/*" onchange="uploadTaskFiles(event)" />
+              </label>
+            </div>
+            <div id="ctAttachList" class="border border-slate-100 rounded-2xl divide-y text-sm min-h-[52px]">
+              <p id="ctAttachEmpty" class="px-4 py-3 text-xs text-slate-400">未添加附件</p>
+            </div>
           </div>
           <div id="ownerFieldWrap">
             <label class="block text-sm text-slate-600 mb-1">责任人 <span class="text-red-500">*</span></label>
@@ -157,17 +195,6 @@
             </div>
             <p class="text-xs text-slate-400 mt-1">限本部门人员；不可选责任人本人；配合人员可查看任务，填报仍由责任人负责</p>
           </div>
-          <div>
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <label class="block text-sm text-slate-600">图片 <span class="text-slate-400 font-normal">（选填，支持 JPG/PNG/GIF/WebP，单张 ≤ 20MB）</span></label>
-              <label class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl cursor-pointer inline-flex items-center gap-1.5">
-                <i class="fa-solid fa-image"></i>添加图片
-                <input id="ctImages" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple class="hidden" onchange="addTaskImages(event)" />
-              </label>
-            </div>
-            <div id="ctImagePreview" class="img-preview-grid min-h-[44px]"></div>
-            <p class="text-xs text-slate-400 mt-2" id="ctImageHint">未添加图片</p>
-          </div>
         </div>
         <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
           <button type="button" onclick="BMS.closeModal('modal-form-task')" class="text-sm text-slate-500 px-3">取消</button>
@@ -176,19 +203,28 @@
       </div>
     </div>
 
-    <!-- 填写完成情况 -->
+    <!-- 跟进 -->
     <div id="modal-complete" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-complete')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
         <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
-          <h3 class="text-lg font-semibold">填写完成情况</h3>
+          <h3 class="text-lg font-semibold">跟进</h3>
           <button type="button" onclick="BMS.closeModal('modal-complete')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           <p class="text-sm text-slate-600" id="cpTaskName">—</p>
-          <div data-ai-inline="F4">
-            <label class="block text-sm text-slate-600 mb-1">情况概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span></label>
-            <textarea id="cpSummary" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-28" placeholder="简述本周完成情况" maxlength="500" oninput="updateCount('cpSummary','cpSummaryCount')"></textarea>
+          <div>
+            <label class="block text-sm text-slate-600 mb-2">标记状态 <span class="text-red-500">*</span></label>
+            <div class="flex flex-wrap gap-4 text-sm">
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="cpStatus" value="进行中" checked onchange="onFollowStatusChange()" />进行中</label>
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="cpStatus" value="已完成" onchange="onFollowStatusChange()" />完成</label>
+              <label class="inline-flex items-center gap-2 cursor-pointer"><input type="radio" name="cpStatus" value="已延期" onchange="onFollowStatusChange()" />延期</label>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">默认「进行中」；可改为完成或延期</p>
+          </div>
+          <div data-ai-inline="F4" id="cpSummaryWrap">
+            <label class="block text-sm text-slate-600 mb-1" id="cpSummaryLabel">情况概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span></label>
+            <textarea id="cpSummary" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-28" placeholder="简述本周跟进情况" maxlength="500" oninput="updateCount('cpSummary','cpSummaryCount')"></textarea>
             <div class="text-xs text-slate-400 mt-1 text-right"><span id="cpSummaryCount">0</span>/500</div>
           </div>
           <div>
@@ -196,15 +232,15 @@
             <input id="cpFiles" type="file" multiple class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm" />
             <p class="text-xs text-slate-400 mt-1" id="cpFileHint">未选择文件</p>
           </div>
-          <div>
+          <div id="cpDoneAtWrap" class="hidden">
             <label class="block text-sm text-slate-600 mb-1">完成具体时间 <span class="text-red-500">*</span></label>
             <input id="cpDoneAt" type="datetime-local" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-29T17:30" />
           </div>
-          <p class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-2">提交后状态变为「已完成」。未完成无需操作；本期结束后未操作将自动标为「已延期」。</p>
+          <p id="cpStatusHint" class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-2">保持「进行中」将记录本次跟进；选「完成」或「延期」将更新任务状态。本期结束仍未完成将自动标为「已延期」。</p>
         </div>
         <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
           <button type="button" onclick="BMS.closeModal('modal-complete')" class="text-sm text-slate-500 px-3">取消</button>
-          <button type="button" onclick="saveComplete()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">标为已完成</button>
+          <button type="button" onclick="saveComplete()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存跟进</button>
         </div>
       </div>
     </div>
@@ -253,6 +289,61 @@
   <script>
     const SELF = '刘强';
     const DEPT_MEMBERS = ['孙伟', '马超', '王芳'];
+    let ownerScope = 'all';
+
+    function getCurrentUser() {
+      return (window.BMS && BMS.currentUser)
+        ? BMS.currentUser
+        : { name: SELF, dept: '装卸队', title: '装卸队负责人', role: 'dept_head', subordinates: DEPT_MEMBERS };
+    }
+
+    function isDeptHead() {
+      const u = getCurrentUser();
+      return u.role === 'dept_head' || !!(u.subordinates && u.subordinates.length);
+    }
+
+    function canViewRow(r) {
+      const u = getCurrentUser();
+      if (r.owner === u.name) return true;
+      if (isDeptHead() && (u.subordinates || []).includes(r.owner)) return true;
+      if ((r.helpers || []).includes(u.name)) return true;
+      return false;
+    }
+
+    function isSubordinateTask(r) {
+      const u = getCurrentUser();
+      return r.owner !== u.name && (u.subordinates || []).includes(r.owner);
+    }
+
+    function initPermissionUi() {
+      const u = getCurrentUser();
+      const hint = document.getElementById('permHint');
+      const wrap = document.getElementById('ownerScopeWrap');
+      const sel = document.getElementById('ownerScope');
+      if (isDeptHead()) {
+        if (hint) {
+          hint.classList.remove('hidden');
+          const subs = (u.subordinates || []).join('、') || '—';
+          hint.innerHTML = '当前账号：<span class="font-medium text-slate-800">' + u.name + ' · ' + (u.title || '负责人') + '</span> · 数据权限：可查看<strong>本人及下级</strong>（' + subs + '）任务；跟进仅限责任人本人，上级可查看与转派。';
+        }
+        if (wrap && sel) {
+          wrap.classList.remove('hidden');
+          const opts = ['<option value="all">全部（本人+下级）</option>', '<option value="self">仅本人</option>'];
+          (u.subordinates || []).forEach(name => {
+            opts.push('<option value="' + name + '">' + name + '（下级）</option>');
+          });
+          sel.innerHTML = opts.join('');
+        }
+      } else if (hint) {
+        hint.classList.remove('hidden');
+        hint.innerHTML = '当前账号：<span class="font-medium text-slate-800">' + u.name + '</span> · 数据权限：仅可查看<strong>本人</strong>任务。';
+      }
+    }
+
+    function onOwnerScopeChange() {
+      ownerScope = document.getElementById('ownerScope').value;
+      renderCurrentView();
+    }
     const CURRENT_PERIOD = '2026-W34';
     const PERIODS = {
       '2026-W34': { start: '2026-08-24', end: '2026-08-30', days: ['2026-08-24','2026-08-25','2026-08-26','2026-08-27','2026-08-28','2026-08-29','2026-08-30'] },
@@ -278,14 +369,21 @@
     };
 
     let ROWS = [
-      { id: 1, period: '2026-W34', name: '桥吊夜班流程复盘', summary: '梳理夜班交接与点检流程，输出整改清单。', plan: '8 月装卸效率提升计划', owner: '刘强', creator: '刘强', helpers: ['孙伟'], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '流程图_v1.pdf' },
-      { id: 2, period: '2026-W34', name: '班前会标准化宣贯', summary: '落实班前会标准话术与记录模板。', plan: '8 月装卸效率提升计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 3, period: '2026-W34', name: '岸桥对位训练跟进', summary: '跟进对位训练排班与考核。', plan: '夜班协同保障计划', owner: '孙伟', creator: '刘强', helpers: ['马超'], src: '代建', start: '2026-08-26', end: '2026-08-29', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 4, period: '2026-W34', name: 'Q3 安全隐患现场复核', summary: '对装卸作业区隐患现场复核。', plan: 'Q3 桥吊点检专项计划', owner: '刘强', creator: '张总', helpers: ['王芳'], src: '督办下达', start: '2026-08-24', end: '2026-08-27', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 5, period: '2026-W33', name: '堆场周转异常复盘', summary: '复盘上周周转异常节点。', plan: '堆场周转优化计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-17', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 16:20', completeSummary: '已形成复盘纪要并同步调度。', files: '复盘纪要.docx' },
-      { id: 6, period: '2026-W33', name: '夜班交接问题闭环', summary: '跟踪交接问题整改进度。', plan: '夜班协同保障计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-23', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 7, period: '2026-W33', name: '点检整改跟踪', summary: '点检发现问题整改跟踪。', plan: 'Q3 桥吊点检专项计划', owner: '刘强', creator: '张总', helpers: [], src: '督办下达', start: '2026-08-19', end: '2026-08-21', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', files: '' },
-      { id: 8, period: '2026-W32', name: '泊位准点核查清单', summary: '整理泊位准点核查清单。', plan: '8 月装卸效率提升计划', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-10', end: '2026-08-15', status: '已完成', doneOp: true, doneAt: '2026-08-15 18:00', completeSummary: '清单已提交设备部。', files: '' }
+      { id: 1, period: '2026-W34', name: '桥吊夜班流程复盘', summary: '梳理夜班交接与点检流程，输出整改清单。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: ['孙伟'], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '流程图_v1.pdf' },
+      { id: 2, period: '2026-W34', name: '班前会标准化宣贯', summary: '落实班前会标准话术与记录模板。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 3, period: '2026-W34', name: '岸桥对位训练跟进', summary: '跟进对位训练排班与考核。', plan: '夜班协同保障计划', dept: '装卸队', owner: '孙伟', creator: '刘强', helpers: ['马超'], src: '代建', start: '2026-08-26', end: '2026-08-29', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 9, period: '2026-W34', name: '岸桥对位训练', summary: '落实对位训练排班与现场考核。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '马超', creator: '马超', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 10, period: '2026-W34', name: '堆场通道标识检查', summary: '检查堆场通道标识与警示牌。', plan: '堆场周转优化计划', dept: '装卸队', owner: '王芳', creator: '王芳', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 4, period: '2026-W34', name: 'Q3 安全隐患现场复核', summary: '对装卸作业区隐患现场复核。', plan: 'Q3 桥吊点检专项计划', dept: '装卸队', owner: '刘强', creator: '张总', helpers: ['王芳'], src: '督办下达', start: '2026-08-24', end: '2026-08-27', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 12, period: '2026-W34', name: '泊位准点抽查记录', summary: '抽查本周泊位准点情况并记录异常。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-26', status: '已完成', doneOp: true, doneAt: '2026-08-26 17:10', completeSummary: '本周抽查 12 个泊位，准点率 91.7%，异常 1 处已登记并同步调度。', delayReason: '', files: '' },
+      { id: 13, period: '2026-W34', name: '班组工具点检登记', summary: '完成本周班组工具点检与登记。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '孙伟', creator: '孙伟', helpers: ['马超'], src: '自建', start: '2026-08-25', end: '2026-08-28', status: '已完成', doneOp: true, doneAt: '2026-08-28 10:30', completeSummary: '点检表已提交，缺件 2 项已报设备部补货。', delayReason: '', files: '点检表.xlsx' },
+      { id: 14, period: '2026-W34', name: '夜班交接清单修订', summary: '根据上周试运行反馈修订夜班交接清单。', plan: '夜班协同保障计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-27', status: '已延期', doneOp: false, doneAt: '', completeSummary: '', delayReason: '试运行反馈尚未收齐，清单修订顺延至下周二前完成。', files: '' },
+      { id: 15, period: '2026-W34', name: '堆场标识补漆', summary: '对磨损堆场标识补漆更新。', plan: '堆场周转优化计划', dept: '装卸队', owner: '王芳', creator: '王芳', helpers: [], src: '自建', start: '2026-08-26', end: '2026-08-29', status: '已延期', doneOp: false, doneAt: '', completeSummary: '', delayReason: '雨天无法施工，已协调下周干燥时段补漆。', files: '' },
+      { id: 5, period: '2026-W33', name: '堆场周转异常复盘', summary: '复盘上周周转异常节点。', plan: '堆场周转优化计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-17', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 16:20', completeSummary: '已形成复盘纪要并同步调度。', delayReason: '', files: '复盘纪要.docx' },
+      { id: 6, period: '2026-W33', name: '夜班交接问题闭环', summary: '跟踪交接问题整改进度。', plan: '夜班协同保障计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-23', status: '已延期', doneOp: false, doneAt: '', completeSummary: '', delayReason: '交接问题涉及多班组协同，整改方案未在本周内闭环。', files: '' },
+      { id: 11, period: '2026-W33', name: '班组安全宣贯记录', summary: '整理班组安全宣贯签到与记录。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '孙伟', creator: '孙伟', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 11:30', completeSummary: '宣贯记录已归档。', delayReason: '', files: '' },
+      { id: 7, period: '2026-W33', name: '点检整改跟踪', summary: '点检发现问题整改跟踪。', plan: 'Q3 桥吊点检专项计划', dept: '装卸队', owner: '刘强', creator: '张总', helpers: [], src: '督办下达', start: '2026-08-19', end: '2026-08-21', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '本期未完成，系统自动标为已延期', files: '' },
+      { id: 8, period: '2026-W32', name: '泊位准点核查清单', summary: '整理泊位准点核查清单。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-10', end: '2026-08-15', status: '已完成', doneOp: true, doneAt: '2026-08-15 18:00', completeSummary: '清单已提交设备部。', delayReason: '', files: '' }
     ];
 
     function findRowIndex(id) {
@@ -305,10 +403,71 @@
     }
 
     function canEdit(r) {
-      return displayStatus(r) !== '已完成';
+      if (displayStatus(r) === '已完成') return false;
+      const u = getCurrentUser();
+      if (r.owner === u.name) return true;
+      if (r.creator === u.name && r.owner !== u.name) return true;
+      return false;
     }
 
-    let taskCreateImages = [];
+    function canComplete(r) {
+      const u = getCurrentUser();
+      return displayStatus(r) === '进行中' && r.owner === u.name && r.period === CURRENT_PERIOD;
+    }
+
+    function canTransfer(r) {
+      const st = displayStatus(r);
+      const u = getCurrentUser();
+      if (st === '已完成') return false;
+      if (r.owner === u.name) return true;
+      if (r.creator === u.name) return true;
+      if (isDeptHead() && isSubordinateTask(r)) return true;
+      return false;
+    }
+
+    function clearTaskAttaches() {
+      const list = document.getElementById('ctAttachList');
+      if (!list) return;
+      list.innerHTML = '<p id="ctAttachEmpty" class="px-4 py-3 text-xs text-slate-400">未添加附件</p>';
+      const input = document.getElementById('ctFileInput');
+      if (input) input.value = '';
+    }
+
+    function uploadTaskFiles(e) {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      const max = 20 * 1024 * 1024;
+      const list = document.getElementById('ctAttachList');
+      const empty = document.getElementById('ctAttachEmpty');
+      if (empty) empty.remove();
+      let ok = 0;
+      files.forEach(f => {
+        const okType = f.type.startsWith('image/') || f.type === 'application/pdf' || /\.(docx?|xlsx?|pptx?|pdf|png|jpe?g|gif|webp)$/i.test(f.name);
+        if (!okType) { BMS.toast('仅支持文档、图片：' + f.name, 'error'); return; }
+        if (f.size > max) { BMS.toast('超过 20MB：' + f.name, 'error'); return; }
+        ok++;
+        const size = f.size > 1024 * 1024 ? (f.size / 1024 / 1024).toFixed(1) + 'MB' : Math.max(1, Math.round(f.size / 1024)) + 'KB';
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between px-4 py-3';
+        row.innerHTML = `<div class="flex items-center gap-3 min-w-0"><i class="fa-solid fa-file text-slate-400"></i><div class="min-w-0"><div class="truncate font-medium"></div><div class="text-xs text-slate-400">刘强 · 刚刚 · ${size}</div></div></div><div class="flex gap-2 shrink-0"><button type="button" class="text-teal-700 text-xs" onclick="BMS.toast('原型：预览')">预览</button><button type="button" class="text-red-500 text-xs" onclick="removeTaskAttach(this)">删除</button></div>`;
+        row.querySelector('.truncate').textContent = f.name;
+        list.appendChild(row);
+      });
+      e.target.value = '';
+      if (!list.querySelectorAll('.flex.items-center.justify-between').length) {
+        list.innerHTML = '<p id="ctAttachEmpty" class="px-4 py-3 text-xs text-slate-400">未添加附件</p>';
+      }
+      if (ok) BMS.toast('已添加 ' + ok + ' 个附件');
+    }
+
+    function removeTaskAttach(btn) {
+      const list = document.getElementById('ctAttachList');
+      btn.closest('.flex.items-center.justify-between').remove();
+      if (!list.querySelectorAll('.flex.items-center.justify-between').length) {
+        list.innerHTML = '<p id="ctAttachEmpty" class="px-4 py-3 text-xs text-slate-400">未添加附件</p>';
+      }
+      BMS.toast('附件已移除');
+    }
 
     function renderTaskImagePreviews() {
       const box = document.getElementById('ctImagePreview');
@@ -373,17 +532,6 @@
       return `<div class="py-2 border-b border-slate-100 last:border-0"><div class="text-slate-500 text-xs mb-1">图片</div><div class="img-preview-grid">${thumbs}</div><div class="text-xs text-slate-400 mt-1">${filesText}</div></div>`;
     }
 
-      return displayStatus(r) === '进行中' && r.owner === SELF && r.period === CURRENT_PERIOD;
-    }
-
-    function canTransfer(r) {
-      const st = displayStatus(r);
-      if (st === '已完成') return false;
-      if (r.owner === SELF) return true;
-      if (r.creator === SELF) return true;
-      return true;
-    }
-
     function getTransfers(taskId) {
       return TRANSFERS[taskId] || [];
     }
@@ -405,6 +553,51 @@
         </div>`).join('') + '</div>';
     }
 
+    function renderFollowResultContent(r) {
+      const st = displayStatus(r);
+      if (st === '已完成') {
+        return `
+          <div class="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5 space-y-4">
+            <div class="flex items-center gap-2 text-emerald-800">
+              <i class="fa-solid fa-circle-check"></i>
+              <span class="font-medium">任务已完成</span>
+            </div>
+            ${viewField('完成时间', r.doneAt || '—')}
+            <div>
+              <div class="text-slate-500 mb-1">完成概述</div>
+              <div class="text-slate-800 leading-relaxed bg-white rounded-xl p-4 border border-emerald-100">${r.completeSummary || '—'}</div>
+            </div>
+            ${viewField('跟进责任人', r.owner)}
+            ${viewField('归属周期', r.period)}
+          </div>`;
+      }
+      if (st === '已延期') {
+        return `
+          <div class="rounded-2xl border border-red-100 bg-red-50/40 p-5 space-y-4">
+            <div class="flex items-center gap-2 text-red-700">
+              <i class="fa-solid fa-clock"></i>
+              <span class="font-medium">任务已延期</span>
+            </div>
+            <div>
+              <div class="text-slate-500 mb-1">延期原因</div>
+              <div class="text-slate-800 leading-relaxed bg-white rounded-xl p-4 border border-red-100">${r.delayReason || '本期未完成，系统自动标为已延期'}</div>
+            </div>
+            ${viewField('跟进责任人', r.owner)}
+            ${viewField('归属周期', r.period)}
+            ${viewField('原计划结束', r.end)}
+          </div>`;
+      }
+      return '<p class="text-slate-400 text-center py-10">当前任务进行中，请通过「跟进」更新状态</p>';
+    }
+
+    function syncViewModalHeader(r) {
+      const st = displayStatus(r);
+      document.getElementById('viewModalTitle').textContent = r.name;
+      document.getElementById('viewModalStatus').innerHTML = statusBadge(st);
+      const followTab = document.getElementById('viewTabFollow');
+      if (followTab) followTab.classList.toggle('hidden', st !== '已完成' && st !== '已延期');
+    }
+
     function switchViewTab(tab) {
       viewTab = tab;
       document.querySelectorAll('.detail-tab').forEach(b => {
@@ -421,24 +614,23 @@
         document.getElementById('viewContent').innerHTML = renderTransferTimeline(r.id);
         return;
       }
+      if (viewTab === 'follow') {
+        document.getElementById('viewContent').innerHTML = renderFollowResultContent(r);
+        return;
+      }
       const st = displayStatus(r);
       let html = `
         <div class="space-y-4">
-        <div class="flex flex-wrap items-center gap-2 mb-2">
-          <h4 class="text-base font-semibold text-slate-900">${r.name}</h4>
-          ${statusBadge(st)}
-        </div>
         ${viewField('所属计划', r.plan)}
-        ${viewField('责任人', r.owner + ' · 来源：' + r.src)}
+        ${viewField('责任人', r.owner + (r.owner === getCurrentUser().name ? '（本人）' : isSubordinateTask(r) ? '（下级）' : '') + ' · 来源：' + r.src)}
         ${viewField('配合人员', (r.helpers && r.helpers.length) ? r.helpers.join('、') : '—')}
         ${viewField('起止时间', r.start + ' ~ ' + r.end)}
         ${viewField('归属周期', r.period)}
         ${viewField('任务概述', r.summary || '—')}
         ${renderTaskImagesView(r.files || '')}
       `;
-      if (st === '已完成') {
-        html += viewField('完成时间', r.doneAt);
-        html += viewField('情况概述', r.completeSummary || '—');
+      if (st === '已完成' || st === '已延期') {
+        html += `<p class="text-xs text-slate-400 pt-2">完成/延期详情请查看「跟进结果」页签</p>`;
       }
       html += '</div>';
       document.getElementById('viewContent').innerHTML = html;
@@ -472,20 +664,33 @@
 
     function filteredRows() {
       const p = currentPeriod();
+      const u = getCurrentUser();
       return ROWS
         .map((r, idx) => ({ ...r, idx, showStatus: displayStatus(r) }))
+        .filter(r => canViewRow(r))
         .filter(r => r.period === p)
+        .filter(r => {
+          if (ownerScope === 'all') return true;
+          if (ownerScope === 'self') return r.owner === u.name;
+          return r.owner === ownerScope;
+        })
         .filter(r => currentFilter === 'all' || statusTag(r.showStatus) === currentFilter);
     }
 
     function switchView(v) {
-      currentView = v;
-      document.getElementById('panel-list').classList.toggle('hidden', v !== 'list');
-      document.getElementById('panel-calendar').classList.toggle('hidden', v !== 'calendar');
-      document.getElementById('viewListBtn').className = v === 'list' ? 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium view-tab-on' : 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500';
-      document.getElementById('viewCalBtn').className = v === 'calendar' ? 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium view-tab-on' : 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500';
+      currentView = v === 'calendar' ? 'calendar' : 'list';
+      const listPanel = document.getElementById('panel-list');
+      const calPanel = document.getElementById('panel-calendar');
+      const listBtn = document.getElementById('viewListBtn');
+      const calBtn = document.getElementById('viewCalBtn');
+      if (!listPanel || !calPanel || !listBtn || !calBtn) return;
+      listPanel.classList.toggle('hidden', currentView !== 'list');
+      calPanel.classList.toggle('hidden', currentView !== 'calendar');
+      listBtn.className = currentView === 'list' ? 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium view-tab-on' : 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500';
+      calBtn.className = currentView === 'calendar' ? 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium view-tab-on' : 'view-tab px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500';
       renderCurrentView();
     }
+    window.switchView = switchView;
 
     function onPeriodChange() {
       const p = currentPeriod();
@@ -497,7 +702,7 @@
         btn.title = '';
       } else {
         hint.classList.remove('hidden');
-        hint.textContent = '正在查看历史周期。未做「完成」操作的任务已自动标为「已延期」；新建请切回本周。';
+        hint.textContent = '正在查看历史周期。未跟进为「完成」的任务已自动标为「已延期」；新建请切回本周。';
         btn.classList.add('opacity-50', 'pointer-events-none');
         btn.title = '仅本周可新建任务';
       }
@@ -522,29 +727,32 @@
       const p = currentPeriod();
       const list = filteredRows();
       document.getElementById('taskBody').innerHTML = list.length ? list.map(r => {
+        const st = r.showStatus;
+        const viewLabel = (st === '已完成' || st === '已延期') ? '查看详情' : '查看';
         const actions = [
-          `<button type="button" class="text-teal-700" onclick="openViewByIdx(${r.idx})">查看</button>`
+          `<button type="button" class="text-teal-700" onclick="openViewByIdx(${r.idx})">${viewLabel}</button>`
         ];
         if (canEdit(r)) {
           actions.push(`<button type="button" class="text-slate-600 hover:text-teal-700" onclick="openEdit(${r.idx})">编辑</button>`);
         }
         if (canComplete(r)) {
-          actions.push(`<button type="button" class="text-teal-700" onclick="openComplete(${r.idx})">填写完成情况</button>`);
+          actions.push(`<button type="button" class="text-teal-700" onclick="openComplete(${r.idx})">跟进</button>`);
         }
         if (canTransfer(r)) {
           actions.push(`<button type="button" class="text-amber-700" onclick="openTransfer(${r.idx})">转派</button>`);
         }
         return `
         <tr class="border-t row-hover">
-          <td class="px-5 py-3 font-medium">${r.name}</td>
+          <td class="px-5 py-3 font-medium"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openViewByIdx(${r.idx})">${r.name}</button>${isSubordinateTask(r) ? ' <span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-normal ml-1">下级</span>' : ''}</td>
           <td class="px-4 py-3 text-slate-600">${r.plan}</td>
-          <td class="px-4 py-3">${r.owner}</td>
+          <td class="px-4 py-3">${r.owner}${r.owner === getCurrentUser().name ? ' <span class="text-xs text-slate-400">（本人）</span>' : ''}</td>
           <td class="px-4 py-3">${formatRange(r)}</td>
           <td class="px-4 py-3">${statusBadge(r.showStatus)}</td>
           <td class="px-5 py-3 space-x-2 whitespace-nowrap">${actions.join('')}</td>
         </tr>`;
-      }).join('') : `<tr><td colspan="6" class="px-5 py-10 text-center text-slate-400">本周期暂无任务</td></tr>`;
-      document.getElementById('footerHint').textContent = '共 ' + list.length + ' 条 · ' + periodLabel(p);
+      }).join('') : `<tr><td colspan="6" class="px-5 py-10 text-center text-slate-400">本周期暂无可见任务</td></tr>`;
+      const scopeText = ownerScope === 'all' ? '本人+下级' : (ownerScope === 'self' ? '仅本人' : ownerScope);
+      document.getElementById('footerHint').textContent = '共 ' + list.length + ' 条 · ' + periodLabel(p) + ' · 范围：' + scopeText;
     }
 
     function spanInWeek(task, weekDays) {
@@ -607,10 +815,13 @@
     function openViewModal() {
       const r = ROWS[viewIndex];
       if (!r) return;
-      viewTab = 'info';
+      const st = displayStatus(r);
+      syncViewModalHeader(r);
+      viewTab = (st === '已完成' || st === '已延期') ? 'follow' : 'info';
       document.querySelectorAll('.detail-tab').forEach(b => {
-        const on = b.getAttribute('data-vtab') === 'info';
+        const on = b.getAttribute('data-vtab') === viewTab;
         b.className = on ? 'detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on' : 'detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600';
+        if (b.id === 'viewTabFollow' && (st !== '已完成' && st !== '已延期')) b.classList.add('hidden');
       });
       renderViewContent();
 
@@ -623,7 +834,7 @@
         actions = `<button type="button" onclick="BMS.closeModal('modal-view');openEdit(${viewIndex})" class="border text-sm px-4 py-2 rounded-xl">编辑</button>` + actions;
       }
       if (canComplete(r)) {
-        actions = `<button type="button" onclick="BMS.closeModal('modal-view');openComplete(${viewIndex})" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">填写完成情况</button>` + actions;
+        actions = `<button type="button" onclick="BMS.closeModal('modal-view');openComplete(${viewIndex})" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">跟进</button>` + actions;
       }
       document.getElementById('viewActions').innerHTML = actions;
       BMS.openModal('modal-view');
@@ -657,6 +868,7 @@
       document.getElementById('ctSummary').value = '';
       document.getElementById('ctPlan').value = '';
       document.getElementById('ctOwner').value = SELF;
+      clearTaskAttaches();
       clearTaskImages();
       updateCount('ctSummary', 'ctSummaryCount');
       syncProxyHint();
@@ -705,6 +917,7 @@
       document.getElementById('ctSummary').value = r.summary || '';
       document.getElementById('ctPlan').value = r.plan;
       document.getElementById('ctOwner').value = r.owner;
+      clearTaskAttaches();
       clearTaskImages();
       if (r.files) {
         r.files.split('、').filter(Boolean).forEach(name => {
@@ -751,6 +964,7 @@
           doneOp: false,
           doneAt: '',
           completeSummary: '',
+          delayReason: '',
           files: imageNames
         });
         BMS.toast(isProxy ? '已代建，完成情况由「' + owner + '」填写' : '任务已创建（进行中）');
@@ -771,10 +985,39 @@
       renderCurrentView();
     }
 
+    function onFollowStatusChange() {
+      const status = document.querySelector('input[name="cpStatus"]:checked')?.value || '进行中';
+      const wrap = document.getElementById('cpDoneAtWrap');
+      const hint = document.getElementById('cpStatusHint');
+      const label = document.getElementById('cpSummaryLabel');
+      const ta = document.getElementById('cpSummary');
+      if (wrap) wrap.classList.toggle('hidden', status !== '已完成');
+      if (label && ta) {
+        if (status === '已完成') {
+          label.innerHTML = '完成概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span>';
+          ta.placeholder = '简述任务完成情况与结果';
+        } else if (status === '已延期') {
+          label.innerHTML = '延期原因 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span>';
+          ta.placeholder = '说明延期原因（可不填）';
+        } else {
+          label.innerHTML = '情况概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span>';
+          ta.placeholder = '简述本周跟进情况';
+        }
+      }
+      if (!hint) return;
+      if (status === '已完成') {
+        hint.textContent = '提交后状态变为「已完成」，请填写完成具体时间；完成概述将在详情回显。';
+      } else if (status === '已延期') {
+        hint.textContent = '提交后状态变为「已延期」。延期原因选填，有填写时将在详情回显。';
+      } else {
+        hint.textContent = '保持「进行中」将记录本次跟进；选「完成」或「延期」将更新任务状态。本期结束仍未完成将自动标为「已延期」。';
+      }
+    }
+
     function openComplete(idx) {
       const r = ROWS[idx];
       if (!canComplete(r)) {
-        BMS.toast('仅责任人可对进行中任务填写完成情况', 'error');
+        BMS.toast('仅责任人可对进行中任务跟进', 'error');
         return;
       }
       completeIndex = idx;
@@ -783,6 +1026,9 @@
       document.getElementById('cpFiles').value = '';
       document.getElementById('cpFileHint').textContent = '未选择文件';
       document.getElementById('cpDoneAt').value = '2026-08-29T17:30';
+      const radios = document.querySelectorAll('input[name="cpStatus"]');
+      radios.forEach(el => { el.checked = el.value === '进行中'; });
+      onFollowStatusChange();
       updateCount('cpSummary', 'cpSummaryCount');
       BMS.openModal('modal-complete');
     }
@@ -839,15 +1085,30 @@
     function saveComplete() {
       if (completeIndex < 0) return;
       const summary = document.getElementById('cpSummary').value.trim();
+      const status = document.querySelector('input[name="cpStatus"]:checked')?.value || '进行中';
       const doneAt = document.getElementById('cpDoneAt').value;
-      if (summary.length > 500) { BMS.toast('情况概述不能超过 500 字', 'error'); return; }
-      if (!doneAt) { BMS.toast('请填写完成具体时间', 'error'); return; }
+      if (summary.length > 500) { BMS.toast('概述不能超过 500 字', 'error'); return; }
+      if (status === '已完成' && !doneAt) { BMS.toast('请填写完成具体时间', 'error'); return; }
       const r = ROWS[completeIndex];
-      r.doneOp = true;
-      r.status = '已完成';
-      r.doneAt = doneAt.replace('T', ' ');
-      r.completeSummary = summary;
-      BMS.toast('已标为已完成');
+      r.status = status;
+      if (status === '已完成') {
+        r.doneOp = true;
+        r.doneAt = doneAt.replace('T', ' ');
+        r.completeSummary = summary;
+        r.delayReason = '';
+        BMS.toast('跟进已保存，状态：已完成');
+      } else if (status === '已延期') {
+        r.doneOp = false;
+        r.doneAt = '';
+        r.completeSummary = '';
+        r.delayReason = summary || '本期未完成，已标记延期';
+        BMS.toast('跟进已保存，状态：已延期');
+      } else {
+        r.doneOp = false;
+        r.doneAt = '';
+        if (summary) r.completeSummary = summary;
+        BMS.toast('跟进已保存，状态：进行中');
+      }
       BMS.closeModal('modal-complete');
       renderCurrentView();
     }
@@ -861,14 +1122,43 @@
       syncHelperOptions();
     }
 
-    document.getElementById('ctOwner').addEventListener('change', syncProxyHint);
+    const ctOwnerEl = document.getElementById('ctOwner');
+    if (ctOwnerEl) ctOwnerEl.addEventListener('change', syncProxyHint);
 
-    document.getElementById('cpFiles').addEventListener('change', function () {
-      const n = this.files ? this.files.length : 0;
-      document.getElementById('cpFileHint').textContent = n ? ('已选 ' + n + ' 个文件') : '未选择文件';
-    });
+    const cpFilesEl = document.getElementById('cpFiles');
+    if (cpFilesEl) {
+      cpFilesEl.addEventListener('change', function () {
+        const n = this.files ? this.files.length : 0;
+        const hint = document.getElementById('cpFileHint');
+        if (hint) hint.textContent = n ? ('已选 ' + n + ' 个文件') : '未选择文件';
+      });
+    }
 
-    document.addEventListener('DOMContentLoaded', () => onPeriodChange());
+    function bootTaskPage() {
+      initPermissionUi();
+      const listBtn = document.getElementById('viewListBtn');
+      const calBtn = document.getElementById('viewCalBtn');
+      if (listBtn) listBtn.addEventListener('click', function () { switchView('list'); });
+      if (calBtn) calBtn.addEventListener('click', function () { switchView('calendar'); });
+      const params = new URLSearchParams(location.search);
+      const period = params.get('period');
+      const open = params.get('open');
+      const id = params.get('id');
+      const tab = params.get('tab');
+      if (period) document.getElementById('periodSelect').value = period;
+      onPeriodChange();
+      if (open === 'modal-view' && id) {
+        setTimeout(() => {
+          openViewById(parseInt(id, 10));
+          if (tab === 'info' || tab === 'follow' || tab === 'transfer') switchViewTab(tab);
+        }, 120);
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootTaskPage);
+    } else {
+      bootTaskPage();
+    }
   </script>
 </body>
 </html>
