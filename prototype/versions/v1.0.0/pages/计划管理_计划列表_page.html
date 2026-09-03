@@ -13,39 +13,39 @@
     .btn-cta:hover { background:#0d9488; }
     .btn-cta:active { transform: scale(.95); }
     .row-hover:hover { background:#f8fafc; }
+    .plan-status-tab-on { background:#0f766e; color:#fff; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="plans" data-title="计划管理">
   <div id="app-root"></div>
   <div id="page-main">
-    <div class="flex flex-wrap gap-3 justify-between mb-5">
-      <div class="flex flex-wrap gap-2">
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
-          <option>全部关联目标</option>
-          <option>【季】桥吊作业效率提升 15%</option>
-          <option>【季】设备完好率 ≥ 98%</option>
-          <option>【季】Q3 安全隐患清零</option>
-        </select>
-        <select id="planStatusFilter" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderPlanList()">
-          <option value="all">全部状态</option>
-          <option value="草稿">草稿</option>
-          <option value="进行中">进行中</option>
-          <option value="已延期">已延期</option>
-          <option value="已完成">已完成</option>
-          <option value="已取消">已取消</option>
-        </select>
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部（含非专项）</option><option>仅专项计划</option><option>仅非专项</option></select>
-        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
+    <div class="flex flex-wrap gap-3 justify-between mb-4">
+      <div class="inline-flex flex-wrap p-1 bg-slate-100 rounded-xl gap-0.5" id="planStatusTabs">
+        <button type="button" class="plan-status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="all" onclick="setPlanStatusFilter('all')">全部</button>
+        <button type="button" class="plan-status-tab px-3 py-1.5 rounded-lg text-sm plan-status-tab-on" data-status="进行中" onclick="setPlanStatusFilter('进行中')">进行中</button>
+        <button type="button" class="plan-status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="已延期" onclick="setPlanStatusFilter('已延期')">已延期</button>
+        <button type="button" class="plan-status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="已完成" onclick="setPlanStatusFilter('已完成')">已完成</button>
+        <button type="button" class="plan-status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="草稿" onclick="setPlanStatusFilter('草稿')">草稿</button>
+        <button type="button" class="plan-status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600" data-status="已取消" onclick="setPlanStatusFilter('已取消')">已取消</button>
       </div>
       <button type="button" onclick="openPlanForm('create')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建计划</button>
     </div>
-    <p class="text-xs text-slate-500 mb-3">计划挂靠规则：<span class="text-slate-700">仅可挂季目标</span>（目标最末级）；<span class="text-slate-700">禁止挂年目标</span>。节奏用起止时间 + 关键节点表达。计划<strong>业务状态</strong>：草稿 / 进行中 / 已延期 / 已完成 / 已取消（新建默认进行中）。</p>
+    <div class="flex flex-wrap gap-2 mb-5">
+      <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+        <option>全部关联目标</option>
+        <option>【季】桥吊作业效率提升 15%</option>
+        <option>【季】设备完好率 ≥ 98%</option>
+        <option>【季】Q3 安全隐患清零</option>
+      </select>
+      <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部（含非专项）</option><option>仅专项计划</option><option>仅非专项</option></select>
+      <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
+    </div>
     <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 text-slate-500">
           <tr>
             <th class="px-5 py-3 text-left">计划名称</th>
-            <th class="px-5 py-3 text-left">业务状态</th>
+            <th class="px-5 py-3 text-left">计划状态</th>
             <th class="px-5 py-3 text-left">关联目标</th>
             <th class="px-5 py-3 text-left">是否专项</th>
             <th class="px-5 py-3 text-left">时间节点</th>
@@ -76,15 +76,15 @@
                 <input id="planName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="8 月装卸效率提升计划" />
               </div>
               <div id="planStatusWrap">
-                <label class="block text-sm text-slate-600 mb-1">业务状态 <span class="text-red-500">*</span></label>
-                <select id="planStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <label class="block text-sm text-slate-600 mb-1">计划状态</label>
+                <select id="planStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-slate-50 text-slate-500" disabled>
                   <option value="草稿">草稿</option>
                   <option value="进行中" selected>进行中</option>
                   <option value="已延期">已延期</option>
                   <option value="已完成">已完成</option>
                   <option value="已取消">已取消</option>
                 </select>
-                <p id="planStatusHint" class="text-xs text-slate-400 mt-1">新建计划默认「进行中」</p>
+                <p id="planStatusHint" class="text-xs text-slate-400 mt-1">新建默认「进行中」；变更请使用「改计划状态」</p>
               </div>
               <div>
                 <label class="block text-sm text-slate-600 mb-1">关联目标 <span class="text-red-500">*</span></label>
@@ -182,23 +182,28 @@
     <div id="modal-plan-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-detail')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 id="planDetailTitle" class="text-xl font-semibold">8 月装卸效率提升计划</h3>
-              <span id="planDetailStatus"></span>
-            </div>
-            <p id="planDetailMeta" class="text-sm text-slate-500 mt-1">关联目标：【季】桥吊作业效率提升 15% · 专项：桥吊效能提升专项 · 08-01 ~ 08-31 · 节点 2/4 按期</p>
+        <div class="relative shrink-0 px-6 py-4 pr-24 border-b">
+          <div class="absolute top-4 right-4 z-10 flex items-center">
+            <button type="button" onclick="BMS.closeModal('modal-plan-detail')" class="w-9 h-9 rounded-xl border text-slate-400 inline-flex items-center justify-center" title="关闭" aria-label="关闭"><i class="fa-solid fa-xmark"></i></button>
           </div>
-          <div class="flex gap-2">
-            <button type="button" id="planDetailEditBtn" onclick="BMS.closeModal('modal-plan-detail');openPlanForm('edit')" class="border text-sm px-4 py-2 rounded-xl">编辑</button>
-            <a href="任务管理_任务列表_page.html?open=modal-task" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">新增任务</a>
-            <button type="button" onclick="BMS.closeModal('modal-plan-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0 flex-1 pr-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 id="planDetailTitle" class="text-xl font-semibold">8 月装卸效率提升计划</h3>
+                <span id="planDetailStatus"></span>
+              </div>
+              <p id="planDetailMeta" class="text-sm text-slate-500 mt-1">关联目标：【季】桥吊作业效率提升 15% · 专项：桥吊效能提升专项 · 08-01 ~ 08-31 · 节点 2/4 按期</p>
+            </div>
+            <div class="flex flex-wrap gap-2 shrink-0 mr-2">
+              <button type="button" id="planDetailEditBtn" onclick="BMS.closeModal('modal-plan-detail');openPlanForm('edit')" class="border text-sm px-4 py-2 rounded-xl">编辑</button>
+              <button type="button" onclick="openPlanStatusChange()" class="border text-sm px-4 py-2 rounded-xl">改计划状态</button>
+              <button type="button" id="planDetailAddTaskBtn" onclick="openPlanAddTask()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">新增任务</button>
+            </div>
           </div>
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">业务状态</div><div class="mt-1 font-medium" id="planDetailStatusText">进行中</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">计划状态</div><div class="mt-1 font-medium" id="planDetailStatusText">进行中</div></div>
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">起止时间</div><div class="mt-1 font-medium" id="planDetailPeriod">08-01 ~ 08-31</div></div>
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">节点达成</div><div class="mt-1 font-medium" id="planDetailNodeRate">2/4 按期</div></div>
             <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">下一节点</div><div class="mt-1 font-medium" id="planDetailNextNode">效率复核 · 3天</div></div>
@@ -230,18 +235,140 @@
             </div>
           </div>
           <div>
-            <div class="text-sm font-medium mb-2">下属任务</div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium">任务清单</div>
+              <div class="inline-flex p-0.5 bg-slate-100 rounded-xl text-xs">
+                <button type="button" class="plan-task-tab px-3 py-1.5 rounded-lg" data-scope="all" onclick="setPlanTaskScope('all')">全部任务</button>
+                <button type="button" class="plan-task-tab px-3 py-1.5 rounded-lg bg-white shadow-sm font-medium text-slate-800" data-scope="last" onclick="setPlanTaskScope('last')">上周任务</button>
+                <button type="button" class="plan-task-tab px-3 py-1.5 rounded-lg" data-scope="current" onclick="setPlanTaskScope('current')">本周任务</button>
+              </div>
+            </div>
             <div class="border border-slate-100 rounded-2xl overflow-hidden">
               <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">任务</th><th class="text-left px-4 py-2.5">责任人</th><th class="text-left px-4 py-2.5">本周期更新</th><th class="text-left px-4 py-2.5">状态</th><th class="text-left px-4 py-2.5">操作</th></tr></thead>
-                <tbody>
-                  <tr class="border-t row-hover"><td class="px-4 py-2.5">桥吊夜班流程复盘</td><td class="px-4 py-2.5">刘强</td><td class="px-4 py-2.5 text-red-500">未更新</td><td class="px-4 py-2.5"><span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span></td><td class="px-4 py-2.5"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
-                  <tr class="border-t row-hover"><td class="px-4 py-2.5">班前会标准化宣贯</td><td class="px-4 py-2.5">孙伟</td><td class="px-4 py-2.5 text-emerald-600">已更新</td><td class="px-4 py-2.5"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td><td class="px-4 py-2.5"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
-                  <tr class="border-t row-hover"><td class="px-4 py-2.5">岸桥对位训练</td><td class="px-4 py-2.5">马超</td><td class="px-4 py-2.5 text-emerald-600">已更新</td><td class="px-4 py-2.5"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td><td class="px-4 py-2.5"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
-                </tbody>
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">任务名称</th>
+                    <th class="text-left px-4 py-2.5">责任人</th>
+                    <th class="text-left px-4 py-2.5">状态</th>
+                    <th class="text-left px-4 py-2.5 min-w-[160px]">跟进概述</th>
+                    <th class="text-left px-4 py-2.5">起止时间</th>
+                    <th class="text-left px-4 py-2.5">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="planDetailTaskBody"></tbody>
               </table>
             </div>
+            <p class="text-xs text-slate-400 mt-2" id="planDetailTaskHint"></p>
           </div>
+          <div>
+            <div class="text-sm font-medium mb-2">状态变更记录</div>
+            <div id="planStatusLogList" class="border border-slate-100 rounded-2xl divide-y text-sm min-h-[48px]"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 删除计划确认 -->
+    <div id="modal-plan-delete" data-modal class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-delete')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold text-slate-800">删除计划</h3>
+          <button type="button" onclick="BMS.closeModal('modal-plan-delete')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <p class="text-sm text-slate-600">确认删除计划「<span id="pdPlanName" class="font-medium text-slate-800">—</span>」？</p>
+        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">删除后不可恢复；关联任务挂接将一并解除（原型演示）。</p>
+        <div class="flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-plan-delete')" class="text-sm text-slate-500 px-3 py-2">取消</button>
+          <button type="button" onclick="confirmPlanDelete()" class="text-sm px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">确认删除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 改计划状态 -->
+    <div id="modal-plan-status" data-modal class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">改计划状态</h3>
+          <button type="button" onclick="BMS.closeModal('modal-plan-status')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <p class="text-sm text-slate-600">计划：<span id="psPlanName" class="font-medium text-slate-800">—</span></p>
+        <p class="text-sm text-slate-500">当前状态：<span id="psCurrentStatus" class="font-medium text-slate-800">—</span></p>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">新状态 <span class="text-red-500">*</span></label>
+          <select id="psNewStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="onPlanStatusOptionChange()">
+            <option value="草稿">草稿</option>
+            <option value="进行中">进行中</option>
+            <option value="已延期">已延期</option>
+            <option value="已完成">已完成</option>
+            <option value="已取消">已取消</option>
+          </select>
+          <p id="psRuleHint" class="text-xs text-slate-400 mt-1">超过计划结束日将自动为「已延期」；标「已完成」须全部关键节点已完成</p>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">变更原因 <span class="text-red-500">*</span></label>
+          <textarea id="psReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="必须填写变更原因" maxlength="500"></textarea>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="savePlanStatusChange()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认变更</button>
+          <button type="button" onclick="BMS.closeModal('modal-plan-status')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 计划详情上 · 新增任务（叠层弹窗） -->
+    <div id="modal-plan-add-task" data-modal class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-add-task')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">新增任务</h3>
+          <button type="button" onclick="BMS.closeModal('modal-plan-add-task')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-600">
+            关联计划：<span id="patPlanName" class="font-medium text-slate-800">—</span>
+            · 默认状态 <span class="font-medium text-sky-700">进行中</span>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">归属周期 <span class="text-red-500">*</span></label>
+            <select id="patPeriod" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="onPatPeriodChange()">
+              <option value="2026-W34">2026-W34（本周）08-24 ~ 08-30</option>
+              <option value="2026-W35">2026-W35（下周）08-31 ~ 09-06</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">任务名称 <span class="text-red-500">*</span></label>
+            <input id="patName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="请输入任务名称" maxlength="100" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">开始时间 <span class="text-red-500">*</span></label>
+              <input id="patStart" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">结束时间 <span class="text-red-500">*</span></label>
+              <input id="patEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">概述 <span class="text-slate-400 font-normal">（选填）</span></label>
+            <textarea id="patSummary" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="简要说明任务背景与要点" maxlength="500"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">责任人 <span class="text-red-500">*</span></label>
+            <select id="patOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+              <option value="刘强" selected>刘强（本人）</option>
+              <option value="孙伟">孙伟 · 装卸队</option>
+              <option value="马超">马超 · 装卸队</option>
+              <option value="王芳">王芳 · 装卸队</option>
+              <option value="陈敏">陈敏 · 调度中心</option>
+            </select>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-plan-add-task')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="savePlanAddTask()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
         </div>
       </div>
     </div>
@@ -280,16 +407,202 @@
   <script src="../assets/common.js"></script>
   <script>
     const PLANS = [
-      { id: 1, name: '8 月装卸效率提升计划', goal: '桥吊作业效率提升 15%', isSpecial: true, specialName: '桥吊效能提升专项', period: '08-01 ~ 08-31', owner: '刘强', nodeRate: '2/4 按期', tasks: '0/2/1', status: '进行中', desc: '围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施。' },
-      { id: 2, name: 'Q3 桥吊点检专项计划', goal: '桥吊作业效率提升 15%', isSpecial: true, specialName: '桥吊效能提升专项', period: '07-01 ~ 09-30', owner: '刘强', nodeRate: '2/4 按期', tasks: '1/1/0', status: '进行中', desc: '配合 Q3 桥吊点检与整改闭环。' },
-      { id: 3, name: '堆场周转优化计划', goal: '设备完好率 ≥ 98%', isSpecial: false, specialName: '', period: '08-01 ~ 08-31', owner: '陈敏', nodeRate: '2/4 按期', tasks: '2/1/1', status: '已延期', desc: '堆场周转瓶颈治理，节点滞后需追赶。' },
-      { id: 4, name: '夜班协同保障计划', goal: '桥吊作业效率提升 15%', isSpecial: false, specialName: '', period: '07-15 ~ 08-15', owner: '刘强', nodeRate: '4/4 按期', tasks: '3/0/0', status: '已完成', desc: '夜班协同保障措施已全部落地。' },
-      { id: 5, name: '9 月效率冲刺计划（草案）', goal: '桥吊作业效率提升 15%', isSpecial: true, specialName: '桥吊效能提升专项', period: '09-01 ~ 09-30', owner: '刘强', nodeRate: '—', tasks: '—', status: '草稿', desc: '待发布，关键节点与任务尚未挂接。' },
-      { id: 6, name: '旧版堆场标识整治计划', goal: 'Q3 安全隐患清零', isSpecial: false, specialName: '', period: '06-01 ~ 06-30', owner: '王芳', nodeRate: '1/3 按期', tasks: '0/0/0', status: '已取消', desc: '因专项合并已终止，不再执行。' }
+      { id: 1, name: '8 月装卸效率提升计划', goal: '桥吊作业效率提升 15%', isSpecial: true, specialName: '桥吊效能提升专项', period: '08-01 ~ 08-31', startDate: '2026-08-01', endDate: '2026-08-31', owner: '刘强', nodeRate: '2/4 按期', tasks: '0/2/1', status: '进行中', desc: '围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施。' },
+      { id: 2, name: 'Q3 桥吊点检专项计划', goal: '桥吊作业效率提升 15%', isSpecial: true, specialName: '桥吊效能提升专项', period: '07-01 ~ 08-20', startDate: '2026-07-01', endDate: '2026-08-20', owner: '刘强', nodeRate: '2/4 按期', tasks: '1/1/0', status: '进行中', desc: '配合 Q3 桥吊点检与整改闭环。' },
+      { id: 3, name: '堆场周转优化计划', goal: '设备完好率 ≥ 98%', isSpecial: false, specialName: '', period: '08-01 ~ 08-31', startDate: '2026-08-01', endDate: '2026-08-31', owner: '陈敏', nodeRate: '2/4 按期', tasks: '2/1/1', status: '已延期', desc: '堆场周转瓶颈治理，节点滞后需追赶。' },
+      { id: 4, name: '夜班协同保障计划', goal: '桥吊作业效率提升 15%', isSpecial: false, specialName: '', period: '07-15 ~ 08-15', startDate: '2026-07-15', endDate: '2026-08-15', owner: '刘强', nodeRate: '4/4 按期', tasks: '3/0/0', status: '已完成', desc: '夜班协同保障措施已全部落地。' },
+      { id: 5, name: '9 月效率冲刺计划（草案）', goal: '桥吊作业效率提升 15%', isSpecial: true, specialName: '桥吊效能提升专项', period: '09-01 ~ 09-30', startDate: '2026-09-01', endDate: '2026-09-30', owner: '刘强', nodeRate: '—', tasks: '—', status: '草稿', desc: '待发布，关键节点与任务尚未挂接。' },
+      { id: 6, name: '旧版堆场标识整治计划', goal: 'Q3 安全隐患清零', isSpecial: false, specialName: '', period: '06-01 ~ 06-30', startDate: '2026-06-01', endDate: '2026-06-30', owner: '王芳', nodeRate: '1/3 按期', tasks: '0/0/0', status: '已取消', desc: '因专项合并已终止，不再执行。' }
     ];
+
+    const PROTOTYPE_TODAY = '2026-08-27';
+    const PLAN_STATUS_LOGS = {
+      3: [{ at: '2026-08-22 09:10', from: '进行中', to: '已延期', reason: '关键节点连续滞后，堆场周转未达预期。', operator: '陈敏' }],
+      4: [{ at: '2026-08-15 18:00', from: '进行中', to: '已完成', reason: '全部关键节点已完成，夜班协同保障闭环。', operator: '刘强' }],
+      6: [{ at: '2026-06-28 11:20', from: '进行中', to: '已取消', reason: '专项合并，本计划终止。', operator: '王芳' }]
+    };
+
+    const PLAN_MILESTONES = {
+      1: [
+        { date: '2026-08-08', name: '夜班流程复盘完成', note: '形成整改清单', status: '已完成', completeNote: '整改清单已输出', onTime: true },
+        { date: '2026-08-15', name: '班前会标准化落地', note: '全班组宣贯', status: '已完成', completeNote: '全班组宣贯完成', onTime: true },
+        { date: '2026-08-25', name: '效率中期复核', note: '对照目标值', status: '已逾期', completeNote: '', onTime: false },
+        { date: '2026-08-31', name: '月度总结闭环', note: '输出下月计划输入', status: '未开始', completeNote: '', onTime: false }
+      ],
+      2: [
+        { date: '2026-07-15', name: '点检范围确认', note: '', status: '已完成', completeNote: '', onTime: true },
+        { date: '2026-08-01', name: '首轮点检完成', note: '', status: '已完成', completeNote: '', onTime: true },
+        { date: '2026-08-10', name: '整改闭环复核', note: '', status: '已逾期', completeNote: '', onTime: false },
+        { date: '2026-08-20', name: '专项阶段总结', note: '', status: '未开始', completeNote: '', onTime: false }
+      ],
+      4: [
+        { date: '2026-07-20', name: '协同机制发布', note: '', status: '已完成', completeNote: '', onTime: true },
+        { date: '2026-07-28', name: '班组试运行', note: '', status: '已完成', completeNote: '', onTime: true },
+        { date: '2026-08-08', name: '问题闭环', note: '', status: '已完成', completeNote: '', onTime: true },
+        { date: '2026-08-15', name: '保障验收', note: '', status: '已完成', completeNote: '', onTime: true }
+      ]
+    };
 
     let currentPlanId = 1;
     let planFormMode = 'create';
+    let planStatusFilter = '进行中';
+    let planTaskScope = 'last'; // all | last | current — 默认上周
+    const PLAN_TASK_CURRENT = '2026-W34';
+    const PLAN_TASK_LAST = '2026-W33';
+    const PLAN_TASK_NEXT = '2026-W35';
+    const PLAN_TASK_PERIOD_DATES = {
+      '2026-W34': { start: '2026-08-24', end: '2026-08-30', shortStart: '08-24', shortEnd: '08-30' },
+      '2026-W35': { start: '2026-08-31', end: '2026-09-06', shortStart: '08-31', shortEnd: '09-06' },
+      '2026-W33': { start: '2026-08-17', end: '2026-08-23', shortStart: '08-17', shortEnd: '08-23' }
+    };
+
+    // 计划详情 · 任务清单样例（按 planId + 周期）
+    const PLAN_TASKS = [
+      { id: 101, planId: 1, period: '2026-W34', name: '桥吊夜班流程复盘', owner: '刘强', status: '进行中', start: '08-24', end: '08-28', situation: '已完成 2 次夜班复盘，交接清单初稿已出。', completeSummary: '', delayReason: '' },
+      { id: 102, planId: 1, period: '2026-W34', name: '班前会标准化宣贯', owner: '刘强', status: '进行中', start: '08-25', end: '08-30', situation: '', completeSummary: '', delayReason: '' },
+      { id: 103, planId: 1, period: '2026-W34', name: '岸桥对位训练', owner: '马超', status: '进行中', start: '08-24', end: '08-28', situation: '', completeSummary: '', delayReason: '' },
+      { id: 104, planId: 1, period: '2026-W34', name: '泊位准点抽查记录', owner: '刘强', status: '已完成', start: '08-24', end: '08-26', situation: '', completeSummary: '本周抽查 12 个泊位，准点率 91.7%。', delayReason: '' },
+      { id: 105, planId: 1, period: '2026-W33', name: '堆场周转异常复盘', owner: '刘强', status: '已完成', start: '08-17', end: '08-22', situation: '', completeSummary: '已形成复盘纪要并同步调度。', delayReason: '' },
+      { id: 106, planId: 1, period: '2026-W33', name: '泊位准点核查清单', owner: '刘强', status: '已完成', start: '08-10', end: '08-15', situation: '', completeSummary: '清单已提交设备部。', delayReason: '' },
+      { id: 107, planId: 1, period: '2026-W33', name: '点检整改跟踪', owner: '刘强', status: '已延期', start: '08-19', end: '08-21', situation: '', completeSummary: '', delayReason: '本期未完成，整改跨周延续。' },
+      { id: 108, planId: 1, period: '2026-W33', name: '夜班交接问题闭环', owner: '孙伟', status: '已延期', start: '08-18', end: '08-23', situation: '', completeSummary: '', delayReason: '多班组协同方案未在本周内闭环。' },
+      { id: 201, planId: 2, period: '2026-W34', name: 'Q3 安全隐患现场复核', owner: '刘强', status: '进行中', start: '08-24', end: '08-27', situation: '现场复核完成 3 处，剩余 1 处待整改。', completeSummary: '', delayReason: '' },
+      { id: 202, planId: 2, period: '2026-W33', name: '点检发现问题汇总', owner: '刘强', status: '已完成', start: '08-18', end: '08-22', situation: '', completeSummary: '隐患台账已更新。', delayReason: '' },
+      { id: 301, planId: 3, period: '2026-W34', name: '堆场通道标识检查', owner: '王芳', status: '进行中', start: '08-25', end: '08-30', situation: '', completeSummary: '', delayReason: '' },
+      { id: 302, planId: 3, period: '2026-W33', name: '堆场周转异常复盘', owner: '刘强', status: '已完成', start: '08-17', end: '08-22', situation: '', completeSummary: '已形成复盘纪要。', delayReason: '' },
+      { id: 401, planId: 4, period: '2026-W33', name: '夜班交接问题闭环', owner: '刘强', status: '已延期', start: '08-18', end: '08-23', situation: '', completeSummary: '', delayReason: '交接问题涉及多班组协同。' },
+      { id: 402, planId: 4, period: '2026-W34', name: '岸桥对位训练跟进', owner: '孙伟', status: '进行中', start: '08-26', end: '08-29', situation: '已排班 3 组，考核表待签字。', completeSummary: '', delayReason: '' }
+    ];
+
+    function taskStatusBadge(status) {
+      const map = {
+        '进行中': 'bg-sky-50 text-sky-700',
+        '已完成': 'bg-emerald-50 text-emerald-700',
+        '已延期': 'bg-red-50 text-red-600'
+      };
+      const cls = map[status] || 'bg-slate-100 text-slate-600';
+      return '<span class="text-xs px-2 py-0.5 rounded-full ' + cls + '">' + status + '</span>';
+    }
+
+    function planTaskOverview(t) {
+      if (t.status === '已完成') return t.completeSummary || '';
+      if (t.status === '已延期') return t.delayReason || '';
+      return t.situation || '';
+    }
+
+    function formatPlanTaskOverview(text) {
+      if (!text || !text.trim()) return '<span class="text-slate-400">—</span>';
+      const safe = text.replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      const shown = text.length > 40 ? text.slice(0, 40) + '…' : text;
+      return '<span class="text-slate-600 line-clamp-2" title="' + safe + '">' + shown.replace(/</g, '&lt;') + '</span>';
+    }
+
+    function filteredPlanTasks() {
+      return PLAN_TASKS.filter(t => {
+        if (t.planId !== currentPlanId) return false;
+        if (planTaskScope === 'last') return t.period === PLAN_TASK_LAST;
+        if (planTaskScope === 'current') return t.period === PLAN_TASK_CURRENT;
+        return true;
+      });
+    }
+
+    function setPlanTaskScope(scope) {
+      planTaskScope = scope;
+      document.querySelectorAll('.plan-task-tab').forEach(btn => {
+        const on = btn.getAttribute('data-scope') === scope;
+        btn.className = on
+          ? 'plan-task-tab px-3 py-1.5 rounded-lg bg-white shadow-sm font-medium text-slate-800'
+          : 'plan-task-tab px-3 py-1.5 rounded-lg text-slate-500';
+      });
+      const hint = document.getElementById('planDetailTaskHint');
+      if (hint) {
+        const n = filteredPlanTasks().length;
+        const label = scope === 'last' ? '上周' : (scope === 'current' ? '本周' : '全部');
+        hint.textContent = label + ' · 共 ' + n + ' 条';
+      }
+      renderPlanDetailTasks();
+    }
+
+    function renderPlanDetailTasks() {
+      const tbody = document.getElementById('planDetailTaskBody');
+      if (!tbody) return;
+      const list = filteredPlanTasks();
+      tbody.innerHTML = list.length ? list.map(t => `
+        <tr class="border-t row-hover">
+          <td class="px-4 py-2.5 font-medium text-slate-800">${t.name}</td>
+          <td class="px-4 py-2.5">${t.owner}</td>
+          <td class="px-4 py-2.5">${taskStatusBadge(t.status)}</td>
+          <td class="px-4 py-2.5 max-w-xs">${formatPlanTaskOverview(planTaskOverview(t))}</td>
+          <td class="px-4 py-2.5 text-slate-600 whitespace-nowrap">${t.start} ~ ${t.end}</td>
+          <td class="px-4 py-2.5"><a href="任务中心_我的任务_page.html" class="text-teal-700">详情</a></td>
+        </tr>
+      `).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">该周期暂无关联任务</td></tr>';
+      const hint = document.getElementById('planDetailTaskHint');
+      if (hint) {
+        const label = planTaskScope === 'last' ? '上周' : (planTaskScope === 'current' ? '本周' : '全部');
+        hint.textContent = label + ' · 共 ' + list.length + ' 条';
+      }
+    }
+
+    function onPatPeriodChange() {
+      const code = document.getElementById('patPeriod').value;
+      const meta = PLAN_TASK_PERIOD_DATES[code];
+      if (!meta) return;
+      document.getElementById('patStart').value = meta.start;
+      document.getElementById('patEnd').value = meta.end;
+    }
+
+    function openPlanAddTask() {
+      const p = getPlan(currentPlanId);
+      if (!p) return;
+      if (p.status === '已完成' || p.status === '已取消') {
+        BMS.toast('已完成/已取消计划不可新增任务', 'error');
+        return;
+      }
+      document.getElementById('patPlanName').textContent = p.name;
+      document.getElementById('patPeriod').value = PLAN_TASK_CURRENT;
+      document.getElementById('patName').value = '';
+      document.getElementById('patSummary').value = '';
+      document.getElementById('patOwner').value = '刘强';
+      onPatPeriodChange();
+      BMS.openModal('modal-plan-add-task');
+    }
+
+    function savePlanAddTask() {
+      const p = getPlan(currentPlanId);
+      const name = document.getElementById('patName').value.trim();
+      const period = document.getElementById('patPeriod').value;
+      const startFull = document.getElementById('patStart').value;
+      const endFull = document.getElementById('patEnd').value;
+      const summary = document.getElementById('patSummary').value.trim();
+      const owner = document.getElementById('patOwner').value;
+      if (!name) { BMS.toast('请填写任务名称', 'error'); return; }
+      if (!startFull || !endFull) { BMS.toast('请填写开始与结束时间', 'error'); return; }
+      if (endFull < startFull) { BMS.toast('结束时间不能早于开始时间', 'error'); return; }
+      if (period !== PLAN_TASK_CURRENT && period !== PLAN_TASK_NEXT) {
+        BMS.toast('仅本周、下周可新建任务', 'error');
+        return;
+      }
+      const fmt = (d) => d.slice(5);
+      PLAN_TASKS.unshift({
+        id: Date.now(),
+        planId: currentPlanId,
+        period,
+        name,
+        owner,
+        status: '进行中',
+        start: fmt(startFull),
+        end: fmt(endFull),
+        situation: '',
+        completeSummary: '',
+        delayReason: '',
+        summary
+      });
+      BMS.closeModal('modal-plan-add-task');
+      BMS.toast(period === PLAN_TASK_NEXT ? '下周任务已创建' : '任务已创建');
+      if (period === PLAN_TASK_CURRENT) setPlanTaskScope('current');
+      else setPlanTaskScope('all');
+    }
 
     function planStatusBadge(status) {
       const map = {
@@ -308,8 +621,19 @@
       return '<span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">是 · ' + (p.specialName || '专项') + '</span>';
     }
 
+    function setPlanStatusFilter(status) {
+      planStatusFilter = status;
+      document.querySelectorAll('.plan-status-tab').forEach(btn => {
+        const on = btn.getAttribute('data-status') === status;
+        btn.className = on
+          ? 'plan-status-tab px-3 py-1.5 rounded-lg text-sm plan-status-tab-on'
+          : 'plan-status-tab px-3 py-1.5 rounded-lg text-sm text-slate-600';
+      });
+      renderPlanList();
+    }
+
     function renderPlanList() {
-      const filter = document.getElementById('planStatusFilter').value;
+      const filter = planStatusFilter;
       const list = PLANS.filter(p => filter === 'all' || p.status === filter);
       const tbody = document.getElementById('planTableBody');
       tbody.innerHTML = list.length ? list.map(p => `
@@ -322,28 +646,187 @@
           <td class="px-5 py-3">${p.owner}</td>
           <td class="px-5 py-3">${p.nodeRate}</td>
           <td class="px-5 py-3">${p.tasks}</td>
-          <td class="px-5 py-3 space-x-2">
-            <button type="button" onclick="openPlanForm('edit', { planId: ${p.id} })" class="hover:text-teal-700">编辑</button>
+          <td class="px-5 py-3 space-x-2 whitespace-nowrap">
+            ${(p.status === '已完成' || p.status === '已取消') ? '' : `<button type="button" onclick="openPlanForm('edit', { planId: ${p.id} })" class="hover:text-teal-700">编辑</button>`}
+            <button type="button" onclick="openPlanStatusChange(${p.id})" class="hover:text-teal-700">改状态</button>
             <button type="button" onclick="openPlanDetail(${p.id})" class="hover:text-teal-700">详情</button>
+            <button type="button" onclick="openPlanDelete(${p.id})" class="hover:text-red-600 text-slate-500">删除</button>
           </td>
         </tr>`).join('') : '<tr><td colspan="9" class="px-5 py-10 text-center text-slate-400">暂无符合条件的计划</td></tr>';
-      document.getElementById('planFooterHint').textContent = '共 ' + list.length + ' 条 · 季目标可挂多计划；负责人/部门取自当前登录账号';
+      document.getElementById('planFooterHint').textContent = '共 ' + list.length + ' 条 · 当前：' + (filter === 'all' ? '全部状态' : filter) + ' · 季目标可挂多计划';
     }
 
     function getPlan(id) {
       return PLANS.find(p => p.id === id) || PLANS[0];
     }
 
-    const DEFAULT_MILESTONES = [
-      { date: '2026-08-08', name: '夜班流程复盘完成', note: '形成整改清单', status: '已完成', completeNote: '整改清单已输出', onTime: true },
-      { date: '2026-08-15', name: '班前会标准化落地', note: '全班组宣贯', status: '已完成', completeNote: '全班组宣贯完成', onTime: true },
-      { date: '2026-08-25', name: '效率中期复核', note: '对照目标值', status: '已逾期', completeNote: '', onTime: false },
-      { date: '2026-08-31', name: '月度总结闭环', note: '输出下月计划输入', status: '未开始', completeNote: '', onTime: false }
-    ];
+    const DEFAULT_MILESTONES = (PLAN_MILESTONES[1] || []).map(m => ({ ...m }));
 
     let planMilestones = DEFAULT_MILESTONES.map(m => ({ ...m }));
     let editingNodeIdx = -1;
-    const PROTOTYPE_TODAY = '2026-08-27';
+    let statusChangePlanId = null;
+    let deletePlanId = null;
+
+    function openPlanDelete(id) {
+      deletePlanId = id;
+      const p = getPlan(id);
+      document.getElementById('pdPlanName').textContent = p.name;
+      BMS.openModal('modal-plan-delete');
+    }
+
+    function confirmPlanDelete() {
+      if (deletePlanId == null) return;
+      const idx = PLANS.findIndex(p => p.id === deletePlanId);
+      if (idx < 0) {
+        BMS.toast('计划不存在', 'error');
+        BMS.closeModal('modal-plan-delete');
+        return;
+      }
+      const name = PLANS[idx].name;
+      PLANS.splice(idx, 1);
+      delete PLAN_STATUS_LOGS[deletePlanId];
+      delete PLAN_MILESTONES[deletePlanId];
+      for (let i = PLAN_TASKS.length - 1; i >= 0; i--) {
+        if (PLAN_TASKS[i].planId === deletePlanId) PLAN_TASKS.splice(i, 1);
+      }
+      if (currentPlanId === deletePlanId) {
+        currentPlanId = PLANS[0] ? PLANS[0].id : 1;
+        const detail = document.getElementById('modal-plan-detail');
+        if (detail && !detail.classList.contains('hidden')) BMS.closeModal('modal-plan-detail');
+      }
+      deletePlanId = null;
+      BMS.closeModal('modal-plan-delete');
+      renderPlanList();
+      BMS.toast('已删除：' + name);
+    }
+
+    function getPlanMilestones(planId) {
+      if (!PLAN_MILESTONES[planId]) {
+        PLAN_MILESTONES[planId] = [];
+      }
+      return PLAN_MILESTONES[planId];
+    }
+
+    function syncPlanMilestonesToStore() {
+      PLAN_MILESTONES[currentPlanId] = planMilestones.map(m => ({ ...m }));
+    }
+
+    function allMilestonesCompleted(planId) {
+      const ms = (planId === currentPlanId && planMilestones.length)
+        ? planMilestones
+        : getPlanMilestones(planId);
+      if (!ms.length) return false;
+      return ms.every(m => m.status === '已完成');
+    }
+
+    function isPlanPastEnd(p) {
+      return !!(p.endDate && p.endDate < PROTOTYPE_TODAY);
+    }
+
+    function appendPlanStatusLog(planId, from, to, reason, operator) {
+      if (!PLAN_STATUS_LOGS[planId]) PLAN_STATUS_LOGS[planId] = [];
+      PLAN_STATUS_LOGS[planId].unshift({
+        at: PROTOTYPE_TODAY + ' ' + new Date().toTimeString().slice(0, 5),
+        from, to, reason, operator: operator || '刘强'
+      });
+    }
+
+    function applyAutoDelayStatuses() {
+      PLANS.forEach(p => {
+        if (!isPlanPastEnd(p)) return;
+        if (p.status === '已完成' || p.status === '已取消' || p.status === '已延期') return;
+        const from = p.status;
+        p.status = '已延期';
+        appendPlanStatusLog(p.id, from, '已延期', '超过计划结束日期，系统自动标为已延期', '系统');
+      });
+    }
+
+    function renderPlanStatusLogs(planId) {
+      const box = document.getElementById('planStatusLogList');
+      if (!box) return;
+      const logs = PLAN_STATUS_LOGS[planId] || [];
+      if (!logs.length) {
+        box.innerHTML = '<p class="px-4 py-3 text-xs text-slate-400">暂无状态变更记录</p>';
+        return;
+      }
+      box.innerHTML = logs.map(l => `
+        <div class="px-4 py-3">
+          <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-500 mb-1">
+            <span>${l.at} · ${l.operator}</span>
+            <span>${l.from} → <span class="font-medium text-slate-700">${l.to}</span></span>
+          </div>
+          <div class="text-slate-700">${l.reason}</div>
+        </div>`).join('');
+    }
+
+    function openPlanStatusChange(planId) {
+      statusChangePlanId = planId || currentPlanId;
+      const p = getPlan(statusChangePlanId);
+      document.getElementById('psPlanName').textContent = p.name;
+      document.getElementById('psCurrentStatus').innerHTML = planStatusBadge(p.status);
+      document.getElementById('psNewStatus').value = p.status;
+      document.getElementById('psReason').value = '';
+      onPlanStatusOptionChange();
+      BMS.openModal('modal-plan-status');
+    }
+
+    function onPlanStatusOptionChange() {
+      const p = getPlan(statusChangePlanId || currentPlanId);
+      const next = document.getElementById('psNewStatus').value;
+      const hint = document.getElementById('psRuleHint');
+      if (!hint) return;
+      if (next === '已完成' && !allMilestonesCompleted(p.id)) {
+        hint.className = 'text-xs text-amber-700 mt-1';
+        hint.textContent = '当前关键节点尚未全部完成，无法标为「已完成」';
+      } else if (next === '进行中' && isPlanPastEnd(p)) {
+        hint.className = 'text-xs text-amber-700 mt-1';
+        hint.textContent = '已超过计划结束日，保存为「进行中」后仍会被系统自动标回「已延期」（需先调整结束日期）';
+      } else {
+        hint.className = 'text-xs text-slate-400 mt-1';
+        hint.textContent = '超过计划结束日将自动为「已延期」；标「已完成」须全部关键节点已完成';
+      }
+    }
+
+    function savePlanStatusChange() {
+      const p = getPlan(statusChangePlanId || currentPlanId);
+      const from = p.status;
+      const next = document.getElementById('psNewStatus').value;
+      const reason = document.getElementById('psReason').value.trim();
+      if (!next) { BMS.toast('请选择新状态', 'error'); return; }
+      if (next === from) { BMS.toast('新状态与当前状态相同', 'error'); return; }
+      if (!reason) { BMS.toast('请填写变更原因', 'error'); return; }
+      if (next === '已完成' && !allMilestonesCompleted(p.id)) {
+        BMS.toast('关键节点未全部完成，不能标为已完成', 'error');
+        return;
+      }
+      p.status = next;
+      if (next !== '已完成' && next !== '已取消' && isPlanPastEnd(p) && next !== '已延期') {
+        p.status = '已延期';
+        appendPlanStatusLog(p.id, from, next, reason, '刘强');
+        appendPlanStatusLog(p.id, next, '已延期', '超过计划结束日期，系统自动标为已延期', '系统');
+        BMS.toast('状态已更新；因超过结束日，已自动标为已延期');
+      } else {
+        appendPlanStatusLog(p.id, from, p.status, reason, '刘强');
+        BMS.toast('计划状态已更新：' + p.status);
+      }
+      BMS.closeModal('modal-plan-status');
+      renderPlanList();
+      if (document.getElementById('modal-plan-detail') && !document.getElementById('modal-plan-detail').classList.contains('hidden')) {
+        if (currentPlanId === p.id) refreshPlanDetailHeader(p);
+      }
+    }
+
+    function refreshPlanDetailHeader(p) {
+      document.getElementById('planDetailTitle').textContent = p.name;
+      document.getElementById('planDetailStatus').innerHTML = planStatusBadge(p.status);
+      document.getElementById('planDetailStatusText').innerHTML = planStatusBadge(p.status);
+      document.getElementById('planDetailMeta').textContent = '关联目标：【季】' + p.goal + (p.isSpecial ? ' · 专项：' + p.specialName : '') + ' · ' + p.period + ' · 节点 ' + p.nodeRate;
+      const editBtn = document.getElementById('planDetailEditBtn');
+      if (editBtn) editBtn.style.display = (p.status === '已完成' || p.status === '已取消') ? 'none' : '';
+      const addBtn = document.getElementById('planDetailAddTaskBtn');
+      if (addBtn) addBtn.style.display = (p.status === '已完成' || p.status === '已取消') ? 'none' : '';
+      renderPlanStatusLogs(p.id);
+    }
 
     function displayNodeStatus(m) {
       if (m.status === '已完成') return '已完成';
@@ -433,6 +916,10 @@
       renderPlanDetailMilestones();
       BMS.toast('节点状态已更新');
       BMS.closeModal('modal-node-status');
+      syncPlanMilestonesToStore();
+      const rate = calcNodeRate();
+      const p = getPlan(currentPlanId);
+      if (p) p.nodeRate = rate;
     }
 
     const YEAR_GOAL_NAMES = ['全年集装箱吞吐量目标', '安全生产零事故'];
@@ -470,19 +957,21 @@
       document.getElementById('planFormTitle').textContent = mode === 'create' ? '新建计划' : '编辑计划';
       const statusEl = document.getElementById('planStatus');
       const statusHint = document.getElementById('planStatusHint');
+      statusEl.disabled = true;
+      statusEl.classList.add('bg-slate-50', 'text-slate-500');
       if (mode === 'create') {
         statusEl.value = '进行中';
-        statusEl.disabled = true;
-        statusEl.classList.add('bg-slate-50', 'text-slate-500');
-        if (statusHint) statusHint.textContent = '新建计划默认「进行中」，发布后可在编辑页变更状态';
+        if (statusHint) statusHint.textContent = '新建默认「进行中」；变更请使用「改计划状态」';
       } else {
         const p = getPlan(opts.planId || currentPlanId);
         currentPlanId = p.id;
-        statusEl.disabled = false;
-        statusEl.classList.remove('bg-slate-50', 'text-slate-500');
         statusEl.value = p.status;
         document.getElementById('planName').value = p.name;
-        if (statusHint) statusHint.textContent = '变更业务状态请谨慎操作；与目标/任务状态语义一致';
+        if (p.startDate) document.getElementById('planStart').value = p.startDate;
+        if (p.endDate) document.getElementById('planEnd').value = p.endDate;
+        if (statusHint) statusHint.textContent = '状态只读；请通过列表或详情「改计划状态」变更（须填原因）';
+        const ms = getPlanMilestones(p.id);
+        if (ms.length) planMilestones = ms.map(m => ({ ...m }));
       }
       const hint = document.getElementById('goalPrefillHint');
       const sel = document.getElementById('planGoal');
@@ -517,14 +1006,13 @@
     function openPlanDetail(id) {
       currentPlanId = id || currentPlanId;
       const p = getPlan(currentPlanId);
-      document.getElementById('planDetailTitle').textContent = p.name;
-      document.getElementById('planDetailStatus').innerHTML = planStatusBadge(p.status);
-      document.getElementById('planDetailMeta').textContent = '关联目标：【季】' + p.goal + (p.isSpecial ? ' · 专项：' + p.specialName : '') + ' · ' + p.period + ' · 节点 ' + p.nodeRate;
-      document.getElementById('planDetailStatusText').innerHTML = planStatusBadge(p.status);
+      const stored = getPlanMilestones(currentPlanId);
+      planMilestones = (stored.length ? stored : DEFAULT_MILESTONES).map(m => ({ ...m }));
+      syncPlanMilestonesToStore();
+      refreshPlanDetailHeader(p);
       document.getElementById('planDetailPeriod').textContent = p.period;
-      const editBtn = document.getElementById('planDetailEditBtn');
-      if (editBtn) editBtn.style.display = (p.status === '已完成' || p.status === '已取消') ? 'none' : '';
       renderPlanDetailMilestones();
+      setPlanTaskScope('last');
       BMS.openModal('modal-plan-detail');
     }
     function toggleSpecial() {
@@ -595,10 +1083,19 @@
         if (m.date < start || m.date > end) { BMS.toast('第 ' + (i + 1) + ' 条关键节点日期需在起止时间范围内', 'error'); return; }
       }
       if (!desc) { BMS.toast('请填写计划说明', 'error'); return; }
-      const status = document.getElementById('planStatus').value;
       if (planFormMode === 'edit') {
         const p = getPlan(currentPlanId);
-        if (p) p.status = status;
+        if (p) {
+          p.name = name;
+          p.goal = goal;
+          p.desc = desc;
+          p.startDate = start;
+          p.endDate = end;
+          p.period = start.slice(5) + ' ~ ' + end.slice(5);
+          p.isSpecial = isSpecial;
+          p.specialName = isSpecial ? special : '';
+          applyAutoDelayStatuses();
+        }
         renderPlanList();
       }
       BMS.toast('计划已保存' + (planFormMode === 'create' ? '（进行中）' : ''));
@@ -627,8 +1124,9 @@
     }
     document.addEventListener('DOMContentLoaded', () => {
       applyPlanOwnerDept();
+      applyAutoDelayStatuses();
       renderPlanList();
-      renderMilestones(DEFAULT_MILESTONES);
+      renderMilestones([{ date: '', name: '', note: '' }]);
       const params = new URLSearchParams(location.search);
       const open = params.get('open');
       const goal = params.get('goal');

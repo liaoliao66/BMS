@@ -19,6 +19,13 @@
     .tree-toggle.is-open .fa-caret-right { transform: rotate(90deg); }
     .more-menu { position:absolute; right:0; top:100%; margin-top:4px; min-width:7.5rem; background:#fff; border:1px solid #e2e8f0; border-radius:0.75rem; box-shadow:0 8px 24px rgba(0,0,0,.08); z-index:20; display:none; }
     .more-wrap.open .more-menu { display:block; }
+    .exec-tree { border:1px solid #e2e8f0; border-radius:1rem; overflow:hidden; }
+    .exec-node { border-top:1px solid #f1f5f9; }
+    .exec-node:first-child { border-top:0; }
+    .exec-rail { width:3px; border-radius:999px; flex-shrink:0; }
+    .exec-rail-goal { background:#94a3b8; }
+    .exec-rail-plan { background:#0f766e; }
+    .exec-rail-task { background:#cbd5e1; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="goals" data-title="目标管理">
@@ -135,7 +142,7 @@
     <!-- 详情 -->
     <div id="modal-goal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal-detail')"></div>
-      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
           <div>
             <div class="flex flex-wrap items-center gap-2">
@@ -168,61 +175,17 @@
             <p id="detailIntro" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3">聚焦桥吊单机效率与班组协同，通过作业流程优化与设备点检，使桥吊平均作业效率较上季提升 15%，支撑码头吞吐目标。</p>
           </div>
 
-          <div class="flex flex-wrap gap-2" id="goalDetailTabs">
-            <button type="button" data-gtab="children" class="gtab px-4 py-2 rounded-xl text-sm text-white" style="background:#0f766e" onclick="switchGoalTab('children')">下级目标</button>
-            <button type="button" data-gtab="plans" class="gtab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchGoalTab('plans')">关联计划</button>
-            <button type="button" data-gtab="tasks" class="gtab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchGoalTab('tasks')">关联任务</button>
-            <button type="button" data-gtab="logs" class="gtab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchGoalTab('logs')">状态变更</button>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium text-slate-900">落地全景</div>
+              <div class="text-xs text-slate-500">目标 → 下级目标 → 计划 → 任务 · 默认展开到任务</div>
+            </div>
+            <div id="goalExecTree" class="exec-tree bg-white"></div>
           </div>
 
-          <div id="gtab-children" class="gtab-pane">
-            <div id="childrenEmpty" class="hidden border border-dashed border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-500">
-              暂无下级目标。季目标为最末级，请通过「新增计划」落实执行。
-            </div>
-            <div id="childrenTableWrap" class="border border-slate-100 rounded-2xl overflow-hidden">
-              <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-3">下级目标</th><th class="text-left px-4 py-3">类型</th><th class="text-left px-4 py-3">周期</th><th class="text-left px-4 py-3">量化达成</th><th class="text-left px-4 py-3">健康状态</th><th class="text-left px-4 py-3">操作</th></tr></thead>
-                <tbody id="childrenBody"></tbody>
-              </table>
-            </div>
-            <p class="text-xs text-slate-400 mt-2">仅展示关联关系；下级健康状态独立计算，不做加总校验。</p>
-          </div>
-
-          <div id="gtab-plans" class="gtab-pane hidden">
-            <div class="border border-slate-100 rounded-2xl overflow-hidden">
-              <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-3">计划名称</th><th class="text-left px-4 py-3">周期</th><th class="text-left px-4 py-3">负责人</th><th class="text-left px-4 py-3">节点达成</th><th class="text-left px-4 py-3">操作</th></tr></thead>
-                <tbody>
-                  <tr class="border-t row-hover">
-                    <td class="px-4 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanFromGoal('8月')">8 月装卸效率提升计划</button></td>
-                    <td class="px-4 py-3">月 · 2026-08</td><td class="px-4 py-3">刘强</td><td class="px-4 py-3">2/4 按期</td>
-                    <td class="px-4 py-3"><button type="button" class="text-teal-700" onclick="openPlanFromGoal('8月')">查看</button></td>
-                  </tr>
-                  <tr class="border-t row-hover">
-                    <td class="px-4 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanFromGoal('Q3')">Q3 桥吊点检专项计划</button></td>
-                    <td class="px-4 py-3">季 · 2026-Q3</td><td class="px-4 py-3">刘强</td><td class="px-4 py-3">2/4 按期</td>
-                    <td class="px-4 py-3"><button type="button" class="text-teal-700" onclick="openPlanFromGoal('Q3')">查看</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div id="gtab-tasks" class="gtab-pane hidden">
-            <div class="border border-slate-100 rounded-2xl overflow-hidden">
-              <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-3">任务名称</th><th class="text-left px-4 py-3">所属计划</th><th class="text-left px-4 py-3">责任人</th><th class="text-left px-4 py-3">本周期更新</th><th class="text-left px-4 py-3">操作</th></tr></thead>
-                <tbody>
-                  <tr class="border-t row-hover"><td class="px-4 py-3 text-teal-700">桥吊夜班流程复盘</td><td class="px-4 py-3">8 月装卸效率提升计划</td><td class="px-4 py-3">刘强</td><td class="px-4 py-3 text-red-500">未更新</td><td class="px-4 py-3"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
-                  <tr class="border-t row-hover"><td class="px-4 py-3 text-teal-700">班前会标准化宣贯</td><td class="px-4 py-3">8 月装卸效率提升计划</td><td class="px-4 py-3">孙伟</td><td class="px-4 py-3 text-emerald-600">已更新</td><td class="px-4 py-3"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
-                  <tr class="border-t row-hover"><td class="px-4 py-3 text-teal-700">岸桥对位训练</td><td class="px-4 py-3">8 月装卸效率提升计划</td><td class="px-4 py-3">马超</td><td class="px-4 py-3 text-emerald-600">已更新</td><td class="px-4 py-3"><a href="任务管理_任务列表_page.html?open=modal-task-detail" class="text-teal-700">详情</a></td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div id="gtab-logs" class="gtab-pane hidden">
-            <ul class="text-sm space-y-2 text-slate-600">
+          <div>
+            <div class="text-sm font-medium mb-2">状态变更</div>
+            <ul class="text-sm space-y-2 text-slate-600" id="goalStatusLogs">
               <li class="border rounded-xl px-4 py-3"><div class="font-medium text-slate-800">08-15 进行中 → 需关注</div><div class="text-xs text-slate-400 mt-1">操作人：张港长</div><div class="mt-1">原因：连续阴雨影响夜班作业，进度滞后</div></li>
               <li class="border rounded-xl px-4 py-3"><div class="font-medium text-slate-800">07-01 草稿 → 进行中</div><div class="text-xs text-slate-400 mt-1">操作人：张港长</div><div class="mt-1">原因：Q3 目标正式下达装卸队</div></li>
             </ul>
@@ -450,11 +413,8 @@
           intro: '全年集装箱吞吐量达成 120 万 TEU，支撑码头经营预算与航线开发节奏。',
           breakLabel: '拆解季目标',
           planGoal: '全年集装箱吞吐量目标',
-          children: [
-            ['桥吊作业效率提升 15%', '季', '2026-Q3', '+12%/+15%', '需关注', 'quarter'],
-            ['设备完好率 ≥ 98%', '季', '2026-Q3', '97%/98%', '正常', 'quarter'],
-            ['堆场周转天数压降', '季', '2026-Q3', '待录入', '正常', 'quarter'],
-            ['航线班期兑现率', '季', '2026-Q2', '达标', '正常', 'quarter']
+          logs: [
+            { title: '01-05 草稿 → 进行中', who: '张港长', reason: '年度吞吐目标正式下达商务部' }
           ]
         },
         quarter: {
@@ -469,9 +429,230 @@
           intro: '聚焦桥吊单机效率与班组协同，通过作业流程优化与设备点检，使桥吊平均作业效率较上季提升 15%，支撑码头吞吐目标。',
           breakLabel: '',
           planGoal: '桥吊作业效率提升 15%',
-          children: []
+          logs: [
+            { title: '08-15 进行中 → 需关注', who: '张港长', reason: '连续阴雨影响夜班作业，进度滞后' },
+            { title: '07-01 草稿 → 进行中', who: '张港长', reason: 'Q3 目标正式下达装卸队' }
+          ]
         }
       };
+
+      const QUARTER_PLANS = [
+        {
+          key: '8月',
+          name: '8 月装卸效率提升计划',
+          period: '月 · 2026-08',
+          owner: '刘强',
+          nodes: '2/4 按期',
+          nextNode: '08-25 效率复核',
+          tasks: [
+            { name: '桥吊夜班流程复盘', owner: '刘强', update: '未更新', status: '进行中', summary: '本周期尚未提交进展；上周已形成初版整改清单。' },
+            { name: '班前会标准化宣贯', owner: '孙伟', update: '已更新', status: '进行中', summary: '全班组第一轮宣贯完成，记录模板已下发。' },
+            { name: '岸桥对位训练', owner: '马超', update: '已更新', status: '已延期', summary: '训练排班冲突，延期至下周第二轮。' }
+          ]
+        },
+        {
+          key: 'Q3',
+          name: 'Q3 桥吊点检专项计划',
+          period: '季 · 2026-Q3',
+          owner: '刘强',
+          nodes: '2/4 按期',
+          nextNode: '08-31 季度节点',
+          tasks: [
+            { name: '钢丝绳点检整改', owner: '周杰', update: '已更新', status: '进行中', summary: '整改项 8 条已闭环 5 条，余 3 条待设备窗口期。' },
+            { name: '点检台账周复核', owner: '周杰', update: '已更新', status: '进行中', summary: '本周台账已复核，无新增隐患。' }
+          ]
+        }
+      ];
+
+      const YEAR_CHILD_TREE = [
+        {
+          name: '桥吊作业效率提升 15%',
+          typeLabel: '季',
+          period: '2026-Q3',
+          dept: '装卸队',
+          achievement: '+12%/+15%',
+          health: '需关注',
+          detailKey: 'quarter',
+          plans: QUARTER_PLANS
+        },
+        {
+          name: '设备完好率 ≥ 98%',
+          typeLabel: '季',
+          period: '2026-Q3',
+          dept: '设备部',
+          achievement: '97%/98%',
+          health: '正常',
+          detailKey: 'quarter',
+          plans: [
+            {
+              key: '设备',
+              name: 'Q3 设备完好率保障计划',
+              period: '季 · 2026-Q3',
+              owner: '赵工',
+              nodes: '3/4 按期',
+              nextNode: '09-15 完好率复核',
+              tasks: [
+                { name: '关键设备巡检排程', owner: '赵工', update: '已更新', status: '进行中', summary: '桥吊/场桥巡检排程已锁定，本周执行率 100%。' },
+                { name: '备件库存核对', owner: '钱磊', update: '已更新', status: '已完成', summary: '高周转备件库存已核对并补货。' }
+              ]
+            }
+          ]
+        },
+        {
+          name: '堆场周转天数压降',
+          typeLabel: '季',
+          period: '2026-Q3',
+          dept: '调度中心',
+          achievement: '待录入',
+          health: '正常',
+          detailKey: 'quarter',
+          plans: [
+            {
+              key: '堆场',
+              name: '堆场周转优化计划',
+              period: '月 · 2026-08',
+              owner: '陈敏',
+              nodes: '3/4 按期',
+              nextNode: '08-20 周转复盘',
+              tasks: [
+                { name: '堆场周转异常复盘', owner: '陈敏', update: '已更新', status: '已完成', summary: '已形成复盘纪要，3 项措施进入试点。' },
+                { name: '箱位周转日报核对', owner: '陈敏', update: '已更新', status: '进行中', summary: '日报核对机制已建立，本周异常 2 起。' }
+              ]
+            }
+          ]
+        },
+        {
+          name: '航线班期兑现率',
+          typeLabel: '季',
+          period: '2026-Q2',
+          dept: '商务部',
+          achievement: '达标',
+          health: '正常',
+          detailKey: 'quarter',
+          plans: []
+        }
+      ];
+
+      function healthBadge(h) {
+        if (h === '需关注') return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span>';
+        if (h === '风险') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">风险</span>';
+        return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span>';
+      }
+
+      function taskUpdateHtml(u) {
+        if (u === '未更新') return '<span class="text-red-500">未更新</span>';
+        return '<span class="text-emerald-600">已更新</span>';
+      }
+
+      function taskStatusHtml(s) {
+        if (s === '已完成') return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">已完成</span>';
+        if (s === '已延期') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span>';
+        return '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span>';
+      }
+
+      function renderTaskNodes(tasks, pad) {
+        if (!tasks || !tasks.length) {
+          return `<div class="exec-node px-4 py-2.5 text-sm text-slate-400" style="padding-left:${pad}px">暂无任务</div>`;
+        }
+        return tasks.map(t => `
+          <div class="exec-node px-4 py-3" style="padding-left:${pad}px">
+            <div class="flex gap-3 items-start">
+              <div class="exec-rail exec-rail-task mt-1.5"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">任务</span>
+                  <span class="text-sm font-medium text-slate-800">${t.name}</span>
+                  ${taskStatusHtml(t.status)}
+                  <span class="text-xs text-slate-500">责任人 ${t.owner}</span>
+                  <span class="text-xs">${taskUpdateHtml(t.update)}</span>
+                </div>
+                <p class="text-sm text-slate-600 mt-1 leading-relaxed">${t.summary || '—'}</p>
+              </div>
+            </div>
+          </div>`).join('');
+      }
+
+      function renderPlanNodes(plans, pad) {
+        if (!plans || !plans.length) {
+          return `<div class="exec-node px-4 py-2.5 text-sm text-slate-400" style="padding-left:${pad}px">暂无关联计划</div>`;
+        }
+        return plans.map(p => `
+          <div class="exec-node">
+            <div class="px-4 py-3 bg-slate-50/60" style="padding-left:${pad}px">
+              <div class="flex gap-3 items-start">
+                <div class="exec-rail exec-rail-plan mt-1.5"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-800">计划</span>
+                    <button type="button" class="text-sm font-medium text-teal-800 hover:underline text-left" onclick="openPlanFromGoal('${p.key}')">${p.name}</button>
+                    <span class="text-xs text-slate-500">${p.period}</span>
+                    <span class="text-xs text-slate-500">负责人 ${p.owner}</span>
+                    <span class="text-xs text-slate-600">节点 ${p.nodes}</span>
+                    <span class="text-xs text-slate-500">下一节点 ${p.nextNode}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ${renderTaskNodes(p.tasks, pad + 28)}
+          </div>`).join('');
+      }
+
+      function renderChildGoalNodes(children) {
+        return children.map(c => `
+          <div class="exec-node">
+            <div class="px-4 py-3.5 bg-white">
+              <div class="flex gap-3 items-start">
+                <div class="exec-rail exec-rail-goal mt-1.5"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">下级目标</span>
+                    <button type="button" class="text-sm font-semibold text-slate-900 hover:text-teal-800 text-left" onclick="openGoalDetail('${c.detailKey}')">${c.name}</button>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">${c.typeLabel}</span>
+                    ${healthBadge(c.health)}
+                  </div>
+                  <div class="text-xs text-slate-500 mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                    <span>周期 ${c.period}</span>
+                    <span>${c.dept}</span>
+                    <span>量化 ${c.achievement}</span>
+                    <span>计划 ${(c.plans || []).length} · 任务 ${(c.plans || []).reduce((n, p) => n + (p.tasks || []).length, 0)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ${renderPlanNodes(c.plans, 44)}
+          </div>`).join('');
+      }
+
+      function renderGoalExecTree(type) {
+        const root = document.getElementById('goalExecTree');
+        if (type === 'year') {
+          root.innerHTML = renderChildGoalNodes(YEAR_CHILD_TREE) ||
+            '<div class="px-4 py-8 text-center text-sm text-slate-400">暂无下级目标</div>';
+          return;
+        }
+        if (type === 'quarter') {
+          root.innerHTML = `
+            <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-100 text-xs text-slate-500">本目标为最末级，以下为直接挂接的计划与任务</div>
+            ${renderPlanNodes(QUARTER_PLANS, 16)}`;
+          return;
+        }
+        root.innerHTML = '<div class="px-4 py-8 text-center text-sm text-slate-400">暂无落地内容</div>';
+      }
+
+      function renderGoalStatusLogs(type) {
+        const logs = (DETAIL[type] && DETAIL[type].logs) || [];
+        const el = document.getElementById('goalStatusLogs');
+        if (!logs.length) {
+          el.innerHTML = '<li class="text-sm text-slate-400 px-1">暂无状态变更记录</li>';
+          return;
+        }
+        el.innerHTML = logs.map(l => `
+          <li class="border rounded-xl px-4 py-3">
+            <div class="font-medium text-slate-800">${l.title}</div>
+            <div class="text-xs text-slate-400 mt-1">操作人：${l.who}</div>
+            <div class="mt-1">原因：${l.reason}</div>
+          </li>`).join('');
+      }
 
       function fillSelect(sel, items, selected) {
         sel.innerHTML = '';
@@ -658,46 +839,23 @@
           btnPlan.classList.add('hidden');
           btnYearNo.classList.remove('hidden');
         }
-        const body = document.getElementById('childrenBody');
-        body.innerHTML = '';
-        if (!d.children.length) {
-          document.getElementById('childrenEmpty').classList.remove('hidden');
-          document.getElementById('childrenTableWrap').classList.add('hidden');
-        } else {
-          document.getElementById('childrenEmpty').classList.add('hidden');
-          document.getElementById('childrenTableWrap').classList.remove('hidden');
-          d.children.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.className = 'border-t row-hover';
-            tr.innerHTML = `<td class="px-4 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openGoalDetail('${row[5]}')">${row[0]}</button></td>
-              <td class="px-4 py-3">${row[1]}</td><td class="px-4 py-3">${row[2]}</td><td class="px-4 py-3">${row[3]}</td>
-              <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${row[4]}</span></td>
-              <td class="px-4 py-3"><button type="button" class="text-teal-700" onclick="openGoalDetail('${row[5]}')">详情</button></td>`;
-            body.appendChild(tr);
-          });
-        }
-        switchGoalTab(type === 'quarter' ? 'plans' : 'children');
+        renderGoalExecTree(type);
+        renderGoalStatusLogs(type);
         BMS.openModal('modal-goal-detail');
       }
 
-      function switchGoalTab(name) {
-        document.querySelectorAll('.gtab-pane').forEach(p => p.classList.add('hidden'));
-        document.getElementById('gtab-' + name).classList.remove('hidden');
-        document.querySelectorAll('.gtab').forEach(b => {
-          const on = b.getAttribute('data-gtab') === name;
-          b.classList.toggle('text-white', on);
-          b.classList.toggle('bg-white', !on);
-          b.classList.toggle('border', !on);
-          b.classList.toggle('border-slate-200', !on);
-          b.style.background = on ? '#0f766e' : '';
-        });
-      }
-
       const planTasks = {
-        '8月': [['桥吊夜班流程复盘', '刘强', '未更新', '本月未更新'], ['班前会标准化宣贯', '孙伟', '已更新', '进行中'], ['岸桥对位训练', '马超', '已更新', '已延期']],
-        'Q3': [['钢丝绳点检整改', '周杰', '已更新', '进行中'], ['点检台账周复核', '周杰', '已更新', '进行中']]
+        '8月': [['桥吊夜班流程复盘', '刘强', '未更新', '进行中'], ['班前会标准化宣贯', '孙伟', '已更新', '进行中'], ['岸桥对位训练', '马超', '已更新', '已延期']],
+        'Q3': [['钢丝绳点检整改', '周杰', '已更新', '进行中'], ['点检台账周复核', '周杰', '已更新', '进行中']],
+        '设备': [['关键设备巡检排程', '赵工', '已更新', '进行中'], ['备件库存核对', '钱磊', '已更新', '已完成']],
+        '堆场': [['堆场周转异常复盘', '陈敏', '已更新', '已完成'], ['箱位周转日报核对', '陈敏', '已更新', '进行中']]
       };
-      const planTitles = { '8月': '8 月装卸效率提升计划', 'Q3': 'Q3 桥吊点检专项计划' };
+      const planTitles = {
+        '8月': '8 月装卸效率提升计划',
+        'Q3': 'Q3 桥吊点检专项计划',
+        '设备': 'Q3 设备完好率保障计划',
+        '堆场': '堆场周转优化计划'
+      };
       function openPlanFromGoal(key) {
         document.getElementById('planFromGoalTitle').textContent = planTitles[key] || key;
         const body = document.getElementById('planFromGoalTasks');

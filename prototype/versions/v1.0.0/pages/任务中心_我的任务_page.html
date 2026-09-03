@@ -25,21 +25,19 @@
 <body class="bg-slate-50" data-page="my-tasks" data-title="任务清单">
   <div id="app-root"></div>
   <div id="page-main">
-    <p class="text-xs text-slate-500 mb-3">周初创建任务（须填起止时间，默认「进行中」），周期内由责任人<strong>跟进</strong>并可标记完成/延期；本期未完成自动「已延期」。支持列表与周历视角；**进行中/已延期**任务可<strong>转派</strong>（须填写原因并留转派记录）。</p>
-    <div id="permHint" class="mb-4 text-xs text-slate-600 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 hidden"></div>
-
     <div class="flex flex-wrap gap-3 justify-between mb-4">
       <div class="inline-flex p-1 bg-slate-100 rounded-xl">
         <button type="button" id="viewListBtn" class="view-tab px-4 py-1.5 rounded-lg text-sm font-medium view-tab-on"><i class="fa-solid fa-list mr-1.5"></i>列表</button>
         <button type="button" id="viewCalBtn" class="view-tab px-4 py-1.5 rounded-lg text-sm font-medium text-slate-500"><i class="fa-solid fa-calendar-week mr-1.5"></i>周历</button>
       </div>
-      <button type="button" id="btnCreate" onclick="openCreateTask()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建任务</button>
+      <button type="button" id="btnCreate" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建任务</button>
     </div>
 
     <div class="flex flex-wrap gap-3 justify-between mb-5">
       <div class="flex flex-wrap gap-2 items-center">
         <label class="text-sm text-slate-500">周期</label>
         <select id="periodSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodChange()">
+          <option value="2026-W35">2026-W35（下周）08-31 ~ 09-06</option>
           <option value="2026-W34" selected>2026-W34（本周）08-24 ~ 08-30</option>
           <option value="2026-W33">2026-W33（上周）08-17 ~ 08-23</option>
           <option value="2026-W32">2026-W32　08-10 ~ 08-16</option>
@@ -71,6 +69,7 @@
             <th class="px-4 py-3 text-left">责任人</th>
             <th class="px-4 py-3 text-left">起止时间</th>
             <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-4 py-3 text-left min-w-[140px]">跟进概述</th>
             <th class="px-5 py-3 text-left">操作</th>
           </tr>
         </thead>
@@ -223,7 +222,7 @@
             <p class="text-xs text-slate-400 mt-1">默认「进行中」；可改为完成或延期</p>
           </div>
           <div data-ai-inline="F4" id="cpSummaryWrap">
-            <label class="block text-sm text-slate-600 mb-1" id="cpSummaryLabel">情况概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span></label>
+            <label class="block text-sm text-slate-600 mb-1" id="cpSummaryLabel">跟进概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span></label>
             <textarea id="cpSummary" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-28" placeholder="简述本周跟进情况" maxlength="500" oninput="updateCount('cpSummary','cpSummaryCount')"></textarea>
             <div class="text-xs text-slate-400 mt-1 text-right"><span id="cpSummaryCount">0</span>/500</div>
           </div>
@@ -317,26 +316,15 @@
 
     function initPermissionUi() {
       const u = getCurrentUser();
-      const hint = document.getElementById('permHint');
       const wrap = document.getElementById('ownerScopeWrap');
       const sel = document.getElementById('ownerScope');
-      if (isDeptHead()) {
-        if (hint) {
-          hint.classList.remove('hidden');
-          const subs = (u.subordinates || []).join('、') || '—';
-          hint.innerHTML = '当前账号：<span class="font-medium text-slate-800">' + u.name + ' · ' + (u.title || '负责人') + '</span> · 数据权限：可查看<strong>本人及下级</strong>（' + subs + '）任务；跟进仅限责任人本人，上级可查看与转派。';
-        }
-        if (wrap && sel) {
-          wrap.classList.remove('hidden');
-          const opts = ['<option value="all">全部（本人+下级）</option>', '<option value="self">仅本人</option>'];
-          (u.subordinates || []).forEach(name => {
-            opts.push('<option value="' + name + '">' + name + '（下级）</option>');
-          });
-          sel.innerHTML = opts.join('');
-        }
-      } else if (hint) {
-        hint.classList.remove('hidden');
-        hint.innerHTML = '当前账号：<span class="font-medium text-slate-800">' + u.name + '</span> · 数据权限：仅可查看<strong>本人</strong>任务。';
+      if (isDeptHead() && wrap && sel) {
+        wrap.classList.remove('hidden');
+        const opts = ['<option value="all">全部（本人+下级）</option>', '<option value="self">仅本人</option>'];
+        (u.subordinates || []).forEach(name => {
+          opts.push('<option value="' + name + '">' + name + '（下级）</option>');
+        });
+        sel.innerHTML = opts.join('');
       }
     }
 
@@ -345,12 +333,23 @@
       renderCurrentView();
     }
     const CURRENT_PERIOD = '2026-W34';
+    const NEXT_PERIOD = '2026-W35';
+    const PERIOD_ORDER = ['2026-W31', '2026-W32', '2026-W33', '2026-W34', '2026-W35'];
     const PERIODS = {
+      '2026-W35': { start: '2026-08-31', end: '2026-09-06', days: ['2026-08-31','2026-09-01','2026-09-02','2026-09-03','2026-09-04','2026-09-05','2026-09-06'] },
       '2026-W34': { start: '2026-08-24', end: '2026-08-30', days: ['2026-08-24','2026-08-25','2026-08-26','2026-08-27','2026-08-28','2026-08-29','2026-08-30'] },
       '2026-W33': { start: '2026-08-17', end: '2026-08-23', days: ['2026-08-17','2026-08-18','2026-08-19','2026-08-20','2026-08-21','2026-08-22','2026-08-23'] },
       '2026-W32': { start: '2026-08-10', end: '2026-08-16', days: ['2026-08-10','2026-08-11','2026-08-12','2026-08-13','2026-08-14','2026-08-15','2026-08-16'] },
       '2026-W31': { start: '2026-08-03', end: '2026-08-09', days: ['2026-08-03','2026-08-04','2026-08-05','2026-08-06','2026-08-07','2026-08-08','2026-08-09'] }
     };
+
+    function isCreatablePeriod(code) {
+      return code === CURRENT_PERIOD || code === NEXT_PERIOD;
+    }
+
+    function isHistoricalPeriod(code) {
+      return PERIOD_ORDER.indexOf(code) < PERIOD_ORDER.indexOf(CURRENT_PERIOD);
+    }
     const WEEKDAY = ['一','二','三','四','五','六','日'];
 
     let currentView = 'list';
@@ -361,6 +360,7 @@
     let viewIndex = -1;
     let transferIndex = -1;
     let viewTab = 'info';
+    let taskCreateImages = [];
 
     const TRANSFERS = {
       4: [
@@ -369,21 +369,23 @@
     };
 
     let ROWS = [
-      { id: 1, period: '2026-W34', name: '桥吊夜班流程复盘', summary: '梳理夜班交接与点检流程，输出整改清单。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: ['孙伟'], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '流程图_v1.pdf' },
-      { id: 2, period: '2026-W34', name: '班前会标准化宣贯', summary: '落实班前会标准话术与记录模板。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
-      { id: 3, period: '2026-W34', name: '岸桥对位训练跟进', summary: '跟进对位训练排班与考核。', plan: '夜班协同保障计划', dept: '装卸队', owner: '孙伟', creator: '刘强', helpers: ['马超'], src: '代建', start: '2026-08-26', end: '2026-08-29', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
-      { id: 9, period: '2026-W34', name: '岸桥对位训练', summary: '落实对位训练排班与现场考核。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '马超', creator: '马超', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
-      { id: 10, period: '2026-W34', name: '堆场通道标识检查', summary: '检查堆场通道标识与警示牌。', plan: '堆场周转优化计划', dept: '装卸队', owner: '王芳', creator: '王芳', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
-      { id: 4, period: '2026-W34', name: 'Q3 安全隐患现场复核', summary: '对装卸作业区隐患现场复核。', plan: 'Q3 桥吊点检专项计划', dept: '装卸队', owner: '刘强', creator: '张总', helpers: ['王芳'], src: '督办下达', start: '2026-08-24', end: '2026-08-27', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '', files: '' },
-      { id: 12, period: '2026-W34', name: '泊位准点抽查记录', summary: '抽查本周泊位准点情况并记录异常。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-26', status: '已完成', doneOp: true, doneAt: '2026-08-26 17:10', completeSummary: '本周抽查 12 个泊位，准点率 91.7%，异常 1 处已登记并同步调度。', delayReason: '', files: '' },
-      { id: 13, period: '2026-W34', name: '班组工具点检登记', summary: '完成本周班组工具点检与登记。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '孙伟', creator: '孙伟', helpers: ['马超'], src: '自建', start: '2026-08-25', end: '2026-08-28', status: '已完成', doneOp: true, doneAt: '2026-08-28 10:30', completeSummary: '点检表已提交，缺件 2 项已报设备部补货。', delayReason: '', files: '点检表.xlsx' },
-      { id: 14, period: '2026-W34', name: '夜班交接清单修订', summary: '根据上周试运行反馈修订夜班交接清单。', plan: '夜班协同保障计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-27', status: '已延期', doneOp: false, doneAt: '', completeSummary: '', delayReason: '试运行反馈尚未收齐，清单修订顺延至下周二前完成。', files: '' },
-      { id: 15, period: '2026-W34', name: '堆场标识补漆', summary: '对磨损堆场标识补漆更新。', plan: '堆场周转优化计划', dept: '装卸队', owner: '王芳', creator: '王芳', helpers: [], src: '自建', start: '2026-08-26', end: '2026-08-29', status: '已延期', doneOp: false, doneAt: '', completeSummary: '', delayReason: '雨天无法施工，已协调下周干燥时段补漆。', files: '' },
-      { id: 5, period: '2026-W33', name: '堆场周转异常复盘', summary: '复盘上周周转异常节点。', plan: '堆场周转优化计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-17', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 16:20', completeSummary: '已形成复盘纪要并同步调度。', delayReason: '', files: '复盘纪要.docx' },
-      { id: 6, period: '2026-W33', name: '夜班交接问题闭环', summary: '跟踪交接问题整改进度。', plan: '夜班协同保障计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-23', status: '已延期', doneOp: false, doneAt: '', completeSummary: '', delayReason: '交接问题涉及多班组协同，整改方案未在本周内闭环。', files: '' },
-      { id: 11, period: '2026-W33', name: '班组安全宣贯记录', summary: '整理班组安全宣贯签到与记录。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '孙伟', creator: '孙伟', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 11:30', completeSummary: '宣贯记录已归档。', delayReason: '', files: '' },
-      { id: 7, period: '2026-W33', name: '点检整改跟踪', summary: '点检发现问题整改跟踪。', plan: 'Q3 桥吊点检专项计划', dept: '装卸队', owner: '刘强', creator: '张总', helpers: [], src: '督办下达', start: '2026-08-19', end: '2026-08-21', status: '进行中', doneOp: false, doneAt: '', completeSummary: '', delayReason: '本期未完成，系统自动标为已延期', files: '' },
-      { id: 8, period: '2026-W32', name: '泊位准点核查清单', summary: '整理泊位准点核查清单。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-10', end: '2026-08-15', status: '已完成', doneOp: true, doneAt: '2026-08-15 18:00', completeSummary: '清单已提交设备部。', delayReason: '', files: '' }
+      { id: 16, period: '2026-W35', name: '夜班交接清单落地宣贯', summary: '下周落地修订后的夜班交接清单并宣贯。', plan: '夜班协同保障计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: ['孙伟'], src: '自建', start: '2026-08-31', end: '2026-09-03', status: '进行中', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 17, period: '2026-W35', name: '堆场标识补漆收尾', summary: '完成上周延期的堆场标识补漆。', plan: '堆场周转优化计划', dept: '装卸队', owner: '王芳', creator: '王芳', helpers: [], src: '自建', start: '2026-09-01', end: '2026-09-04', status: '进行中', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 1, period: '2026-W34', name: '桥吊夜班流程复盘', summary: '梳理夜班交接与点检流程，输出整改清单。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: ['孙伟'], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', situationSummary: '已完成 2 次夜班复盘，交接清单初稿已出。', completeSummary: '', delayReason: '', files: '流程图_v1.pdf' },
+      { id: 2, period: '2026-W34', name: '班前会标准化宣贯', summary: '落实班前会标准话术与记录模板。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 3, period: '2026-W34', name: '岸桥对位训练跟进', summary: '跟进对位训练排班与考核。', plan: '夜班协同保障计划', dept: '装卸队', owner: '孙伟', creator: '刘强', helpers: ['马超'], src: '代建', start: '2026-08-26', end: '2026-08-29', status: '进行中', doneOp: false, doneAt: '', situationSummary: '已排班 3 组，考核表待签字。', completeSummary: '', delayReason: '', files: '' },
+      { id: 9, period: '2026-W34', name: '岸桥对位训练', summary: '落实对位训练排班与现场考核。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '马超', creator: '马超', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-28', status: '进行中', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 10, period: '2026-W34', name: '堆场通道标识检查', summary: '检查堆场通道标识与警示牌。', plan: '堆场周转优化计划', dept: '装卸队', owner: '王芳', creator: '王芳', helpers: [], src: '自建', start: '2026-08-25', end: '2026-08-30', status: '进行中', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '', files: '' },
+      { id: 4, period: '2026-W34', name: 'Q3 安全隐患现场复核', summary: '对装卸作业区隐患现场复核。', plan: 'Q3 桥吊点检专项计划', dept: '装卸队', owner: '刘强', creator: '张总', helpers: ['王芳'], src: '督办下达', start: '2026-08-24', end: '2026-08-27', status: '进行中', doneOp: false, doneAt: '', situationSummary: '现场复核完成 3 处，剩余 1 处待整改。', completeSummary: '', delayReason: '', files: '' },
+      { id: 12, period: '2026-W34', name: '泊位准点抽查记录', summary: '抽查本周泊位准点情况并记录异常。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-26', status: '已完成', doneOp: true, doneAt: '2026-08-26 17:10', situationSummary: '', completeSummary: '本周抽查 12 个泊位，准点率 91.7%，异常 1 处已登记并同步调度。', delayReason: '', files: '' },
+      { id: 13, period: '2026-W34', name: '班组工具点检登记', summary: '完成本周班组工具点检与登记。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '孙伟', creator: '孙伟', helpers: ['马超'], src: '自建', start: '2026-08-25', end: '2026-08-28', status: '已完成', doneOp: true, doneAt: '2026-08-28 10:30', situationSummary: '', completeSummary: '点检表已提交，缺件 2 项已报设备部补货。', delayReason: '', files: '点检表.xlsx' },
+      { id: 14, period: '2026-W34', name: '夜班交接清单修订', summary: '根据上周试运行反馈修订夜班交接清单。', plan: '夜班协同保障计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-24', end: '2026-08-27', status: '已延期', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '试运行反馈尚未收齐，清单修订顺延至下周二前完成。', files: '' },
+      { id: 15, period: '2026-W34', name: '堆场标识补漆', summary: '对磨损堆场标识补漆更新。', plan: '堆场周转优化计划', dept: '装卸队', owner: '王芳', creator: '王芳', helpers: [], src: '自建', start: '2026-08-26', end: '2026-08-29', status: '已延期', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '雨天无法施工，已协调下周干燥时段补漆。', files: '' },
+      { id: 5, period: '2026-W33', name: '堆场周转异常复盘', summary: '复盘上周周转异常节点。', plan: '堆场周转优化计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-17', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 16:20', situationSummary: '', completeSummary: '已形成复盘纪要并同步调度。', delayReason: '', files: '复盘纪要.docx' },
+      { id: 6, period: '2026-W33', name: '夜班交接问题闭环', summary: '跟踪交接问题整改进度。', plan: '夜班协同保障计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-23', status: '已延期', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '交接问题涉及多班组协同，整改方案未在本周内闭环。', files: '' },
+      { id: 11, period: '2026-W33', name: '班组安全宣贯记录', summary: '整理班组安全宣贯签到与记录。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '孙伟', creator: '孙伟', helpers: [], src: '自建', start: '2026-08-18', end: '2026-08-22', status: '已完成', doneOp: true, doneAt: '2026-08-22 11:30', situationSummary: '', completeSummary: '宣贯记录已归档。', delayReason: '', files: '' },
+      { id: 7, period: '2026-W33', name: '点检整改跟踪', summary: '点检发现问题整改跟踪。', plan: 'Q3 桥吊点检专项计划', dept: '装卸队', owner: '刘强', creator: '张总', helpers: [], src: '督办下达', start: '2026-08-19', end: '2026-08-21', status: '进行中', doneOp: false, doneAt: '', situationSummary: '', completeSummary: '', delayReason: '本期未完成，系统自动标为已延期', files: '' },
+      { id: 8, period: '2026-W32', name: '泊位准点核查清单', summary: '整理泊位准点核查清单。', plan: '8 月装卸效率提升计划', dept: '装卸队', owner: '刘强', creator: '刘强', helpers: [], src: '自建', start: '2026-08-10', end: '2026-08-15', status: '已完成', doneOp: true, doneAt: '2026-08-15 18:00', situationSummary: '', completeSummary: '清单已提交设备部。', delayReason: '', files: '' }
     ];
 
     function findRowIndex(id) {
@@ -397,9 +399,24 @@
 
     function displayStatus(r) {
       if (r.doneOp && r.status === '已完成') return '已完成';
-      if (r.period !== CURRENT_PERIOD && !r.doneOp) return '已延期';
       if (r.status === '已延期') return '已延期';
+      if (isHistoricalPeriod(r.period) && !r.doneOp) return '已延期';
       return '进行中';
+    }
+
+    function getListSituationOverview(r, st) {
+      const status = st || displayStatus(r);
+      if (status === '已完成') return r.completeSummary || '';
+      if (status === '已延期') return r.delayReason || '';
+      return r.situationSummary || '';
+    }
+
+    function formatOverviewCell(text, maxLen) {
+      const limit = maxLen || 48;
+      if (!text || !text.trim()) return '<span class="text-slate-400">—</span>';
+      const safe = text.replace(/"/g, '&quot;').replace(/</g, '&lt;');
+      const shown = text.length > limit ? text.slice(0, limit) + '…' : text;
+      return '<span class="text-slate-600 line-clamp-2" title="' + safe + '">' + shown.replace(/</g, '&lt;') + '</span>';
     }
 
     function canEdit(r) {
@@ -627,6 +644,7 @@
         ${viewField('起止时间', r.start + ' ~ ' + r.end)}
         ${viewField('归属周期', r.period)}
         ${viewField('任务概述', r.summary || '—')}
+        ${st === '进行中' && r.situationSummary ? viewField('跟进概述', r.situationSummary) : ''}
         ${renderTaskImagesView(r.files || '')}
       `;
       if (st === '已完成' || st === '已延期') {
@@ -696,15 +714,15 @@
       const p = currentPeriod();
       const hint = document.getElementById('periodHint');
       const btn = document.getElementById('btnCreate');
-      if (p === CURRENT_PERIOD) {
+      if (isCreatablePeriod(p)) {
         hint.classList.add('hidden');
         btn.classList.remove('opacity-50', 'pointer-events-none');
         btn.title = '';
       } else {
         hint.classList.remove('hidden');
-        hint.textContent = '正在查看历史周期。未跟进为「完成」的任务已自动标为「已延期」；新建请切回本周。';
+        hint.textContent = '正在查看历史周期。未跟进为「完成」的任务已自动标为「已延期」；新建请切到本周或下周。';
         btn.classList.add('opacity-50', 'pointer-events-none');
-        btn.title = '仅本周可新建任务';
+        btn.title = '仅本周、下周可新建任务';
       }
       renderCurrentView();
     }
@@ -748,9 +766,10 @@
           <td class="px-4 py-3">${r.owner}${r.owner === getCurrentUser().name ? ' <span class="text-xs text-slate-400">（本人）</span>' : ''}</td>
           <td class="px-4 py-3">${formatRange(r)}</td>
           <td class="px-4 py-3">${statusBadge(r.showStatus)}</td>
+          <td class="px-4 py-3 max-w-xs">${formatOverviewCell(getListSituationOverview(r, r.showStatus))}</td>
           <td class="px-5 py-3 space-x-2 whitespace-nowrap">${actions.join('')}</td>
         </tr>`;
-      }).join('') : `<tr><td colspan="6" class="px-5 py-10 text-center text-slate-400">本周期暂无可见任务</td></tr>`;
+      }).join('') : `<tr><td colspan="7" class="px-5 py-10 text-center text-slate-400">本周期暂无可见任务</td></tr>`;
       const scopeText = ownerScope === 'all' ? '本人+下级' : (ownerScope === 'self' ? '仅本人' : ownerScope);
       document.getElementById('footerHint').textContent = '共 ' + list.length + ' 条 · ' + periodLabel(p) + ' · 范围：' + scopeText;
     }
@@ -825,8 +844,7 @@
       });
       renderViewContent();
 
-      let actions = `<button type="button" onclick="BMS.AI.run('F14')" class="bms-ai-page-btn border-0 text-sm px-3 py-2">AI 摘要评论</button>`;
-      actions += `<button type="button" onclick="BMS.closeModal('modal-view')" class="border text-sm px-4 py-2 rounded-xl">关闭</button>`;
+      let actions = `<button type="button" onclick="BMS.closeModal('modal-view')" class="border text-sm px-4 py-2 rounded-xl">关闭</button>`;
       if (canTransfer(r)) {
         actions = `<button type="button" onclick="BMS.closeModal('modal-view');openTransfer(${viewIndex})" class="border text-sm px-4 py-2 rounded-xl text-amber-700 border-amber-200 bg-amber-50">转派</button>` + actions;
       }
@@ -834,7 +852,7 @@
         actions = `<button type="button" onclick="BMS.closeModal('modal-view');openEdit(${viewIndex})" class="border text-sm px-4 py-2 rounded-xl">编辑</button>` + actions;
       }
       if (canComplete(r)) {
-        actions = `<button type="button" onclick="BMS.closeModal('modal-view');openComplete(${viewIndex})" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">跟进</button>` + actions;
+        actions = `<button type="button" onclick="BMS.closeModal('modal-view');openComplete(${viewIndex})" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">跟进 / 改状态</button>` + actions;
       }
       document.getElementById('viewActions').innerHTML = actions;
       BMS.openModal('modal-view');
@@ -862,9 +880,11 @@
     }
 
     function resetForm() {
+      const p = isCreatablePeriod(currentPeriod()) ? currentPeriod() : CURRENT_PERIOD;
+      const meta = PERIODS[p];
       document.getElementById('ctName').value = '';
-      document.getElementById('ctStart').value = PERIODS[CURRENT_PERIOD].start;
-      document.getElementById('ctEnd').value = PERIODS[CURRENT_PERIOD].end;
+      document.getElementById('ctStart').value = meta.start;
+      document.getElementById('ctEnd').value = meta.end;
       document.getElementById('ctSummary').value = '';
       document.getElementById('ctPlan').value = '';
       document.getElementById('ctOwner').value = SELF;
@@ -887,19 +907,26 @@
     }
 
     function openCreateTask() {
-      if (currentPeriod() !== CURRENT_PERIOD) {
-        BMS.toast('请切回本周后再新建', 'error');
-        return;
+      try {
+        const p = currentPeriod();
+        if (!isCreatablePeriod(p)) {
+          BMS.toast('请切到本周或下周后再新建', 'error');
+          return;
+        }
+        formMode = 'create';
+        formIndex = -1;
+        document.getElementById('formTitle').textContent = '新建任务';
+        document.getElementById('formPeriodHint').classList.remove('hidden');
+        document.getElementById('ctPeriodLabel').textContent = periodLabel(p);
+        resetForm();
+        syncOwnerFieldLock();
+        BMS.openModal('modal-form-task');
+      } catch (err) {
+        console.error(err);
+        BMS.toast('打开新建任务失败，请刷新重试', 'error');
       }
-      formMode = 'create';
-      formIndex = -1;
-      document.getElementById('formTitle').textContent = '新建任务';
-      document.getElementById('formPeriodHint').classList.remove('hidden');
-      document.getElementById('ctPeriodLabel').textContent = periodLabel(CURRENT_PERIOD);
-      resetForm();
-      syncOwnerFieldLock();
-      BMS.openModal('modal-form-task');
     }
+    window.openCreateTask = openCreateTask;
 
     function openEdit(idx) {
       const r = ROWS[idx];
@@ -951,10 +978,15 @@
       const helpers = getSelectedHelpers().filter(h => h !== owner);
 
       if (formMode === 'create') {
+        const targetPeriod = isCreatablePeriod(currentPeriod()) ? currentPeriod() : CURRENT_PERIOD;
+        if (!isCreatablePeriod(targetPeriod)) {
+          BMS.toast('仅本周、下周可新建任务', 'error');
+          return;
+        }
         const isProxy = owner !== SELF;
         ROWS.unshift({
           id: Date.now(),
-          period: CURRENT_PERIOD,
+          period: targetPeriod,
           name, summary, plan, owner,
           creator: SELF,
           helpers,
@@ -963,11 +995,14 @@
           status: '进行中',
           doneOp: false,
           doneAt: '',
+          situationSummary: '',
           completeSummary: '',
           delayReason: '',
           files: imageNames
         });
-        BMS.toast(isProxy ? '已代建，完成情况由「' + owner + '」填写' : '任务已创建（进行中）');
+        BMS.toast(isProxy
+          ? '已代建至「' + (targetPeriod === NEXT_PERIOD ? '下周' : '本周') + '」，完成情况由「' + owner + '」填写'
+          : (targetPeriod === NEXT_PERIOD ? '下周任务已创建（进行中）' : '任务已创建（进行中）'));
       } else {
         const r = ROWS[formIndex];
         r.name = name;
@@ -1000,7 +1035,7 @@
           label.innerHTML = '延期原因 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span>';
           ta.placeholder = '说明延期原因（可不填）';
         } else {
-          label.innerHTML = '情况概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span>';
+          label.innerHTML = '跟进概述 <span class="text-slate-400 font-normal">（选填，最多 500 字）</span>';
           ta.placeholder = '简述本周跟进情况';
         }
       }
@@ -1022,7 +1057,7 @@
       }
       completeIndex = idx;
       document.getElementById('cpTaskName').textContent = r.name + ' · ' + r.plan;
-      document.getElementById('cpSummary').value = '';
+      document.getElementById('cpSummary').value = r.situationSummary || '';
       document.getElementById('cpFiles').value = '';
       document.getElementById('cpFileHint').textContent = '未选择文件';
       document.getElementById('cpDoneAt').value = '2026-08-29T17:30';
@@ -1106,7 +1141,7 @@
       } else {
         r.doneOp = false;
         r.doneAt = '';
-        if (summary) r.completeSummary = summary;
+        r.situationSummary = summary;
         BMS.toast('跟进已保存，状态：进行中');
       }
       BMS.closeModal('modal-complete');
@@ -1140,6 +1175,14 @@
       const calBtn = document.getElementById('viewCalBtn');
       if (listBtn) listBtn.addEventListener('click', function () { switchView('list'); });
       if (calBtn) calBtn.addEventListener('click', function () { switchView('calendar'); });
+      const btnCreate = document.getElementById('btnCreate');
+      if (btnCreate && !btnCreate.dataset.boundCreate) {
+        btnCreate.dataset.boundCreate = '1';
+        btnCreate.addEventListener('click', function (e) {
+          e.preventDefault();
+          openCreateTask();
+        });
+      }
       const params = new URLSearchParams(location.search);
       const period = params.get('period');
       const open = params.get('open');

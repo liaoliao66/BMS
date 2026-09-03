@@ -584,9 +584,9 @@
           </div>
         </div>
 
-        <!-- 集装箱 · 与吞吐量同布局 -->
+        <!-- 集装箱 · 总数 / 重箱 / 空箱 -->
         <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-          <div class="vol-compose-label mb-0">集装箱 · 总数 / 进口 / 出口</div>
+          <div class="vol-compose-label mb-0">集装箱 · 总数 / 重箱 / 空箱</div>
           <button type="button" onclick="openSummary('volTeuIe')" class="text-xs text-teal-700 hover:underline shrink-0">进出口明细</button>
         </div>
         <div class="grid grid-cols-3 gap-2.5 mb-2.5 vol-kpi-grid">
@@ -601,46 +601,58 @@
                 <div class="vol-ring-wrap" id="kpiTeuModTotalTarget"></div>
               </div>
             </div>
+            <div class="kpi-ie-bar" id="ieBarTeuModTotal"></div>
           </button>
-          <button type="button" onclick="openSummary('volTeuIe')" class="card-hover kpi-card border border-slate-100">
+          <button type="button" onclick="openSummary('volTeuLoad')" class="card-hover kpi-card border border-slate-100">
             <div class="kpi-card-body">
               <div class="kpi-vol-head">
                 <div class="flex-1 min-w-0">
-                  <div class="text-[11px] text-slate-500">进口（TEU）</div>
-                  <div class="mt-0.5 text-lg font-semibold leading-tight" id="kpiTeuImp">7,680</div>
-                  <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuImpShare">64%</span></div>
+                  <div class="text-[11px] text-slate-500">重箱（TEU）</div>
+                  <div class="mt-0.5 text-lg font-semibold leading-tight" id="kpiTeuFull">9,600</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuFullShare">80%</span></div>
                 </div>
-                <div class="vol-ring-wrap" id="kpiTeuModImpTarget"></div>
+                <div class="vol-ring-wrap" id="kpiTeuFullPie" aria-hidden="true"></div>
               </div>
             </div>
           </button>
-          <button type="button" onclick="openSummary('volTeuIe')" class="card-hover kpi-card border border-slate-100">
+          <button type="button" onclick="openSummary('volTeuLoad')" class="card-hover kpi-card border border-slate-100">
             <div class="kpi-card-body">
               <div class="kpi-vol-head">
                 <div class="flex-1 min-w-0">
-                  <div class="text-[11px] text-slate-500">出口（TEU）</div>
-                  <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiTeuExp">4,320</div>
-                  <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuExpShare">36%</span></div>
+                  <div class="text-[11px] text-slate-500">空箱（TEU）</div>
+                  <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiTeuEmpty">2,400</div>
+                  <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuEmptyShare">20%</span></div>
                 </div>
-                <div class="vol-ring-wrap" id="kpiTeuModExpTarget"></div>
+                <div class="vol-ring-wrap" id="kpiTeuEmptyPie" aria-hidden="true"></div>
               </div>
             </div>
           </button>
         </div>
-        <div class="vol-trend-panel mb-2.5">
-          <div class="vol-chart-head">
-            <div class="flex items-center gap-2 min-w-0">
-              <span class="title">集装箱趋势</span>
-              <span class="text-[11px] text-slate-400 truncate">TEU</span>
-              <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline" id="teuTrendScopeLabel">2026/01/01 – 2026/12/31</span>
+        <div class="vol-charts-row mb-2.5">
+          <div class="vol-trend-panel">
+            <div class="vol-chart-head">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="title">集装箱趋势</span>
+                <span class="text-[11px] text-slate-400 truncate">TEU</span>
+                <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline" id="teuTrendScopeLabel">2026/01/01 – 2026/12/31</span>
+              </div>
+              <div class="vol-chart-legend vol-chart-legend--inline">
+                <span><i style="background:#64748b"></i>进口</span>
+                <span><i style="background:#0f766e"></i>出口</span>
+              </div>
             </div>
-            <div class="vol-chart-legend vol-chart-legend--inline">
-              <span><i style="background:#64748b"></i>进口</span>
-              <span><i style="background:#0f766e"></i>出口</span>
+            <div class="vol-chart-body">
+              <svg id="teuTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="集装箱趋势柱状图：进口与出口"></svg>
             </div>
           </div>
-          <div class="vol-chart-body">
-            <svg id="teuTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="集装箱趋势柱状图：进口与出口"></svg>
+          <div class="vol-pie-panel">
+            <div class="vol-chart-head">
+              <span class="title">箱型结构占比</span>
+              <span class="text-[11px] text-slate-400">TEU</span>
+            </div>
+            <div class="vol-chart-body">
+              <svg id="teuTypePieChart" viewBox="0 0 300 180" preserveAspectRatio="xMinYMid meet" class="vol-pie-svg" role="img" aria-label="箱型结构占比"></svg>
+            </div>
           </div>
         </div>
 
@@ -1194,6 +1206,7 @@
       volPiece: { title: '件杂货作业量', sub: '万吨 · 手动录入', cols: ['月份', '进口（万吨）', '出口（万吨）', '合计'], rows: [['2026-06', '4', '3', '7'], ['2026-07', '5', '3', '8'], ['2026-08', '4', '3', '7']] },
       volTeu: { title: '集装箱总量', sub: 'TEU · 期间合计', cols: ['月份', 'TEU', '折合（万吨·手工）'], rows: [['2026-06', '1,200', '1.2'], ['2026-07', '1,400', '1.4'], ['2026-08', '1,300', '1.3']] },
       volTeuIe: { title: '集装箱进出口明细', sub: 'TEU · 期间', cols: ['月份', '进口（TEU）', '出口（TEU）', '合计'], rows: [['2026-06', '800', '400', '1,200'], ['2026-07', '900', '500', '1,400'], ['2026-08', '800', '500', '1,300']] },
+      volTeuLoad: { title: '重箱 / 空箱明细', sub: 'TEU · 期间 · 重箱约 80%', cols: ['类型', 'TEU', '占比'], rows: [['重箱', '9,600', '80%'], ['空箱', '2,400', '20%'], ['合计', '12,000', '100%']] },
       cargoRankBulk: { title: '散杂货种排行', sub: '万吨口径 · 粮食为主 · 降序', cols: ['货种', '货类', '作业量', '占比'], rows: CARGO_RANK_BULK.concat([['矿砂', '散货', '22 万吨', '4%']]) },
       cargoRankTeu: { title: '集装箱货种排行', sub: 'TEU · 体量很小 · 降序', cols: ['货种', '货类', '作业量', '占比'], rows: CARGO_RANK_TEU },
       customerRank: { title: '客户作业量排行', sub: '粮食客户为主 · 降序', cols: ['客户', '主要货类', '作业量', '占比'], rows: CUSTOMER_RANK },
@@ -1557,15 +1570,62 @@
       });
     }
 
-    /** 集装箱模块三卡 · 目标完成率（与吞吐量卡片同环） */
-    function setTeuModTargets(totalTeu, impTeu, expTeu, targetTeuWan, impPct) {
+    /** 集装箱模块 · 总数目标环；重箱/空箱用饼图，无目标 */
+    function setTeuModTargets(totalTeu, targetTeuWan) {
       const size = 34;
       const targetTotal = wanTeuToTeu(targetTeuWan);
-      const targetImp = Math.round(targetTotal * impPct / 100);
-      const targetExp = Math.max(0, targetTotal - targetImp);
       renderVolRing(document.getElementById('kpiTeuModTotalTarget'), totalTeu, targetTotal, 'TEU', false, size);
-      renderVolRing(document.getElementById('kpiTeuModImpTarget'), impTeu, targetImp, 'TEU', false, size);
-      renderVolRing(document.getElementById('kpiTeuModExpTarget'), expTeu, targetExp, 'TEU', false, size);
+    }
+
+    /** 卡片迷你饼图 · 重箱 / 空箱占比 */
+    function renderMiniLoadPie(elId, highlight, fullPct) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const size = 34;
+      const r = 15, ir = 8, cx = 17, cy = 17;
+      const emptyPct = 100 - fullPct;
+      const segs = highlight === 'full'
+        ? [{ pct: fullPct, c: '#0f766e' }, { pct: emptyPct, c: '#e2e8f0' }]
+        : [{ pct: fullPct, c: '#e2e8f0' }, { pct: emptyPct, c: '#64748b' }];
+      const rad = function (d) { return d * Math.PI / 180; };
+      let angle = -90, html = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">';
+      segs.forEach(function (s) {
+        if (s.pct <= 0) return;
+        const a1 = angle, a2 = angle + s.pct * 3.6;
+        angle = a2;
+        const x1 = cx + r * Math.cos(rad(a1)), y1 = cy + r * Math.sin(rad(a1));
+        const x2 = cx + r * Math.cos(rad(a2)), y2 = cy + r * Math.sin(rad(a2));
+        const xi1 = cx + ir * Math.cos(rad(a1)), yi1 = cy + ir * Math.sin(rad(a1));
+        const xi2 = cx + ir * Math.cos(rad(a2)), yi2 = cy + ir * Math.sin(rad(a2));
+        const large = s.pct > 50 ? 1 : 0;
+        html += '<path d="M' + x1.toFixed(1) + ',' + y1.toFixed(1) +
+          ' A' + r + ',' + r + ' 0 ' + large + ',1 ' + x2.toFixed(1) + ',' + y2.toFixed(1) +
+          ' L' + xi2.toFixed(1) + ',' + yi2.toFixed(1) +
+          ' A' + ir + ',' + ir + ' 0 ' + large + ',0 ' + xi1.toFixed(1) + ',' + yi1.toFixed(1) +
+          ' Z" fill="' + s.c + '"/>';
+      });
+      const centerPct = highlight === 'full' ? fullPct : emptyPct;
+      html += '<text x="' + cx + '" y="' + (cy + 3) + '" text-anchor="middle" font-size="8" font-weight="700" fill="#334155">' + centerPct + '%</text>';
+      html += '</svg>';
+      el.innerHTML = html;
+    }
+
+    const TEU_FULL_SHARE_PCT = 80;
+    const TEU_TYPE_STRUCT = [
+      { label: '内贸箱', v: 55, c: '#0f766e' },
+      { label: '外贸箱', v: 29, c: '#64748b' },
+      { label: '空箱调运', v: 10, c: '#94a3b8' },
+      { label: '冷藏箱', v: 4, c: '#f59e0b' },
+      { label: '特种箱', v: 2, c: '#cbd5e1' }
+    ];
+
+    function renderTeuTypePie(totalTeu) {
+      const segs = TEU_TYPE_STRUCT.map(function (s) {
+        return { label: s.label, v: Math.round(totalTeu * s.v / 100), c: s.c };
+      });
+      if (document.getElementById('teuTypePieChart')) {
+        renderCompactDonutPie('teuTypePieChart', segs, ' TEU');
+      }
     }
 
     function renderLineChart(svgId, series, opts) {
@@ -1811,14 +1871,16 @@
         html += '<path d="M' + x1 + ',' + y1 + ' A' + r + ',' + r + ' 0 ' + large + ',1 ' + x2 + ',' + y2 +
           ' L' + xi2 + ',' + yi2 + ' A' + ir + ',' + ir + ' 0 ' + large + ',0 ' + xi1 + ',' + yi1 + ' Z" fill="' + s.c + '" stroke="#fff" stroke-width="1.5"/>';
       });
-      const step = segs.length > 2 ? 42 : 52;
-      const startY = segs.length > 2 ? 48 : 58;
+      const step = segs.length > 4 ? 26 : (segs.length > 2 ? 42 : 52);
+      const startY = segs.length > 4 ? 32 : (segs.length > 2 ? 48 : 58);
+      const fsMain = segs.length > 4 ? 11 : 12;
+      const fsSub = segs.length > 4 ? 10 : 11;
       segs.forEach(function (s, i) {
         const pct = Math.round(s.v / total * 100);
         const ly = startY + i * step;
         html += '<rect x="168" y="' + (ly - 8) + '" width="9" height="9" rx="1.5" fill="' + s.c + '"/>';
-        html += '<text x="184" y="' + ly + '" font-size="12" fill="#334155" font-weight="600">' + s.label + '</text>';
-        html += '<text x="184" y="' + (ly + 15) + '" font-size="11" fill="#64748b">' + pct + '% · ' + s.v + unit + '</text>';
+        html += '<text x="184" y="' + ly + '" font-size="' + fsMain + '" fill="#334155" font-weight="600">' + s.label + '</text>';
+        html += '<text x="184" y="' + (ly + 13) + '" font-size="' + fsSub + '" fill="#64748b">' + pct + '% · ' + s.v + unit + '</text>';
       });
       const el = document.getElementById(svgId);
       if (el) {
@@ -1921,6 +1983,7 @@
       renderCargoPie(data.loose, data.piece, teuConv);
 
       renderTeuTrendBars('teuTrendChart', TREND_TEU_IMP, TREND_TEU_EXP, TREND_MONTHS);
+      renderTeuTypePie(wanTeuToTeu(data.teu));
 
       renderCardIeBars(data);
       renderRankBars('cargoRankBars', CARGO_RANK_VOL);
@@ -1979,24 +2042,39 @@
       const teuPair = (data.ieStack && data.ieStack.teu) ? data.ieStack.teu : [7, 4];
       const teuPairSum = teuPair[0] + teuPair[1] || 1;
       const teuImpPct = Math.round(teuPair[0] / teuPairSum * 100);
-      const teuExpPct = 100 - teuImpPct;
       const teuTotalTeu = wanTeuToTeu(data.teu);
-      const teuImpTeu = Math.round(teuTotalTeu * teuImpPct / 100);
-      const teuExpTeu = teuTotalTeu - teuImpTeu;
+      const fullPct = TEU_FULL_SHARE_PCT;
+      const emptyPct = 100 - fullPct;
+      const teuFull = Math.round(teuTotalTeu * fullPct / 100);
+      const teuEmpty = teuTotalTeu - teuFull;
       const modTotal = document.getElementById('kpiTeuModTotal');
       const modConv = document.getElementById('kpiTeuModConv');
-      const kpiImp = document.getElementById('kpiTeuImp');
-      const kpiExp = document.getElementById('kpiTeuExp');
-      const kpiImpShare = document.getElementById('kpiTeuImpShare');
-      const kpiExpShare = document.getElementById('kpiTeuExpShare');
+      const kpiFull = document.getElementById('kpiTeuFull');
+      const kpiEmpty = document.getElementById('kpiTeuEmpty');
+      const kpiFullShare = document.getElementById('kpiTeuFullShare');
+      const kpiEmptyShare = document.getElementById('kpiTeuEmptyShare');
       if (modTotal) modTotal.textContent = fmtTeu(data.teu);
       if (modConv) modConv.textContent = data.teuTonWan;
-      if (kpiImp) kpiImp.textContent = fmtTeuNum(teuImpTeu);
-      if (kpiExp) kpiExp.textContent = fmtTeuNum(teuExpTeu);
-      if (kpiImpShare) kpiImpShare.textContent = teuImpPct + '%';
-      if (kpiExpShare) kpiExpShare.textContent = teuExpPct + '%';
+      if (kpiFull) kpiFull.textContent = fmtTeuNum(teuFull);
+      if (kpiEmpty) kpiEmpty.textContent = fmtTeuNum(teuEmpty);
+      if (kpiFullShare) kpiFullShare.textContent = fullPct + '%';
+      if (kpiEmptyShare) kpiEmptyShare.textContent = emptyPct + '%';
 
-      setTeuModTargets(teuTotalTeu, teuImpTeu, teuExpTeu, data.targetTeu, teuImpPct);
+      setTeuModTargets(teuTotalTeu, data.targetTeu);
+      renderCardIeBar('ieBarTeuModTotal', teuImpPct);
+      renderMiniLoadPie('kpiTeuFullPie', 'full', fullPct);
+      renderMiniLoadPie('kpiTeuEmptyPie', 'empty', fullPct);
+
+      SUMMARY_DATA.volTeuLoad = {
+        title: '重箱 / 空箱明细',
+        sub: 'TEU · 当前范围 · 重箱约 ' + fullPct + '%',
+        cols: ['类型', 'TEU', '占比'],
+        rows: [
+          ['重箱', fmtTeuNum(teuFull), fullPct + '%'],
+          ['空箱', fmtTeuNum(teuEmpty), emptyPct + '%'],
+          ['合计', fmtTeuNum(teuTotalTeu), '100%']
+        ]
+      };
 
       setVolTargets({
         total: totalTon,

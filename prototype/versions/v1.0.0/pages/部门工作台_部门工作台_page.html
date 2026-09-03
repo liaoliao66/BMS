@@ -49,6 +49,14 @@
     .meter > i { display:block; height:100%; border-radius:9999px; background:#0f766e; }
     .meter.warn > i { background:#d97706; }
     .meter.bad > i { background:#dc2626; }
+    .exec-tree { border:1px solid #e2e8f0; border-radius:1rem; overflow:hidden; }
+    .exec-node { border-top:1px solid #f1f5f9; }
+    .exec-node:first-child { border-top:0; }
+    .exec-rail { width:3px; border-radius:999px; flex-shrink:0; }
+    .exec-rail-goal { background:#94a3b8; }
+    .exec-rail-plan { background:#0f766e; }
+    .exec-rail-task { background:#cbd5e1; }
+    .priority-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:.02em; margin:0 0 .5rem; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="depts" data-title="任务台账">
@@ -60,9 +68,9 @@
       <div>
         <div class="flex flex-wrap items-center gap-2">
           <h1 class="text-lg font-semibold text-slate-800">任务台账</h1>
-          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">目标 · 计划 · 任务</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">中高领导 · 执行态势</span>
         </div>
-        <p class="text-xs text-slate-400 mt-1">领导掌握执行态势 · 按目标主线推进工作</p>
+        <p class="text-xs text-slate-400 mt-1">周五写本周进展与下周计划 · 周一例会过 · 点击汇总卡可查看明细</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <select id="periodSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="BMS.toast('已切换周期（演示）')">
@@ -75,6 +83,7 @@
           <option value="dept">我的部门</option>
         </select>
         <a href="经营台账_总览_page.html" class="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">经营总览</a>
+        <a href="任务中心_任务督办_page.html" class="text-xs px-3 py-2 rounded-xl border border-teal-200 bg-teal-50 text-teal-800">任务督办</a>
       </div>
     </div>
 
@@ -85,37 +94,38 @@
           <div class="text-xs text-slate-500 mb-1">执行态势</div>
           <p class="text-sm text-slate-800 leading-relaxed" id="l1Sentence">
             本期目标健康：正常 <strong class="text-emerald-700">9</strong> · 需关注 <strong class="text-amber-600">5</strong> · 风险 <strong class="text-red-600">2</strong>；
-            计划节点按期率 <strong>80%</strong>（12/15）；任务更新率 <strong class="text-amber-600">78%</strong>。
-            <span class="text-amber-700">优先督办装卸队桥吊效率目标及 2 条未更新任务。</span>
+            计划节点按期率 <strong>80%</strong>（12/15）。
+            <span class="text-amber-700">本周待跟进 <strong>5</strong> 人 · 下周待计划 <strong>6</strong> 人；优先关注装卸队桥吊效率与设备部完好率。</span>
           </p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0">
           <button type="button" onclick="setFilter('risk')" class="text-xs px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-800">仅看风险</button>
-          <button type="button" onclick="setFilter('lag')" class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600">仅看未更新</button>
+          <button type="button" onclick="setFilter('lag')" class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600">仅看滞后</button>
           <button type="button" onclick="setFilter('all')" class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600">全部</button>
         </div>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-        <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+        <button type="button" onclick="openKpiSummary('health')" class="rounded-xl bg-slate-50 border border-slate-100 p-3 text-left hover:border-teal-200 hover:bg-white transition">
           <div class="text-xs text-slate-500">目标健康</div>
           <div class="mt-1 font-semibold text-slate-800">9 / 5 / 2</div>
-          <div class="text-xs text-slate-400 mt-0.5">正常 / 需关注 / 风险</div>
-        </div>
-        <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
+          <div class="text-xs text-slate-400 mt-0.5">正常 / 需关注 / 风险 · 点击明细</div>
+        </button>
+        <button type="button" onclick="openKpiSummary('nodes')" class="rounded-xl bg-slate-50 border border-slate-100 p-3 text-left hover:border-teal-200 hover:bg-white transition">
           <div class="text-xs text-slate-500">计划节点按期率</div>
           <div class="mt-1 font-semibold text-slate-800">80%</div>
           <div class="meter warn mt-2"><i style="width:80%"></i></div>
-        </div>
-        <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-          <div class="text-xs text-slate-500">任务更新率</div>
-          <div class="mt-1 font-semibold text-amber-700">78%</div>
-          <div class="meter warn mt-2"><i style="width:78%"></i></div>
-        </div>
-        <div class="rounded-xl bg-slate-50 border border-slate-100 p-3">
-          <div class="text-xs text-slate-500">本周待汇报</div>
-          <div class="mt-1 font-semibold text-amber-700">8 人</div>
-          <a href="任务中心_汇报提醒_page.html" class="text-xs text-teal-700 mt-1 inline-block">去催填</a>
-        </div>
+          <div class="text-xs text-slate-400 mt-1">12/15 按期 · 点击明细</div>
+        </button>
+        <button type="button" onclick="openKpiSummary('follow')" class="rounded-xl bg-slate-50 border border-slate-100 p-3 text-left hover:border-teal-200 hover:bg-white transition">
+          <div class="text-xs text-slate-500">本周待跟进</div>
+          <div class="mt-1 font-semibold text-amber-700">5 人</div>
+          <div class="text-xs text-slate-400 mt-1">周五应写本周进展 · 点击名单</div>
+        </button>
+        <button type="button" onclick="openKpiSummary('plan')" class="rounded-xl bg-slate-50 border border-slate-100 p-3 text-left hover:border-teal-200 hover:bg-white transition">
+          <div class="text-xs text-slate-500">下周待计划</div>
+          <div class="mt-1 font-semibold text-amber-700">6 人</div>
+          <div class="text-xs text-slate-400 mt-1">周五应写下周计划 · 点击名单</div>
+        </button>
       </div>
     </div>
 
@@ -124,21 +134,20 @@
       <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2 bg-slate-50/80">
         <div>
           <span class="text-sm font-medium text-slate-800">部门执行对照</span>
-          <span class="text-xs text-slate-400 ml-2">按风险优先排序 · 点击定位主线</span>
+          <span class="text-xs text-slate-400 ml-2">按待跟进 / 待计划 / 滞后优先 · 点击定位主线</span>
         </div>
         <span class="text-xs text-slate-400" id="l2Hint">全港 4 个部门</span>
       </div>
       <div class="overflow-x-auto">
-        <table class="dept-table min-w-[720px]">
+        <table class="dept-table min-w-[640px]">
           <thead>
             <tr>
               <th>部门</th>
               <th>目标健康</th>
               <th class="num">计划节点</th>
               <th class="num">滞后任务</th>
-              <th class="num">待汇报</th>
-              <th class="num">风险分</th>
-              <th>优先动作</th>
+              <th class="num">本周待跟进</th>
+              <th class="num">下周待计划</th>
             </tr>
           </thead>
           <tbody id="deptCompareBody"></tbody>
@@ -146,25 +155,22 @@
       </div>
     </div>
 
-    <!-- L4 本周必办 + 风险目标摘要 -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
-        <div class="px-4 py-3 border-b bg-slate-50/80 flex justify-between items-center">
-          <span class="text-sm font-medium text-slate-800">本周必办</span>
-          <span class="text-xs text-slate-400">推进工作 · Top5</span>
+    <!-- 优先关注：本周必办 + 风险目标 -->
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden mb-4">
+      <div class="px-4 py-3 border-b bg-slate-50/80 flex flex-wrap justify-between items-center gap-2">
+        <div>
+          <span class="text-sm font-medium text-slate-800">优先关注</span>
+          <span class="text-xs text-slate-400 ml-2">本周必办 + 风险/需关注目标</span>
         </div>
-        <div class="p-3 space-y-2" id="mustDoList"></div>
+        <button type="button" onclick="expandRiskGoals()" class="text-xs text-teal-700">在主线中展开风险目标</button>
       </div>
-      <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
-        <div class="px-4 py-3 border-b bg-slate-50/80 flex justify-between items-center">
-          <span class="text-sm font-medium text-slate-800">风险 / 需关注目标</span>
-          <button type="button" onclick="expandRiskGoals()" class="text-xs text-teal-700">在主线中展开</button>
-        </div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+        <div class="p-3 space-y-2" id="mustDoList"></div>
         <div class="p-3 space-y-2" id="riskGoalList"></div>
       </div>
     </div>
 
-    <!-- L3 目标主线 -->
+    <!-- 目标主线 -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] p-4 mb-4">
       <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div class="flex flex-wrap items-center gap-2">
@@ -180,71 +186,142 @@
             <option value="设备部">设备部</option>
             <option value="安全环保部">安全环保部</option>
           </select>
-          <div class="flex gap-1 ml-1" id="viewTabs">
-            <button type="button" data-view="tree" class="view-btn px-3 py-1.5 rounded-xl text-xs view-active" onclick="switchView('tree')">目标主线</button>
-            <button type="button" data-view="plans" class="view-btn px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-600" onclick="switchView('plans')">计划</button>
-            <button type="button" data-view="tasks" class="view-btn px-3 py-1.5 rounded-xl text-xs bg-slate-50 border border-slate-200 text-slate-600" onclick="switchView('tasks')">任务</button>
-          </div>
         </div>
       </div>
 
       <div id="view-tree" class="view-pane"></div>
+    </div>
 
-      <div id="view-plans" class="view-pane hidden overflow-x-auto border border-slate-100 rounded-xl">
-        <table class="w-full text-sm min-w-[720px]">
-          <thead class="bg-slate-50 text-slate-500"><tr>
-            <th class="text-left px-4 py-2.5">计划</th><th class="text-left px-4 py-2.5">挂靠目标</th><th class="text-left px-4 py-2.5">部门</th>
-            <th class="text-left px-4 py-2.5">节点</th><th class="text-left px-4 py-2.5">下一节点</th><th class="text-left px-4 py-2.5">任务概况</th>
-          </tr></thead>
-          <tbody id="planFlatBody"></tbody>
-        </table>
-      </div>
-
-      <div id="view-tasks" class="view-pane hidden overflow-x-auto border border-slate-100 rounded-xl">
-        <table class="w-full text-sm min-w-[720px]">
-          <thead class="bg-slate-50 text-slate-500"><tr>
-            <th class="text-left px-4 py-2.5">任务</th><th class="text-left px-4 py-2.5">计划 / 目标</th><th class="text-left px-4 py-2.5">责任人</th>
-            <th class="text-left px-4 py-2.5">本周期更新</th><th class="text-left px-4 py-2.5">进展</th><th class="text-left px-4 py-2.5">状态</th>
-          </tr></thead>
-          <tbody id="taskFlatBody"></tbody>
-        </table>
+    <!-- KPI / 汇总明细弹窗 -->
+    <div id="modal-kpi-summary" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-kpi-summary')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-start gap-3">
+          <div>
+            <h3 class="text-lg font-semibold" id="kpiSummaryTitle">明细</h3>
+            <p class="text-sm text-slate-500 mt-1" id="kpiSummarySub"></p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-kpi-summary')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5">
+          <div class="border border-slate-100 rounded-2xl overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-slate-500" id="kpiSummaryThead"></thead>
+              <tbody id="kpiSummaryTbody"></tbody>
+            </table>
+          </div>
+          <p class="text-xs text-slate-400 mt-3" id="kpiSummaryNote"></p>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex flex-wrap gap-2 justify-between items-center">
+          <a id="kpiSummaryLink" href="#" class="text-sm text-teal-700 hover:underline hidden"></a>
+          <button type="button" onclick="BMS.closeModal('modal-kpi-summary')" class="text-sm text-slate-500 px-3">关闭</button>
+        </div>
       </div>
     </div>
 
-    <!-- 明细弹窗 -->
+    <!-- 目标详情 · 落地全景只读 -->
     <div id="modal-goal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal-detail')"></div>
-      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-        <div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-semibold" id="goalModalTitle">桥吊作业效率提升 15%</h3><p class="text-sm text-slate-500 mt-1" id="goalModalSub">装卸队 · 2026-Q3</p></div><button type="button" onclick="BMS.closeModal('modal-goal-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
-        <p class="text-sm text-slate-700 mb-4 leading-relaxed" id="goalModalDesc">聚焦桥吊单机效率与班组协同，使桥吊平均作业效率较上季提升 15%。</p>
-        <div class="text-sm font-medium mb-2">下属计划</div>
-        <ul class="text-sm space-y-2 mb-4" id="goalModalPlans"></ul>
-        <div class="flex gap-2"><button type="button" onclick="BMS.closeModal('modal-goal-detail');BMS.openModal('modal-plan-form')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">新增计划</button><button type="button" onclick="BMS.closeModal('modal-goal-detail')" class="text-sm text-slate-500">关闭</button></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 class="text-xl font-semibold text-slate-900" id="goalModalTitle">目标</h3>
+              <span class="status-pill" id="goalModalBadge">—</span>
+            </div>
+            <p class="text-sm text-slate-500 mt-1" id="goalModalSub"></p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <a href="任务中心_任务督办_page.html" class="border text-sm px-4 py-2 rounded-xl text-teal-800 border-teal-200 bg-teal-50">去督办</a>
+            <button type="button" onclick="BMS.closeModal('modal-goal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">量化达成</div><div class="mt-1 font-medium" id="goalModalValue">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">健康状态</div><div class="mt-1 font-medium" id="goalModalHealth">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联计划</div><div class="mt-1 font-medium" id="goalModalPlanCount">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">滞后/未更新任务</div><div class="mt-1 font-medium" id="goalModalLagCount">—</div></div>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-1">目标介绍</div>
+            <p id="goalModalDesc" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3">—</p>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium text-slate-900">落地全景</div>
+              <div class="text-xs text-slate-500">目标 → 计划 → 任务 · 只读</div>
+            </div>
+            <div id="goalModalExecTree" class="exec-tree bg-white"></div>
+          </div>
+        </div>
       </div>
     </div>
+
     <div id="modal-plan-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-detail')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-        <div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-semibold" id="planModalTitle">计划</h3><p class="text-sm text-slate-500 mt-1" id="planModalSub"></p></div><button type="button" onclick="BMS.closeModal('modal-plan-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h3 class="text-lg font-semibold" id="planModalTitle">计划</h3>
+            <p class="text-sm text-slate-500 mt-1" id="planModalSub"></p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-plan-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
         <div class="grid grid-cols-3 gap-3 mb-4 text-sm" id="planModalKpis"></div>
         <div class="text-sm font-medium mb-2">下属任务</div>
         <ul class="text-sm space-y-2 mb-4" id="planModalTasks"></ul>
-        <div class="flex gap-2"><button type="button" onclick="BMS.closeModal('modal-plan-detail');BMS.openModal('modal-task-form')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">新增任务</button><button type="button" onclick="BMS.closeModal('modal-plan-detail')" class="text-sm text-slate-500">关闭</button></div>
+        <div class="flex flex-wrap gap-2">
+          <a href="计划管理_计划列表_page.html" class="border text-sm px-4 py-2 rounded-xl">打开计划管理</a>
+          <button type="button" onclick="BMS.closeModal('modal-plan-detail')" class="text-sm text-slate-500 px-3">关闭</button>
+        </div>
       </div>
     </div>
+
     <div id="modal-task-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task-detail')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-        <div class="flex justify-between items-start mb-4"><div><h3 class="text-lg font-semibold" id="taskModalTitle">任务</h3><p class="text-sm text-slate-500 mt-1" id="taskModalSub"></p></div><button type="button" onclick="BMS.closeModal('modal-task-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
-        <p class="text-sm text-slate-600 mb-4" id="taskModalProg">—</p>
-        <div class="mb-4"><div class="text-sm font-medium mb-2">跟踪评论</div>
-          <div class="space-y-3 text-sm max-h-40 overflow-y-auto mb-2">
-            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-400 mb-1">张明 · 08-19</div>请本周确认进度并更新汇报。</div>
+        <div class="flex justify-between items-start mb-4 gap-3">
+          <div>
+            <h3 class="text-lg font-semibold" id="taskModalTitle">任务</h3>
+            <p class="text-sm text-slate-500 mt-1" id="taskModalSub"></p>
           </div>
-          <textarea id="deptComment" class="w-full border rounded-xl px-3 py-2 text-sm h-16" placeholder="发表跟踪评论"></textarea>
-          <button type="button" onclick="(function(){if(!document.getElementById('deptComment').value.trim()){BMS.toast('请输入评论','error');return;}BMS.toast('评论已发表');document.getElementById('deptComment').value='';})()" class="mt-2 btn-cta text-white text-sm px-4 py-2 rounded-xl">发表</button>
+          <button type="button" onclick="BMS.closeModal('modal-task-detail')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
         </div>
-        <div class="flex gap-2"><button type="button" onclick="BMS.closeModal('modal-task-detail');BMS.openModal('modal-fill')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">本周填报</button><button type="button" onclick="BMS.closeModal('modal-task-detail')" class="text-sm text-slate-500">关闭</button></div>
+        <p class="text-sm text-slate-600 mb-4" id="taskModalProg">—</p>
+        <div class="flex flex-wrap gap-2">
+          <a href="任务中心_任务督办_page.html" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">去督办</a>
+          <a href="任务中心_我的任务_page.html" class="border text-sm px-4 py-2 rounded-xl">打开任务清单</a>
+          <button type="button" onclick="BMS.closeModal('modal-task-detail')" class="text-sm text-slate-500 px-3">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-dept-task-status" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-dept-task-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">改业务状态</h3>
+          <button type="button" onclick="BMS.closeModal('modal-dept-task-status')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <p class="text-sm text-slate-600" id="dtsName">—</p>
+        <div class="flex flex-wrap gap-4 text-sm">
+          <label class="inline-flex items-center gap-2"><input type="radio" name="dtsStatus" value="进行中" checked onchange="onDeptTaskStatusChange()" />进行中</label>
+          <label class="inline-flex items-center gap-2"><input type="radio" name="dtsStatus" value="已完成" onchange="onDeptTaskStatusChange()" />已完成</label>
+          <label class="inline-flex items-center gap-2"><input type="radio" name="dtsStatus" value="已延期" onchange="onDeptTaskStatusChange()" />已延期</label>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1" id="dtsSummaryLabel">跟进概述（选填）</label>
+          <textarea id="dtsSummary" class="w-full border rounded-xl px-3 py-2.5 text-sm h-24" placeholder="简述情况"></textarea>
+        </div>
+        <div id="dtsDoneAtWrap" class="hidden">
+          <label class="block text-sm text-slate-600 mb-1">完成时间 *</label>
+          <input id="dtsDoneAt" type="datetime-local" class="w-full border rounded-xl px-3 py-2.5 text-sm" value="2026-08-29T17:30" />
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="saveDeptTaskStatus()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确认变更</button>
+          <button type="button" onclick="BMS.closeModal('modal-dept-task-status')" class="text-sm text-slate-500">取消</button>
+        </div>
       </div>
     </div>
     <div id="modal-plan-form" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4"><div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-form')"></div><div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-3"><div class="flex justify-between"><h3 class="font-semibold text-lg">新增计划</h3><button type="button" onclick="BMS.closeModal('modal-plan-form')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div><input class="w-full border rounded-xl px-3 py-2.5 text-sm" placeholder="计划名称" /><div class="flex gap-2"><button type="button" onclick="BMS.toast('计划已保存');BMS.closeModal('modal-plan-form')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button><button type="button" onclick="BMS.closeModal('modal-plan-form')" class="text-sm text-slate-500">取消</button></div></div></div>
@@ -252,7 +329,7 @@
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task-form')"></div>
       <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
         <div class="shrink-0 px-6 py-4 border-b flex justify-between">
-          <h3 class="font-semibold text-lg">新增任务</h3>
+          <h3 class="font-semibold text-lg" id="deptTaskFormTitle">新增任务</h3>
           <button type="button" onclick="BMS.closeModal('modal-task-form')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
@@ -286,10 +363,10 @@
 
     <script>
       const DEPTS = [
-        { name: '装卸队', health: '正常 1 · 需关注 1 · 风险 1', nodes: '6/8', lag: 3, report: 3, score: 92, action: '督办桥吊效率目标' },
-        { name: '设备部', health: '正常 2 · 需关注 0 · 风险 1', nodes: '4/5', lag: 2, report: 2, score: 78, action: '催点检滞后任务' },
-        { name: '调度中心', health: '正常 2 · 需关注 1 · 风险 0', nodes: '3/4', lag: 1, report: 2, score: 55, action: '跟进周转节点' },
-        { name: '安全环保部', health: '正常 2 · 需关注 0 · 风险 0', nodes: '3/3', lag: 0, report: 1, score: 18, action: '例行更新' }
+        { name: '装卸队', health: '正常 1 · 需关注 1 · 风险 1', nodes: '6/8', lag: 3, follow: 3, plan: 2 },
+        { name: '设备部', health: '正常 2 · 需关注 0 · 风险 1', nodes: '4/5', lag: 2, follow: 1, plan: 2 },
+        { name: '调度中心', health: '正常 2 · 需关注 1 · 风险 0', nodes: '3/4', lag: 1, follow: 1, plan: 1 },
+        { name: '安全环保部', health: '正常 2 · 需关注 0 · 风险 0', nodes: '3/3', lag: 0, follow: 0, plan: 1 }
       ];
 
       const GOALS = [
@@ -374,11 +451,29 @@
       ];
 
       const MUST_DOS = [
-        { type: '催任务', title: '桥吊夜班流程复盘 · 刘强', sub: '装卸队 · 本周期未更新', action: 'openTask', key: '桥吊夜班流程复盘' },
-        { type: '催节点', title: '效率复核节点 · 剩 3 天', sub: '计划：8 月装卸效率提升', action: 'openPlan', key: '8 月装卸效率提升计划' },
-        { type: '催任务', title: '钢丝绳专项复查 · 周杰', sub: '设备部 · 已延期', action: 'openTask', key: '钢丝绳专项复查' },
-        { type: '催填', title: '本周待汇报 8 人', sub: '填报覆盖不足 · 去汇报提醒', action: 'link', href: '任务中心_汇报提醒_page.html' },
-        { type: '督目标', title: 'Q3 桥吊完好率 · 风险', sub: '设备部 · 96% / 98%', action: 'openGoal', key: 'g2' }
+        { type: '催任务', urge: true, title: '桥吊夜班流程复盘 · 刘强', sub: '装卸队 · 本周进展未更新', action: 'openTask', key: '桥吊夜班流程复盘' },
+        { type: '催节点', urge: true, title: '效率复核节点 · 剩 3 天', sub: '计划：8 月装卸效率提升', action: 'openPlan', key: '8 月装卸效率提升计划' },
+        { type: '催任务', urge: true, title: '钢丝绳专项复查 · 周杰', sub: '设备部 · 已延期', action: 'openTask', key: '钢丝绳专项复查' },
+        { type: '催填', urge: true, title: '本周待跟进 5 人', sub: '本周进展未填 · 查看工作周报', action: 'link', href: '经营台账_工作汇报_page.html?section=tasks&open=pending' },
+        { type: '催填', urge: true, title: '下周待计划 6 人', sub: '下周计划未填 · 查看工作周报', action: 'link', href: '经营台账_工作汇报_page.html?section=nextweek&open=pending' },
+        { type: '督目标', urge: true, title: 'Q3 桥吊完好率 · 风险', sub: '设备部 · 96% / 98%', action: 'openGoal', key: 'g2' }
+      ];
+
+      const FOLLOW_PENDING = [
+        { name: '马超', dept: '装卸队', item: '岸桥对位训练', status: '未填报' },
+        { name: '孙伟', dept: '装卸队', item: '班前会标准化宣贯', status: '未填报' },
+        { name: '周杰', dept: '设备部', item: '钢丝绳专项复查', status: '已逾期' },
+        { name: '陈敏', dept: '调度中心', item: '堆场周转异常复盘', status: '未填报' },
+        { name: '王芳', dept: '装卸队', item: '堆场标识补漆', status: '未填报' }
+      ];
+
+      const PLAN_PENDING = [
+        { name: '刘强', dept: '装卸队', item: '效率复核材料整理', status: '未填报' },
+        { name: '马超', dept: '装卸队', item: '对位训练第二轮排班', status: '未填报' },
+        { name: '周杰', dept: '设备部', item: '季度点检节点冲刺', status: '未填报' },
+        { name: '赵磊', dept: '设备部', item: '点检报告归档计划', status: '未填报' },
+        { name: '陈敏', dept: '调度中心', item: '堆场周转周报机制', status: '未填报' },
+        { name: '李芳', dept: '安全环保部', item: '隐患周复盘安排', status: '未填报' }
       ];
 
       let uiFilter = 'all';
@@ -392,26 +487,32 @@
 
       function renderDeptCompare() {
         const body = document.getElementById('deptCompareBody');
-        const sorted = DEPTS.slice().sort(function (a, b) { return b.score - a.score; });
+        const sorted = DEPTS.slice().sort(function (a, b) {
+          return (b.follow + b.plan + b.lag) - (a.follow + a.plan + a.lag);
+        });
         body.innerHTML = sorted.map(function (d) {
-          const tone = d.score >= 70 ? 'text-red-600' : (d.score >= 40 ? 'text-amber-600' : 'text-emerald-700');
           return '<tr data-dept="' + d.name + '" onclick="focusDept(\'' + d.name + '\')">' +
             '<td class="font-medium text-slate-800">' + d.name + '</td>' +
             '<td class="text-xs">' + d.health + '</td>' +
             '<td class="num">' + d.nodes + '</td>' +
             '<td class="num ' + (d.lag ? 'text-red-600 font-medium' : '') + '">' + d.lag + '</td>' +
-            '<td class="num">' + d.report + '</td>' +
-            '<td class="num font-semibold ' + tone + '">' + d.score + '</td>' +
-            '<td class="text-xs text-teal-700">' + d.action + '</td>' +
+            '<td class="num ' + (d.follow ? 'text-amber-700 font-medium' : '') + '">' + d.follow + '</td>' +
+            '<td class="num ' + (d.plan ? 'text-amber-700 font-medium' : '') + '">' + d.plan + '</td>' +
             '</tr>';
         }).join('');
       }
 
       function renderMustDo() {
         const el = document.getElementById('mustDoList');
-        el.innerHTML = MUST_DOS.map(function (m) {
-          return '<button type="button" class="action-item" onclick="runMustDo(\'' + m.action + '\',\'' + (m.key || '').replace(/'/g, '\\\'') + '\',\'' + (m.href || '') + '\')">' +
-            '<div class="flex justify-between gap-2"><span class="text-xs text-amber-700 font-medium">' + m.type + '</span></div>' +
+        el.innerHTML = '<div class="priority-label">本周必办</div>' + MUST_DOS.map(function (m) {
+          const badge = m.urge
+            ? '<span class="text-[11px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100 font-medium">需催办</span>'
+            : '';
+          return '<button type="button" class="action-item' + (m.urge ? ' border-red-100' : '') + '" onclick="runMustDo(\'' + m.action + '\',\'' + (m.key || '').replace(/'/g, '\\\'') + '\',\'' + (m.href || '') + '\')">' +
+            '<div class="flex flex-wrap items-center justify-between gap-2">' +
+              '<span class="text-xs text-amber-700 font-medium">' + m.type + '</span>' +
+              badge +
+            '</div>' +
             '<div class="text-sm font-medium text-slate-800 mt-0.5">' + m.title + '</div>' +
             '<div class="text-xs text-slate-400 mt-0.5">' + m.sub + '</div>' +
             '</button>';
@@ -421,7 +522,11 @@
       function renderRiskGoals() {
         const el = document.getElementById('riskGoalList');
         const rows = GOALS.filter(function (g) { return g.status !== 'ok'; });
-        el.innerHTML = rows.map(function (g) {
+        if (!rows.length) {
+          el.innerHTML = '<div class="priority-label">风险 / 需关注目标</div><p class="text-sm text-slate-400 py-6 text-center">本期无风险目标</p>';
+          return;
+        }
+        el.innerHTML = '<div class="priority-label">风险 / 需关注目标</div>' + rows.map(function (g) {
           return '<button type="button" class="action-item" onclick="focusGoal(\'' + g.id + '\')">' +
             '<div class="flex flex-wrap justify-between gap-2">' +
               '<span class="text-sm font-medium text-slate-800">' + g.name + '</span>' +
@@ -430,6 +535,134 @@
             '<div class="text-xs text-slate-500 mt-1">' + g.dept + ' · ' + g.actual + ' / ' + g.target + ' · 负责人 ' + g.owner + '</div>' +
             '</button>';
         }).join('');
+      }
+
+      function openKpiSummary(kind) {
+        const link = document.getElementById('kpiSummaryLink');
+        link.classList.add('hidden');
+        link.removeAttribute('href');
+        link.textContent = '';
+        let title = '', sub = '', cols = [], rows = [], note = '';
+        if (kind === 'health') {
+          title = '目标健康明细';
+          sub = '正常 / 需关注 / 风险 · 点击可对照主线';
+          cols = ['目标', '部门', '量化', '健康', '负责人'];
+          rows = GOALS.map(function (g) {
+            return [g.name, g.dept, g.actual + ' / ' + g.target, g.statusLabel, g.owner];
+          });
+          note = '共 ' + GOALS.length + ' 项目标；风险与需关注默认在主线展开。';
+        } else if (kind === 'nodes') {
+          title = '计划节点按期明细';
+          sub = '按期率 80% · 12/15 按期';
+          cols = ['计划', '挂靠目标', '部门', '节点达成', '下一节点'];
+          GOALS.forEach(function (g) {
+            g.plans.forEach(function (p) {
+              rows.push([p.name, g.name, g.dept, p.nodes, p.next]);
+            });
+          });
+          note = '节点未按期的计划建议结合「优先关注」督办。';
+        } else if (kind === 'follow') {
+          title = '本周待跟进人员';
+          sub = '共 ' + FOLLOW_PENDING.length + ' 人 · 周五应写本周任务进展 · 催填请前往工作周报';
+          cols = ['责任人', '部门', '待跟进任务', '状态'];
+          rows = FOLLOW_PENDING.map(function (r) { return [r.name, r.dept, r.item, r.status]; });
+          note = '对应工作周报「上周任务汇总」待填；领导只读，催填在周报完成。';
+          link.href = '经营台账_工作汇报_page.html?section=tasks&open=pending';
+          link.textContent = '打开工作周报 · 本周待跟进';
+          link.classList.remove('hidden');
+        } else if (kind === 'plan') {
+          title = '下周待计划人员';
+          sub = '共 ' + PLAN_PENDING.length + ' 人 · 周五应写下周任务计划 · 催填请前往工作周报';
+          cols = ['责任人', '部门', '待计划任务', '状态'];
+          rows = PLAN_PENDING.map(function (r) { return [r.name, r.dept, r.item, r.status]; });
+          note = '对应工作周报「本周任务计划」待填；周一例会前应完成。';
+          link.href = '经营台账_工作汇报_page.html?section=nextweek&open=pending';
+          link.textContent = '打开工作周报 · 下周待计划';
+          link.classList.remove('hidden');
+        } else {
+          title = '明细';
+          sub = '';
+          cols = ['—'];
+          rows = [];
+          note = '';
+        }
+        document.getElementById('kpiSummaryTitle').textContent = title;
+        document.getElementById('kpiSummarySub').textContent = sub;
+        document.getElementById('kpiSummaryThead').innerHTML = '<tr>' + cols.map(function (c) {
+          return '<th class="px-4 py-2.5 text-left">' + c + '</th>';
+        }).join('') + '</tr>';
+        document.getElementById('kpiSummaryTbody').innerHTML = rows.length
+          ? rows.map(function (r) {
+              return '<tr class="border-t row-hover">' + r.map(function (c) {
+                return '<td class="px-4 py-2.5">' + c + '</td>';
+              }).join('') + '</tr>';
+            }).join('')
+          : '<tr><td colspan="' + cols.length + '" class="px-4 py-10 text-center text-slate-400">暂无数据</td></tr>';
+        document.getElementById('kpiSummaryNote').textContent = note;
+        BMS.openModal('modal-kpi-summary');
+      }
+
+      function lagCountOfGoal(g) {
+        return g.plans.reduce(function (n, p) {
+          return n + p.tasks.filter(function (t) { return !t.updated || t.status === '已延期' || t.status === '未更新'; }).length;
+        }, 0);
+      }
+
+      function renderGoalExecTree(g) {
+        const root = document.getElementById('goalModalExecTree');
+        if (!root) return;
+        const plansHtml = g.plans.map(function (p) {
+          const tasksHtml = p.tasks.length ? p.tasks.map(function (t) {
+            const bad = !t.updated || t.status === '已延期' || t.status === '未更新';
+            return '<div class="exec-node px-4 py-3" style="padding-left:72px">' +
+              '<div class="flex gap-3 items-start">' +
+                '<div class="exec-rail exec-rail-task mt-1.5"></div>' +
+                '<div class="flex-1 min-w-0">' +
+                  '<div class="flex flex-wrap items-center gap-2">' +
+                    '<span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">任务</span>' +
+                    '<button type="button" class="text-sm font-medium text-teal-800 hover:underline text-left" onclick="BMS.closeModal(\'modal-goal-detail\');openTaskDetail(\'' + t.name.replace(/'/g, '\\\'') + '\')">' + t.name + '</button>' +
+                    '<span class="status-pill ' + (bad ? 'st-lag' : 'st-run') + '">' + t.status + '</span>' +
+                    '<span class="text-xs text-slate-500">责任人 ' + t.owner + '</span>' +
+                    '<span class="text-xs ' + (t.updated ? 'text-emerald-600' : 'text-red-500') + '">' + (t.updated ? '已更新' : '未更新') + '</span>' +
+                  '</div>' +
+                  (t.prog && t.prog !== '—' ? '<p class="text-sm text-slate-600 mt-1">' + t.prog + '</p>' : '') +
+                '</div>' +
+              '</div></div>';
+          }).join('') : '<div class="exec-node px-4 py-2.5 text-sm text-slate-400" style="padding-left:72px">暂无任务</div>';
+          return '<div class="exec-node">' +
+            '<div class="px-4 py-3 bg-slate-50/60" style="padding-left:44px">' +
+              '<div class="flex gap-3 items-start">' +
+                '<div class="exec-rail exec-rail-plan mt-1.5"></div>' +
+                '<div class="flex-1 min-w-0">' +
+                  '<div class="flex flex-wrap items-center gap-2">' +
+                    '<span class="text-[11px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-800">计划</span>' +
+                    '<button type="button" class="text-sm font-medium text-teal-800 hover:underline text-left" onclick="BMS.closeModal(\'modal-goal-detail\');openPlanDetail(\'' + p.name.replace(/'/g, '\\\'') + '\')">' + p.name + '</button>' +
+                    '<span class="text-xs text-slate-600">节点 ' + p.nodes + '</span>' +
+                    '<span class="text-xs text-slate-500">下一节点 ' + p.next + '</span>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' + tasksHtml + '</div>';
+        }).join('');
+        root.innerHTML =
+          '<div class="exec-node">' +
+            '<div class="px-4 py-3.5 bg-white">' +
+              '<div class="flex gap-3 items-start">' +
+                '<div class="exec-rail exec-rail-goal mt-1.5"></div>' +
+                '<div class="flex-1 min-w-0">' +
+                  '<div class="flex flex-wrap items-center gap-2">' +
+                    '<span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">目标</span>' +
+                    '<span class="text-sm font-semibold text-slate-900">' + g.name + '</span>' +
+                    '<span class="status-pill ' + statusClass(g.status) + '">' + g.statusLabel + '</span>' +
+                  '</div>' +
+                  '<div class="text-xs text-slate-500 mt-1.5 flex flex-wrap gap-x-3 gap-y-1">' +
+                    '<span>' + g.dept + '</span><span>周期 ' + g.period + '</span><span>量化 ' + g.actual + ' / ' + g.target + '</span>' +
+                    '<span>计划 ' + g.plans.length + ' · 滞后/未更新 ' + lagCountOfGoal(g) + '</span>' +
+                  '</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' + plansHtml +
+          '</div>';
       }
 
       function filteredGoals() {
@@ -502,6 +735,7 @@
 
       function renderPlanFlat() {
         const body = document.getElementById('planFlatBody');
+        if (!body) return;
         const rows = [];
         filteredGoals().forEach(function (g) {
           g.plans.forEach(function (p) {
@@ -522,6 +756,7 @@
 
       function renderTaskFlat() {
         const body = document.getElementById('taskFlatBody');
+        if (!body) return;
         const rows = [];
         filteredGoals().forEach(function (g) {
           g.plans.forEach(function (p) {
@@ -549,8 +784,6 @@
         renderMustDo();
         renderRiskGoals();
         renderTree();
-        renderPlanFlat();
-        renderTaskFlat();
         const dept = document.getElementById('deptSelect').value;
         document.getElementById('treeScopeLabel').textContent =
           '当前：' + (dept === 'all' ? '全部部门' : dept) +
@@ -594,12 +827,15 @@
 
       function onScopeChange() {
         const scope = document.getElementById('scopeSelect').value;
+        const l2 = document.getElementById('l2DeptBlock');
         if (scope === 'dept') {
           document.getElementById('deptSelect').value = '装卸队';
           document.getElementById('l2Hint').textContent = '我的部门视角';
+          if (l2) l2.classList.add('hidden');
         } else {
           document.getElementById('deptSelect').value = 'all';
           document.getElementById('l2Hint').textContent = '全港 4 个部门';
+          if (l2) l2.classList.remove('hidden');
         }
         refreshAll();
         BMS.toast(scope === 'dept' ? '已切换为我的部门' : '已切换为全港');
@@ -612,17 +848,9 @@
       }
 
       function switchView(name) {
-        currentView = name;
-        document.querySelectorAll('.view-pane').forEach(function (p) { p.classList.add('hidden'); });
-        document.getElementById('view-' + name).classList.remove('hidden');
-        document.querySelectorAll('.view-btn').forEach(function (b) {
-          const on = b.getAttribute('data-view') === name;
-          b.classList.toggle('view-active', on);
-          b.classList.toggle('bg-slate-50', !on);
-          b.classList.toggle('border', !on);
-          b.classList.toggle('border-slate-200', !on);
-          b.classList.toggle('text-slate-600', !on);
-        });
+        currentView = 'tree';
+        const pane = document.getElementById('view-tree');
+        if (pane) pane.classList.remove('hidden');
       }
 
       function findGoal(id) { return GOALS.find(function (g) { return g.id === id; }); }
@@ -650,13 +878,18 @@
       function openGoalDetail(id) {
         const g = findGoal(id);
         if (!g) return;
+        const lag = lagCountOfGoal(g);
         document.getElementById('goalModalTitle').textContent = g.name;
-        document.getElementById('goalModalSub').innerHTML = g.dept + ' · ' + g.period + ' · 量化 ' + g.actual + ' / ' + g.target +
-          ' · <span class="' + (g.status === 'ok' ? 'text-emerald-600' : 'text-amber-600') + '">' + g.statusLabel + '</span>';
+        const badge = document.getElementById('goalModalBadge');
+        badge.textContent = g.statusLabel;
+        badge.className = 'status-pill ' + statusClass(g.status);
+        document.getElementById('goalModalSub').textContent = g.dept + ' · ' + g.period + ' · 负责人 ' + g.owner;
+        document.getElementById('goalModalValue').textContent = g.actual + ' / ' + g.target;
+        document.getElementById('goalModalHealth').textContent = g.statusLabel;
+        document.getElementById('goalModalPlanCount').textContent = g.plans.length + ' 个';
+        document.getElementById('goalModalLagCount').textContent = lag + ' 项';
         document.getElementById('goalModalDesc').textContent = g.desc;
-        document.getElementById('goalModalPlans').innerHTML = g.plans.map(function (p) {
-          return '<li class="flex justify-between border rounded-xl px-3 py-2"><span>' + p.name + '</span><span class="text-slate-500">' + p.nodes + '</span></li>';
-        }).join('');
+        renderGoalExecTree(g);
         BMS.openModal('modal-goal-detail');
       }
 
@@ -679,10 +912,79 @@
       function openTaskDetail(name) {
         const hit = findTask(name);
         if (!hit) return;
+        currentDeptTaskName = hit.t.name;
         document.getElementById('taskModalTitle').textContent = hit.t.name;
-        document.getElementById('taskModalSub').textContent = hit.t.owner + ' · ' + hit.g.dept + ' · ' + hit.p.name;
+        document.getElementById('taskModalSub').textContent = hit.t.owner + ' · ' + hit.g.dept + ' · ' + hit.p.name + ' · ' + hit.t.status;
         document.getElementById('taskModalProg').textContent = '进展：' + hit.t.prog + ' · ' + (hit.t.updated ? '本周期已更新' : '本周期未更新');
         BMS.openModal('modal-task-detail');
+      }
+
+      let currentDeptTaskName = '';
+      let deptTaskFormMode = 'create';
+
+      function prepareDeptTaskCreate() {
+        deptTaskFormMode = 'create';
+        document.getElementById('deptTaskFormTitle').textContent = '新增任务';
+        document.getElementById('deptTaskName').value = '';
+        BMS.openModal('modal-task-form');
+      }
+
+      function openDeptTaskEdit() {
+        const hit = findTask(currentDeptTaskName);
+        deptTaskFormMode = 'edit';
+        document.getElementById('deptTaskFormTitle').textContent = '编辑任务';
+        document.getElementById('deptTaskName').value = hit ? hit.t.name : currentDeptTaskName;
+        if (hit) document.getElementById('deptTaskOwner').value = hit.t.owner;
+        BMS.openModal('modal-task-form');
+      }
+
+      function onDeptTaskStatusChange() {
+        const st = (document.querySelector('input[name="dtsStatus"]:checked') || {}).value || '进行中';
+        const label = document.getElementById('dtsSummaryLabel');
+        const doneWrap = document.getElementById('dtsDoneAtWrap');
+        if (st === '已完成') {
+          label.innerHTML = '完成概述 <span class="text-red-500">*</span>';
+          doneWrap.classList.remove('hidden');
+        } else if (st === '已延期') {
+          label.innerHTML = '延期原因 <span class="text-red-500">*</span>';
+          doneWrap.classList.add('hidden');
+        } else {
+          label.textContent = '跟进概述（选填）';
+          doneWrap.classList.add('hidden');
+        }
+      }
+
+      function openDeptTaskStatus() {
+        const hit = findTask(currentDeptTaskName);
+        document.getElementById('dtsName').textContent = currentDeptTaskName || '—';
+        const cur = hit ? hit.t.status : '进行中';
+        document.querySelectorAll('input[name="dtsStatus"]').forEach(el => { el.checked = el.value === cur; });
+        if (![...document.querySelectorAll('input[name="dtsStatus"]')].some(el => el.checked)) {
+          document.querySelector('input[name="dtsStatus"][value="进行中"]').checked = true;
+        }
+        document.getElementById('dtsSummary').value = '';
+        onDeptTaskStatusChange();
+        BMS.openModal('modal-dept-task-status');
+      }
+
+      function saveDeptTaskStatus() {
+        const st = (document.querySelector('input[name="dtsStatus"]:checked') || {}).value;
+        const summary = document.getElementById('dtsSummary').value.trim();
+        const doneAt = document.getElementById('dtsDoneAt').value;
+        if (st === '已完成') {
+          if (!summary) { BMS.toast('请填写完成概述', 'error'); return; }
+          if (!doneAt) { BMS.toast('请填写完成时间', 'error'); return; }
+        }
+        if (st === '已延期' && !summary) { BMS.toast('请填写延期原因', 'error'); return; }
+        const hit = findTask(currentDeptTaskName);
+        if (hit) {
+          hit.t.status = st;
+          if (summary) hit.t.prog = summary;
+          if (st === '已完成' || st === '已延期' || summary) hit.t.updated = true;
+        }
+        BMS.closeModal('modal-dept-task-status');
+        openTaskDetail(currentDeptTaskName);
+        BMS.toast('业务状态已更新为「' + st + '」');
       }
 
       function runMustDo(action, key, href) {
@@ -733,6 +1035,19 @@
       function saveDeptTask() {
         const name = document.getElementById('deptTaskName').value.trim();
         if (!name) { BMS.toast('请填写任务名称', 'error'); return; }
+        const owner = document.getElementById('deptTaskOwner').value;
+        const hit = findTask(currentDeptTaskName);
+        if (hit && deptTaskFormMode === 'edit') {
+          hit.t.name = name;
+          hit.t.owner = owner;
+          currentDeptTaskName = name;
+          BMS.toast('任务已保存');
+          clearDeptTaskImages();
+          BMS.closeModal('modal-task-form');
+          deptTaskFormMode = 'create';
+          openTaskDetail(name);
+          return;
+        }
         BMS.toast(deptTaskImages.length ? ('任务已保存（含 ' + deptTaskImages.length + ' 张图片）') : '任务已保存');
         clearDeptTaskImages();
         document.getElementById('deptTaskName').value = '';
@@ -756,8 +1071,9 @@
         rawOpen(id);
         if (id === 'modal-task-form') {
           clearDeptTaskImages();
-          const nameEl = document.getElementById('deptTaskName');
-          if (nameEl) nameEl.value = '';
+          if (deptTaskFormMode !== 'edit') {
+            document.getElementById('deptTaskFormTitle').textContent = '新增任务';
+          }
         }
       };
     });

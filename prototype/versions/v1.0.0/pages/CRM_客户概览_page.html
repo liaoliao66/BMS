@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>客户概览 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }
+    .stat-card { transition: transform .2s, box-shadow .2s; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="crm-overview" data-title="客户概览">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <header class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">客户概览</h1>
+        <p class="text-slate-500 text-sm mt-1">市场部数据概览 · 2026年8月27日</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="CRM_洽谈列表_page.html?modal=talk-create" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium transition active:scale-95"><i class="fa-solid fa-plus mr-2"></i>写洽谈</a>
+        <a href="CRM_客户列表_page.html?modal=customer-create" class="px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl text-sm transition"><i class="fa-solid fa-building mr-2"></i>新建客户</a>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-4 gap-5 mb-8">
+      <a href="CRM_客户列表_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+        <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">客户总数</span><i class="fa-solid fa-building text-teal-600"></i></div>
+        <p class="text-3xl font-bold mt-2">128</p>
+        <p class="text-xs text-emerald-600 mt-1"><i class="fa-solid fa-arrow-up"></i> 本月新增 6</p>
+      </a>
+      <a href="CRM_分组管理_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+        <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">启用分组</span><i class="fa-solid fa-layer-group text-teal-600"></i></div>
+        <p class="text-3xl font-bold mt-2">3</p>
+        <p class="text-xs text-slate-500 mt-1">停用 1 · 一客户一组</p>
+      </a>
+      <a href="合同收款_合同管理_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+        <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">生效合同</span><i class="fa-solid fa-file-contract text-teal-600"></i></div>
+        <p class="text-3xl font-bold mt-2">45</p>
+        <p class="text-xs text-amber-600 mt-1"><i class="fa-solid fa-clock"></i> 7 天内到期 2 份</p>
+      </a>
+      <a href="CRM_洽谈列表_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+        <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">近7日洽谈</span><i class="fa-solid fa-comments text-teal-600"></i></div>
+        <p class="text-3xl font-bold mt-2">37</p>
+        <p class="text-xs text-slate-500 mt-1">今日待洽谈 5 条</p>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-3 gap-6">
+      <div class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="font-semibold text-slate-900">客户分组分布</h2>
+          <a href="CRM_分组管理_page.html" class="text-teal-700 text-sm hover:underline">分组管理</a>
+        </div>
+        <div class="space-y-3">
+          <a href="CRM_客户列表_page.html?group=%E6%88%98%E7%95%A5%E9%92%A2%E5%8E%82" class="flex items-center gap-4 group">
+            <span class="w-24 text-sm text-slate-600">战略钢厂</span>
+            <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-teal-500 h-full rounded-full flex items-center px-3 text-xs text-white font-medium" style="width:75%">12 家</div></div>
+          </a>
+          <a href="CRM_客户列表_page.html?group=%E8%88%B9%E4%B8%9C%E9%87%8D%E7%82%B9" class="flex items-center gap-4 group">
+            <span class="w-24 text-sm text-slate-600">船东重点</span>
+            <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-teal-400 h-full rounded-full flex items-center px-3 text-xs text-white font-medium" style="width:50%">8 家</div></div>
+          </a>
+          <a href="CRM_客户列表_page.html?group=%E6%95%A3%E8%B4%A7%E6%BD%9C%E5%8A%9B" class="flex items-center gap-4 group">
+            <span class="w-24 text-sm text-slate-600">散货潜力</span>
+            <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-teal-300 h-full rounded-full flex items-center px-3 text-xs font-medium" style="width:65%">15 家</div></div>
+          </a>
+          <a href="CRM_客户列表_page.html?group=%E6%9C%AA%E5%88%86%E7%BB%84" class="flex items-center gap-4 group">
+            <span class="w-24 text-sm text-slate-600">未分组</span>
+            <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-slate-300 h-full rounded-full flex items-center px-3 text-xs font-medium text-slate-700" style="width:40%">93 家</div></div>
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <h2 class="font-semibold text-slate-900 mb-4">业务待办</h2>
+        <ul class="space-y-3 text-sm">
+          <li><a href="CRM_客户列表_page.html?modal=customer-detail" class="flex gap-3 p-3 rounded-xl hover:bg-slate-50 border border-slate-100"><span class="text-amber-500"><i class="fa-solid fa-circle text-[8px]"></i></span><div><p class="font-medium">今日洽谈：宝钢股份</p><p class="text-slate-500 text-xs">上次洽谈 2026-08-20</p></div></a></li>
+          <li><a href="合同收款_合同管理_page.html?open=modal-contract-detail" class="flex gap-3 p-3 rounded-xl hover:bg-slate-50 border border-amber-100 bg-amber-50/50"><span class="text-amber-500"><i class="fa-solid fa-triangle-exclamation"></i></span><div><p class="font-medium">合同 7 天内到期</p><p class="text-slate-500 text-xs">首钢码头装卸服务合同</p></div></a></li>
+          <li><a href="CRM_客户列表_page.html?group=%E6%9C%AA%E5%88%86%E7%BB%84" class="flex gap-3 p-3 rounded-xl hover:bg-slate-50 border border-slate-100"><span class="text-slate-400"><i class="fa-solid fa-circle text-[8px]"></i></span><div><p class="font-medium">未分组客户待归类</p><p class="text-slate-500 text-xs">建议尽快归入分组</p></div></a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-semibold">最近洽谈</h2>
+        <a href="CRM_洽谈列表_page.html" class="text-teal-700 text-sm hover:underline">查看全部</a>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="text-slate-500 border-b"><tr><th class="text-left py-2 font-medium">时间</th><th class="text-left py-2 font-medium">客户</th><th class="text-left py-2 font-medium">方式</th><th class="text-left py-2 font-medium">内容摘要</th><th class="text-left py-2 font-medium">负责人</th></tr></thead>
+        <tbody class="divide-y divide-slate-50">
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="location.href='CRM_客户列表_page.html?modal=customer-detail'"><td class="py-3">08-27 14:30</td><td>宝钢股份</td><td><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">拜访</span></td><td class="text-slate-600 max-w-xs truncate">讨论 Q4 铁矿卸船量及铁水联运比例调整…</td><td>张明</td></tr>
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="location.href='CRM_客户列表_page.html?modal=customer-detail'"><td class="py-3">08-26 10:15</td><td>首钢集团</td><td><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">电话</span></td><td class="text-slate-600 max-w-xs truncate">确认堆存费免费天数及装卸单价…</td><td>李华</td></tr>
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="location.href='CRM_客户列表_page.html?modal=customer-detail'"><td class="py-3">08-25 16:00</td><td>中远海运</td><td><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">会议</span></td><td class="text-slate-600 max-w-xs truncate">年度框架合同续签商务条款初步沟通…</td><td>王芳</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script src="../assets/crm-modals.js"></script>
+  <script src="../assets/common.js"></script>
+</body>
+</html>

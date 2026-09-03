@@ -21,12 +21,6 @@
       items: [
         { id: "my-tasks", name: "任务清单", href: "任务中心_我的任务_page.html", icon: "fa-list-check" },
         { id: "supervise", name: "任务督办", href: "任务中心_任务督办_page.html", icon: "fa-flag" },
-        { id: "reminders", name: "汇报提醒", href: "任务中心_汇报提醒_page.html", icon: "fa-bell" },
-      ],
-    },
-    {
-      group: "专项",
-      items: [
         { id: "projects", name: "专项管理", href: "专项管理_专项列表_page.html", icon: "fa-folder-open" },
       ],
     },

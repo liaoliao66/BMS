@@ -7,14 +7,18 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
-    .card-hover { transition: transform .2s, box-shadow .2s; }
-    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
     .btn-cta { background:#0f766e; }
     .btn-cta:hover { background:#0d9488; }
     .btn-cta:active { transform: scale(.95); }
     .row-hover:hover { background:#f8fafc; }
-    .detail-tab-on { background:#0f766e; color:#fff; }
     .status-tab-on { background:#0f766e; color:#fff; }
+    .exec-tree { border:1px solid #e2e8f0; border-radius:1rem; overflow:hidden; }
+    .exec-node { border-top:1px solid #f1f5f9; }
+    .exec-node:first-child { border-top:0; }
+    .exec-rail { width:3px; border-radius:999px; flex-shrink:0; }
+    .exec-rail-special { background:#94a3b8; }
+    .exec-rail-plan { background:#0f766e; }
+    .exec-rail-task { background:#cbd5e1; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="projects" data-title="专项管理">
@@ -114,81 +118,42 @@
       </div>
     </div>
 
-    <!-- 详情 · 大弹窗 -->
+    <!-- 详情 · 大弹窗（对齐目标详情） -->
     <div id="modal-special-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-special-detail')"></div>
-      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex flex-wrap items-center gap-2">
               <h3 id="detailName" class="text-xl font-semibold text-slate-900">—</h3>
               <span id="detailStatusBadge" class="text-xs px-2 py-0.5 rounded-full"></span>
             </div>
             <p id="detailSub" class="text-sm text-slate-500 mt-1">—</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2">
             <button type="button" id="detailEditBtn" class="border text-sm px-4 py-2 rounded-xl">编辑</button>
             <button type="button" id="detailDeleteBtn" class="text-sm px-4 py-2 rounded-xl text-red-600 border border-red-200 hover:bg-red-50">删除</button>
-            <button type="button" onclick="BMS.closeModal('modal-special-detail')" class="w-9 h-9 rounded-xl border text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" onclick="BMS.closeModal('modal-special-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
           </div>
         </div>
-        <div class="shrink-0 px-6 py-3 border-b bg-slate-50/80 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">节点达成</div><div id="detailNodes" class="font-medium mt-0.5">—</div></div>
-          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">滞后任务</div><div id="detailDelayed" class="font-medium mt-0.5">—</div></div>
-          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">关联计划</div><div id="detailPlanCount" class="font-medium mt-0.5">—</div></div>
-          <div class="bg-white rounded-xl px-3 py-2 border border-slate-100"><div class="text-xs text-slate-500">挂接任务</div><div id="detailTaskCount" class="font-medium mt-0.5">—</div></div>
-        </div>
-        <div class="shrink-0 px-6 pt-4 flex gap-2">
-          <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on" data-dtab="info" onclick="switchDetailTab('info')">基本信息</button>
-          <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600" data-dtab="plans" onclick="switchDetailTab('plans')">关联计划</button>
-          <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600" data-dtab="tasks" onclick="switchDetailTab('tasks')">关键任务</button>
-        </div>
-        <div class="flex-1 overflow-y-auto px-6 py-5">
-          <div id="detailPane-info" class="detail-pane space-y-3 text-sm">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">归属部门</div><div id="detailDept">—</div></div>
-              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">负责人</div><div id="detailOwner">—</div></div>
-              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">专项周期</div><div id="detailPeriod">—</div></div>
-              <div class="border border-slate-100 rounded-xl p-3"><div class="text-xs text-slate-500 mb-1">创建时间</div><div id="detailCreated">—</div></div>
-            </div>
-            <div class="border border-slate-100 rounded-xl p-4">
-              <div class="text-xs text-slate-500 mb-2">专项说明</div>
-              <p id="detailDesc" class="text-slate-700 leading-relaxed">—</p>
-            </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">节点达成</div><div class="mt-1 font-medium" id="detailNodes">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">滞后任务</div><div class="mt-1 font-medium" id="detailDelayed">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联计划</div><div class="mt-1 font-medium" id="detailPlanCount">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">挂接任务</div><div class="mt-1 font-medium" id="detailTaskCount">—</div></div>
           </div>
-          <div id="detailPane-plans" class="detail-pane hidden">
-            <p class="text-xs text-slate-500 mb-3">以下为挂接本专项的计划，点击名称可查看计划详情</p>
-            <div class="overflow-hidden border border-slate-200 rounded-xl">
-              <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-500"><tr>
-                  <th class="px-4 py-2.5 text-left">计划名称</th>
-                  <th class="px-4 py-2.5 text-left">关联目标</th>
-                  <th class="px-4 py-2.5 text-left">节点达成</th>
-                  <th class="px-4 py-2.5 text-left">任务概况</th>
-                  <th class="px-4 py-2.5 text-left">负责人</th>
-                </tr></thead>
-                <tbody id="detailPlansBody"></tbody>
-              </table>
-            </div>
+          <div>
+            <div class="text-sm font-medium mb-1">专项说明</div>
+            <p id="detailDesc" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3">—</p>
           </div>
-          <div id="detailPane-tasks" class="detail-pane hidden">
-            <p class="text-xs text-slate-500 mb-3">挂接本专项计划下的任务，点击名称可查看任务详情</p>
-            <div class="overflow-hidden border border-slate-200 rounded-xl">
-              <table class="w-full text-sm">
-                <thead class="bg-slate-50 text-slate-500"><tr>
-                  <th class="px-4 py-2.5 text-left">任务名称</th>
-                  <th class="px-4 py-2.5 text-left">所属计划</th>
-                  <th class="px-4 py-2.5 text-left">责任人</th>
-                  <th class="px-4 py-2.5 text-left">本周期更新</th>
-                  <th class="px-4 py-2.5 text-left">状态</th>
-                </tr></thead>
-                <tbody id="detailTasksBody"></tbody>
-              </table>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium text-slate-900">落地全景</div>
+              <div class="text-xs text-slate-500">专项 → 计划 → 任务 · 默认展开到任务</div>
             </div>
+            <div id="specialExecTree" class="exec-tree bg-white"></div>
           </div>
-        </div>
-        <div class="shrink-0 px-6 py-4 border-t flex gap-2">
-          <button type="button" onclick="BMS.closeModal('modal-special-detail')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">关闭</button>
         </div>
       </div>
     </div>
@@ -352,7 +317,6 @@
     let formId = null;
     let detailId = null;
     let deleteId = null;
-    let detailTab = 'info';
     let statusTab = '';
 
     function findSpecial(id) {
@@ -388,6 +352,102 @@
       return '<span class="text-xs px-2 py-0.5 rounded-full ' + cls + '">' + status + '</span>';
     }
 
+    function taskUpdateHtml(u) {
+      if (u === '未更新') return '<span class="text-red-500">未更新</span>';
+      return '<span class="text-emerald-600">已更新</span>';
+    }
+
+    function taskStatusHtml(s) {
+      if (s === '已完成') return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">已完成</span>';
+      if (s === '已延期') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span>';
+      if (s === '本月未更新') return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">本月未更新</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span>';
+    }
+
+    function escapeAttr(str) {
+      return String(str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function renderSpecialTaskNodes(tasks, pad) {
+      if (!tasks || !tasks.length) {
+        return '<div class="exec-node px-4 py-2.5 text-sm text-slate-400" style="padding-left:' + pad + 'px">暂无任务</div>';
+      }
+      return tasks.map(t => `
+        <div class="exec-node px-4 py-3" style="padding-left:${pad}px">
+          <div class="flex gap-3 items-start">
+            <div class="exec-rail exec-rail-task mt-1.5"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">任务</span>
+                <button type="button" class="text-sm font-medium text-teal-800 hover:underline text-left" onclick="goTaskDetail('${escapeAttr(t.name)}')">${t.name}</button>
+                ${taskStatusHtml(t.status)}
+                <span class="text-xs text-slate-500">责任人 ${t.owner}</span>
+                <span class="text-xs">${taskUpdateHtml(t.updated)}</span>
+              </div>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function renderSpecialPlanNodes(s, pad) {
+      if (!s.plans || !s.plans.length) {
+        return '<div class="exec-node px-4 py-2.5 text-sm text-slate-400" style="padding-left:' + pad + 'px">暂无关联计划</div>';
+      }
+      return s.plans.map(p => {
+        const tasks = (s.tasks || []).filter(t => t.plan === p.name);
+        return `
+        <div class="exec-node">
+          <div class="px-4 py-3 bg-slate-50/60" style="padding-left:${pad}px">
+            <div class="flex gap-3 items-start">
+              <div class="exec-rail exec-rail-plan mt-1.5"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[11px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-800">计划</span>
+                  <button type="button" class="text-sm font-medium text-teal-800 hover:underline text-left" onclick="goPlanDetail('${escapeAttr(p.name)}')">${p.name}</button>
+                  <span class="text-xs text-slate-500">关联目标 ${p.goal}</span>
+                  <span class="text-xs text-slate-500">负责人 ${p.owner}</span>
+                  <span class="text-xs text-slate-600">节点 ${p.nodes}</span>
+                  <span class="text-xs text-slate-500">任务概况 ${p.tasks}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          ${renderSpecialTaskNodes(tasks, pad + 28)}
+        </div>`;
+      }).join('');
+    }
+
+    function renderSpecialExecTree(s) {
+      const root = document.getElementById('specialExecTree');
+      if (!root) return;
+      if (!s.plans.length && !s.tasks.length) {
+        root.innerHTML = '<div class="px-4 py-10 text-center text-sm text-slate-400">暂无挂接计划与任务</div>';
+        return;
+      }
+      root.innerHTML = `
+        <div class="exec-node">
+          <div class="px-4 py-3.5 bg-white">
+            <div class="flex gap-3 items-start">
+              <div class="exec-rail exec-rail-special mt-1.5"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">专项</span>
+                  <span class="text-sm font-semibold text-slate-900">${s.name}</span>
+                  ${statusBadge(s.status)}
+                </div>
+                <div class="text-xs text-slate-500 mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                  <span>${s.dept}</span>
+                  <span>负责人 ${s.owner}</span>
+                  <span>周期 ${s.start} ~ ${s.end}</span>
+                  <span>计划 ${s.plans.length} · 任务 ${s.tasks.length}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          ${renderSpecialPlanNodes(s, 44)}
+        </div>`;
+    }
+
     function renderTable() {
       const list = getFilteredList();
       const tbody = document.getElementById('specialTbody');
@@ -417,62 +477,27 @@
         '当前筛选「' + label + '」共 ' + list.length + ' 条 · 档案总计 ' + total + ' 条 · 「专项」用于码头运营战役归集，任务可挂接专项';
     }
 
-    function switchDetailTab(tab) {
-      detailTab = tab;
-      document.querySelectorAll('.detail-tab').forEach(b => {
-        const on = b.getAttribute('data-dtab') === tab;
-        b.className = on ? 'detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on' : 'detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600';
-      });
-      document.querySelectorAll('.detail-pane').forEach(p => p.classList.add('hidden'));
-      document.getElementById('detailPane-' + tab).classList.remove('hidden');
-    }
-
     function openSpecialDetail(id) {
       const s = findSpecial(id);
       if (!s) return;
       detailId = id;
-      detailTab = 'info';
-      switchDetailTab('info');
 
       document.getElementById('detailName').textContent = s.name;
-      document.getElementById('detailSub').textContent = s.dept + ' · 负责人 ' + s.owner + ' · ' + s.start + ' ~ ' + s.end;
+      document.getElementById('detailSub').textContent =
+        s.dept + ' · 负责人 ' + s.owner + ' · 周期 ' + s.start + ' ~ ' + s.end + ' · 创建 ' + s.created;
       const badge = document.getElementById('detailStatusBadge');
       badge.textContent = s.status;
       badge.className = 'text-xs px-2 py-0.5 rounded-full ' + (STATUS_CLASS[s.status] || 'bg-slate-100 text-slate-600');
 
       document.getElementById('detailNodes').textContent = s.nodes;
-      document.getElementById('detailDelayed').textContent = s.delayed + ' 项';
-      document.getElementById('detailDelayed').className = 'font-medium mt-0.5' + (s.delayed ? ' text-red-500' : '');
+      const delayedEl = document.getElementById('detailDelayed');
+      delayedEl.textContent = s.delayed + ' 项';
+      delayedEl.className = 'mt-1 font-medium' + (s.delayed ? ' text-red-500' : '');
       document.getElementById('detailPlanCount').textContent = s.plans.length + ' 个';
       document.getElementById('detailTaskCount').textContent = s.tasks.length + ' 项';
-
-      document.getElementById('detailDept').textContent = s.dept;
-      document.getElementById('detailOwner').textContent = s.owner;
-      document.getElementById('detailPeriod').textContent = s.start + ' ~ ' + s.end;
-      document.getElementById('detailCreated').textContent = s.created;
       document.getElementById('detailDesc').textContent = s.desc;
 
-      document.getElementById('detailPlansBody').innerHTML = s.plans.map(p => `
-        <tr class="border-t row-hover">
-          <td class="px-4 py-2.5">
-            <button type="button" class="text-teal-700 hover:underline text-left" onclick="goPlanDetail('${p.name.replace(/'/g, "\\'")}')">${p.name}</button>
-          </td>
-          <td class="px-4 py-2.5">${p.goal}</td>
-          <td class="px-4 py-2.5">${p.nodes}</td>
-          <td class="px-4 py-2.5">${p.tasks}</td>
-          <td class="px-4 py-2.5">${p.owner}</td>
-        </tr>`).join('');
-
-      document.getElementById('detailTasksBody').innerHTML = s.tasks.map(t => `
-        <tr class="border-t row-hover">
-          <td class="px-4 py-2.5">
-            <button type="button" class="text-teal-700 hover:underline text-left" onclick="goTaskDetail('${t.name.replace(/'/g, "\\'")}')">${t.name}</button>
-          </td>
-          <td class="px-4 py-2.5">${t.plan}</td>
-          <td class="px-4 py-2.5">${t.owner}</td>
-          <td class="px-4 py-2.5 ${t.updated === '未更新' ? 'text-red-500' : 'text-emerald-600'}">${t.updated}</td>
-          <td class="px-4 py-2.5 ${t.statusClass}">${t.status}</td>
-        </tr>`).join('');
+      renderSpecialExecTree(s);
 
       document.getElementById('detailEditBtn').onclick = function () {
         BMS.closeModal('modal-special-detail');
