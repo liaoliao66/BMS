@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>客户管理 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }
+    .cargo-tag { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:9999px; font-size:12px; border:1px solid #e2e8f0; background:#fff; color:#64748b; cursor:pointer; user-select:none; transition:all .15s; }
+    .cargo-tag:hover { border-color:#99f6e4; color:#0f766e; }
+    .cargo-tag.on { background:#f0fdfa; border-color:#5eead4; color:#0f766e; font-weight:500; }
+    .cargo-chip { display:inline-flex; align-items:center; padding:2px 8px; border-radius:9999px; font-size:11px; background:#f1f5f9; color:#475569; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="crm-customers" data-title="客户管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+      <header class="flex justify-between items-center mb-6">
+        <div><h1 class="text-2xl font-bold">客户管理</h1><p class="text-slate-500 text-sm mt-1">共 128 家客户</p></div>
+        <button type="button" onclick="CRM_MODALS.customerCreate()" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium transition active:scale-95"><i class="fa-solid fa-plus mr-2"></i>新建客户</button>
+      </header>
+
+      <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
+        <div><label class="text-xs text-slate-500 block mb-1">客户名称</label><input type="text" placeholder="搜索客户名称" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-48 focus:ring-2 focus:ring-teal-500 outline-none"></div>
+        <div><label class="text-xs text-slate-500 block mb-1">所属分组</label>
+          <select id="filterGroup" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-40">
+            <option value="">全部</option>
+            <option value="未分组">未分组</option>
+            <option value="战略钢厂">战略钢厂</option>
+            <option value="船东重点">船东重点</option>
+            <option value="散货潜力">散货潜力</option>
+            <option value="休眠观察">休眠观察</option>
+          </select>
+        </div>
+        <div><label class="text-xs text-slate-500 block mb-1">客户类型</label><select class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-36"><option>全部</option><option>货主</option><option>船公司</option><option>钢厂</option><option>物流商</option></select></div>
+        <div><label class="text-xs text-slate-500 block mb-1">客户状态</label><select class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-32"><option>全部</option><option>潜在</option><option>合作中</option><option>休眠</option></select></div>
+        <button class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm hover:bg-slate-700">查询</button>
+        <button type="button" onclick="document.getElementById('filterGroup').value='';" class="px-4 py-2 border border-slate-200 rounded-xl text-sm hover:bg-slate-50">重置</button>
+        <a href="CRM_分组管理_page.html" class="text-sm text-teal-700 hover:underline ml-auto">分组管理</a>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600"><tr>
+            <th class="px-4 py-3 text-left font-medium">客户名称</th>
+            <th class="px-4 py-3 text-left font-medium">所属分组</th>
+            <th class="px-4 py-3 text-left font-medium">类型</th>
+            <th class="px-4 py-3 text-left font-medium">等级</th>
+            <th class="px-4 py-3 text-left font-medium">状态</th>
+            <th class="px-4 py-3 text-left font-medium">主要货种</th>
+            <th class="px-4 py-3 text-left font-medium">年预估吞吐量</th>
+            <th class="px-4 py-3 text-left font-medium">负责人</th>
+            <th class="px-4 py-3 text-left font-medium">最近洽谈</th>
+            <th class="px-4 py-3 text-left font-medium">操作</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50 cursor-pointer customer-row" data-group="战略钢厂" onclick="CRM_MODALS.customerDetail('宝钢股份有限公司')">
+              <td class="px-4 py-3 text-teal-700 font-medium">宝钢股份有限公司</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-teal-50 text-teal-800 rounded text-xs">战略钢厂</span></td>
+              <td class="px-4 py-3">钢厂</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">战略</span></td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">合作中</span></td>
+              <td class="px-4 py-3"><span class="cargo-chip">铁矿</span> <span class="cargo-chip">钢材</span></td>
+              <td class="px-4 py-3">280 万吨</td>
+              <td class="px-4 py-3">张明</td>
+              <td class="px-4 py-3 text-slate-500">08-27</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()">
+                <button type="button" onclick="CRM_MODALS.customerDetail('宝钢股份有限公司')" class="text-teal-600 hover:underline mr-2">详情</button>
+                <button type="button" onclick="CRM_MODALS.talkCreate('宝钢股份有限公司')" class="text-slate-500 hover:underline">写洽谈</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50 cursor-pointer customer-row" data-group="战略钢厂" onclick="CRM_MODALS.customerDetail('首钢集团有限公司')">
+              <td class="px-4 py-3 text-teal-700 font-medium">首钢集团有限公司</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-teal-50 text-teal-800 rounded text-xs">战略钢厂</span></td>
+              <td class="px-4 py-3">钢厂</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">重点</span></td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">合作中</span></td>
+              <td class="px-4 py-3"><span class="cargo-chip">铁矿</span> <span class="cargo-chip">煤炭</span></td>
+              <td class="px-4 py-3">150 万吨</td>
+              <td class="px-4 py-3">李华</td>
+              <td class="px-4 py-3 text-slate-500">08-26</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()">
+                <button type="button" onclick="CRM_MODALS.customerDetail('首钢集团有限公司')" class="text-teal-600 hover:underline mr-2">详情</button>
+                <button type="button" onclick="CRM_MODALS.talkCreate('首钢集团有限公司')" class="text-slate-500 hover:underline">写洽谈</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50 cursor-pointer customer-row" data-group="船东重点" onclick="CRM_MODALS.customerDetail('中远海运散货运输有限公司')">
+              <td class="px-4 py-3 text-teal-700 font-medium">中远海运散货运输有限公司</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-teal-50 text-teal-800 rounded text-xs">船东重点</span></td>
+              <td class="px-4 py-3">船公司</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">重点</span></td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">潜在</span></td>
+              <td class="px-4 py-3"><span class="cargo-chip">铁矿</span> <span class="cargo-chip">其他散货</span></td>
+              <td class="px-4 py-3">—</td>
+              <td class="px-4 py-3">王芳</td>
+              <td class="px-4 py-3 text-slate-500">08-25</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()">
+                <button type="button" onclick="CRM_MODALS.customerDetail('中远海运散货运输有限公司')" class="text-teal-600 hover:underline mr-2">详情</button>
+                <button type="button" onclick="CRM_MODALS.talkCreate('中远海运散货运输有限公司')" class="text-slate-500 hover:underline">写洽谈</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="px-4 py-3 border-t flex justify-between text-sm text-slate-500"><span id="customerCountHint">共 128 条 · 一客户仅属一组</span><div class="flex gap-1"><button class="px-3 py-1 border rounded-lg">上一页</button><button class="px-3 py-1 bg-teal-600 text-white rounded-lg">1</button><button class="px-3 py-1 border rounded-lg">下一页</button></div></div>
+      </div>
+  </div>
+
+  <template id="tpl-customer-create">
+    <div class="grid grid-cols-2 gap-4">
+      <div class="col-span-2 crm-field"><label class="crm-label">客户名称 <span class="crm-req">*</span></label><input id="cCustName" placeholder="企业全称"></div>
+      <div class="crm-field"><label class="crm-label">客户类型 <span class="crm-req">*</span></label><select><option>货主</option><option>船公司</option><option selected>钢厂</option><option>物流商</option></select></div>
+      <div class="crm-field"><label class="crm-label">客户状态</label><select><option selected>潜在</option><option>合作中</option><option>休眠</option></select></div>
+      <div class="crm-field"><label class="crm-label">客户等级</label><select><option>普通</option><option>重点</option><option>战略</option></select></div>
+      <div class="crm-field"><label class="crm-label">年预估吞吐量（万吨）</label><input type="number"></div>
+      <div class="crm-field"><label class="crm-label">负责人</label><select><option selected>张明</option><option>李华</option></select></div>
+      <div class="crm-field"><label class="crm-label">所属分组</label>
+        <select id="cCustGroup">
+          <option value="">未分组</option>
+          <option>战略钢厂</option>
+          <option>船东重点</option>
+          <option>散货潜力</option>
+        </select>
+        <p class="text-[11px] text-slate-400 mt-1">一客户仅属一组；停用分组不可选（如「休眠观察」）</p>
+      </div>
+      <div class="col-span-2 crm-field"><label class="crm-label">地址</label><input></div>
+
+      <div class="col-span-2 mt-1 pt-4 border-t">
+        <label class="crm-label mb-2">主要运营货种</label>
+        <p class="text-xs text-slate-400 mb-2">可多选；也可输入后回车添加自定义货种</p>
+        <div id="cargoTagBox" class="flex flex-wrap gap-2 mb-2">
+          <button type="button" class="cargo-tag" data-cargo="铁矿" onclick="toggleCargoTag(this)">铁矿</button>
+          <button type="button" class="cargo-tag" data-cargo="煤炭" onclick="toggleCargoTag(this)">煤炭</button>
+          <button type="button" class="cargo-tag" data-cargo="钢材" onclick="toggleCargoTag(this)">钢材</button>
+          <button type="button" class="cargo-tag" data-cargo="集装箱" onclick="toggleCargoTag(this)">集装箱</button>
+          <button type="button" class="cargo-tag" data-cargo="其他散货" onclick="toggleCargoTag(this)">其他散货</button>
+        </div>
+        <div class="flex gap-2">
+          <input id="cargoCustomInput" class="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-600" placeholder="自定义货种，回车添加" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCargo();}">
+          <button type="button" onclick="addCustomCargo()" class="px-3 py-2 text-sm border border-slate-200 rounded-xl hover:bg-slate-50">添加</button>
+        </div>
+      </div>
+
+      <div class="col-span-2 mt-1 pt-4 border-t">
+        <div class="flex items-center justify-between mb-3">
+          <p class="font-medium text-slate-900">联系人</p>
+          <button type="button" onclick="addContactRow()" class="text-sm text-teal-700 hover:underline"><i class="fa-solid fa-plus mr-1"></i>添加联系人</button>
+        </div>
+        <div id="contactList" class="space-y-3">
+          <div class="contact-row p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-xs text-slate-500 contact-index">联系人 1</span>
+              <button type="button" class="contact-del text-xs text-slate-300 cursor-not-allowed" title="至少保留 1 条" disabled><i class="fa-solid fa-trash"></i></button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="crm-field"><label class="crm-label">姓名</label><input placeholder="姓名"></div>
+              <div class="crm-field"><label class="crm-label">手机</label><input placeholder="手机号"></div>
+              <div class="crm-field"><label class="crm-label">职务</label><input placeholder="如：采购经理"></div>
+              <div class="crm-field"><label class="crm-label">备注</label><input placeholder="可选"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-span-2 mt-1 pt-4 border-t">
+        <p class="font-medium text-slate-900 mb-1">开票信息</p>
+        <p class="text-xs text-slate-400 mb-3">选填；抬头可与客户名称一致</p>
+        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
+          <div class="col-span-2 crm-field"><label class="crm-label">开票抬头</label><input placeholder="默认可与客户名称一致"></div>
+          <div class="crm-field"><label class="crm-label">纳税人识别号</label><input placeholder="统一社会信用代码"></div>
+          <div class="crm-field"><label class="crm-label">开票电话</label><input placeholder="开票联系电话"></div>
+          <div class="crm-field"><label class="crm-label">开户银行</label><input placeholder="开户行名称"></div>
+          <div class="crm-field"><label class="crm-label">银行账号</label><input placeholder="银行账号"></div>
+          <div class="col-span-2 crm-field"><label class="crm-label">开票地址</label><input placeholder="开票地址"></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-customer-detail">
+    <div class="space-y-5">
+      <div class="flex items-center gap-3 flex-wrap"><h4 class="text-lg font-bold" id="modal-customer-name">宝钢股份有限公司</h4><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">合作中</span><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">战略</span></div>
+      <div class="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl">
+        <div><span class="text-slate-500 text-xs">类型</span><p class="font-medium mt-0.5">钢厂</p></div>
+        <div class="col-span-2"><span class="text-slate-500 text-xs">主要运营货种</span><p class="mt-1.5 flex flex-wrap gap-1.5"><span class="cargo-chip">铁矿</span><span class="cargo-chip">钢材</span></p></div>
+        <div><span class="text-slate-500 text-xs">年预估吞吐量</span><p class="font-medium mt-0.5">280 万吨</p></div>
+        <div><span class="text-slate-500 text-xs">所属分组</span><p class="font-medium mt-0.5 text-teal-700" id="modal-customer-group">战略钢厂</p></div>
+        <div><span class="text-slate-500 text-xs">负责人</span><p class="font-medium mt-0.5">张明</p></div>
+        <div><span class="text-slate-500 text-xs">地址</span><p class="font-medium mt-0.5">上海市宝山区</p></div>
+      </div>
+
+      <div>
+        <p class="font-medium mb-3">联系人</p>
+        <div class="space-y-2">
+          <div class="border border-slate-100 rounded-xl p-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+            <div><span class="text-slate-500 text-xs">姓名</span><p class="font-medium mt-0.5">陈经理</p></div>
+            <div><span class="text-slate-500 text-xs">手机</span><p class="font-medium mt-0.5">138****8821</p></div>
+            <div><span class="text-slate-500 text-xs">职务</span><p class="font-medium mt-0.5">采购经理</p></div>
+            <div><span class="text-slate-500 text-xs">备注</span><p class="font-medium mt-0.5">主对接人</p></div>
+          </div>
+          <div class="border border-slate-100 rounded-xl p-3 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+            <div><span class="text-slate-500 text-xs">姓名</span><p class="font-medium mt-0.5">王主管</p></div>
+            <div><span class="text-slate-500 text-xs">手机</span><p class="font-medium mt-0.5">139****6630</p></div>
+            <div><span class="text-slate-500 text-xs">职务</span><p class="font-medium mt-0.5">物流协调</p></div>
+            <div><span class="text-slate-500 text-xs">备注</span><p class="font-medium mt-0.5">现场调度相关</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="font-medium mb-3">开票信息</p>
+        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-xl text-sm">
+          <div class="col-span-2"><span class="text-slate-500 text-xs">开票抬头</span><p class="font-medium mt-0.5">宝钢股份有限公司</p></div>
+          <div><span class="text-slate-500 text-xs">纳税人识别号</span><p class="font-medium mt-0.5">91310000MA1XXXXX1X</p></div>
+          <div><span class="text-slate-500 text-xs">开票电话</span><p class="font-medium mt-0.5">021-2664****</p></div>
+          <div><span class="text-slate-500 text-xs">开户银行</span><p class="font-medium mt-0.5">中国工商银行上海分行</p></div>
+          <div><span class="text-slate-500 text-xs">银行账号</span><p class="font-medium mt-0.5">1001 **** **** 8821</p></div>
+          <div class="col-span-2"><span class="text-slate-500 text-xs">开票地址</span><p class="font-medium mt-0.5">上海市宝山区富锦路885号</p></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex justify-between items-center mb-3"><span class="font-medium">洽谈时间轴</span><button type="button" onclick="closeModal(); setTimeout(()=>CRM_MODALS.talkCreate('宝钢股份有限公司'), 200)" class="text-teal-700 text-xs hover:underline">+ 写洽谈</button></div>
+        <div class="space-y-3 border-l-2 border-teal-200 pl-4 ml-1">
+          <div><p class="text-xs text-slate-500">08-27 · 拜访 · 张明</p><p class="mt-1">讨论 Q4 铁矿卸船量及铁水联运比例调整。</p></div>
+          <div><p class="text-xs text-slate-500">08-15 · 电话 · 张明</p><p class="mt-1">报价方案已发送，等待内部评审。</p></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 gap-4">
+        <div class="p-3 border rounded-xl"><p class="text-xs text-slate-500 mb-1">关联合同</p><p class="font-medium">宝钢铁矿铁水联运框架合同 · 860万</p></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-talk-create">
+    <div class="space-y-4">
+      <div class="crm-field"><label class="crm-label">关联客户 <span class="crm-req">*</span></label><select id="modal-talk-customer"><option>宝钢股份有限公司</option><option>首钢集团有限公司</option></select></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="crm-field"><label class="crm-label">洽谈方式</label><select><option>拜访</option><option>电话</option><option>会议</option></select></div>
+        <div class="crm-field"><label class="crm-label">洽谈时间</label><input type="datetime-local" value="2026-08-27T14:30"></div>
+      </div>
+      <div class="crm-field"><label class="crm-label">洽谈内容 <span class="crm-req">*</span></label><textarea rows="4" placeholder="记录本次沟通要点…"></textarea></div>
+      <div class="crm-field"><label class="crm-label">下次洽谈计划</label><input type="date"></div>
+    </div>
+  </template>
+
+  <script src="../assets/crm-modals.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    function toggleCargoTag(btn) {
+      btn.classList.toggle('on');
+    }
+
+    function addCustomCargo() {
+      const input = document.getElementById('cargoCustomInput');
+      const box = document.getElementById('cargoTagBox');
+      if (!input || !box) return;
+      const name = (input.value || '').trim();
+      if (!name) { showToast('请输入货种名称', 'error'); return; }
+      const exists = Array.from(box.querySelectorAll('[data-cargo]')).some(el => el.getAttribute('data-cargo') === name);
+      if (exists) {
+        const hit = box.querySelector('[data-cargo="' + name + '"]');
+        if (hit) hit.classList.add('on');
+        input.value = '';
+        return;
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cargo-tag on';
+      btn.setAttribute('data-cargo', name);
+      btn.onclick = function () { toggleCargoTag(btn); };
+      btn.textContent = name;
+      box.appendChild(btn);
+      input.value = '';
+    }
+
+    function renumberContacts() {
+      const list = document.getElementById('contactList');
+      if (!list) return;
+      const rows = list.querySelectorAll('.contact-row');
+      rows.forEach((row, i) => {
+        const label = row.querySelector('.contact-index');
+        if (label) label.textContent = '联系人 ' + (i + 1);
+        const del = row.querySelector('.contact-del');
+        if (!del) return;
+        if (rows.length <= 1) {
+          del.disabled = true;
+          del.className = 'contact-del text-xs text-slate-300 cursor-not-allowed';
+          del.title = '至少保留 1 条';
+          del.onclick = null;
+        } else {
+          del.disabled = false;
+          del.className = 'contact-del text-xs text-red-400 hover:text-red-600';
+          del.title = '删除';
+          del.onclick = function () { removeContactRow(del); };
+        }
+      });
+    }
+
+    function addContactRow() {
+      const list = document.getElementById('contactList');
+      if (!list) return;
+      const row = document.createElement('div');
+      row.className = 'contact-row p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3';
+      row.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-slate-500 contact-index">联系人</span>
+          <button type="button" class="contact-del text-xs text-red-400 hover:text-red-600" title="删除"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="crm-field"><label class="crm-label">姓名</label><input placeholder="姓名"></div>
+          <div class="crm-field"><label class="crm-label">手机</label><input placeholder="手机号"></div>
+          <div class="crm-field"><label class="crm-label">职务</label><input placeholder="如：采购经理"></div>
+          <div class="crm-field"><label class="crm-label">备注</label><input placeholder="可选"></div>
+        </div>`;
+      list.appendChild(row);
+      renumberContacts();
+    }
+
+    function removeContactRow(btn) {
+      const list = document.getElementById('contactList');
+      if (!list) return;
+      if (list.querySelectorAll('.contact-row').length <= 1) {
+        showToast('至少保留 1 个联系人', 'error');
+        return;
+      }
+      const row = btn.closest('.contact-row');
+      if (row) row.remove();
+      renumberContacts();
+    }
+
+    window.toggleCargoTag = toggleCargoTag;
+    window.addCustomCargo = addCustomCargo;
+    window.addContactRow = addContactRow;
+    window.removeContactRow = removeContactRow;
+
+    const CUSTOMER_GROUP_MAP = {
+      '宝钢股份有限公司': '战略钢厂',
+      '首钢集团有限公司': '战略钢厂',
+      '中远海运散货运输有限公司': '船东重点'
+    };
+
+    function applyGroupFilter(groupName) {
+      const sel = document.getElementById('filterGroup');
+      if (sel && groupName) sel.value = groupName;
+      const target = (sel && sel.value) || '';
+      let shown = 0;
+      document.querySelectorAll('.customer-row').forEach(row => {
+        const g = row.getAttribute('data-group') || '未分组';
+        const ok = !target || g === target || (target === '未分组' && (!g || g === '未分组'));
+        row.classList.toggle('hidden', !ok);
+        if (ok) shown++;
+      });
+      const hint = document.getElementById('customerCountHint');
+      if (hint) {
+        hint.textContent = target
+          ? ('筛选「' + target + '」· 本页 ' + shown + ' 条 · 一客户仅属一组')
+          : '共 128 条 · 一客户仅属一组';
+      }
+    }
+
+    window.CRM_MODALS = {
+      customerCreate() {
+        openModalFromTemplate('tpl-customer-create', {
+          title: '新建客户',
+          size: 'xl',
+          footer: modalFooter('取消', '保存', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('客户保存成功')")
+        });
+        setTimeout(renumberContacts, 0);
+      },
+      customerDetail(name) {
+        openModalFromTemplate('tpl-customer-detail', {
+          title: '客户详情',
+          size: 'xl',
+          footer: `<button type="button" data-close-modal class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm hover:bg-white">关闭</button>
+            <button type="button" onclick="closeModal(); CRM_MODALS.talkCreate('${name}')" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-sm hover:bg-teal-700">写洽谈</button>`
+        });
+        setTimeout(() => {
+          const el = document.getElementById('modal-customer-name');
+          if (el) el.textContent = name;
+          const gEl = document.getElementById('modal-customer-group');
+          if (gEl) gEl.textContent = CUSTOMER_GROUP_MAP[name] || '未分组';
+        }, 0);
+      },
+      talkCreate(customer) {
+        openModalFromTemplate('tpl-talk-create', { title: '写洽谈', size: 'md', footer: modalFooter('取消', '保存', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('洽谈已保存')") });
+        setTimeout(() => { const sel = document.getElementById('modal-talk-customer'); if (sel && customer) sel.value = customer; }, 0);
+      }
+    };
+    CRM_MODALS['customer-create'] = () => CRM_MODALS.customerCreate();
+    CRM_MODALS['customer-detail'] = () => CRM_MODALS.customerDetail('宝钢股份有限公司');
+    CRM_MODALS['talk-create'] = () => CRM_MODALS.talkCreate('宝钢股份有限公司');
+    CRM_MODALS['followup-create'] = () => CRM_MODALS.talkCreate('宝钢股份有限公司');
+
+    (function bootGroupFilter() {
+      const p = new URLSearchParams(location.search).get('group');
+      const sel = document.getElementById('filterGroup');
+      if (sel) sel.addEventListener('change', () => applyGroupFilter(sel.value));
+      if (p) applyGroupFilter(p);
+    })();
+  </script>
+</body>
+</html>
