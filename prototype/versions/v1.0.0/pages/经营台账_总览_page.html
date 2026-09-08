@@ -543,9 +543,8 @@
             <div class="kpi-card-body">
               <div class="kpi-vol-head">
                 <div class="flex-1 min-w-0">
-                  <div class="text-[11px] text-slate-500" id="kpiTeuLabel">集装箱（TEU）</div>
-                  <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiTeu">12,000</div>
-                  <div class="mt-0.5 text-[10px] text-slate-400">折合 <span id="kpiTeuConv">11</span> 万吨</div>
+                  <div class="text-[11px] text-slate-500" id="kpiTeuLabel">集装箱（万吨）</div>
+                  <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiTeu">11</div>
                 </div>
                 <div class="vol-ring-wrap" id="kpiTeuTarget"></div>
               </div>
@@ -564,13 +563,11 @@
                 <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline" id="trendScopeLabel">2026/01/01 – 2026/12/31</span>
               </div>
               <div class="vol-chart-legend vol-chart-legend--inline">
-                <span><i style="background:#64748b"></i>散货</span>
-                <span><i style="background:#94a3b8"></i>件杂货</span>
-                <span><i style="background:#0f766e"></i>集装箱</span>
+                <span><i style="background:#0f766e"></i>总吞吐量</span>
               </div>
             </div>
             <div class="vol-chart-body">
-              <svg id="volumeTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="吞吐量趋势柱状图"></svg>
+              <svg id="volumeTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="吞吐量趋势折线图：总吞吐量"></svg>
             </div>
           </div>
           <div class="vol-pie-panel">
@@ -596,12 +593,10 @@
                 <div class="flex-1 min-w-0">
                   <div class="text-[11px] text-teal-700 font-medium">总数（TEU）</div>
                   <div class="mt-0.5 text-lg font-semibold text-teal-800 leading-tight" id="kpiTeuModTotal">12,000</div>
-                  <div class="mt-0.5 text-[10px] text-slate-400">折合 <span id="kpiTeuModConv">11</span> 万吨</div>
                 </div>
                 <div class="vol-ring-wrap" id="kpiTeuModTotalTarget"></div>
               </div>
             </div>
-            <div class="kpi-ie-bar" id="ieBarTeuModTotal"></div>
           </button>
           <button type="button" onclick="openSummary('volTeuLoad')" class="card-hover kpi-card border border-slate-100">
             <div class="kpi-card-body">
@@ -611,7 +606,6 @@
                   <div class="mt-0.5 text-lg font-semibold leading-tight" id="kpiTeuFull">9,600</div>
                   <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuFullShare">80%</span></div>
                 </div>
-                <div class="vol-ring-wrap" id="kpiTeuFullPie" aria-hidden="true"></div>
               </div>
             </div>
           </button>
@@ -623,7 +617,6 @@
                   <div class="mt-0.5 text-lg font-semibold text-teal-700 leading-tight" id="kpiTeuEmpty">2,400</div>
                   <div class="mt-0.5 text-[10px] text-slate-400">占比 <span id="kpiTeuEmptyShare">20%</span></div>
                 </div>
-                <div class="vol-ring-wrap" id="kpiTeuEmptyPie" aria-hidden="true"></div>
               </div>
             </div>
           </button>
@@ -637,21 +630,20 @@
                 <span class="text-[11px] text-slate-400 shrink-0 hidden sm:inline" id="teuTrendScopeLabel">2026/01/01 – 2026/12/31</span>
               </div>
               <div class="vol-chart-legend vol-chart-legend--inline">
-                <span><i style="background:#64748b"></i>进口</span>
-                <span><i style="background:#0f766e"></i>出口</span>
+                <span><i style="background:#0f766e"></i>总箱数</span>
               </div>
             </div>
             <div class="vol-chart-body">
-              <svg id="teuTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="集装箱趋势柱状图：进口与出口"></svg>
+              <svg id="teuTrendChart" viewBox="0 0 640 180" class="vol-chart-svg" role="img" aria-label="集装箱趋势折线图：总箱数"></svg>
             </div>
           </div>
           <div class="vol-pie-panel">
             <div class="vol-chart-head">
-              <span class="title">箱型结构占比</span>
+              <span class="title">进出口占比</span>
               <span class="text-[11px] text-slate-400">TEU</span>
             </div>
             <div class="vol-chart-body">
-              <svg id="teuTypePieChart" viewBox="0 0 300 180" preserveAspectRatio="xMinYMid meet" class="vol-pie-svg" role="img" aria-label="箱型结构占比"></svg>
+              <svg id="teuTypePieChart" viewBox="0 0 300 180" preserveAspectRatio="xMinYMid meet" class="vol-pie-svg" role="img" aria-label="集装箱进出口占比"></svg>
             </div>
           </div>
         </div>
@@ -675,8 +667,8 @@
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <div class="rank-dim-picker" title="切换统计维度">
-                  <button type="button" class="rank-dim-btn active" data-dim="customer" onclick="setCustomerRankDim('customer')">客户</button>
-                  <button type="button" class="rank-dim-btn" data-dim="group" onclick="setCustomerRankDim('group')">分组</button>
+                  <button type="button" class="rank-dim-btn vol-rank-dim-btn active" data-dim="customer" onclick="setCustomerRankDim('customer')">客户</button>
+                  <button type="button" class="rank-dim-btn vol-rank-dim-btn" data-dim="group" onclick="setCustomerRankDim('group')">分组</button>
                 </div>
                 <button type="button" onclick="openCustomerRankSummary()" class="text-xs text-teal-700 hover:underline">全部</button>
               </div>
@@ -912,11 +904,18 @@
             <button type="button" onclick="openSummary('receivable')" class="mt-3 text-xs text-teal-700 self-start">查看应收明细</button>
           </div>
           <div class="border border-slate-100 rounded-2xl overflow-hidden flex flex-col min-h-[260px]">
-            <div class="px-4 py-3 border-b flex justify-between items-center bg-slate-50 shrink-0">
-              <span class="text-sm font-medium">客户应收压力 <span class="text-xs text-slate-400 font-normal">欠款降序</span></span>
-              <div class="flex items-center gap-2">
+            <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2 bg-slate-50 shrink-0">
+              <div class="flex flex-wrap items-center gap-2 min-w-0">
+                <span class="text-sm font-medium" id="recvCustomerRankTitle">客户应收压力</span>
+                <span class="text-xs text-slate-400 font-normal shrink-0">欠款降序</span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <div class="rank-dim-picker" title="切换统计维度">
+                  <button type="button" class="rank-dim-btn recv-rank-dim-btn active" data-dim="customer" onclick="setRecvCustomerRankDim('customer')">客户</button>
+                  <button type="button" class="rank-dim-btn recv-rank-dim-btn" data-dim="group" onclick="setRecvCustomerRankDim('group')">分组</button>
+                </div>
                 <span class="tag-baseline">开累</span>
-                <button type="button" onclick="openSummary('recvCustomerRank')" class="text-xs text-teal-700">全部</button>
+                <button type="button" onclick="openRecvCustomerRankSummary()" class="text-xs text-teal-700">全部</button>
               </div>
             </div>
             <div class="flex-1 overflow-auto" id="recvCustomerRankBars"></div>
@@ -937,65 +936,30 @@
         <div class="border border-orange-100 rounded-2xl overflow-hidden">
           <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2" style="background:linear-gradient(90deg,#fff7ed 0%,#fff 60%)">
             <div>
-              <div class="text-sm font-medium text-slate-800">超期客户 · 合同付款条件</div>
-              <div class="text-xs text-slate-400 mt-0.5">相对约定应付日逾期未回 · 未约定付款条件不列入本表</div>
+              <div class="text-sm font-medium text-slate-800" id="overdueSectionTitle">超期客户 · 合同付款条件</div>
+              <div class="text-xs text-slate-400 mt-0.5" id="overdueSectionSub">相对约定应付日逾期未回 · 未约定付款条件不列入本表</div>
             </div>
-            <button type="button" onclick="openSummary('overdueCustomers')" class="text-xs text-teal-700">全部超期明细</button>
+            <div class="flex items-center gap-2 shrink-0">
+              <div class="rank-dim-picker" title="切换统计维度">
+                <button type="button" class="rank-dim-btn overdue-dim-btn active" data-dim="customer" onclick="setOverdueDim('customer')">客户</button>
+                <button type="button" class="rank-dim-btn overdue-dim-btn" data-dim="group" onclick="setOverdueDim('group')">分组</button>
+              </div>
+              <button type="button" onclick="openOverdueSummary()" class="text-xs text-teal-700">全部超期明细</button>
+            </div>
           </div>
           <div class="overdue-table-wrap">
-            <table class="overdue-table">
+            <table class="overdue-table" id="overdueTable">
               <thead>
                 <tr>
-                  <th>客户</th>
-                  <th>合同 / 业务</th>
+                  <th id="overdueColName">客户</th>
+                  <th id="overdueColBiz">合同 / 业务</th>
                   <th>约定付款条件</th>
                   <th>应付日</th>
                   <th class="num">超期天数</th>
                   <th class="num">超期金额（万）</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>中谷物流</td>
-                  <td>粮食装卸 · HT-2026-0015</td>
-                  <td>月结 30 天</td>
-                  <td>2026-07-15</td>
-                  <td class="num overdue-days">42</td>
-                  <td class="num font-medium text-amber-700">340</td>
-                </tr>
-                <tr>
-                  <td>远洋货运</td>
-                  <td>堆场仓储 · HT-2026-0018</td>
-                  <td>货到后 45 天</td>
-                  <td>2026-07-01</td>
-                  <td class="num overdue-days">56</td>
-                  <td class="num font-medium text-amber-700">310</td>
-                </tr>
-                <tr>
-                  <td>港机粮贸</td>
-                  <td>设备维保 · HT-2025-0088</td>
-                  <td>季度结算（季末）</td>
-                  <td>2026-03-31</td>
-                  <td class="num overdue-days">148</td>
-                  <td class="num font-medium text-red-600">220</td>
-                </tr>
-                <tr>
-                  <td>中粮储运</td>
-                  <td>粮食装卸 · HT-2026-0012</td>
-                  <td>月结 60 天</td>
-                  <td>2026-06-30</td>
-                  <td class="num overdue-days">57</td>
-                  <td class="num font-medium text-amber-700">180</td>
-                </tr>
-                <tr>
-                  <td>港联贸易</td>
-                  <td>件杂货 · HT-2026-0021</td>
-                  <td>月结 30 天</td>
-                  <td>2026-07-20</td>
-                  <td class="num overdue-days">37</td>
-                  <td class="num font-medium text-amber-700">130</td>
-                </tr>
-              </tbody>
+              <tbody id="overdueBody"></tbody>
             </table>
           </div>
           <p class="calib-note mx-4 mb-4">口径说明：超期 = 相对合同约定应付日逾期；账龄 = 欠款天数分层。二者辅助视图，数值可能不完全一一对应。数据截止 2026-08-26。</p>
@@ -1008,13 +972,17 @@
       <div class="kpi-section-head flex flex-wrap items-center justify-between gap-3">
         <div>
           <div class="flex flex-wrap items-center gap-2">
-            <h2 class="font-medium text-slate-800">客户明细</h2>
+            <h2 class="font-medium text-slate-800" id="custMoneyTitle">客户明细</h2>
             <span class="scope-badge scope-badge-period">作业量·营收随筛选</span>
             <span class="scope-badge scope-badge-fixed">开票/回款/应收为开累 · 超期=合同应付日</span>
           </div>
-          <p class="text-xs text-slate-400 mt-1">一行一客户 · 作业量按散货/件杂/集装箱分列 · 默认按营收降序 · 点击表头切换排序</p>
+          <p class="text-xs text-slate-400 mt-1" id="custMoneyHint">一行一客户 · 作业量按散货/件杂/集装箱分列 · 默认按营收降序 · 点击表头切换排序</p>
         </div>
         <div class="flex items-center gap-3">
+          <div class="rank-dim-picker" title="切换统计维度">
+            <button type="button" class="rank-dim-btn cust-money-dim-btn active" data-dim="customer" onclick="setCustMoneyDim('customer')">客户</button>
+            <button type="button" class="rank-dim-btn cust-money-dim-btn" data-dim="group" onclick="setCustMoneyDim('group')">分组</button>
+          </div>
           <span class="text-xs text-slate-400" id="custMoneyScopeLabel">2026/01/01 – 2026/12/31</span>
           <a href="部门工作台_部门工作台_page.html" class="text-sm px-3 py-1.5 rounded-xl text-white shrink-0" style="background:#0f766e">任务台账</a>
         </div>
@@ -1024,7 +992,7 @@
           <table class="cust-money-table" id="custMoneyTable">
             <thead>
               <tr>
-                <th class="col-name" data-sort="name" onclick="sortCustomerMoney('name')">客户<span class="sort-ind">↕</span></th>
+                <th class="col-name" data-sort="name" id="custMoneyColName" onclick="sortCustomerMoney('name')">客户<span class="sort-ind">↕</span></th>
                 <th class="num" data-sort="volLoose" onclick="sortCustomerMoney('volLoose')">散货（万吨）<span class="sort-ind">↕</span></th>
                 <th class="num" data-sort="volPiece" onclick="sortCustomerMoney('volPiece')">件杂货（万吨）<span class="sort-ind">↕</span></th>
                 <th class="num" data-sort="volTeu" onclick="sortCustomerMoney('volTeu')">集装箱（TEU）<span class="sort-ind">↕</span></th>
@@ -1179,6 +1147,94 @@
       ['港机粮贸', '设备维保', '220 万', '11%'],
       ['港联贸易', '件杂货', '130 万', '7%']
     ];
+    /** 客户分组应收 · 按 CRM 客户组汇总（演示） */
+    const RECV_CUSTOMER_GROUP_RANK = [
+      ['散货潜力', '粮食装卸', '600 万', '48%'],
+      ['船东重点', '堆场仓储', '310 万', '25%'],
+      ['未分组', '设备维保', '220 万', '17%'],
+      ['战略钢厂', '件杂货', '130 万', '10%']
+    ];
+    let recvCustomerRankDim = 'customer';
+
+    /** CRM 客户 → 分组（与作业量/营收分组口径一致） */
+    const CUSTOMER_GROUP_MAP = {
+      '中粮储运': '散货潜力',
+      '中谷物流': '散货潜力',
+      '远洋货运': '船东重点',
+      '中远散运': '船东重点',
+      '港联贸易': '战略钢厂',
+      '港机粮贸': '未分组',
+      '粮港代理': '未分组',
+      '海河储运': '未分组'
+    };
+
+    const OVERDUE_CUSTOMER_ROWS = [
+      { name: '中谷物流', biz: '粮食装卸 · HT-2026-0015', terms: '月结 30 天', due: '2026-07-15', days: 42, amt: 340 },
+      { name: '远洋货运', biz: '堆场仓储 · HT-2026-0018', terms: '货到后 45 天', due: '2026-07-01', days: 56, amt: 310 },
+      { name: '港机粮贸', biz: '设备维保 · HT-2025-0088', terms: '季度结算（季末）', due: '2026-03-31', days: 148, amt: 220 },
+      { name: '中粮储运', biz: '粮食装卸 · HT-2026-0012', terms: '月结 60 天', due: '2026-06-30', days: 57, amt: 180 },
+      { name: '港联贸易', biz: '件杂货 · HT-2026-0021', terms: '月结 30 天', due: '2026-07-20', days: 37, amt: 130 }
+    ];
+    let overdueDim = 'customer';
+    let custMoneyDim = 'customer';
+
+    function buildOverdueGroupRows() {
+      const map = {};
+      OVERDUE_CUSTOMER_ROWS.forEach(function (r) {
+        const g = CUSTOMER_GROUP_MAP[r.name] || '未分组';
+        if (!map[g]) {
+          map[g] = { name: g, count: 0, termsSet: {}, due: r.due, days: 0, amt: 0, bizParts: [] };
+        }
+        const row = map[g];
+        row.count += 1;
+        row.amt += r.amt;
+        if (r.days > row.days) row.days = r.days;
+        if (r.due < row.due) row.due = r.due;
+        row.termsSet[r.terms] = true;
+        row.bizParts.push(r.biz.split(' · ')[0]);
+      });
+      return Object.keys(map).map(function (k) {
+        const row = map[k];
+        const terms = Object.keys(row.termsSet);
+        const bizUniq = row.bizParts.filter(function (v, i, a) { return a.indexOf(v) === i; });
+        return {
+          name: row.name,
+          biz: row.count + ' 笔 · ' + bizUniq.slice(0, 2).join('、') + (bizUniq.length > 2 ? '等' : ''),
+          terms: terms.length === 1 ? terms[0] : '多条件（' + terms.length + '）',
+          due: row.due,
+          days: row.days,
+          amt: row.amt
+        };
+      }).sort(function (a, b) { return b.amt - a.amt; });
+    }
+
+    function buildCustomerGroupMoney() {
+      const map = {};
+      CUSTOMER_MONEY.forEach(function (r) {
+        const g = CUSTOMER_GROUP_MAP[r.name] || '未分组';
+        if (!map[g]) {
+          map[g] = {
+            name: g,
+            vol: { loose: 0, piece: 0, teu: 0 },
+            rev: 0, revAll: 0, invoice: 0, paid: 0,
+            overdueDays: 0, overdueAmt: 0, recv: 0, custCount: 0
+          };
+        }
+        const row = map[g];
+        row.custCount += 1;
+        row.vol.loose += (r.vol && r.vol.loose) || 0;
+        row.vol.piece += (r.vol && r.vol.piece) || 0;
+        row.vol.teu += (r.vol && r.vol.teu) || 0;
+        row.rev += r.rev;
+        row.revAll += r.revAll;
+        row.invoice += r.invoice;
+        row.paid += r.paid;
+        row.overdueAmt += r.overdueAmt || 0;
+        if ((r.overdueDays || 0) > row.overdueDays) row.overdueDays = r.overdueDays || 0;
+        row.recv = Math.max(0, row.revAll - row.paid);
+      });
+      return Object.keys(map).map(function (k) { return map[k]; });
+    }
     const REV_STRUCT = { teu: 28, loose: 820, piece: 138 }; /* 箱约 3% 营收，量约 2% */
     /* 进出口营收占比演示：进口 72% / 出口 28%（粮食港特征） */
     const REV_IE_RATIO = { import: 0.72, export: 0.28 };
@@ -1222,12 +1278,14 @@
       revCustomerRank: { title: '客户营收排行', sub: '粮食客户为主 · 降序', cols: ['客户', '主要货类', '营收（万）', '占比'], rows: REV_CUSTOMER_RANK },
       revGroupCustomerRank: { title: '客户分组营收排行', sub: '按 CRM 客户组汇总 · 降序', cols: ['分组', '主要货类', '营收（万）', '占比'], rows: REV_CUSTOMER_GROUP_RANK },
       recvCustomerRank: { title: '客户应收排行', sub: '谁欠得多 · 按应收降序', cols: ['客户', '业务', '应收（万）', '占应收比'], rows: RECV_CUSTOMER_RANK },
+      recvGroupCustomerRank: { title: '客户分组应收排行', sub: '按 CRM 客户组汇总 · 欠款降序', cols: ['分组', '主要业务', '应收（万）', '占应收比'], rows: RECV_CUSTOMER_GROUP_RANK },
       invoiceTotal: { title: '累计开票明细', sub: '不含已作废 · 开票率相对开累营收', cols: ['发票号', '客户', '金额（万）', '日期'], rows: [['FP-2026-0088', '中粮储运', '120', '2026-08-01'], ['FP-2026-0071', '中谷物流', '300', '2026-06-15']] },
       contractPaid: { title: '累计回款明细', sub: '收款记录汇总 · 回款率相对开累营收', cols: ['客户', '业务', '回款（万）', '日期'], rows: [['中粮储运', '粮食装卸', '120', '2026-08-10'], ['远洋货运', '堆场仓储', '80', '2026-08-15']] },
       receivable: { title: '应收明细 · 按客户欠款', sub: '口径：营收 − 回款 = 1,975 万 · 封顶不小于 0', cols: ['客户', '业务', '开累营收（万）', '已回款（万）', '应收（万）'], rows: [['中谷物流', '粮食装卸', '720', '380', '340'], ['远洋货运', '堆场仓储', '650', '340', '310'], ['中粮储运', '粮食装卸', '980', '720', '260'], ['港机粮贸', '设备维保', '420', '200', '220'], ['港联贸易', '件杂货', '310', '180', '130']] },
       overdueRecv: { title: '超期应收构成', sub: '1,185 万 · 占应收 60% · 合同约定应付日已过', cols: ['客户', '合同', '约定付款条件', '应付日', '超期天数', '金额（万）'], rows: [['中谷物流', 'HT-2026-0015', '月结 30 天', '2026-07-15', '42', '340'], ['远洋货运', 'HT-2026-0018', '货到后 45 天', '2026-07-01', '56', '310'], ['港机粮贸', 'HT-2025-0088', '季度结算', '2026-03-31', '148', '220'], ['中粮储运', 'HT-2026-0012', '月结 60 天', '2026-06-30', '57', '180'], ['港联贸易', 'HT-2026-0021', '月结 30 天', '2026-07-20', '37', '130'], ['其他（汇总）', '—', '—', '—', '—', '5']] },
       notOverdueRecv: { title: '未超期应收构成', sub: '790 万 · 占应收 40% · 约定应付日未到', cols: ['客户', '业务', '约定付款条件', '应付日', '金额（万）'], rows: [['中远散运', '散货装卸', '月结 30 天', '2026-09-15', '80'], ['粮港代理', '代理服务', '月结 45 天', '2026-09-20', '40'], ['海河储运', '仓储', '月结 30 天', '2026-09-10', '70'], ['中粮储运', '粮食装卸（未到期部分）', '月结 60 天', '2026-09-30', '80'], ['其他未到期', '—', '各合同条件', '—', '520']] },
-      overdueCustomers: { title: '超期客户明细 · 合同付款条件', sub: '相对约定应付日逾期 · 未约定条件不列入', cols: ['客户', '合同/业务', '约定付款条件', '应付日', '超期天数', '超期金额（万）'], rows: [['中谷物流', '粮食装卸 · HT-2026-0015', '月结 30 天', '2026-07-15', '42', '340'], ['远洋货运', '堆场仓储 · HT-2026-0018', '货到后 45 天', '2026-07-01', '56', '310'], ['港机粮贸', '设备维保 · HT-2025-0088', '季度结算（季末）', '2026-03-31', '148', '220'], ['中粮储运', '粮食装卸 · HT-2026-0012', '月结 60 天', '2026-06-30', '57', '180'], ['港联贸易', '件杂货 · HT-2026-0021', '月结 30 天', '2026-07-20', '37', '130']], note: '超期口径与账龄口径不同：前者看合同应付日，后者看欠款天数。' },
+      overdueCustomers: { title: '超期客户明细 · 合同付款条件', sub: '相对约定应付日逾期 · 未约定条件不列入', cols: ['客户', '合同/业务', '约定付款条件', '应付日', '超期天数', '超期金额（万）'], rows: OVERDUE_CUSTOMER_ROWS.map(function (r) { return [r.name, r.biz, r.terms, r.due, String(r.days), String(r.amt)]; }), note: '超期口径与账龄口径不同：前者看合同应付日，后者看欠款天数。' },
+      overdueGroups: { title: '超期分组明细 · 合同付款条件', sub: '按 CRM 客户组汇总 · 相对约定应付日逾期', cols: ['分组', '合同/业务', '约定付款条件', '最早应付日', '最长超期天数', '超期金额（万）'], rows: buildOverdueGroupRows().map(function (r) { return [r.name, r.biz, r.terms, r.due, String(r.days), String(r.amt)]; }), note: '分组汇总：超期金额合计、最长超期天数、最早应付日。' },
       invoicePending: { title: '待开票明细', sub: '开累营收 − 累计开票', cols: ['客户', '待开（万）'], rows: [['中谷物流', '240'], ['远洋货运', '230'], ['港机粮贸', '140']] },
       remaining: { title: '待回款明细', sub: '与应收总额一致 · 按欠款降序', cols: ['业务', '客户', '待回（万）', '计划收款日'], rows: [['粮食装卸服务', '中谷物流', '340', '2026-09-10'], ['堆场仓储', '远洋货运', '310', '2026-09-15'], ['粮食装卸服务', '中粮储运', '260', '2026-09-20'], ['设备维保', '港机粮贸', '220', '2026-09-30'], ['件杂货装卸', '港联贸易', '130', '2026-10-08']] }
     };
@@ -1272,6 +1330,9 @@
     const TREND_LOOSE = [52, 55, 58, 60, 62, 64, 72, 69]; /* 散货含粮食 · 万吨 */
     const TREND_PIECE = [6, 6, 7, 7, 7, 7, 8, 7];
     const TREND_TEU_TON = [1.1, 1.2, 1.3, 1.3, 1.4, 1.2, 1.4, 1.3]; /* 约占总吞吐量 2% · 折合万吨 */
+    const TREND_TOTAL = TREND_LOOSE.map(function (v, i) {
+      return Math.round((v + TREND_PIECE[i] + TREND_TEU_TON[i]) * 10) / 10;
+    }); /* 总吞吐量 = 散货 + 件杂 + 箱折合 */
     /* 集装箱趋势 · TEU（非万）· 进口主导约 63% */
     const TREND_TEU_IMP = [760, 820, 880, 890, 950, 760, 880, 820];
     const TREND_TEU_EXP = [440, 480, 520, 510, 550, 440, 520, 480];
@@ -1333,7 +1394,7 @@
 
     function setCustomerRankDim(dim) {
       customerRankDim = dim === 'group' ? 'group' : 'customer';
-      document.querySelectorAll('.rank-dim-btn:not(.rev-rank-dim-btn)').forEach(function (btn) {
+      document.querySelectorAll('.vol-rank-dim-btn').forEach(function (btn) {
         btn.classList.toggle('active', btn.getAttribute('data-dim') === customerRankDim);
       });
       renderCustomerRankBars();
@@ -1367,6 +1428,79 @@
 
     function openRevCustomerRankSummary() {
       openSummary(revCustomerRankDim === 'group' ? 'revGroupCustomerRank' : 'revCustomerRank');
+    }
+
+    function renderRecvCustomerRankBars() {
+      const isGroup = recvCustomerRankDim === 'group';
+      const rows = isGroup ? RECV_CUSTOMER_GROUP_RANK : RECV_CUSTOMER_RANK;
+      const titleEl = document.getElementById('recvCustomerRankTitle');
+      if (titleEl) titleEl.textContent = isGroup ? '分组应收压力' : '客户应收压力';
+      renderRankBars('recvCustomerRankBars', rows, {
+        nameCol: isGroup ? '5.25rem' : '4.5rem'
+      });
+    }
+
+    function setRecvCustomerRankDim(dim) {
+      recvCustomerRankDim = dim === 'group' ? 'group' : 'customer';
+      document.querySelectorAll('.recv-rank-dim-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-dim') === recvCustomerRankDim);
+      });
+      renderRecvCustomerRankBars();
+    }
+
+    function openRecvCustomerRankSummary() {
+      openSummary(recvCustomerRankDim === 'group' ? 'recvGroupCustomerRank' : 'recvCustomerRank');
+    }
+
+    function renderOverdueTable() {
+      const body = document.getElementById('overdueBody');
+      if (!body) return;
+      const isGroup = overdueDim === 'group';
+      const rows = isGroup ? buildOverdueGroupRows() : OVERDUE_CUSTOMER_ROWS.slice();
+      const titleEl = document.getElementById('overdueSectionTitle');
+      const subEl = document.getElementById('overdueSectionSub');
+      const colName = document.getElementById('overdueColName');
+      const colBiz = document.getElementById('overdueColBiz');
+      if (titleEl) titleEl.textContent = isGroup ? '超期分组 · 合同付款条件' : '超期客户 · 合同付款条件';
+      if (subEl) {
+        subEl.textContent = isGroup
+          ? '按 CRM 客户组汇总 · 超期金额合计 · 最长超期天数'
+          : '相对约定应付日逾期未回 · 未约定付款条件不列入本表';
+      }
+      if (colName) colName.textContent = isGroup ? '分组' : '客户';
+      if (colBiz) colBiz.textContent = isGroup ? '合同 / 业务（汇总）' : '合同 / 业务';
+      body.innerHTML = rows.map(function (r) {
+        const daysCls = r.days >= 90 ? 'num overdue-days text-red-600' : 'num overdue-days';
+        const amtCls = r.days >= 90 ? 'num font-medium text-red-600' : 'num font-medium text-amber-700';
+        return '<tr>' +
+          '<td>' + r.name + '</td>' +
+          '<td>' + r.biz + '</td>' +
+          '<td>' + r.terms + '</td>' +
+          '<td>' + r.due + '</td>' +
+          '<td class="' + daysCls + '">' + r.days + '</td>' +
+          '<td class="' + amtCls + '">' + r.amt + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function setOverdueDim(dim) {
+      overdueDim = dim === 'group' ? 'group' : 'customer';
+      document.querySelectorAll('.overdue-dim-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-dim') === overdueDim);
+      });
+      renderOverdueTable();
+    }
+
+    function openOverdueSummary() {
+      openSummary(overdueDim === 'group' ? 'overdueGroups' : 'overdueCustomers');
+    }
+
+    function setCustMoneyDim(dim) {
+      custMoneyDim = dim === 'group' ? 'group' : 'customer';
+      document.querySelectorAll('.cust-money-dim-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-dim') === custMoneyDim);
+      });
+      renderCustomerMoneyTable();
     }
 
     function renderBarChart(containerId, values, colors, maxH) {
@@ -1563,7 +1697,7 @@
         ['Total', actual.total, targets.total, '万吨', false],
         ['Loose', actual.loose, targets.loose, '万吨', false],
         ['Piece', actual.piece, targets.piece, '万吨', false],
-        ['Teu', wanTeuToTeu(actual.teu), wanTeuToTeu(targets.teu), 'TEU', false]
+        ['Teu', actual.teuTon, targets.teuTon, '万吨', false]
       ];
       map.forEach(function (m) {
         renderVolRing(document.getElementById('kpi' + m[0] + 'Target'), m[1], m[2], m[3], m[4], size);
@@ -1577,52 +1711,18 @@
       renderVolRing(document.getElementById('kpiTeuModTotalTarget'), totalTeu, targetTotal, 'TEU', false, size);
     }
 
-    /** 卡片迷你饼图 · 重箱 / 空箱占比 */
-    function renderMiniLoadPie(elId, highlight, fullPct) {
-      const el = document.getElementById(elId);
-      if (!el) return;
-      const size = 34;
-      const r = 15, ir = 8, cx = 17, cy = 17;
-      const emptyPct = 100 - fullPct;
-      const segs = highlight === 'full'
-        ? [{ pct: fullPct, c: '#0f766e' }, { pct: emptyPct, c: '#e2e8f0' }]
-        : [{ pct: fullPct, c: '#e2e8f0' }, { pct: emptyPct, c: '#64748b' }];
-      const rad = function (d) { return d * Math.PI / 180; };
-      let angle = -90, html = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '">';
-      segs.forEach(function (s) {
-        if (s.pct <= 0) return;
-        const a1 = angle, a2 = angle + s.pct * 3.6;
-        angle = a2;
-        const x1 = cx + r * Math.cos(rad(a1)), y1 = cy + r * Math.sin(rad(a1));
-        const x2 = cx + r * Math.cos(rad(a2)), y2 = cy + r * Math.sin(rad(a2));
-        const xi1 = cx + ir * Math.cos(rad(a1)), yi1 = cy + ir * Math.sin(rad(a1));
-        const xi2 = cx + ir * Math.cos(rad(a2)), yi2 = cy + ir * Math.sin(rad(a2));
-        const large = s.pct > 50 ? 1 : 0;
-        html += '<path d="M' + x1.toFixed(1) + ',' + y1.toFixed(1) +
-          ' A' + r + ',' + r + ' 0 ' + large + ',1 ' + x2.toFixed(1) + ',' + y2.toFixed(1) +
-          ' L' + xi2.toFixed(1) + ',' + yi2.toFixed(1) +
-          ' A' + ir + ',' + ir + ' 0 ' + large + ',0 ' + xi1.toFixed(1) + ',' + yi1.toFixed(1) +
-          ' Z" fill="' + s.c + '"/>';
-      });
-      const centerPct = highlight === 'full' ? fullPct : emptyPct;
-      html += '<text x="' + cx + '" y="' + (cy + 3) + '" text-anchor="middle" font-size="8" font-weight="700" fill="#334155">' + centerPct + '%</text>';
-      html += '</svg>';
-      el.innerHTML = html;
-    }
-
     const TEU_FULL_SHARE_PCT = 80;
-    const TEU_TYPE_STRUCT = [
-      { label: '内贸箱', v: 55, c: '#0f766e' },
-      { label: '外贸箱', v: 29, c: '#64748b' },
-      { label: '空箱调运', v: 10, c: '#94a3b8' },
-      { label: '冷藏箱', v: 4, c: '#f59e0b' },
-      { label: '特种箱', v: 2, c: '#cbd5e1' }
-    ];
 
-    function renderTeuTypePie(totalTeu) {
-      const segs = TEU_TYPE_STRUCT.map(function (s) {
-        return { label: s.label, v: Math.round(totalTeu * s.v / 100), c: s.c };
-      });
+    function renderTeuIePie(data) {
+      const totalTeu = wanTeuToTeu(data.teu);
+      const pair = (data.ieStack && data.ieStack.teu) ? data.ieStack.teu : [7, 4];
+      const sum = (pair[0] + pair[1]) || 1;
+      const impTeu = Math.round(totalTeu * pair[0] / sum);
+      const expTeu = Math.max(0, totalTeu - impTeu);
+      const segs = [
+        { label: '进口', v: impTeu, c: '#64748b' },
+        { label: '出口', v: expTeu, c: '#0f766e' }
+      ];
       if (document.getElementById('teuTypePieChart')) {
         renderCompactDonutPie('teuTypePieChart', segs, ' TEU');
       }
@@ -1727,51 +1827,18 @@
       renderCardIeBar('ieBarReceivable', recvPct);
     }
 
-    /** 集装箱趋势 · 双柱 · 进口 / 出口（TEU） */
-    function renderTeuTrendBars(svgId, imp, exp, months) {
-      const el = document.getElementById(svgId);
-      if (!el) return;
-      const W = 640, H = 180;
-      const pad = { l: 38, r: 4, t: 14, b: 28 };
-      const plotW = W - pad.l - pad.r;
-      const plotH = H - pad.t - pad.b;
-      const n = Math.max(imp.length, 1);
-      const maxV = Math.max.apply(null, imp.concat(exp).concat([1])) * 1.08;
-      const barW = Math.min(22, Math.max(10, (plotW / n) * 0.22));
-      const gap = 4;
-      const clusterW = barW * 2 + gap;
-      const step = n > 1 ? (plotW - clusterW) / (n - 1) : 0;
-      const y = function (v) { return pad.t + plotH - (v / maxV) * plotH; };
-      const series = [
-        { data: imp, cls: 'teu-bar-imp', name: '进口' },
-        { data: exp, cls: 'teu-bar-exp', name: '出口' }
-      ];
-
-      let svg = '<rect width="' + W + '" height="' + H + '" fill="transparent"/>';
-      for (let g = 0; g <= 3; g++) {
-        const gy = pad.t + (plotH / 3) * g;
-        const gv = Math.round(maxV * (1 - g / 3));
-        svg += '<line class="line-chart-grid" x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '"/>';
-        if (g < 3) {
-          svg += '<text class="line-chart-axis" x="' + (pad.l - 5) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10">' + gv.toLocaleString() + '</text>';
-        }
-      }
-
-      for (let i = 0; i < n; i++) {
-        const x0 = pad.l + i * step;
-        const cx = x0 + clusterW / 2;
-        series.forEach(function (s, si) {
-          const v = s.data[i] || 0;
-          const x = x0 + si * (barW + gap);
-          const barTop = y(v);
-          const tip = months[i] + ' · ' + s.name + ' ' + fmtTeuNum(v) + ' TEU';
-          svg += '<rect class="' + s.cls + '" x="' + x + '" y="' + barTop + '" width="' + barW +
-            '" height="' + Math.max(2, pad.t + plotH - barTop) + '" rx="2"><title>' + tip + '</title></rect>';
-        });
-        svg += '<text class="line-chart-axis" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10">' + months[i] + '</text>';
-      }
-      el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-      el.innerHTML = svg;
+    /** 集装箱趋势 · 折线图 · 仅总箱数（进口+出口 TEU） */
+    function renderTeuTrendLine(svgId, totals, months) {
+      renderLineChart(svgId, [
+        { data: totals, color: '#0f766e', bold: true }
+      ], {
+        width: 640,
+        height: 180,
+        months: months || TREND_MONTHS,
+        padL: 42,
+        padR: 8,
+        axisFmt: function (v) { return Math.round(v).toLocaleString(); }
+      });
     }
 
     function initBaseline() {
@@ -1925,70 +1992,29 @@
       }
     }
 
-    /** 吞吐量趋势 · 分组柱状图 · 散货 / 件杂货 / 集装箱折合 */
-    function renderVolTrendBars(svgId, loose, piece, teuTon, months) {
-      const el = document.getElementById(svgId);
-      if (!el) return;
-      const W = 640, H = 180;
-      const pad = { l: 34, r: 4, t: 14, b: 28 };
-      const plotW = W - pad.l - pad.r;
-      const plotH = H - pad.t - pad.b;
-      const n = Math.max(loose.length, 1);
-      const maxMain = Math.max.apply(null, loose.concat(piece).concat([1])) * 1.06;
-      const maxTeu = Math.max.apply(null, teuTon.concat([0.1])) * 1.15;
-      const groupW = plotW / n;
-      const barW = Math.min(20, Math.max(9, groupW * 0.28));
-      const gap = 3;
-      const clusterW = barW * 3 + gap * 2;
-      const step = n > 1 ? (plotW - clusterW) / (n - 1) : 0;
-      const yMain = function (v) { return pad.t + plotH - (v / maxMain) * plotH; };
-      const yTeu = function (v) { return pad.t + plotH - (v / maxTeu) * plotH * 0.62; };
-      const series = [
-        { data: loose, cls: 'vol-bar-loose', name: '散货', yFn: yMain },
-        { data: piece, cls: 'vol-bar-piece', name: '件杂货', yFn: yMain },
-        { data: teuTon, cls: 'vol-bar-teu', name: '集装箱', yFn: yTeu }
-      ];
-
-      let svg = '<rect width="' + W + '" height="' + H + '" fill="transparent"/>';
-      for (let g = 0; g <= 3; g++) {
-        const gy = pad.t + (plotH / 3) * g;
-        const gv = Math.round(maxMain * (1 - g / 3));
-        svg += '<line class="line-chart-grid" x1="' + pad.l + '" y1="' + gy + '" x2="' + (W - pad.r) + '" y2="' + gy + '"/>';
-        if (g < 3) {
-          svg += '<text class="line-chart-axis" x="' + (pad.l - 5) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10">' + gv + '</text>';
-        }
-      }
-
-      for (let i = 0; i < n; i++) {
-        const x0 = pad.l + i * step;
-        const cx = x0 + clusterW / 2;
-        series.forEach(function (s, si) {
-          const v = s.data[i] || 0;
-          const x = x0 + si * (barW + gap);
-          const barTop = s.yFn(v);
-          const tip = months[i] + ' · ' + s.name + ' ' + v + ' 万吨';
-          svg += '<rect class="' + s.cls + '" x="' + x + '" y="' + barTop + '" width="' + barW +
-            '" height="' + Math.max(2, pad.t + plotH - barTop) + '" rx="2"><title>' + tip + '</title></rect>';
-        });
-        svg += '<text class="line-chart-axis" x="' + cx + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10">' + months[i] + '</text>';
-      }
-      el.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
-      el.innerHTML = svg;
-    }
-
     function renderVolumeCharts(data) {
       const teuConv = data.teuTonWan;
 
-      renderVolTrendBars('volumeTrendChart', TREND_LOOSE, TREND_PIECE, TREND_TEU_TON, TREND_MONTHS);
+      renderLineChart('volumeTrendChart', [
+        { data: TREND_TOTAL, color: '#0f766e', bold: true }
+      ], {
+        width: 640,
+        height: 180,
+        months: TREND_MONTHS,
+        padL: 34,
+        padR: 8,
+        axisFmt: function (v) { return Math.round(v); }
+      });
       renderCargoPie(data.loose, data.piece, teuConv);
 
-      renderTeuTrendBars('teuTrendChart', TREND_TEU_IMP, TREND_TEU_EXP, TREND_MONTHS);
-      renderTeuTypePie(wanTeuToTeu(data.teu));
+      renderTeuTrendLine('teuTrendChart', TREND_TEU_TOTAL, TREND_MONTHS);
+      renderTeuIePie(data);
 
       renderCardIeBars(data);
       renderRankBars('cargoRankBars', CARGO_RANK_VOL);
       renderCustomerRankBars();
-      renderRankBars('recvCustomerRankBars', RECV_CUSTOMER_RANK);
+      renderRecvCustomerRankBars();
+      renderOverdueTable();
     }
 
     function rangeLabelForScope(scope) {
@@ -2035,35 +2061,26 @@
       document.getElementById('kpiLoose').textContent = data.loose.toLocaleString();
       document.getElementById('kpiPieceLabel').textContent = '件杂货（万吨）';
       document.getElementById('kpiPiece').textContent = data.piece.toLocaleString();
-      document.getElementById('kpiTeuLabel').textContent = '集装箱（TEU）';
-      document.getElementById('kpiTeu').textContent = fmtTeu(data.teu);
-      document.getElementById('kpiTeuConv').textContent = data.teuTonWan;
+      document.getElementById('kpiTeuLabel').textContent = '集装箱（万吨）';
+      document.getElementById('kpiTeu').textContent = data.teuTonWan.toLocaleString();
 
-      const teuPair = (data.ieStack && data.ieStack.teu) ? data.ieStack.teu : [7, 4];
-      const teuPairSum = teuPair[0] + teuPair[1] || 1;
-      const teuImpPct = Math.round(teuPair[0] / teuPairSum * 100);
       const teuTotalTeu = wanTeuToTeu(data.teu);
       const fullPct = TEU_FULL_SHARE_PCT;
       const emptyPct = 100 - fullPct;
       const teuFull = Math.round(teuTotalTeu * fullPct / 100);
       const teuEmpty = teuTotalTeu - teuFull;
       const modTotal = document.getElementById('kpiTeuModTotal');
-      const modConv = document.getElementById('kpiTeuModConv');
       const kpiFull = document.getElementById('kpiTeuFull');
       const kpiEmpty = document.getElementById('kpiTeuEmpty');
       const kpiFullShare = document.getElementById('kpiTeuFullShare');
       const kpiEmptyShare = document.getElementById('kpiTeuEmptyShare');
       if (modTotal) modTotal.textContent = fmtTeu(data.teu);
-      if (modConv) modConv.textContent = data.teuTonWan;
       if (kpiFull) kpiFull.textContent = fmtTeuNum(teuFull);
       if (kpiEmpty) kpiEmpty.textContent = fmtTeuNum(teuEmpty);
       if (kpiFullShare) kpiFullShare.textContent = fullPct + '%';
       if (kpiEmptyShare) kpiEmptyShare.textContent = emptyPct + '%';
 
       setTeuModTargets(teuTotalTeu, data.targetTeu);
-      renderCardIeBar('ieBarTeuModTotal', teuImpPct);
-      renderMiniLoadPie('kpiTeuFullPie', 'full', fullPct);
-      renderMiniLoadPie('kpiTeuEmptyPie', 'empty', fullPct);
 
       SUMMARY_DATA.volTeuLoad = {
         title: '重箱 / 空箱明细',
@@ -2076,16 +2093,19 @@
         ]
       };
 
+      const teuTargetTon = (Number(data.teu) > 0)
+        ? Math.round(Number(data.targetTeu) / Number(data.teu) * Number(data.teuTonWan) * 10) / 10
+        : Number(data.teuTonWan);
       setVolTargets({
         total: totalTon,
         loose: data.loose,
         piece: data.piece,
-        teu: data.teu
+        teuTon: data.teuTonWan
       }, {
         total: data.targetTotal,
         loose: data.targetLoose,
         piece: data.targetPiece,
-        teu: data.targetTeu
+        teuTon: teuTargetTon
       });
 
       document.getElementById('volumePeriodHint').innerHTML = '当前范围：<strong class="text-slate-600">' + badge + ' · ' + label + '</strong>';
@@ -2190,7 +2210,9 @@
     function renderCustomerMoneyTable() {
       const body = document.getElementById('custMoneyBody');
       if (!body) return;
-      const rows = CUSTOMER_MONEY.slice().map(function (r) {
+      const isGroup = custMoneyDim === 'group';
+      const source = isGroup ? buildCustomerGroupMoney() : CUSTOMER_MONEY;
+      const rows = source.slice().map(function (r) {
         return Object.assign({}, r, {
           revShow: Math.max(1, Math.round(r.rev * custMoneyScale)),
           recv: Math.max(0, (r.revAll || r.rev) - r.paid)
@@ -2228,9 +2250,29 @@
           '</tr>';
       }).join('');
 
+      const titleEl = document.getElementById('custMoneyTitle');
+      const hintEl = document.getElementById('custMoneyHint');
+      const colName = document.getElementById('custMoneyColName');
+      if (titleEl) titleEl.textContent = isGroup ? '分组明细' : '客户明细';
+      if (hintEl) {
+        hintEl.textContent = isGroup
+          ? '一行一分组 · 作业量/营收等按组汇总 · 默认按营收降序 · 点击表头切换排序'
+          : '一行一客户 · 作业量按散货/件杂/集装箱分列 · 默认按营收降序 · 点击表头切换排序';
+      }
+      if (colName) {
+        const ind = colName.querySelector('.sort-ind');
+        const indText = ind ? ind.textContent : '↕';
+        colName.innerHTML = (isGroup ? '分组' : '客户') + '<span class="sort-ind">' + indText + '</span>';
+      }
+
       const foot = document.getElementById('custMoneyFoot');
-      if (foot) foot.textContent = '共 ' + rows.length + ' 家客户 · 期间营收合计 ' +
-        rows.reduce(function (s, r) { return s + r.revShow; }, 0).toLocaleString() + ' 万';
+      if (foot) {
+        foot.textContent = isGroup
+          ? ('共 ' + rows.length + ' 个分组 · 期间营收合计 ' +
+            rows.reduce(function (s, r) { return s + r.revShow; }, 0).toLocaleString() + ' 万')
+          : ('共 ' + rows.length + ' 家客户 · 期间营收合计 ' +
+            rows.reduce(function (s, r) { return s + r.revShow; }, 0).toLocaleString() + ' 万');
+      }
 
       document.querySelectorAll('#custMoneyTable th[data-sort]').forEach(function (th) {
         const k = th.getAttribute('data-sort');

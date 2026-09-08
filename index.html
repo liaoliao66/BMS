@@ -2,13 +2,56 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0;url=prototype/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>经营管理系统 · 跳转中</title>
-  <script>location.replace('prototype/index.html');</script>
+  <title>经营管理系统 · 本地打开说明</title>
+  <style>
+    body { font-family: "Microsoft YaHei", sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1.25rem; color: #334155; line-height: 1.6; }
+    h1 { font-size: 1.35rem; color: #0f172a; }
+    .box { background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px; padding: 1rem 1.1rem; margin: 1.25rem 0; color: #9a3412; }
+    .ok { background: #f0fdfa; border-color: #99f6e4; color: #115e59; }
+    a.btn { display: inline-block; margin: 0.35rem 0.5rem 0.35rem 0; padding: 0.55rem 1rem; border-radius: 10px; background: #0f766e; color: #fff; text-decoration: none; font-size: 0.9rem; }
+    a.btn.secondary { background: #fff; color: #0f766e; border: 1px solid #cbd5e1; }
+    code { background: #f1f5f9; padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.85em; }
+    ol { padding-left: 1.25rem; }
+  </style>
 </head>
-<body style="font-family:sans-serif;padding:2rem;color:#334155">
-  <p>正在进入版本选择页…</p>
-  <p><a href="prototype/index.html">若未自动跳转，请点击这里</a></p>
+<body>
+  <h1>经营管理系统 · 本地入口</h1>
+  <div class="box">
+    <strong>请勿依赖双击本文件打开原型。</strong><br />
+    仓库路径含中文（如「存档」「产品」）时，Chrome/Edge 会把地址编乱，随后报「系统找不到指定的文件」。
+  </div>
+  <div class="box ok">
+    <strong>推荐做法：</strong>回到本文件夹，双击 <code>打开原型.bat</code>（或 <code>打开v1原型.bat</code>）。<br />
+    脚本会经英文联接路径 <code>C:\Users\user\BMS</code> 打开，可避开乱码。
+  </div>
+  <p>若 bat 已创建联接，也可直接点下面链接（仅在联接存在时有效）：</p>
+  <p>
+    <a class="btn" href="file:///C:/Users/user/BMS/prototype/index.html">版本选择页</a>
+    <a class="btn secondary" href="file:///C:/Users/user/BMS/prototype/versions/v1.0.0/index.html">v1.0.0 原型</a>
+    <a class="btn secondary" href="file:///C:/Users/user/BMS/prototype/versions/v2.0.0/index.html">v2.0.0 入口</a>
+  </p>
+  <p style="font-size:0.9rem;color:#64748b">联接未创建时，上面链接也会失败，请先运行 bat。</p>
+  <ol>
+    <li>双击 <code>打开原型.bat</code></li>
+    <li>浏览器应打开版本选择页</li>
+    <li>再点 v1.0.0 / v2.0.0</li>
+  </ol>
+  <p style="font-size:0.85rem;color:#94a3b8">在线访问：<a href="https://liaoliao66.github.io/BMS/">GitHub Pages</a></p>
+  <script>
+    // 若当前已在英文联接路径下打开，则自动进入版本选择页
+    (function () {
+      try {
+        var href = location.href || '';
+        if (/\/BMS\/(index\.html)?$/i.test(href.replace(/\\/g, '/')) || /file:\/\/\/C:\/Users\/[^/]+\/BMS\//i.test(href)) {
+          if (href.indexOf('C:/Users/') !== -1 || href.indexOf('C:%5CUsers%5C') !== -1 || /\/BMS\//i.test(href)) {
+            if (/\/BMS\/index\.html/i.test(href) || /\/BMS\/?$/i.test(href)) {
+              location.replace('prototype/index.html');
+            }
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
 </body>
 </html>

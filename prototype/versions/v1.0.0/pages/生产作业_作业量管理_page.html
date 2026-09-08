@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>作业量管理 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .view-tab {
+      font-size: 13px; padding: 0.4rem 0.9rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;
+      background: #fff; color: #64748b; cursor: pointer;
+    }
+    .view-tab.active { background: #0f766e; color: #fff; border-color: #0f766e; font-weight: 600; }
+    .dim-picker {
+      display: inline-flex; gap: 0; padding: 2px; background: #f1f5f9; border-radius: 0.5rem; border: 1px solid #e2e8f0;
+    }
+    .dim-btn {
+      font-size: 11px; padding: 0.2rem 0.55rem; border-radius: 0.375rem; border: none; background: transparent;
+      color: #64748b; cursor: pointer;
+    }
+    .dim-btn.active { background: #fff; color: #0f766e; font-weight: 600; box-shadow: 0 1px 2px rgba(15,23,42,.06); }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="ops-volume" data-title="作业量管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">
+      以<strong>业务日</strong>登记散货 / 件杂 / 集装箱作业量；支持按<strong>月 / 季 / 年</strong>汇总。
+      汇总默认<strong>客户</strong>维度，可切换<strong>客户组</strong>（按客户当前所属组重算 · 自然季）。供经营总览引用。
+    </p>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex gap-2">
+        <button type="button" class="view-tab active" data-view="daily" onclick="switchView('daily')">日明细</button>
+        <button type="button" class="view-tab" data-view="summary" onclick="switchView('summary')">汇总</button>
+      </div>
+      <button type="button" id="btnRegister" onclick="openVolForm()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2">
+        <i class="fa-solid fa-plus"></i>按日登记
+      </button>
+    </div>
+
+    <!-- 日明细 -->
+    <div id="view-daily">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <input type="date" id="fDateFrom" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" value="2026-08-01" />
+        <span class="text-slate-400 self-center text-sm">至</span>
+        <input type="date" id="fDateTo" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" value="2026-08-31" />
+        <select id="fCargo" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderDaily()">
+          <option value="">全部货类</option><option>散货</option><option>件杂货</option><option>集装箱</option>
+        </select>
+        <select id="fCustomer" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderDaily()">
+          <option value="">全部客户</option>
+        </select>
+        <select id="fGroup" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderDaily()">
+          <option value="">全部客户组</option>
+          <option>散货潜力</option><option>船东重点</option><option>战略钢厂</option><option>未分组</option>
+        </select>
+        <button type="button" onclick="renderDaily()" class="bg-slate-800 text-white text-sm px-4 py-2 rounded-xl">查询</button>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+          <div class="text-xs text-slate-500">筛选内吞吐（万吨）</div>
+          <div class="text-xl font-semibold mt-1 text-teal-800" id="kpiTon">—</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+          <div class="text-xs text-slate-500">散货（万吨）</div>
+          <div class="text-xl font-semibold mt-1" id="kpiLoose">—</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+          <div class="text-xs text-slate-500">件杂（万吨）</div>
+          <div class="text-xl font-semibold mt-1" id="kpiPiece">—</div>
+        </div>
+        <div class="bg-white rounded-2xl p-4 shadow-[0_4px_12px_rgba(0,0,0,0.05)]">
+          <div class="text-xs text-slate-500">集装箱（TEU）</div>
+          <div class="text-xl font-semibold mt-1" id="kpiTeu">—</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm min-w-[960px]">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-4 py-3 text-left">业务日</th>
+                <th class="px-3 py-3 text-left">货类</th>
+                <th class="px-3 py-3 text-left">货种</th>
+                <th class="px-3 py-3 text-left">客户</th>
+                <th class="px-3 py-3 text-left">客户组</th>
+                <th class="px-3 py-3 text-right">进口</th>
+                <th class="px-3 py-3 text-right">出口</th>
+                <th class="px-3 py-3 text-right">合计</th>
+                <th class="px-3 py-3 text-left">口径</th>
+                <th class="px-4 py-3 text-left">操作</th>
+              </tr>
+            </thead>
+            <tbody id="dailyBody"></tbody>
+          </table>
+        </div>
+        <div class="px-5 py-3 border-t text-sm text-slate-500" id="dailyFoot">共 — 条</div>
+      </div>
+    </div>
+
+    <!-- 汇总 -->
+    <div id="view-summary" class="hidden">
+      <div class="flex flex-wrap items-center gap-2 mb-4">
+        <select id="sumPeriodType" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onSumPeriodTypeChange()">
+          <option value="month">按月</option>
+          <option value="quarter">按季</option>
+          <option value="year">按年</option>
+        </select>
+        <select id="sumPeriodValue" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderSummary()"></select>
+        <div class="dim-picker ml-1" title="汇总维度">
+          <button type="button" class="dim-btn active" data-dim="customer" onclick="setSumDim('customer')">客户</button>
+          <button type="button" class="dim-btn" data-dim="group" onclick="setSumDim('group')">客户组</button>
+        </div>
+        <span class="text-xs text-slate-400 ml-1">默认客户 · 可切换客户组</span>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm min-w-[880px]">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-4 py-3 text-left" id="sumColDim">客户</th>
+                <th class="px-3 py-3 text-right">散货（万吨）</th>
+                <th class="px-3 py-3 text-right">件杂（万吨）</th>
+                <th class="px-3 py-3 text-right">箱 TEU</th>
+                <th class="px-3 py-3 text-right">箱折合（万吨）</th>
+                <th class="px-3 py-3 text-right">吞吐合计（万吨）</th>
+                <th class="px-4 py-3 text-left">操作</th>
+              </tr>
+            </thead>
+            <tbody id="summaryBody"></tbody>
+          </table>
+        </div>
+        <div class="px-5 py-3 border-t text-sm text-slate-500" id="summaryFoot">—</div>
+      </div>
+    </div>
+
+    <!-- 登记弹窗 -->
+    <div id="modal-vol" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-vol')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="volFormTitle">按日登记作业量</h3>
+          <button type="button" onclick="BMS.closeModal('modal-vol')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">业务日期 <span class="text-red-500">*</span></label>
+              <input type="date" id="vDate" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-12" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">货类 <span class="text-red-500">*</span></label>
+              <select id="vCargo" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="onCargoChange()">
+                <option value="散货">散货</option>
+                <option value="件杂货">件杂货</option>
+                <option value="集装箱">集装箱</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">货种 <span class="text-red-500">*</span></label>
+              <input id="vKind" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="粮食" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">客户 <span class="text-red-500">*</span></label>
+              <select id="vCustomer" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="syncCustomerGroup()"></select>
+              <p class="text-xs text-slate-400 mt-1">所属客户组：<span id="vGroupLabel">—</span></p>
+            </div>
+          </div>
+
+          <!-- 散货 / 件杂 -->
+          <div id="blockBulk" class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">进口（万吨）</label>
+              <input type="number" step="0.1" id="vImpTon" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="12" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">出口（万吨）</label>
+              <input type="number" step="0.1" id="vExpTon" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="6" />
+            </div>
+          </div>
+
+          <!-- 集装箱：先 TEU，再折合吨 -->
+          <div id="blockTeu" class="hidden space-y-3">
+            <div class="rounded-xl border border-slate-100 bg-slate-50/80 px-3 py-2 text-xs text-slate-500">① 先录入 TEU，② 再录入折合万吨</div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">进口（TEU） <span class="text-red-500">*</span></label>
+                <input type="number" id="vImpTeu" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="800" />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">出口（TEU） <span class="text-red-500">*</span></label>
+                <input type="number" id="vExpTeu" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="500" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">折合进口（万吨） <span class="text-red-500">*</span></label>
+                <input type="number" step="0.01" id="vImpConv" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="0.8" />
+              </div>
+              <div>
+                <label class="block text-sm text-slate-600 mb-1">折合出口（万吨） <span class="text-red-500">*</span></label>
+                <input type="number" step="0.01" id="vExpConv" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="0.5" />
+              </div>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-400">唯一键：业务日 + 货类 + 货种 + 客户。重复提交需确认覆盖。</p>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveVol()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-vol')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/common.js"></script>
+  <script>
+    const CUSTOMER_GROUP = {
+      '中粮储运': '散货潜力',
+      '中谷物流': '散货潜力',
+      '远洋货运': '船东重点',
+      '中远散运': '船东重点',
+      '港联贸易': '战略钢厂',
+      '粮港代理': '未分组',
+      '海河储运': '未分组',
+      '港机粮贸': '未分组'
+    };
+    const CUSTOMERS = Object.keys(CUSTOMER_GROUP);
+
+    let DAILY = [
+      { date: '2026-08-05', cargo: '散货', kind: '粮食', customer: '中粮储运', impTon: 18, expTon: 8, impTeu: 0, expTeu: 0, impConv: 0, expConv: 0 },
+      { date: '2026-08-12', cargo: '散货', kind: '粮食', customer: '中谷物流', impTon: 14, expTon: 6, impTeu: 0, expTeu: 0, impConv: 0, expConv: 0 },
+      { date: '2026-08-12', cargo: '散货', kind: '粮食', customer: '中粮储运', impTon: 12, expTon: 5, impTeu: 0, expTeu: 0, impConv: 0, expConv: 0 },
+      { date: '2026-08-15', cargo: '件杂货', kind: '钢材', customer: '港联贸易', impTon: 4, expTon: 3, impTeu: 0, expTeu: 0, impConv: 0, expConv: 0 },
+      { date: '2026-08-18', cargo: '集装箱', kind: '重箱', customer: '粮港代理', impTon: 0, expTon: 0, impTeu: 800, expTeu: 500, impConv: 0.8, expConv: 0.5 },
+      { date: '2026-08-20', cargo: '散货', kind: '煤炭', customer: '远洋货运', impTon: 10, expTon: 4, impTeu: 0, expTeu: 0, impConv: 0, expConv: 0 },
+      { date: '2026-07-22', cargo: '散货', kind: '粮食', customer: '中谷物流', impTon: 20, expTon: 9, impTeu: 0, expTeu: 0, impConv: 0, expConv: 0 },
+      { date: '2026-09-03', cargo: '集装箱', kind: '重箱', customer: '海河储运', impTon: 0, expTon: 0, impTeu: 400, expTeu: 200, impConv: 0.4, expConv: 0.2 }
+    ];
+
+    let editingKey = null;
+    let sumDim = 'customer';
+    let currentView = 'daily';
+
+    function groupOf(name) { return CUSTOMER_GROUP[name] || '未分组'; }
+
+    function rowTon(r) {
+      if (r.cargo === '集装箱') return (Number(r.impConv) || 0) + (Number(r.expConv) || 0);
+      return (Number(r.impTon) || 0) + (Number(r.expTon) || 0);
+    }
+    function rowTeu(r) {
+      if (r.cargo !== '集装箱') return 0;
+      return (Number(r.impTeu) || 0) + (Number(r.expTeu) || 0);
+    }
+    function uniqueKey(r) {
+      return [r.date, r.cargo, r.kind, r.customer].join('|');
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll('.view-tab').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === view);
+      });
+      document.getElementById('view-daily').classList.toggle('hidden', view !== 'daily');
+      document.getElementById('view-summary').classList.toggle('hidden', view !== 'summary');
+      document.getElementById('btnRegister').classList.toggle('hidden', view !== 'daily');
+      if (view === 'summary') renderSummary();
+    }
+
+    function fillCustomerSelects() {
+      const opts = CUSTOMERS.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+      document.getElementById('vCustomer').innerHTML = opts;
+      document.getElementById('fCustomer').innerHTML = '<option value="">全部客户</option>' + opts;
+    }
+
+    function syncCustomerGroup() {
+      const c = document.getElementById('vCustomer').value;
+      document.getElementById('vGroupLabel').textContent = groupOf(c);
+    }
+
+    function onCargoChange() {
+      const isTeu = document.getElementById('vCargo').value === '集装箱';
+      document.getElementById('blockBulk').classList.toggle('hidden', isTeu);
+      document.getElementById('blockTeu').classList.toggle('hidden', !isTeu);
+      if (isTeu && !document.getElementById('vKind').value) document.getElementById('vKind').value = '重箱';
+      if (!isTeu && document.getElementById('vKind').value === '重箱') document.getElementById('vKind').value = '粮食';
+    }
+
+    function openVolForm(row) {
+      editingKey = row ? uniqueKey(row) : null;
+      document.getElementById('volFormTitle').textContent = row ? '编辑日作业量' : '按日登记作业量';
+      if (row) {
+        document.getElementById('vDate').value = row.date;
+        document.getElementById('vCargo').value = row.cargo;
+        document.getElementById('vKind').value = row.kind;
+        document.getElementById('vCustomer').value = row.customer;
+        document.getElementById('vImpTon').value = row.impTon || 0;
+        document.getElementById('vExpTon').value = row.expTon || 0;
+        document.getElementById('vImpTeu').value = row.impTeu || 0;
+        document.getElementById('vExpTeu').value = row.expTeu || 0;
+        document.getElementById('vImpConv').value = row.impConv || 0;
+        document.getElementById('vExpConv').value = row.expConv || 0;
+      }
+      onCargoChange();
+      syncCustomerGroup();
+      BMS.openModal('modal-vol');
+    }
+
+    function saveVol() {
+      const cargo = document.getElementById('vCargo').value;
+      const row = {
+        date: document.getElementById('vDate').value,
+        cargo: cargo,
+        kind: (document.getElementById('vKind').value || '').trim(),
+        customer: document.getElementById('vCustomer').value,
+        impTon: 0, expTon: 0, impTeu: 0, expTeu: 0, impConv: 0, expConv: 0
+      };
+      if (!row.date || !row.kind || !row.customer) {
+        BMS.toast('请完整填写必填项', 'warn');
+        return;
+      }
+      if (cargo === '集装箱') {
+        row.impTeu = Number(document.getElementById('vImpTeu').value) || 0;
+        row.expTeu = Number(document.getElementById('vExpTeu').value) || 0;
+        row.impConv = Number(document.getElementById('vImpConv').value) || 0;
+        row.expConv = Number(document.getElementById('vExpConv').value) || 0;
+        if (row.impTeu + row.expTeu <= 0) {
+          BMS.toast('请先录入 TEU', 'warn');
+          return;
+        }
+        if (row.impConv + row.expConv <= 0) {
+          BMS.toast('请再录入折合万吨', 'warn');
+          return;
+        }
+      } else {
+        row.impTon = Number(document.getElementById('vImpTon').value) || 0;
+        row.expTon = Number(document.getElementById('vExpTon').value) || 0;
+      }
+      const key = uniqueKey(row);
+      const idx = DAILY.findIndex(function (r) { return uniqueKey(r) === key; });
+      if (idx >= 0 && editingKey !== key) {
+        if (!confirm('同一业务日 + 货类 + 货种 + 客户已存在，确认覆盖？')) return;
+        DAILY[idx] = row;
+      } else if (editingKey && editingKey !== key) {
+        DAILY = DAILY.filter(function (r) { return uniqueKey(r) !== editingKey; });
+        const exist = DAILY.findIndex(function (r) { return uniqueKey(r) === key; });
+        if (exist >= 0) DAILY[exist] = row; else DAILY.push(row);
+      } else if (idx >= 0) {
+        DAILY[idx] = row;
+      } else {
+        DAILY.push(row);
+      }
+      BMS.toast('作业量已保存（演示）');
+      BMS.closeModal('modal-vol');
+      renderDaily();
+      if (currentView === 'summary') renderSummary();
+    }
+
+    function deleteVol(key) {
+      if (!confirm('确认删除该日作业量？删除后汇总将重算。')) return;
+      DAILY = DAILY.filter(function (r) { return uniqueKey(r) !== key; });
+      BMS.toast('已删除');
+      renderDaily();
+      if (currentView === 'summary') renderSummary();
+    }
+
+    function filteredDaily() {
+      const from = document.getElementById('fDateFrom').value;
+      const to = document.getElementById('fDateTo').value;
+      const cargo = document.getElementById('fCargo').value;
+      const customer = document.getElementById('fCustomer').value;
+      const group = document.getElementById('fGroup').value;
+      return DAILY.filter(function (r) {
+        if (from && r.date < from) return false;
+        if (to && r.date > to) return false;
+        if (cargo && r.cargo !== cargo) return false;
+        if (customer && r.customer !== customer) return false;
+        if (group && groupOf(r.customer) !== group) return false;
+        return true;
+      }).slice().sort(function (a, b) {
+        return b.date.localeCompare(a.date) || a.customer.localeCompare(b.customer, 'zh');
+      });
+    }
+
+    function renderDaily() {
+      const rows = filteredDaily();
+      let loose = 0, piece = 0, teu = 0, ton = 0;
+      rows.forEach(function (r) {
+        ton += rowTon(r);
+        teu += rowTeu(r);
+        if (r.cargo === '散货') loose += rowTon(r);
+        if (r.cargo === '件杂货') piece += rowTon(r);
+      });
+      document.getElementById('kpiTon').textContent = round2(ton);
+      document.getElementById('kpiLoose').textContent = round2(loose);
+      document.getElementById('kpiPiece').textContent = round2(piece);
+      document.getElementById('kpiTeu').textContent = teu.toLocaleString();
+
+      const body = document.getElementById('dailyBody');
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="10" class="px-5 py-10 text-center text-slate-400">该期间暂无作业量，请按日登记或等待生产系统同步</td></tr>';
+      } else {
+        body.innerHTML = rows.map(function (r) {
+          const g = groupOf(r.customer);
+          let imp, exp, total, unit;
+          if (r.cargo === '集装箱') {
+            imp = (r.impTeu || 0).toLocaleString() + ' TEU / ' + round2(r.impConv) + ' 万吨';
+            exp = (r.expTeu || 0).toLocaleString() + ' TEU / ' + round2(r.expConv) + ' 万吨';
+            total = rowTeu(r).toLocaleString() + ' TEU · ' + round2(rowTon(r)) + ' 万吨';
+            unit = 'TEU + 折合';
+          } else {
+            imp = round2(r.impTon);
+            exp = round2(r.expTon);
+            total = round2(rowTon(r));
+            unit = '万吨';
+          }
+          const key = uniqueKey(r);
+          return '<tr class="border-t row-hover">' +
+            '<td class="px-4 py-3">' + r.date + '</td>' +
+            '<td class="px-3 py-3">' + r.cargo + '</td>' +
+            '<td class="px-3 py-3">' + r.kind + '</td>' +
+            '<td class="px-3 py-3">' + r.customer + '</td>' +
+            '<td class="px-3 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">' + g + '</span></td>' +
+            '<td class="px-3 py-3 text-right text-xs">' + imp + '</td>' +
+            '<td class="px-3 py-3 text-right text-xs">' + exp + '</td>' +
+            '<td class="px-3 py-3 text-right font-medium text-xs">' + total + '</td>' +
+            '<td class="px-3 py-3 text-slate-500 text-xs">' + unit + '</td>' +
+            '<td class="px-4 py-3 space-x-2 whitespace-nowrap">' +
+            '<button type="button" class="text-teal-700 hover:underline" data-key="' + encodeURIComponent(key) + '" onclick="editByKey(this)">编辑</button>' +
+            '<button type="button" class="text-slate-400 hover:text-red-600" data-key="' + encodeURIComponent(key) + '" onclick="delByKey(this)">删除</button>' +
+            '</td></tr>';
+        }).join('');
+      }
+      document.getElementById('dailyFoot').textContent = '共 ' + rows.length + ' 条日明细';
+    }
+
+    function editByKey(el) {
+      const key = decodeURIComponent(el.getAttribute('data-key'));
+      const row = DAILY.find(function (r) { return uniqueKey(r) === key; });
+      if (row) openVolForm(row);
+    }
+    function delByKey(el) {
+      deleteVol(decodeURIComponent(el.getAttribute('data-key')));
+    }
+
+    function round2(n) {
+      return Math.round((Number(n) || 0) * 100) / 100;
+    }
+
+    function onSumPeriodTypeChange() {
+      fillSumPeriodValues();
+      renderSummary();
+    }
+
+    function fillSumPeriodValues() {
+      const type = document.getElementById('sumPeriodType').value;
+      const sel = document.getElementById('sumPeriodValue');
+      let opts = [];
+      if (type === 'month') {
+        opts = ['2026-09', '2026-08', '2026-07', '2026-06'];
+      } else if (type === 'quarter') {
+        opts = ['2026-Q3', '2026-Q2', '2026-Q1'];
+      } else {
+        opts = ['2026', '2025'];
+      }
+      sel.innerHTML = opts.map(function (v) { return '<option value="' + v + '">' + v + '</option>'; }).join('');
+      if (type === 'month') sel.value = '2026-08';
+      else if (type === 'quarter') sel.value = '2026-Q3';
+      else sel.value = '2026';
+    }
+
+    function inPeriod(dateStr, type, value) {
+      if (type === 'month') return dateStr.slice(0, 7) === value;
+      if (type === 'year') return dateStr.slice(0, 4) === value;
+      if (type === 'quarter') {
+        const m = Number(dateStr.slice(5, 7));
+        const y = dateStr.slice(0, 4);
+        const q = m <= 3 ? 1 : (m <= 6 ? 2 : (m <= 9 ? 3 : 4));
+        return value === (y + '-Q' + q);
+      }
+      return false;
+    }
+
+    function setSumDim(dim) {
+      sumDim = dim === 'group' ? 'group' : 'customer';
+      document.querySelectorAll('.dim-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-dim') === sumDim);
+      });
+      document.getElementById('sumColDim').textContent = sumDim === 'group' ? '客户组' : '客户';
+      renderSummary();
+    }
+
+    function renderSummary() {
+      const type = document.getElementById('sumPeriodType').value;
+      const value = document.getElementById('sumPeriodValue').value;
+      const rows = DAILY.filter(function (r) { return inPeriod(r.date, type, value); });
+      const map = {};
+      rows.forEach(function (r) {
+        const key = sumDim === 'group' ? groupOf(r.customer) : r.customer;
+        if (!map[key]) map[key] = { name: key, loose: 0, piece: 0, teu: 0, conv: 0, custSet: {} };
+        const row = map[key];
+        row.custSet[r.customer] = true;
+        if (r.cargo === '散货') row.loose += rowTon(r);
+        else if (r.cargo === '件杂货') row.piece += rowTon(r);
+        else if (r.cargo === '集装箱') {
+          row.teu += rowTeu(r);
+          row.conv += rowTon(r);
+        }
+      });
+      const list = Object.keys(map).map(function (k) {
+        const r = map[k];
+        r.total = round2(r.loose + r.piece + r.conv);
+        r.custCount = Object.keys(r.custSet).length;
+        return r;
+      }).sort(function (a, b) { return b.total - a.total; });
+
+      const body = document.getElementById('summaryBody');
+      if (!list.length) {
+        body.innerHTML = '<tr><td colspan="7" class="px-5 py-10 text-center text-slate-400">该期间暂无汇总数据</td></tr>';
+      } else {
+        body.innerHTML = list.map(function (r) {
+          const dimCell = sumDim === 'group'
+            ? (r.name + ' <span class="text-xs text-slate-400">(' + r.custCount + ' 家)</span>')
+            : r.name;
+          return '<tr class="border-t row-hover">' +
+            '<td class="px-4 py-3">' + dimCell + '</td>' +
+            '<td class="px-3 py-3 text-right">' + round2(r.loose) + '</td>' +
+            '<td class="px-3 py-3 text-right">' + round2(r.piece) + '</td>' +
+            '<td class="px-3 py-3 text-right">' + (r.teu ? r.teu.toLocaleString() : '—') + '</td>' +
+            '<td class="px-3 py-3 text-right">' + (r.conv ? round2(r.conv) : '—') + '</td>' +
+            '<td class="px-3 py-3 text-right font-medium text-teal-800">' + r.total + '</td>' +
+            '<td class="px-4 py-3"><button type="button" class="text-teal-700 hover:underline text-xs" onclick="drillToDaily(\'' + r.name.replace(/'/g, "\\'") + '\')">看日明细</button></td>' +
+            '</tr>';
+        }).join('');
+      }
+      const sumTon = list.reduce(function (s, r) { return s + r.total; }, 0);
+      document.getElementById('summaryFoot').textContent =
+        value + ' · 按' + (sumDim === 'group' ? '客户组' : '客户') + '汇总 · 共 ' + list.length + ' 行 · 吞吐 ' + round2(sumTon) + ' 万吨';
+    }
+
+    function drillToDaily(name) {
+      switchView('daily');
+      if (sumDim === 'group') {
+        document.getElementById('fGroup').value = name;
+        document.getElementById('fCustomer').value = '';
+      } else {
+        document.getElementById('fCustomer').value = name;
+        document.getElementById('fGroup').value = '';
+      }
+      const type = document.getElementById('sumPeriodType').value;
+      const value = document.getElementById('sumPeriodValue').value;
+      if (type === 'month') {
+        document.getElementById('fDateFrom').value = value + '-01';
+        document.getElementById('fDateTo').value = value + '-31';
+      } else if (type === 'year') {
+        document.getElementById('fDateFrom').value = value + '-01-01';
+        document.getElementById('fDateTo').value = value + '-12-31';
+      } else if (type === 'quarter') {
+        const q = Number(value.slice(-1));
+        const y = value.slice(0, 4);
+        const startM = (q - 1) * 3 + 1;
+        const endM = q * 3;
+        document.getElementById('fDateFrom').value = y + '-' + String(startM).padStart(2, '0') + '-01';
+        document.getElementById('fDateTo').value = y + '-' + String(endM).padStart(2, '0') + '-31';
+      }
+      renderDaily();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      fillCustomerSelects();
+      fillSumPeriodValues();
+      onCargoChange();
+      syncCustomerGroup();
+      renderDaily();
+    });
+  </script>
+</body>
+</html>

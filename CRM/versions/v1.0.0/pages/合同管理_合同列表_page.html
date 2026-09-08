@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>合同列表 · 铁水联运码头 CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }</style>
+</head>
+<body class="text-slate-800">
+  <div id="sidebar-mount"></div>
+  <main class="ml-56 min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+      <header class="flex justify-between items-center mb-6">
+        <div><h1 class="text-2xl font-bold">合同管理</h1><p class="text-slate-500 text-sm mt-1">生效 45 份 · 含完整计费明细</p></div>
+        <button type="button" onclick="CRM_MODALS.contractCreate()" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium active:scale-95"><i class="fa-solid fa-plus mr-2"></i>新建合同</button>
+      </header>
+
+      <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
+        <div><label class="text-xs text-slate-500 block mb-1">合同编号/名称</label><input type="text" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-48 outline-none focus:ring-2 focus:ring-teal-500"></div>
+        <div><label class="text-xs text-slate-500 block mb-1">到期预警</label><select class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-32"><option>全部</option><option>7天内</option><option>30天内</option></select></div>
+        <button class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm">查询</button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600"><tr>
+            <th class="px-4 py-3 text-left font-medium">合同编号</th>
+            <th class="px-4 py-3 text-left font-medium">合同名称</th>
+            <th class="px-4 py-3 text-left font-medium">客户</th>
+            <th class="px-4 py-3 text-left font-medium">金额</th>
+            <th class="px-4 py-3 text-left font-medium">计费项</th>
+            <th class="px-4 py-3 text-left font-medium">到期日</th>
+            <th class="px-4 py-3 text-left font-medium">状态</th>
+            <th class="px-4 py-3 text-left font-medium">操作</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.contractDetail('首钢')">
+              <td class="px-4 py-3">HT-2026-0089</td>
+              <td class="px-4 py-3 text-teal-700 font-medium">首钢码头装卸服务合同</td>
+              <td class="px-4 py-3">首钢集团</td>
+              <td class="px-4 py-3 font-medium">520 万</td>
+              <td class="px-4 py-3">6 项</td>
+              <td class="px-4 py-3 text-amber-600 font-medium">2026-09-03 ⚠</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">生效</span></td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()"><button type="button" onclick="CRM_MODALS.contractDetail('首钢')" class="text-teal-600 hover:underline">详情</button></td>
+            </tr>
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.contractDetail('宝钢')">
+              <td class="px-4 py-3">HT-2026-0076</td>
+              <td class="px-4 py-3 text-teal-700 font-medium">宝钢铁矿铁水联运框架合同</td>
+              <td class="px-4 py-3">宝钢股份</td>
+              <td class="px-4 py-3 font-medium">860 万</td>
+              <td class="px-4 py-3">8 项</td>
+              <td class="px-4 py-3">2027-06-30</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">生效</span></td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()"><button type="button" onclick="CRM_MODALS.contractDetail('宝钢')" class="text-teal-600 hover:underline">详情</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <template id="tpl-contract-create">
+    <div class="space-y-5">
+      <div class="grid grid-cols-2 gap-4">
+        <div class="crm-field"><label class="crm-label">合同编号</label><input readonly value="HT-2026-0093" class="bg-slate-50"></div>
+        <div class="crm-field"><label class="crm-label">合同名称 <span class="crm-req">*</span></label><input value="宝钢铁矿铁水联运框架合同"></div>
+        <div class="crm-field"><label class="crm-label">关联客户</label><select><option selected>宝钢股份有限公司</option></select></div>
+        <div class="crm-field"><label class="crm-label">合同类型</label><select><option selected>综合</option><option>装卸服务</option><option>堆存</option></select></div>
+        <div class="crm-field"><label class="crm-label">生效日期</label><input type="date"></div>
+        <div class="crm-field"><label class="crm-label">到期日期</label><input type="date"></div>
+        <div class="crm-field"><label class="crm-label">合同总金额（万元）</label><input type="number" value="860" class="bg-teal-50 font-medium"></div>
+        <div class="crm-field"><label class="crm-label">约定吞吐量（万吨/年）</label><input type="number" value="280"></div>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-3"><span class="font-medium text-slate-900">计费明细</span><button type="button" onclick="addBillingRow(this)" class="text-teal-700 text-xs hover:underline"><i class="fa-solid fa-plus mr-1"></i>添加费用项</button></div>
+        <div class="overflow-x-auto border rounded-xl">
+          <table class="w-full text-xs">
+            <thead class="bg-slate-50"><tr><th class="px-2 py-2 text-left">费用项</th><th class="px-2 py-2 text-left">单位</th><th class="px-2 py-2 text-left">单价</th><th class="px-2 py-2 text-left">免费额度</th><th class="px-2 py-2 text-left">货种</th><th class="px-2 py-2 text-left">作业方式</th><th></th></tr></thead>
+            <tbody>
+              <tr class="border-b"><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>装卸费</option><option>堆存费</option><option>铁水联运代理费</option></select></td><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>元/吨</option></select></td><td class="py-2 pr-2"><input type="number" value="18.5" class="border rounded-lg px-2 py-1.5 w-full"></td><td class="py-2 pr-2"><input class="border rounded-lg px-2 py-1.5 w-full" placeholder="—"></td><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>铁矿</option></select></td><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>铁水联运</option></select></td><td class="py-2"><button type="button" class="text-red-400" onclick="this.closest('tr').remove()"><i class="fa-solid fa-trash"></i></button></td></tr>
+              <tr class="border-b"><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>堆存费</option></select></td><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>元/吨/天</option></select></td><td class="py-2 pr-2"><input type="number" value="0.8" class="border rounded-lg px-2 py-1.5 w-full"></td><td class="py-2 pr-2"><input value="免费5天" class="border rounded-lg px-2 py-1.5 w-full"></td><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>铁矿</option></select></td><td class="py-2 pr-2"><select class="border rounded-lg px-2 py-1.5 w-full"><option selected>堆存</option></select></td><td class="py-2"><button type="button" class="text-red-400" onclick="this.closest('tr').remove()"><i class="fa-solid fa-trash"></i></button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-contract-detail">
+    <div class="space-y-5">
+      <div class="flex items-start justify-between">
+        <div><h4 class="text-lg font-bold" id="modal-contract-title">宝钢铁矿铁水联运框架合同</h4><p class="text-slate-500 text-sm mt-1">HT-2026-0076 · 宝钢股份有限公司</p></div>
+        <span class="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs">生效</span>
+      </div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="p-3 bg-slate-50 rounded-xl"><span class="text-xs text-slate-500">合同总金额</span><p class="text-xl font-bold mt-1">860 万</p></div>
+        <div class="p-3 bg-slate-50 rounded-xl"><span class="text-xs text-slate-500">约定吞吐量</span><p class="text-xl font-bold mt-1">280 万吨/年</p></div>
+        <div class="p-3 bg-slate-50 rounded-xl"><span class="text-xs text-slate-500">到期日</span><p class="text-xl font-bold mt-1">2027-06-30</p></div>
+      </div>
+      <div>
+        <p class="font-medium mb-2">计费明细</p>
+        <table class="w-full text-xs border rounded-xl overflow-hidden">
+          <thead class="bg-slate-50"><tr><th class="px-3 py-2 text-left">费用项</th><th class="px-3 py-2 text-left">单位</th><th class="px-3 py-2 text-left">单价</th><th class="px-3 py-2 text-left">免费额度</th><th class="px-3 py-2 text-left">货种</th><th class="px-3 py-2 text-left">作业方式</th><th class="px-3 py-2 text-left">结算</th></tr></thead>
+          <tbody class="divide-y">
+            <tr><td class="px-3 py-2 font-medium">装卸费</td><td class="px-3 py-2">元/吨</td><td class="px-3 py-2">18.50</td><td class="px-3 py-2">—</td><td class="px-3 py-2">铁矿</td><td class="px-3 py-2">卸船</td><td class="px-3 py-2">月结</td></tr>
+            <tr><td class="px-3 py-2 font-medium">堆存费</td><td class="px-3 py-2">元/吨/天</td><td class="px-3 py-2">0.80</td><td class="px-3 py-2">免费5天</td><td class="px-3 py-2">铁矿</td><td class="px-3 py-2">堆存</td><td class="px-3 py-2">月结</td></tr>
+            <tr><td class="px-3 py-2 font-medium">铁水联运代理费</td><td class="px-3 py-2">元/吨</td><td class="px-3 py-2">6.20</td><td class="px-3 py-2">—</td><td class="px-3 py-2">铁矿</td><td class="px-3 py-2">铁水联运</td><td class="px-3 py-2">月结</td></tr>
+            <tr><td class="px-3 py-2 font-medium">停泊费</td><td class="px-3 py-2">元/次</td><td class="px-3 py-2">12,000</td><td class="px-3 py-2">—</td><td class="px-3 py-2">—</td><td class="px-3 py-2">停泊</td><td class="px-3 py-2">票结</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </template>
+
+  <script src="common.js"></script>
+  <script>
+    window.CRM_MODALS = {
+      contractCreate() {
+        openModalFromTemplate('tpl-contract-create', { title: '新建合同', size: '2xl', footer: modalFooter('取消', '保存草稿', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('合同草稿已保存')") });
+      },
+      contractDetail(key) {
+        const titles = { '宝钢': '宝钢铁矿铁水联运框架合同', '首钢': '首钢码头装卸服务合同' };
+        openModalFromTemplate('tpl-contract-detail', {
+          title: '合同详情', size: '2xl',
+          footer: `<button type="button" data-close-modal class="px-5 py-2.5 border rounded-xl text-sm">关闭</button>
+            <button type="button" onclick="closeModal(); CRM_MODALS.contractCreate()" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm">编辑</button>
+            <button type="button" onclick="closeModal(); showToast('已跳转续约商机')" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-sm">发起续约商机</button>`
+        });
+        setTimeout(() => { const el = document.getElementById('modal-contract-title'); if (el && titles[key]) el.textContent = titles[key]; }, 0);
+      }
+    };
+    CRM_MODALS['contract-create'] = () => CRM_MODALS.contractCreate();
+    CRM_MODALS['contract-detail'] = () => CRM_MODALS.contractDetail('首钢');
+    initPage('合同管理_合同列表_page.html');
+  </script>
+</body>
+</html>

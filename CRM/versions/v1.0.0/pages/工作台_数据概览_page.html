@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>工作台 · 铁水联运码头 CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }
+    .stat-card { transition: transform .2s, box-shadow .2s; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+  </style>
+</head>
+<body class="text-slate-800">
+  <div id="sidebar-mount"></div>
+  <main class="ml-56 min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+      <header class="flex justify-between items-center mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">工作台</h1>
+          <p class="text-slate-500 text-sm mt-1">市场部数据概览 · 2026年8月27日</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="跟进记录_跟进列表_page.html?modal=followup-create" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium transition active:scale-95"><i class="fa-solid fa-plus mr-2"></i>写跟进</a>
+          <a href="客户管理_客户列表_page.html?modal=customer-create" class="px-4 py-2.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl text-sm transition"><i class="fa-solid fa-building mr-2"></i>新建客户</a>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-4 gap-5 mb-8">
+        <a href="客户管理_客户列表_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+          <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">客户总数</span><i class="fa-solid fa-building text-teal-600"></i></div>
+          <p class="text-3xl font-bold mt-2">128</p>
+          <p class="text-xs text-emerald-600 mt-1"><i class="fa-solid fa-arrow-up"></i> 本月新增 6</p>
+        </a>
+        <a href="商机管理_商机列表_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+          <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">进行中商机</span><i class="fa-solid fa-chart-line text-teal-600"></i></div>
+          <p class="text-3xl font-bold mt-2">23</p>
+          <p class="text-xs text-slate-500 mt-1">预估金额 4,860 万</p>
+        </a>
+        <a href="合同管理_合同列表_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+          <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">生效合同</span><i class="fa-solid fa-file-contract text-teal-600"></i></div>
+          <p class="text-3xl font-bold mt-2">45</p>
+          <p class="text-xs text-amber-600 mt-1"><i class="fa-solid fa-clock"></i> 7 天内到期 2 份</p>
+        </a>
+        <a href="跟进记录_跟进列表_page.html" class="stat-card bg-white rounded-2xl p-5 shadow-sm border border-slate-100 block">
+          <div class="flex justify-between items-start"><span class="text-slate-500 text-sm">近7日跟进</span><i class="fa-solid fa-comments text-teal-600"></i></div>
+          <p class="text-3xl font-bold mt-2">37</p>
+          <p class="text-xs text-slate-500 mt-1">今日待跟进 5 条</p>
+        </a>
+      </div>
+
+      <div class="grid grid-cols-3 gap-6">
+        <div class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <h2 class="font-semibold text-slate-900 mb-4">销售漏斗</h2>
+          <div class="space-y-3">
+            <a href="商机管理_商机列表_page.html" class="flex items-center gap-4 group">
+              <span class="w-20 text-sm text-slate-600">初步接触</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-teal-200 h-full rounded-full flex items-center px-3 text-xs font-medium" style="width:85%">8 · 620万</div></div>
+            </a>
+            <a href="商机管理_商机列表_page.html" class="flex items-center gap-4 group">
+              <span class="w-20 text-sm text-slate-600">需求确认</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-teal-300 h-full rounded-full flex items-center px-3 text-xs font-medium" style="width:70%">6 · 980万</div></div>
+            </a>
+            <a href="商机管理_商机列表_page.html" class="flex items-center gap-4 group">
+              <span class="w-20 text-sm text-slate-600">方案报价</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-teal-400 h-full rounded-full flex items-center px-3 text-xs text-white font-medium" style="width:55%">5 · 1,120万</div></div>
+            </a>
+            <a href="商机管理_商机列表_page.html" class="flex items-center gap-4 group">
+              <span class="w-20 text-sm text-slate-600">商务谈判</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden"><div class="bg-teal-500 h-full rounded-full flex items-center px-3 text-xs text-white font-medium" style="width:40%">4 · 1,640万</div></div>
+            </a>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+          <h2 class="font-semibold text-slate-900 mb-4">业务待办</h2>
+          <ul class="space-y-3 text-sm">
+            <li><a href="客户管理_客户列表_page.html?modal=customer-detail" class="flex gap-3 p-3 rounded-xl hover:bg-slate-50 border border-slate-100"><span class="text-amber-500"><i class="fa-solid fa-circle text-[8px]"></i></span><div><p class="font-medium">今日跟进：宝钢股份</p><p class="text-slate-500 text-xs">上次跟进 2026-08-20</p></div></a></li>
+            <li><a href="合同管理_合同列表_page.html?modal=contract-detail" class="flex gap-3 p-3 rounded-xl hover:bg-slate-50 border border-amber-100 bg-amber-50/50"><span class="text-amber-500"><i class="fa-solid fa-triangle-exclamation"></i></span><div><p class="font-medium">合同 7 天内到期</p><p class="text-slate-500 text-xs">首钢码头装卸服务合同</p></div></a></li>
+            <li><a href="商机管理_商机列表_page.html?modal=opportunity-detail" class="flex gap-3 p-3 rounded-xl hover:bg-slate-50 border border-slate-100"><span class="text-slate-400"><i class="fa-solid fa-circle text-[8px]"></i></span><div><p class="font-medium">商机 15 天未更新</p><p class="text-slate-500 text-xs">河钢铁矿铁水联运项目</p></div></a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-6 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="font-semibold">最近跟进</h2>
+          <a href="跟进记录_跟进列表_page.html" class="text-teal-700 text-sm hover:underline">查看全部</a>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="text-slate-500 border-b"><tr><th class="text-left py-2 font-medium">时间</th><th class="text-left py-2 font-medium">客户</th><th class="text-left py-2 font-medium">方式</th><th class="text-left py-2 font-medium">内容摘要</th><th class="text-left py-2 font-medium">负责人</th></tr></thead>
+          <tbody class="divide-y divide-slate-50">
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="location.href='客户管理_客户列表_page.html?modal=customer-detail'"><td class="py-3">08-27 14:30</td><td>宝钢股份</td><td><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">拜访</span></td><td class="text-slate-600 max-w-xs truncate">讨论 Q4 铁矿卸船量及铁水联运比例调整…</td><td>张明</td></tr>
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="location.href='商机管理_商机列表_page.html?modal=opportunity-detail'"><td class="py-3">08-26 10:15</td><td>首钢集团</td><td><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">电话</span></td><td class="text-slate-600 max-w-xs truncate">确认堆存费免费天数及装卸单价…</td><td>李华</td></tr>
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="location.href='客户管理_客户详情_page.html'"><td class="py-3">08-25 16:00</td><td>中远海运</td><td><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">会议</span></td><td class="text-slate-600 max-w-xs truncate">年度框架合同续签商务条款初步沟通…</td><td>王芳</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+  <script src="common.js"></script>
+  <script>initPage('工作台_数据概览_page.html');</script>
+</body>
+</html>

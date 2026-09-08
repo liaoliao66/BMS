@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>客户列表 · 铁水联运码头 CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }</style>
+</head>
+<body class="text-slate-800">
+  <div id="sidebar-mount"></div>
+  <main class="ml-56 min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+      <header class="flex justify-between items-center mb-6">
+        <div><h1 class="text-2xl font-bold">客户管理</h1><p class="text-slate-500 text-sm mt-1">共 128 家客户</p></div>
+        <button type="button" onclick="CRM_MODALS.customerCreate()" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium transition active:scale-95"><i class="fa-solid fa-plus mr-2"></i>新建客户</button>
+      </header>
+
+      <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
+        <div><label class="text-xs text-slate-500 block mb-1">客户名称</label><input type="text" placeholder="搜索客户名称" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-48 focus:ring-2 focus:ring-teal-500 outline-none"></div>
+        <div><label class="text-xs text-slate-500 block mb-1">客户类型</label><select class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-36"><option>全部</option><option>货主</option><option>船公司</option><option>钢厂</option><option>物流商</option></select></div>
+        <div><label class="text-xs text-slate-500 block mb-1">客户状态</label><select class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-32"><option>全部</option><option>潜在</option><option>合作中</option><option>休眠</option></select></div>
+        <button class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm hover:bg-slate-700">查询</button>
+        <button class="px-4 py-2 border border-slate-200 rounded-xl text-sm hover:bg-slate-50">重置</button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600"><tr>
+            <th class="px-4 py-3 text-left font-medium">客户名称</th>
+            <th class="px-4 py-3 text-left font-medium">类型</th>
+            <th class="px-4 py-3 text-left font-medium">等级</th>
+            <th class="px-4 py-3 text-left font-medium">状态</th>
+            <th class="px-4 py-3 text-left font-medium">主要货种</th>
+            <th class="px-4 py-3 text-left font-medium">年预估吞吐量</th>
+            <th class="px-4 py-3 text-left font-medium">负责人</th>
+            <th class="px-4 py-3 text-left font-medium">最近跟进</th>
+            <th class="px-4 py-3 text-left font-medium">操作</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.customerDetail('宝钢股份有限公司')">
+              <td class="px-4 py-3 text-teal-700 font-medium">宝钢股份有限公司</td>
+              <td class="px-4 py-3">钢厂</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">战略</span></td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">合作中</span></td>
+              <td class="px-4 py-3">铁矿</td>
+              <td class="px-4 py-3">280 万吨</td>
+              <td class="px-4 py-3">张明</td>
+              <td class="px-4 py-3 text-slate-500">08-27</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()">
+                <button type="button" onclick="CRM_MODALS.customerDetail('宝钢股份有限公司')" class="text-teal-600 hover:underline mr-2">详情</button>
+                <button type="button" onclick="CRM_MODALS.opportunityCreate('宝钢股份有限公司')" class="text-slate-500 hover:underline">建商机</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.customerDetail('首钢集团有限公司')">
+              <td class="px-4 py-3 text-teal-700 font-medium">首钢集团有限公司</td>
+              <td class="px-4 py-3">钢厂</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">重点</span></td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">合作中</span></td>
+              <td class="px-4 py-3">铁矿、煤炭</td>
+              <td class="px-4 py-3">150 万吨</td>
+              <td class="px-4 py-3">李华</td>
+              <td class="px-4 py-3 text-slate-500">08-26</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()">
+                <button type="button" onclick="CRM_MODALS.customerDetail('首钢集团有限公司')" class="text-teal-600 hover:underline mr-2">详情</button>
+                <button type="button" onclick="CRM_MODALS.opportunityCreate('首钢集团有限公司')" class="text-slate-500 hover:underline">建商机</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.customerDetail('中远海运散货运输有限公司')">
+              <td class="px-4 py-3 text-teal-700 font-medium">中远海运散货运输有限公司</td>
+              <td class="px-4 py-3">船公司</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">重点</span></td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">潜在</span></td>
+              <td class="px-4 py-3">铁矿石</td>
+              <td class="px-4 py-3">—</td>
+              <td class="px-4 py-3">王芳</td>
+              <td class="px-4 py-3 text-slate-500">08-25</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()">
+                <button type="button" onclick="CRM_MODALS.customerDetail('中远海运散货运输有限公司')" class="text-teal-600 hover:underline mr-2">详情</button>
+                <button type="button" onclick="CRM_MODALS.opportunityCreate('中远海运散货运输有限公司')" class="text-slate-500 hover:underline">建商机</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="px-4 py-3 border-t flex justify-between text-sm text-slate-500"><span>共 128 条</span><div class="flex gap-1"><button class="px-3 py-1 border rounded-lg">上一页</button><button class="px-3 py-1 bg-teal-600 text-white rounded-lg">1</button><button class="px-3 py-1 border rounded-lg">下一页</button></div></div>
+      </div>
+    </div>
+  </main>
+
+  <template id="tpl-customer-create">
+    <div class="grid grid-cols-2 gap-4">
+      <div class="col-span-2 crm-field"><label class="crm-label">客户名称 <span class="crm-req">*</span></label><input placeholder="企业全称"></div>
+      <div class="crm-field"><label class="crm-label">客户类型 <span class="crm-req">*</span></label><select><option>货主</option><option>船公司</option><option selected>钢厂</option><option>物流商</option></select></div>
+      <div class="crm-field"><label class="crm-label">客户状态</label><select><option selected>潜在</option><option>合作中</option><option>休眠</option></select></div>
+      <div class="crm-field"><label class="crm-label">客户等级</label><select><option>普通</option><option>重点</option><option>战略</option></select></div>
+      <div class="crm-field"><label class="crm-label">年预估吞吐量（万吨）</label><input type="number"></div>
+      <div class="crm-field"><label class="crm-label">负责人</label><select><option selected>张明</option><option>李华</option></select></div>
+      <div class="col-span-2 crm-field"><label class="crm-label">地址</label><input></div>
+      <div class="col-span-2 mt-2 pt-4 border-t"><p class="font-medium text-slate-900 mb-3">主联系人</p>
+        <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
+          <div class="crm-field"><label class="crm-label">姓名</label><input></div>
+          <div class="crm-field"><label class="crm-label">手机</label><input></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-customer-detail">
+    <div class="space-y-5">
+      <div class="flex items-center gap-3"><h4 class="text-lg font-bold" id="modal-customer-name">宝钢股份有限公司</h4><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">合作中</span><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">战略</span></div>
+      <div class="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl">
+        <div><span class="text-slate-500 text-xs">类型</span><p class="font-medium mt-0.5">钢厂</p></div>
+        <div><span class="text-slate-500 text-xs">主要货种</span><p class="font-medium mt-0.5">铁矿</p></div>
+        <div><span class="text-slate-500 text-xs">年预估吞吐量</span><p class="font-medium mt-0.5">280 万吨</p></div>
+        <div><span class="text-slate-500 text-xs">负责人</span><p class="font-medium mt-0.5">张明</p></div>
+        <div><span class="text-slate-500 text-xs">主联系人</span><p class="font-medium mt-0.5">陈经理 · 138****8821</p></div>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-3"><span class="font-medium">跟进时间轴</span><button type="button" onclick="closeModal(); setTimeout(()=>CRM_MODALS.followupCreate('宝钢股份有限公司'), 200)" class="text-teal-700 text-xs hover:underline">+ 写跟进</button></div>
+        <div class="space-y-3 border-l-2 border-teal-200 pl-4 ml-1">
+          <div><p class="text-xs text-slate-500">08-27 · 拜访 · 张明</p><p class="mt-1">讨论 Q4 铁矿卸船量及铁水联运比例调整。</p></div>
+          <div><p class="text-xs text-slate-500">08-15 · 电话 · 张明</p><p class="mt-1">报价方案已发送，等待内部评审。</p></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-3 border rounded-xl"><p class="text-xs text-slate-500 mb-1">关联商机</p><p class="font-medium text-teal-700">宝钢 Q4 铁矿铁水联运扩量</p></div>
+        <div class="p-3 border rounded-xl"><p class="text-xs text-slate-500 mb-1">关联合同</p><p class="font-medium">宝钢铁矿铁水联运框架合同 · 860万</p></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-followup-create">
+    <div class="space-y-4">
+      <div class="crm-field"><label class="crm-label">关联客户 <span class="crm-req">*</span></label><select id="modal-followup-customer"><option>宝钢股份有限公司</option><option>首钢集团有限公司</option></select></div>
+      <div class="crm-field"><label class="crm-label">关联商机</label><select><option>— 不关联 —</option><option>宝钢 Q4 铁矿铁水联运扩量</option></select></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="crm-field"><label class="crm-label">跟进方式</label><select><option>拜访</option><option>电话</option><option>会议</option></select></div>
+        <div class="crm-field"><label class="crm-label">跟进时间</label><input type="datetime-local" value="2026-08-27T14:30"></div>
+      </div>
+      <div class="crm-field"><label class="crm-label">跟进内容 <span class="crm-req">*</span></label><textarea rows="4" placeholder="记录本次沟通要点…"></textarea></div>
+      <div class="crm-field"><label class="crm-label">下次跟进计划</label><input type="date"></div>
+    </div>
+  </template>
+
+  <template id="tpl-opportunity-create">
+    <div class="space-y-4">
+      <div class="crm-field"><label class="crm-label">商机名称 <span class="crm-req">*</span></label><input placeholder="如：XX 钢厂铁矿铁水联运项目"></div>
+      <div class="crm-field"><label class="crm-label">关联客户</label><select id="modal-opp-customer"><option>宝钢股份有限公司</option><option>首钢集团有限公司</option></select></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="crm-field"><label class="crm-label">商机阶段</label><select><option selected>初步接触</option><option>需求确认</option><option>方案报价</option></select></div>
+        <div class="crm-field"><label class="crm-label">预估金额（万元）</label><input type="number"></div>
+        <div class="crm-field"><label class="crm-label">年吞吐量（万吨）</label><input type="number"></div>
+        <div class="crm-field"><label class="crm-label">铁水联运占比（%）</label><input type="number" max="100"></div>
+      </div>
+    </div>
+  </template>
+
+  <script src="common.js"></script>
+  <script>
+    window.CRM_MODALS = {
+      customerCreate() {
+        openModalFromTemplate('tpl-customer-create', { title: '新建客户', size: 'lg', footer: modalFooter('取消', '保存', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('客户保存成功')") });
+      },
+      customerDetail(name) {
+        openModalFromTemplate('tpl-customer-detail', {
+          title: '客户详情',
+          size: 'xl',
+          footer: `<button type="button" data-close-modal class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm hover:bg-white">关闭</button>
+            <button type="button" onclick="closeModal(); CRM_MODALS.followupCreate('${name}')" class="px-5 py-2.5 border border-teal-600 text-teal-700 rounded-xl text-sm hover:bg-teal-50">写跟进</button>
+            <button type="button" onclick="closeModal(); CRM_MODALS.opportunityCreate('${name}')" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-sm hover:bg-teal-700">新建商机</button>`
+        });
+        setTimeout(() => { const el = document.getElementById('modal-customer-name'); if (el) el.textContent = name; }, 0);
+      },
+      followupCreate(customer) {
+        openModalFromTemplate('tpl-followup-create', { title: '写跟进', size: 'md', footer: modalFooter('取消', '保存', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('跟进已保存')") });
+        setTimeout(() => { const sel = document.getElementById('modal-followup-customer'); if (sel && customer) sel.value = customer; }, 0);
+      },
+      opportunityCreate(customer) {
+        openModalFromTemplate('tpl-opportunity-create', { title: '新建商机', size: 'lg', footer: modalFooter('取消', '保存', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('商机保存成功')") });
+        setTimeout(() => { const sel = document.getElementById('modal-opp-customer'); if (sel && customer) sel.value = customer; }, 0);
+      }
+    };
+    CRM_MODALS['customer-create'] = () => CRM_MODALS.customerCreate();
+    CRM_MODALS['customer-detail'] = () => CRM_MODALS.customerDetail('宝钢股份有限公司');
+    CRM_MODALS['followup-create'] = () => CRM_MODALS.followupCreate('宝钢股份有限公司');
+    initPage('客户管理_客户列表_page.html');
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>商机列表 · 铁水联运码头 CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }</style>
+</head>
+<body class="text-slate-800">
+  <div id="sidebar-mount"></div>
+  <main class="ml-56 min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+      <header class="flex justify-between items-center mb-6">
+        <div><h1 class="text-2xl font-bold">商机管理</h1><p class="text-slate-500 text-sm mt-1">进行中 23 条 · 预估总额 4,860 万</p></div>
+        <button type="button" onclick="CRM_MODALS.opportunityCreate()" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium active:scale-95"><i class="fa-solid fa-plus mr-2"></i>新建商机</button>
+      </header>
+
+      <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
+        <div><label class="text-xs text-slate-500 block mb-1">商机名称</label><input type="text" placeholder="搜索" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-48 outline-none focus:ring-2 focus:ring-teal-500"></div>
+        <div><label class="text-xs text-slate-500 block mb-1">阶段</label><select class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-36"><option>全部</option><option>商务谈判</option><option>方案报价</option></select></div>
+        <button class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm">查询</button>
+      </div>
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600"><tr>
+            <th class="px-4 py-3 text-left font-medium">商机名称</th>
+            <th class="px-4 py-3 text-left font-medium">客户</th>
+            <th class="px-4 py-3 text-left font-medium">阶段</th>
+            <th class="px-4 py-3 text-left font-medium">预估金额</th>
+            <th class="px-4 py-3 text-left font-medium">铁水联运占比</th>
+            <th class="px-4 py-3 text-left font-medium">负责人</th>
+            <th class="px-4 py-3 text-left font-medium">操作</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.opportunityDetail()">
+              <td class="px-4 py-3 text-teal-700 font-medium">宝钢 Q4 铁矿铁水联运扩量</td>
+              <td class="px-4 py-3">宝钢股份</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-teal-50 text-teal-700 rounded text-xs">商务谈判</span></td>
+              <td class="px-4 py-3 font-medium">680 万</td>
+              <td class="px-4 py-3">65%</td>
+              <td class="px-4 py-3">张明</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()"><button type="button" onclick="CRM_MODALS.opportunityDetail()" class="text-teal-600 hover:underline">详情</button></td>
+            </tr>
+            <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.opportunityDetail()">
+              <td class="px-4 py-3 text-teal-700 font-medium">河钢铁矿铁水联运项目</td>
+              <td class="px-4 py-3">河钢集团</td>
+              <td class="px-4 py-3"><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">方案报价</span></td>
+              <td class="px-4 py-3 font-medium">420 万</td>
+              <td class="px-4 py-3">80%</td>
+              <td class="px-4 py-3">李华</td>
+              <td class="px-4 py-3" onclick="event.stopPropagation()"><button type="button" onclick="CRM_MODALS.opportunityDetail()" class="text-teal-600 hover:underline">详情</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="px-4 py-3 border-t flex justify-between text-sm text-slate-500"><span>共 23 条</span></div>
+      </div>
+    </div>
+  </main>
+
+  <template id="tpl-opportunity-create">
+    <div class="space-y-4">
+      <div class="crm-field"><label class="crm-label">商机名称 <span class="crm-req">*</span></label><input placeholder="如：XX 钢厂铁矿铁水联运项目"></div>
+      <div class="crm-field"><label class="crm-label">关联客户 <span class="crm-req">*</span></label><select><option>宝钢股份有限公司</option><option>首钢集团有限公司</option><option>河钢集团</option></select></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="crm-field"><label class="crm-label">商机阶段</label><select><option selected>初步接触</option><option>需求确认</option><option>方案报价</option><option>商务谈判</option></select></div>
+        <div class="crm-field"><label class="crm-label">负责人</label><select><option selected>张明</option><option>李华</option></select></div>
+        <div class="crm-field"><label class="crm-label">预估金额（万元）</label><input type="number"></div>
+        <div class="crm-field"><label class="crm-label">年吞吐量（万吨）</label><input type="number"></div>
+        <div class="crm-field"><label class="crm-label">铁水联运占比（%）</label><input type="number"></div>
+        <div class="crm-field"><label class="crm-label">预计成交</label><input type="month"></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-opportunity-detail">
+    <div class="space-y-5">
+      <div><h4 class="text-lg font-bold">宝钢 Q4 铁矿铁水联运扩量</h4><p class="text-slate-500 text-sm mt-1">客户：宝钢股份有限公司 · 负责人：张明</p></div>
+      <div class="flex gap-2 flex-wrap">
+        <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-xs line-through">初步接触</span>
+        <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-xs line-through">需求确认</span>
+        <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-xs line-through">方案报价</span>
+        <span class="px-3 py-1 bg-teal-600 text-white rounded-full text-xs">商务谈判</span>
+        <span class="px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-xs">赢单</span>
+      </div>
+      <div class="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-xl">
+        <div><span class="text-slate-500 text-xs">预估金额</span><p class="font-bold text-lg mt-0.5">680 万</p></div>
+        <div><span class="text-slate-500 text-xs">年吞吐量</span><p class="font-medium mt-0.5">50 万吨</p></div>
+        <div><span class="text-slate-500 text-xs">铁水联运占比</span><p class="font-medium mt-0.5">65%</p></div>
+      </div>
+      <div><p class="font-medium mb-2">阶段变更历史</p><ul class="text-slate-600 space-y-1 text-xs"><li>08-20 · 方案报价 → 商务谈判</li><li>08-05 · 需求确认 → 方案报价</li></ul></div>
+    </div>
+  </template>
+
+  <template id="tpl-stage-change">
+    <div class="space-y-4">
+      <div class="crm-field"><label class="crm-label">当前阶段</label><input readonly value="商务谈判" class="bg-slate-50"></div>
+      <div class="crm-field"><label class="crm-label">目标阶段 <span class="crm-req">*</span></label><select><option>赢单</option><option>输单</option><option>方案报价</option></select></div>
+      <div class="crm-field"><label class="crm-label">变更说明 <span class="crm-req">*</span></label><textarea rows="3" placeholder="请说明阶段变更原因"></textarea></div>
+    </div>
+  </template>
+
+  <script src="common.js"></script>
+  <script>
+    window.CRM_MODALS = {
+      opportunityCreate() {
+        openModalFromTemplate('tpl-opportunity-create', { title: '新建商机', size: 'lg', footer: modalFooter('取消', '保存', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('商机保存成功')") });
+      },
+      opportunityDetail() {
+        openModalFromTemplate('tpl-opportunity-detail', {
+          title: '商机详情', size: 'xl',
+          footer: `<button type="button" data-close-modal class="px-5 py-2.5 border rounded-xl text-sm">关闭</button>
+            <button type="button" onclick="closeModal(); setTimeout(CRM_MODALS.stageChange, 150)" class="px-5 py-2.5 border border-teal-600 text-teal-700 rounded-xl text-sm">推进阶段</button>
+            <button type="button" onclick="closeModal(); setTimeout(CRM_MODALS.contractCreate, 150)" class="px-5 py-2.5 bg-teal-600 text-white rounded-xl text-sm">创建合同</button>`
+        });
+      },
+      stageChange() {
+        openModalFromTemplate('tpl-stage-change', { title: '推进商机阶段', size: 'md', footer: modalFooter('取消', '确认变更', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('阶段已更新')") });
+      },
+      contractCreate() {
+        location.href = '合同管理_合同列表_page.html?modal=contract-create';
+      }
+    };
+    CRM_MODALS['opportunity-create'] = () => CRM_MODALS.opportunityCreate();
+    CRM_MODALS['opportunity-detail'] = () => CRM_MODALS.opportunityDetail();
+    CRM_MODALS['stage-change'] = () => CRM_MODALS.stageChange();
+    initPage('商机管理_商机列表_page.html');
+  </script>
+</body>
+</html>

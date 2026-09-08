@@ -24,13 +24,22 @@
     .st-lag { background:#fef2f2; color:#b91c1c; }
     .st-run { background:#f0f9ff; color:#0369a1; }
     .dept-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .dept-table th { text-align:left; padding:0.625rem 0.75rem; font-size:11px; color:#64748b; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
+    .dept-table th { text-align:left; padding:0.5rem 0.75rem; font-size:11px; color:#64748b; background:#f8fafc; border-bottom:1px solid #e2e8f0; white-space:nowrap; }
+    .dept-table th.group { text-align:center; font-weight:600; color:#475569; border-bottom:1px solid #e2e8f0; }
+    .dept-table th.group-goal { background:#f8fafc; }
+    .dept-table th.group-plan { background:#f1f5f9; }
+    .dept-table th.group-task { background:#f8fafc; }
     .dept-table td { padding:0.75rem; border-bottom:1px solid #f1f5f9; color:#334155; }
     .dept-table tbody tr { cursor:pointer; }
     .dept-table tbody tr:hover { background:#f8fafc; }
     .dept-table tbody tr.active { background:#f0fdfa; }
     .dept-table .num { font-variant-numeric:tabular-nums; text-align:right; }
     .dept-table th.num { text-align:right; }
+    .dept-table .warn-num { color:#b45309; font-weight:500; }
+    .dept-table .risk-num { color:#dc2626; font-weight:500; }
+    .dept-table .exec-cell-btn { min-width:1.5rem; padding:0.15rem 0.35rem; border-radius:0.4rem; font-variant-numeric:tabular-nums; }
+    .dept-table .exec-cell-btn:hover { background:#ecfdf5; color:#0f766e; }
+    .dept-table .exec-cell-btn:disabled { color:#cbd5e1; cursor:default; background:transparent; }
     .tree-goal { border:1px solid #e2e8f0; border-radius:1rem; background:#fff; margin-bottom:0.75rem; overflow:hidden; }
     .tree-goal-hd { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:0.75rem; padding:0.875rem 1rem; cursor:pointer; }
     .tree-goal-hd:hover { background:#f8fafc; }
@@ -56,54 +65,32 @@
     .exec-rail-goal { background:#94a3b8; }
     .exec-rail-plan { background:#0f766e; }
     .exec-rail-task { background:#cbd5e1; }
-    .priority-label { font-size:11px; font-weight:600; color:#64748b; letter-spacing:.02em; margin:0 0 .5rem; }
   </style>
 </head>
 <body class="bg-slate-50" data-page="depts" data-title="任务台账">
   <div id="app-root"></div>
   <div id="page-main">
 
-    <!-- 顶栏 -->
+    <!-- 顶栏：左上角统一部门筛选 -->
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <div>
         <div class="flex flex-wrap items-center gap-2">
           <h1 class="text-lg font-semibold text-slate-800">任务台账</h1>
+          <select id="scopeSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-sm" onchange="onScopeChange()" title="部门范围">
+            <option value="all" selected>全港</option>
+            <option value="装卸队">装卸队</option>
+            <option value="设备部">设备部</option>
+            <option value="调度中心">调度中心</option>
+            <option value="安全环保部">安全环保部</option>
+          </select>
           <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">中高领导 · 执行态势</span>
         </div>
-        <p class="text-xs text-slate-400 mt-1">周五写本周进展与下周计划 · 周一例会过 · 点击汇总卡可查看明细</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <select id="periodSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="BMS.toast('已切换周期（演示）')">
-          <option>2026-Q3</option>
-          <option>2026 年</option>
-          <option>2026-08</option>
-        </select>
-        <select id="scopeSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onScopeChange()">
-          <option value="port" selected>全港</option>
-          <option value="dept">我的部门</option>
-        </select>
-        <a href="经营台账_总览_page.html" class="text-xs px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">经营总览</a>
-        <a href="任务中心_任务督办_page.html" class="text-xs px-3 py-2 rounded-xl border border-teal-200 bg-teal-50 text-teal-800">任务督办</a>
+        <p class="text-xs text-slate-400 mt-1">周五写本周进展与下周计划 · 周一例会过 · 点击汇总卡与对照表数字可查看明细</p>
       </div>
     </div>
 
-    <!-- L1 执行态势 -->
+    <!-- L1 汇总卡 -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] p-4 mb-4" id="l1Status">
-      <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
-        <div>
-          <div class="text-xs text-slate-500 mb-1">执行态势</div>
-          <p class="text-sm text-slate-800 leading-relaxed" id="l1Sentence">
-            本期目标健康：正常 <strong class="text-emerald-700">9</strong> · 需关注 <strong class="text-amber-600">5</strong> · 风险 <strong class="text-red-600">2</strong>；
-            计划节点按期率 <strong>80%</strong>（12/15）。
-            <span class="text-amber-700">本周待跟进 <strong>5</strong> 人 · 下周待计划 <strong>6</strong> 人；优先关注装卸队桥吊效率与设备部完好率。</span>
-          </p>
-        </div>
-        <div class="flex flex-wrap gap-2 shrink-0">
-          <button type="button" onclick="setFilter('risk')" class="text-xs px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50 text-amber-800">仅看风险</button>
-          <button type="button" onclick="setFilter('lag')" class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600">仅看滞后</button>
-          <button type="button" onclick="setFilter('all')" class="text-xs px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-600">全部</button>
-        </div>
-      </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
         <button type="button" onclick="openKpiSummary('health')" class="rounded-xl bg-slate-50 border border-slate-100 p-3 text-left hover:border-teal-200 hover:bg-white transition">
           <div class="text-xs text-slate-500">目标健康</div>
@@ -129,44 +116,37 @@
       </div>
     </div>
 
-    <!-- L2 部门对照 -->
+    <!-- L2 执行对照：全港=部门 / 指定部门=人员 -->
     <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden mb-4" id="l2DeptBlock">
       <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2 bg-slate-50/80">
         <div>
-          <span class="text-sm font-medium text-slate-800">部门执行对照</span>
-          <span class="text-xs text-slate-400 ml-2">按待跟进 / 待计划 / 滞后优先 · 点击定位主线</span>
+          <span class="text-sm font-medium text-slate-800" id="l2Title">部门执行对照</span>
+          <span class="text-xs text-slate-400 ml-2" id="l2Sub">点击数字查看明细 · 点击行名定位主线</span>
         </div>
         <span class="text-xs text-slate-400" id="l2Hint">全港 4 个部门</span>
       </div>
       <div class="overflow-x-auto">
-        <table class="dept-table min-w-[640px]">
+        <table class="dept-table min-w-[720px]">
           <thead>
             <tr>
-              <th>部门</th>
-              <th>目标健康</th>
-              <th class="num">计划节点</th>
-              <th class="num">滞后任务</th>
-              <th class="num">本周待跟进</th>
-              <th class="num">下周待计划</th>
+              <th rowspan="2" id="l2FirstCol" class="align-middle">部门</th>
+              <th colspan="3" class="group group-goal">目标</th>
+              <th colspan="2" class="group group-plan">计划</th>
+              <th colspan="3" class="group group-task">任务</th>
+            </tr>
+            <tr>
+              <th class="num">正常</th>
+              <th class="num">关注</th>
+              <th class="num">风险</th>
+              <th class="num">进行中</th>
+              <th class="num">已延期</th>
+              <th class="num">延期任务</th>
+              <th class="num">上周跟进</th>
+              <th class="num">本周计划</th>
             </tr>
           </thead>
           <tbody id="deptCompareBody"></tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- 优先关注：本周必办 + 风险目标 -->
-    <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden mb-4">
-      <div class="px-4 py-3 border-b bg-slate-50/80 flex flex-wrap justify-between items-center gap-2">
-        <div>
-          <span class="text-sm font-medium text-slate-800">优先关注</span>
-          <span class="text-xs text-slate-400 ml-2">本周必办 + 风险/需关注目标</span>
-        </div>
-        <button type="button" onclick="expandRiskGoals()" class="text-xs text-teal-700">在主线中展开风险目标</button>
-      </div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
-        <div class="p-3 space-y-2" id="mustDoList"></div>
-        <div class="p-3 space-y-2" id="riskGoalList"></div>
       </div>
     </div>
 
@@ -177,16 +157,7 @@
           <h2 class="text-sm font-semibold text-slate-800">目标主线</h2>
           <span class="text-xs text-slate-400" id="treeScopeLabel">当前：全港 · 风险目标默认展开</span>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <label class="text-xs text-slate-500">部门</label>
-          <select id="deptSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-sm" onchange="onDeptFilter()">
-            <option value="all" selected>全部部门</option>
-            <option value="装卸队">装卸队</option>
-            <option value="调度中心">调度中心</option>
-            <option value="设备部">设备部</option>
-            <option value="安全环保部">安全环保部</option>
-          </select>
-        </div>
+        <button type="button" onclick="expandRiskGoals()" class="text-xs text-teal-700 px-2 py-1.5">展开风险/关注</button>
       </div>
 
       <div id="view-tree" class="view-pane"></div>
@@ -362,12 +333,93 @@
     <div id="modal-fill" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4"><div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-fill')"></div><div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg p-6 space-y-3"><div class="flex justify-between"><h3 class="font-semibold text-lg">周期填报</h3><button type="button" onclick="BMS.closeModal('modal-fill')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div><textarea class="w-full border rounded-xl px-3 py-2.5 text-sm h-24" placeholder="进展说明（必填）">整改清单已定稿，待班组宣贯。</textarea><textarea class="w-full border rounded-xl px-3 py-2.5 text-sm h-16" placeholder="风险/阻塞说明（选填）"></textarea><div class="flex gap-2"><button type="button" onclick="BMS.toast('填报已提交');BMS.closeModal('modal-fill')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">提交</button><button type="button" onclick="BMS.closeModal('modal-fill')" class="text-sm text-slate-500">取消</button></div></div></div>
 
     <script>
-      const DEPTS = [
-        { name: '装卸队', health: '正常 1 · 需关注 1 · 风险 1', nodes: '6/8', lag: 3, follow: 3, plan: 2 },
-        { name: '设备部', health: '正常 2 · 需关注 0 · 风险 1', nodes: '4/5', lag: 2, follow: 1, plan: 2 },
-        { name: '调度中心', health: '正常 2 · 需关注 1 · 风险 0', nodes: '3/4', lag: 1, follow: 1, plan: 1 },
-        { name: '安全环保部', health: '正常 2 · 需关注 0 · 风险 0', nodes: '3/3', lag: 0, follow: 0, plan: 1 }
+      /* 执行对照明细：点击数字弹窗列表；计数由本表汇总 */
+      const EXEC_METRIC_META = {
+        goalOk: { label: '目标 · 正常', cols: ['目标', '部门', '负责人', '量化', '状态'] },
+        goalWatch: { label: '目标 · 关注', cols: ['目标', '部门', '负责人', '量化', '状态'] },
+        goalRisk: { label: '目标 · 风险', cols: ['目标', '部门', '负责人', '量化', '状态'] },
+        planDoing: { label: '计划 · 进行中', cols: ['计划', '挂靠目标', '部门', '负责人', '状态'] },
+        planDelay: { label: '计划 · 已延期', cols: ['计划', '挂靠目标', '部门', '负责人', '状态'] },
+        taskDelay: { label: '任务 · 延期任务', cols: ['任务', '所属计划', '部门', '责任人', '状态'] },
+        lastFollow: { label: '任务 · 上周跟进', cols: ['事项', '部门', '责任人', '状态'] },
+        weekPlan: { label: '任务 · 本周计划', cols: ['事项', '部门', '责任人', '状态'] }
+      };
+
+      const EXEC_ITEMS = [
+        /* 目标 */
+        { metric: 'goalOk', dept: '装卸队', person: '刘强', title: '班组准点出勤率', sub: '装卸队', extra: '91% / 90%', status: '正常', goalId: 'g4' },
+        { metric: 'goalWatch', dept: '装卸队', person: '刘强', title: '桥吊作业效率提升 15%', sub: '装卸队', extra: '+12% / +15%', status: '关注', goalId: 'g1' },
+        { metric: 'goalRisk', dept: '装卸队', person: '王芳', title: '堆场标识标准化达标率', sub: '装卸队', extra: '78% / 95%', status: '风险' },
+        { metric: 'goalRisk', dept: '设备部', person: '周杰', title: 'Q3 桥吊完好率', sub: '设备部', extra: '96% / 98%', status: '风险', goalId: 'g2' },
+        { metric: 'goalWatch', dept: '调度中心', person: '陈敏', title: '堆场周转优化', sub: '调度中心', extra: '2.1 天 / 1.8 天', status: '关注', goalId: 'g3' },
+        { metric: 'goalOk', dept: '安全环保部', person: '王磊', title: '隐患排查闭环率', sub: '安全环保部', extra: '100% / 100%', status: '正常', goalId: 'g5' },
+        /* 计划 */
+        { metric: 'planDoing', dept: '装卸队', person: '刘强', title: '8 月装卸效率提升计划', sub: '桥吊作业效率提升 15%', extra: '刘强', status: '进行中' },
+        { metric: 'planDoing', dept: '装卸队', person: '马超', title: 'Q3 桥吊点检专项计划', sub: '桥吊作业效率提升 15%', extra: '马超', status: '进行中' },
+        { metric: 'planDelay', dept: '装卸队', person: '王芳', title: '堆场标识补齐计划', sub: '堆场标识标准化达标率', extra: '王芳', status: '已延期' },
+        { metric: 'planDoing', dept: '设备部', person: '赵磊', title: '夜班点检表标准化推进', sub: 'Q3 桥吊完好率', extra: '赵磊', status: '进行中' },
+        { metric: 'planDelay', dept: '设备部', person: '周杰', title: '设备点检达标计划', sub: 'Q3 桥吊完好率', extra: '周杰', status: '已延期' },
+        { metric: 'planDoing', dept: '调度中心', person: '陈敏', title: '堆场周转周报机制', sub: '堆场周转优化', extra: '陈敏', status: '进行中' },
+        { metric: 'planDelay', dept: '调度中心', person: '陈敏', title: '堆场周转优化计划', sub: '堆场周转优化', extra: '陈敏', status: '已延期' },
+        { metric: 'planDoing', dept: '安全环保部', person: '王磊', title: '8 月隐患排查计划', sub: '隐患排查闭环率', extra: '王磊', status: '进行中' },
+        /* 任务 · 延期 */
+        { metric: 'taskDelay', dept: '装卸队', person: '刘强', title: '桥吊夜班流程复盘', sub: '8 月装卸效率提升计划', extra: '刘强', status: '已延期' },
+        { metric: 'taskDelay', dept: '装卸队', person: '王芳', title: '堆场标识补漆', sub: '堆场标识补齐计划', extra: '王芳', status: '已延期' },
+        { metric: 'taskDelay', dept: '装卸队', person: '王芳', title: '标识验收清单整理', sub: '堆场标识补齐计划', extra: '王芳', status: '已延期' },
+        { metric: 'taskDelay', dept: '设备部', person: '周杰', title: '钢丝绳专项复查', sub: '设备点检达标计划', extra: '周杰', status: '已延期' },
+        { metric: 'taskDelay', dept: '设备部', person: '钱进', title: '点检报告归档', sub: '设备点检达标计划', extra: '钱进', status: '已延期' },
+        { metric: 'taskDelay', dept: '调度中心', person: '陈敏', title: '堆场周转异常复盘', sub: '堆场周转优化计划', extra: '陈敏', status: '已延期' },
+        /* 上周跟进 */
+        { metric: 'lastFollow', dept: '装卸队', person: '刘强', title: '桥吊夜班流程复盘跟进', sub: '装卸队', extra: '刘强', status: '待确认' },
+        { metric: 'lastFollow', dept: '装卸队', person: '马超', title: '岸桥对位训练进展', sub: '装卸队', extra: '马超', status: '未填报' },
+        { metric: 'lastFollow', dept: '装卸队', person: '孙伟', title: '班前会标准化宣贯', sub: '装卸队', extra: '孙伟', status: '未填报' },
+        { metric: 'lastFollow', dept: '设备部', person: '周杰', title: '钢丝绳专项复查进展', sub: '设备部', extra: '周杰', status: '已逾期' },
+        { metric: 'lastFollow', dept: '调度中心', person: '陈敏', title: '堆场周转异常复盘', sub: '调度中心', extra: '陈敏', status: '未填报' },
+        /* 本周计划 */
+        { metric: 'weekPlan', dept: '装卸队', person: '刘强', title: '效率复核材料整理', sub: '装卸队', extra: '刘强', status: '未填报' },
+        { metric: 'weekPlan', dept: '装卸队', person: '马超', title: '对位训练第二轮排班', sub: '装卸队', extra: '马超', status: '未填报' },
+        { metric: 'weekPlan', dept: '设备部', person: '周杰', title: '季度点检节点冲刺', sub: '设备部', extra: '周杰', status: '未填报' },
+        { metric: 'weekPlan', dept: '设备部', person: '钱进', title: '点检报告归档计划', sub: '设备部', extra: '钱进', status: '未填报' },
+        { metric: 'weekPlan', dept: '调度中心', person: '陈敏', title: '堆场周转周报机制', sub: '调度中心', extra: '陈敏', status: '未填报' },
+        { metric: 'weekPlan', dept: '安全环保部', person: '李芳', title: '隐患周复盘安排', sub: '安全环保部', extra: '李芳', status: '未填报' }
       ];
+
+      const EXEC_METRICS = ['goalOk', 'goalWatch', 'goalRisk', 'planDoing', 'planDelay', 'taskDelay', 'lastFollow', 'weekPlan'];
+
+      function filterExecItems(metric, opts) {
+        opts = opts || {};
+        return EXEC_ITEMS.filter(function (it) {
+          if (it.metric !== metric) return false;
+          if (opts.dept && it.dept !== opts.dept) return false;
+          if (opts.person && it.person !== opts.person) return false;
+          return true;
+        });
+      }
+
+      function metricCounts(opts) {
+        var row = {};
+        EXEC_METRICS.forEach(function (m) {
+          row[m] = filterExecItems(m, opts).length;
+        });
+        return row;
+      }
+
+      const DEPT_NAMES = ['装卸队', '设备部', '调度中心', '安全环保部'];
+      const DEPTS = DEPT_NAMES.map(function (name) {
+        return Object.assign({ name: name }, metricCounts({ dept: name }));
+      });
+
+      const PEOPLE = (function () {
+        var map = {};
+        EXEC_ITEMS.forEach(function (it) {
+          var key = it.dept + '|' + it.person;
+          if (!map[key]) map[key] = { name: it.person, dept: it.dept };
+        });
+        return Object.keys(map).map(function (k) {
+          var p = map[k];
+          return Object.assign({ name: p.name, dept: p.dept }, metricCounts({ dept: p.dept, person: p.name }));
+        });
+      })();
 
       const GOALS = [
         {
@@ -450,15 +502,6 @@
         }
       ];
 
-      const MUST_DOS = [
-        { type: '催任务', urge: true, title: '桥吊夜班流程复盘 · 刘强', sub: '装卸队 · 本周进展未更新', action: 'openTask', key: '桥吊夜班流程复盘' },
-        { type: '催节点', urge: true, title: '效率复核节点 · 剩 3 天', sub: '计划：8 月装卸效率提升', action: 'openPlan', key: '8 月装卸效率提升计划' },
-        { type: '催任务', urge: true, title: '钢丝绳专项复查 · 周杰', sub: '设备部 · 已延期', action: 'openTask', key: '钢丝绳专项复查' },
-        { type: '催填', urge: true, title: '本周待跟进 5 人', sub: '本周进展未填 · 查看工作周报', action: 'link', href: '经营台账_工作汇报_page.html?section=tasks&open=pending' },
-        { type: '催填', urge: true, title: '下周待计划 6 人', sub: '下周计划未填 · 查看工作周报', action: 'link', href: '经营台账_工作汇报_page.html?section=nextweek&open=pending' },
-        { type: '督目标', urge: true, title: 'Q3 桥吊完好率 · 风险', sub: '设备部 · 96% / 98%', action: 'openGoal', key: 'g2' }
-      ];
-
       const FOLLOW_PENDING = [
         { name: '马超', dept: '装卸队', item: '岸桥对位训练', status: '未填报' },
         { name: '孙伟', dept: '装卸队', item: '班前会标准化宣贯', status: '未填报' },
@@ -485,56 +528,128 @@
         return 'st-ok';
       }
 
+      function execPressure(row) {
+        return (row.goalRisk || 0) * 3 + (row.goalWatch || 0) * 2 + (row.planDelay || 0) * 2 +
+          (row.taskDelay || 0) * 2 + (row.lastFollow || 0) + (row.weekPlan || 0);
+      }
+
+      function cellNum(v, kind, metric, entityType, entityName, entityDept) {
+        var n = v || 0;
+        var cls = 'num';
+        if (n && (kind === 'risk' || kind === 'delay')) cls += ' risk-num';
+        else if (n && kind === 'watch') cls += ' warn-num';
+        var args = "'" + metric + "','" + entityType + "','" + entityName + "','" + (entityDept || '') + "'";
+        if (!n) {
+          return '<td class="' + cls + '"><button type="button" class="exec-cell-btn" disabled>0</button></td>';
+        }
+        return '<td class="' + cls + '"><button type="button" class="exec-cell-btn" onclick="event.stopPropagation();openExecDetail(' + args + ')">' + n + '</button></td>';
+      }
+
+      function renderExecRow(label, row, attrs, onclick, entityType, entityName, entityDept) {
+        return '<tr ' + attrs + ' onclick="' + onclick + '">' +
+          '<td class="font-medium text-slate-800">' + label + '</td>' +
+          cellNum(row.goalOk, null, 'goalOk', entityType, entityName, entityDept) +
+          cellNum(row.goalWatch, 'watch', 'goalWatch', entityType, entityName, entityDept) +
+          cellNum(row.goalRisk, 'risk', 'goalRisk', entityType, entityName, entityDept) +
+          cellNum(row.planDoing, null, 'planDoing', entityType, entityName, entityDept) +
+          cellNum(row.planDelay, 'delay', 'planDelay', entityType, entityName, entityDept) +
+          cellNum(row.taskDelay, 'delay', 'taskDelay', entityType, entityName, entityDept) +
+          cellNum(row.lastFollow, 'watch', 'lastFollow', entityType, entityName, entityDept) +
+          cellNum(row.weekPlan, 'watch', 'weekPlan', entityType, entityName, entityDept) +
+          '</tr>';
+      }
+
+      function openExecDetail(metric, entityType, entityName, entityDept) {
+        var meta = EXEC_METRIC_META[metric];
+        if (!meta) return;
+        var opts = entityType === 'person'
+          ? { dept: entityDept, person: entityName }
+          : { dept: entityName };
+        var list = filterExecItems(metric, opts);
+        var scopeLabel = entityType === 'person'
+          ? (entityDept + ' · ' + entityName)
+          : entityName;
+        var link = document.getElementById('kpiSummaryLink');
+        link.classList.add('hidden');
+        link.removeAttribute('href');
+        link.textContent = '';
+
+        document.getElementById('kpiSummaryTitle').textContent = meta.label;
+        document.getElementById('kpiSummarySub').textContent = scopeLabel + ' · 共 ' + list.length + ' 条';
+        document.getElementById('kpiSummaryThead').innerHTML = '<tr>' + meta.cols.map(function (c) {
+          return '<th class="px-4 py-2.5 text-left">' + c + '</th>';
+        }).join('') + '</tr>';
+        document.getElementById('kpiSummaryTbody').innerHTML = list.length
+          ? list.map(function (it) {
+              var cells;
+              if (metric.indexOf('goal') === 0) {
+                cells = [it.title, it.dept, it.person, it.extra || '—', it.status];
+              } else if (metric.indexOf('plan') === 0) {
+                cells = [it.title, it.sub, it.dept, it.person, it.status];
+              } else if (metric === 'taskDelay') {
+                cells = [it.title, it.sub, it.dept, it.person, it.status];
+              } else {
+                cells = [it.title, it.dept, it.person, it.status];
+              }
+              var click = '';
+              if (it.goalId) {
+                click = ' class="border-t row-hover cursor-pointer" onclick="BMS.closeModal(\'modal-kpi-summary\');focusGoal(\'' + it.goalId + '\')"';
+              } else {
+                click = ' class="border-t row-hover"';
+              }
+              return '<tr' + click + '>' + cells.map(function (c) {
+                return '<td class="px-4 py-2.5">' + c + '</td>';
+              }).join('') + '</tr>';
+            }).join('')
+          : '<tr><td colspan="' + meta.cols.length + '" class="px-4 py-10 text-center text-slate-400">暂无数据</td></tr>';
+        document.getElementById('kpiSummaryNote').textContent = list.length
+          ? '演示数据：与执行对照表数字一致；目标类可点击行定位主线。'
+          : '';
+        BMS.openModal('modal-kpi-summary');
+      }
+
+      function getScopeDept() {
+        var el = document.getElementById('scopeSelect');
+        var v = el ? el.value : 'all';
+        return (!v || v === 'all' || v === 'port') ? 'all' : v;
+      }
+
       function renderDeptCompare() {
         const body = document.getElementById('deptCompareBody');
-        const sorted = DEPTS.slice().sort(function (a, b) {
-          return (b.follow + b.plan + b.lag) - (a.follow + a.plan + a.lag);
-        });
-        body.innerHTML = sorted.map(function (d) {
-          return '<tr data-dept="' + d.name + '" onclick="focusDept(\'' + d.name + '\')">' +
-            '<td class="font-medium text-slate-800">' + d.name + '</td>' +
-            '<td class="text-xs">' + d.health + '</td>' +
-            '<td class="num">' + d.nodes + '</td>' +
-            '<td class="num ' + (d.lag ? 'text-red-600 font-medium' : '') + '">' + d.lag + '</td>' +
-            '<td class="num ' + (d.follow ? 'text-amber-700 font-medium' : '') + '">' + d.follow + '</td>' +
-            '<td class="num ' + (d.plan ? 'text-amber-700 font-medium' : '') + '">' + d.plan + '</td>' +
-            '</tr>';
-        }).join('');
-      }
+        const title = document.getElementById('l2Title');
+        const sub = document.getElementById('l2Sub');
+        const hint = document.getElementById('l2Hint');
+        const firstCol = document.getElementById('l2FirstCol');
+        const l2 = document.getElementById('l2DeptBlock');
+        if (l2) l2.classList.remove('hidden');
 
-      function renderMustDo() {
-        const el = document.getElementById('mustDoList');
-        el.innerHTML = '<div class="priority-label">本周必办</div>' + MUST_DOS.map(function (m) {
-          const badge = m.urge
-            ? '<span class="text-[11px] px-1.5 py-0.5 rounded bg-red-50 text-red-600 border border-red-100 font-medium">需催办</span>'
-            : '';
-          return '<button type="button" class="action-item' + (m.urge ? ' border-red-100' : '') + '" onclick="runMustDo(\'' + m.action + '\',\'' + (m.key || '').replace(/'/g, '\\\'') + '\',\'' + (m.href || '') + '\')">' +
-            '<div class="flex flex-wrap items-center justify-between gap-2">' +
-              '<span class="text-xs text-amber-700 font-medium">' + m.type + '</span>' +
-              badge +
-            '</div>' +
-            '<div class="text-sm font-medium text-slate-800 mt-0.5">' + m.title + '</div>' +
-            '<div class="text-xs text-slate-400 mt-0.5">' + m.sub + '</div>' +
-            '</button>';
-        }).join('');
-      }
+        const dept = getScopeDept();
+        const personMode = dept !== 'all';
+        let rows;
 
-      function renderRiskGoals() {
-        const el = document.getElementById('riskGoalList');
-        const rows = GOALS.filter(function (g) { return g.status !== 'ok'; });
-        if (!rows.length) {
-          el.innerHTML = '<div class="priority-label">风险 / 需关注目标</div><p class="text-sm text-slate-400 py-6 text-center">本期无风险目标</p>';
-          return;
+        if (personMode) {
+          rows = PEOPLE.filter(function (p) { return p.dept === dept; })
+            .slice()
+            .sort(function (a, b) { return execPressure(b) - execPressure(a); });
+          if (title) title.textContent = '人员执行对照';
+          if (sub) sub.textContent = dept + ' · 点击数字查看明细 · 点击人名定位主线';
+          if (hint) hint.textContent = rows.length + ' 人';
+          if (firstCol) firstCol.textContent = '人员';
+          body.innerHTML = rows.length
+            ? rows.map(function (p) {
+                return renderExecRow(p.name, p, 'data-person="' + p.name + '" data-dept="' + p.dept + '"', "focusPerson('" + p.name + "','" + p.dept + "')", 'person', p.name, p.dept);
+              }).join('')
+            : '<tr><td colspan="9" class="text-center text-slate-400 py-8">该部门暂无人员数据</td></tr>';
+        } else {
+          rows = DEPTS.slice().sort(function (a, b) { return execPressure(b) - execPressure(a); });
+          if (title) title.textContent = '部门执行对照';
+          if (sub) sub.textContent = '点击数字查看明细 · 点击部门名切换范围并定位主线';
+          if (hint) hint.textContent = '全港 ' + rows.length + ' 个部门';
+          if (firstCol) firstCol.textContent = '部门';
+          body.innerHTML = rows.map(function (d) {
+            return renderExecRow(d.name, d, 'data-dept="' + d.name + '"', "focusDept('" + d.name + "')", 'dept', d.name, d.name);
+          }).join('');
         }
-        el.innerHTML = '<div class="priority-label">风险 / 需关注目标</div>' + rows.map(function (g) {
-          return '<button type="button" class="action-item" onclick="focusGoal(\'' + g.id + '\')">' +
-            '<div class="flex flex-wrap justify-between gap-2">' +
-              '<span class="text-sm font-medium text-slate-800">' + g.name + '</span>' +
-              '<span class="status-pill ' + statusClass(g.status) + '">' + g.statusLabel + '</span>' +
-            '</div>' +
-            '<div class="text-xs text-slate-500 mt-1">' + g.dept + ' · ' + g.actual + ' / ' + g.target + ' · 负责人 ' + g.owner + '</div>' +
-            '</button>';
-        }).join('');
       }
 
       function openKpiSummary(kind) {
@@ -560,7 +675,7 @@
               rows.push([p.name, g.name, g.dept, p.nodes, p.next]);
             });
           });
-          note = '节点未按期的计划建议结合「优先关注」督办。';
+          note = '计划明细可在执行对照中点击「进行中 / 已延期」查看。';
         } else if (kind === 'follow') {
           title = '本周待跟进人员';
           sub = '共 ' + FOLLOW_PENDING.length + ' 人 · 周五应写本周任务进展 · 催填请前往工作周报';
@@ -666,7 +781,7 @@
       }
 
       function filteredGoals() {
-        const dept = document.getElementById('deptSelect').value;
+        const dept = getScopeDept();
         return GOALS.filter(function (g) {
           if (dept !== 'all' && g.dept !== dept) return false;
           if (uiFilter === 'risk' && g.status === 'ok') return false;
@@ -781,12 +896,10 @@
 
       function refreshAll() {
         renderDeptCompare();
-        renderMustDo();
-        renderRiskGoals();
         renderTree();
-        const dept = document.getElementById('deptSelect').value;
+        const dept = getScopeDept();
         document.getElementById('treeScopeLabel').textContent =
-          '当前：' + (dept === 'all' ? '全部部门' : dept) +
+          '当前：' + (dept === 'all' ? '全港' : dept) +
           (uiFilter === 'risk' ? ' · 仅风险/需关注' : (uiFilter === 'lag' ? ' · 仅未更新/滞后' : ' · 风险目标默认展开'));
       }
 
@@ -815,30 +928,27 @@
       }
 
       function focusDept(name) {
-        document.getElementById('deptSelect').value = name;
+        document.getElementById('scopeSelect').value = name;
+        refreshAll();
         document.querySelectorAll('#deptCompareBody tr').forEach(function (tr) {
-          tr.classList.toggle('active', tr.getAttribute('data-dept') === name);
+          tr.classList.toggle('active', tr.getAttribute('data-dept') === name && !tr.getAttribute('data-person'));
         });
-        onDeptFilter();
-        BMS.toast('已定位部门「' + name + '」');
+        BMS.toast('已切换至「' + name + '」');
       }
 
-      function onDeptFilter() { refreshAll(); }
+      function focusPerson(name, dept) {
+        if (dept) document.getElementById('scopeSelect').value = dept;
+        refreshAll();
+        document.querySelectorAll('#deptCompareBody tr').forEach(function (tr) {
+          tr.classList.toggle('active', tr.getAttribute('data-person') === name);
+        });
+        BMS.toast('已定位人员「' + name + '」');
+      }
 
       function onScopeChange() {
-        const scope = document.getElementById('scopeSelect').value;
-        const l2 = document.getElementById('l2DeptBlock');
-        if (scope === 'dept') {
-          document.getElementById('deptSelect').value = '装卸队';
-          document.getElementById('l2Hint').textContent = '我的部门视角';
-          if (l2) l2.classList.add('hidden');
-        } else {
-          document.getElementById('deptSelect').value = 'all';
-          document.getElementById('l2Hint').textContent = '全港 4 个部门';
-          if (l2) l2.classList.remove('hidden');
-        }
+        var dept = getScopeDept();
         refreshAll();
-        BMS.toast(scope === 'dept' ? '已切换为我的部门' : '已切换为全港');
+        BMS.toast(dept === 'all' ? '已切换为全港（部门对照）' : '已切换为「' + dept + '」（人员对照）');
       }
 
       function setFilter(f) {
@@ -895,11 +1005,25 @@
 
       function openPlanDetail(name) {
         const hit = findPlan(name);
-        if (!hit) return;
+        if (!hit) {
+          var item = EXEC_ITEMS.find(function (it) {
+            return (it.metric === 'planDelay' || it.metric === 'planDoing') && it.title === name;
+          });
+          if (!item) { BMS.toast('未找到计划「' + name + '」'); return; }
+          document.getElementById('planModalTitle').textContent = item.title;
+          document.getElementById('planModalSub').textContent = '关联目标：' + item.sub + ' · ' + item.dept + ' · ' + item.person;
+          document.getElementById('planModalKpis').innerHTML =
+            '<div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">状态</div><div class="font-medium mt-1">' + item.status + '</div></div>' +
+            '<div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">部门</div><div class="font-medium mt-1">' + item.dept + '</div></div>' +
+            '<div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">负责人</div><div class="font-medium mt-1">' + item.person + '</div></div>';
+          document.getElementById('planModalTasks').innerHTML = '<li class="text-slate-400 text-sm px-1">演示数据：该计划尚未挂入目标主线任务树</li>';
+          BMS.openModal('modal-plan-detail');
+          return;
+        }
         document.getElementById('planModalTitle').textContent = hit.p.name;
         document.getElementById('planModalSub').textContent = '关联目标：' + hit.g.name + ' · ' + hit.g.dept + ' · ' + hit.g.owner;
         document.getElementById('planModalKpis').innerHTML =
-          '<div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">节点达成</div><div class="font-medium mt-1">' + hit.p.nodes + '</div></div>' +
+          '<div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">状态</div><div class="font-medium mt-1">进行中 / 已延期见对照表</div></div>' +
           '<div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">下一节点</div><div class="font-medium mt-1">' + hit.p.next + '</div></div>' +
           '<div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500 text-xs">任务概况</div><div class="font-medium mt-1">' + hit.p.taskSum + '</div></div>';
         document.getElementById('planModalTasks').innerHTML = hit.p.tasks.map(function (t) {
@@ -911,7 +1035,18 @@
 
       function openTaskDetail(name) {
         const hit = findTask(name);
-        if (!hit) return;
+        if (!hit) {
+          var item = EXEC_ITEMS.find(function (it) {
+            return it.metric === 'taskDelay' && it.title === name;
+          });
+          if (!item) { BMS.toast('未找到任务「' + name + '」'); return; }
+          currentDeptTaskName = item.title;
+          document.getElementById('taskModalTitle').textContent = item.title;
+          document.getElementById('taskModalSub').textContent = item.person + ' · ' + item.dept + ' · ' + item.sub + ' · ' + item.status;
+          document.getElementById('taskModalProg').textContent = '进展：— · 状态「' + item.status + '」';
+          BMS.openModal('modal-task-detail');
+          return;
+        }
         currentDeptTaskName = hit.t.name;
         document.getElementById('taskModalTitle').textContent = hit.t.name;
         document.getElementById('taskModalSub').textContent = hit.t.owner + ' · ' + hit.g.dept + ' · ' + hit.p.name + ' · ' + hit.t.status;

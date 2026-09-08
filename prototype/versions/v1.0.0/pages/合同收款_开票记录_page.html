@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>开票记录 · 经营管理系统</title>
+  <title>开票管理 · 经营管理系统</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
@@ -12,10 +12,10 @@
     .row-hover:hover { background:#f8fafc; }
   </style>
 </head>
-<body class="bg-slate-50" data-page="invoices" data-title="开票记录">
+<body class="bg-slate-50" data-page="invoices" data-title="开票管理">
   <div id="app-root"></div>
   <div id="page-main">
-    <p class="text-xs text-slate-500 mb-4">记录已开具发票及金额；开票<strong>必须关联合同</strong>。作废仅标记状态为「已作废」，<strong>不计入</strong>累计开票；超额开票时提示确认。开票与收款<strong>无强关联</strong>，可先收款后开票。</p>
+    <p class="text-xs text-slate-500 mb-4">结算收款域 · 开票管理：记录已开具发票及金额；开票<strong>必须关联合同</strong>。作废仅标记状态为「已作废」，<strong>不计入</strong>累计开票；超额开票时提示确认。开票与收款<strong>无强关联</strong>，可先收款后开票。</p>
     <div class="flex flex-wrap gap-3 justify-between mb-5">
       <div class="flex flex-wrap gap-2">
         <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>2026 年</option><option>2025 年</option></select>
@@ -24,8 +24,8 @@
         <select id="filterStatus" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderInvoiceTable()"><option value="">全部状态</option><option value="active">已开票</option><option value="void">已作废</option></select>
       </div>
       <div class="flex gap-2 flex-wrap">
-        <a href="合同收款_合同管理_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">合同管理</a>
-        <a href="合同收款_收款记录_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">收款记录</a>
+        <a href="合同收款_合同管理_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">合同台账</a>
+        <a href="合同收款_收款记录_page.html" class="border bg-white text-sm px-4 py-2 rounded-xl">收款管理</a>
         <button type="button" onclick="openInvoiceForm()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>登记开票</button>
       </div>
     </div>

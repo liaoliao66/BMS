@@ -1,10 +1,9 @@
-/* 经营管理系统 v1.0.0 · PC 公共壳（菜单第 2 轮） */
+/* 经营管理系统 v1.0.0 · PC 公共壳（第一期：目标/计划/任务） */
 (function () {
   const NAV = [
     {
       group: "经营台账",
       items: [
-        { id: "dashboard", name: "经营总览", href: "经营台账_总览_page.html", icon: "fa-chart-line" },
         { id: "depts", name: "任务台账", href: "部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
         { id: "reports", name: "工作周报", href: "经营台账_工作汇报_page.html", icon: "fa-file-lines" },
       ],
@@ -20,25 +19,16 @@
       group: "任务中心",
       items: [
         { id: "my-tasks", name: "任务清单", href: "任务中心_我的任务_page.html", icon: "fa-list-check" },
-        { id: "supervise", name: "任务督办", href: "任务中心_任务督办_page.html", icon: "fa-flag" },
+        { id: "supervise", name: "任务督办", href: "任务中心_任务督办_page.html", icon: "fa-clipboard-check" },
+        // 本期隐藏：汇报提醒（能力并入工作周报，后续版本再开放菜单）
+        // { id: "fill-remind", name: "汇报提醒", href: "经营台账_工作汇报_page.html?section=tasks&open=pending", icon: "fa-bell" },
         { id: "projects", name: "专项管理", href: "专项管理_专项列表_page.html", icon: "fa-folder-open" },
       ],
     },
     {
-      group: "客户",
+      group: "基础配置",
       items: [
-        { id: "crm-overview", name: "客户概览", href: "CRM_客户概览_page.html", icon: "fa-gauge-high" },
-        { id: "crm-groups", name: "分组管理", href: "CRM_分组管理_page.html", icon: "fa-layer-group" },
-        { id: "crm-customers", name: "客户管理", href: "CRM_客户列表_page.html", icon: "fa-building" },
-        { id: "crm-talks", name: "洽谈记录", href: "CRM_洽谈列表_page.html", icon: "fa-comments" },
-      ],
-    },
-    {
-      group: "合同收款",
-      items: [
-        { id: "contracts", name: "合同管理", href: "合同收款_合同管理_page.html", icon: "fa-file-signature" },
-        { id: "invoices", name: "开票记录", href: "合同收款_开票记录_page.html", icon: "fa-file-invoice" },
-        { id: "receipts", name: "收款记录", href: "合同收款_收款记录_page.html", icon: "fa-yen-sign" },
+        { id: "cfg-scope", name: "使用范围", href: "基础配置_使用范围_page.html", icon: "fa-sliders" },
       ],
     },
   ];
@@ -163,7 +153,7 @@
       <aside class="w-64 shrink-0 bg-slate-800 text-slate-200 min-h-screen flex flex-col">
         <div class="px-5 py-5 border-b border-slate-700">
           <div class="text-white font-semibold text-base tracking-wide">经营管理系统</div>
-          <div class="text-xs text-slate-400 mt-1">v1.0.0 · PC 原型</div>
+          <div class="text-xs text-slate-400 mt-1">v1.0.0 · 目标计划任务</div>
         </div>
         <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">`;
     NAV.forEach((g) => {
