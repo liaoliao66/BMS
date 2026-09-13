@@ -125,23 +125,6 @@
     </div>
   </div>
 
-  <!-- 转派 -->
-  <div id="modal-transfer" data-modal>
-    <div class="wecom-mask" onclick="BMS.closeModal('modal-transfer')"></div>
-    <div class="wecom-dialog" style="max-width:340px">
-      <div class="wecom-dialog-hd"><div class="wecom-dialog-title">任务转派</div></div>
-      <div class="wecom-dialog-bd" style="padding:12px 16px">
-        <label class="wecom-field-label">新责任人 *</label>
-        <select id="tfOwner" class="wecom-input"><option>孙伟</option><option>马超</option><option>王芳</option></select>
-        <label class="wecom-field-label" style="margin-top:12px">转派原因 *（至少 10 字）</label>
-        <textarea id="tfReason" class="wecom-input" style="min-height:72px;resize:vertical" placeholder="说明转派背景"></textarea>
-      </div>
-      <div class="wecom-dialog-ft">
-        <button type="button" class="wecom-dialog-btn" onclick="BMS.closeModal('modal-transfer')">取消</button>
-        <button type="button" class="wecom-dialog-btn primary" onclick="saveTransfer()">确认转派</button>
-      </div>
-    </div>
-  </div>
 
   <script src="../../assets/wecom-common.js"></script>
   <script>
@@ -168,7 +151,6 @@
     let ownerScope = 'all';
     let viewIdx = -1;
     let completeIdx = -1;
-    let transferIdx = -1;
 
     function isDeptHead() {
       return CURRENT_USER.role === 'dept_head' || !!(CURRENT_USER.subordinates && CURRENT_USER.subordinates.length);
@@ -195,14 +177,6 @@
       return false;
     }
 
-    function canTransfer(r) {
-      const s = displayStatus(r);
-      if (s === '已完成') return false;
-      if (r.owner === CURRENT_USER.name) return true;
-      if (r.creator === CURRENT_USER.name) return true;
-      if (isDeptHead() && isSubordinateTask(r)) return true;
-      return false;
-    }
 
     function initPermissionUi() {
       const hint = document.getElementById('permHint');
@@ -354,9 +328,6 @@
         if (!r.filled) actions += '<button type="button" class="wecom-dialog-btn primary" onclick="goFill()">去填报</button>';
         actions += '<button type="button" class="wecom-dialog-btn primary" onclick="openComplete()">跟进/改状态</button>';
       }
-      if (canTransfer(r)) {
-        actions += '<button type="button" class="wecom-dialog-btn" onclick="openTransfer()">转派</button>';
-      }
       document.getElementById('vActions').innerHTML = actions;
       BMS.openModal('modal-view');
     }
@@ -500,22 +471,6 @@
       renderTasks();
     }
 
-    function openTransfer() {
-      transferIdx = viewIdx;
-      document.getElementById('tfReason').value = '';
-      BMS.closeModal('modal-view');
-      BMS.openModal('modal-transfer');
-    }
-
-    function saveTransfer() {
-      if ((document.getElementById('tfReason').value.trim().length || 0) < 10) {
-        WECOM.toast('转派原因至少 10 字'); return;
-      }
-      ROWS[transferIdx].owner = document.getElementById('tfOwner').value;
-      WECOM.toast('转派成功');
-      BMS.closeModal('modal-transfer');
-      renderTasks();
-    }
 
     initPermissionUi();
     onPeriodChange();

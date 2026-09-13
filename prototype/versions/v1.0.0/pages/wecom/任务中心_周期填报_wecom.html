@@ -102,8 +102,8 @@
       { id: 2, type: 'week', period: '2026-W34', task: '班前会标准化宣贯', plan: '8 月装卸效率提升计划', owner: '刘强', filled: false, progress: '', risk: '' },
       { id: 3, type: 'week', period: '2026-W34', task: 'Q3 安全隐患现场复核', plan: 'Q3 桥吊点检专项计划', owner: '刘强', filled: true, progress: '现场复核完成 3/5 项，剩余项已排期。', risk: '需设备部配合验电', submittedAt: '2026-08-26 16:20' },
       { id: 4, type: 'week', period: '2026-W33', task: '堆场周转异常复盘', plan: '堆场周转优化计划', owner: '刘强', filled: true, progress: '已形成复盘纪要。', risk: '', submittedAt: '2026-08-22 14:10' },
-      { id: 5, type: 'month', period: '2026-08', task: '桥吊作业效率量化更新', plan: '8 月装卸效率提升计划', owner: '刘强', filled: false, progress: '', risk: '', goal: true },
-      { id: 6, type: 'month', period: '2026-08', task: '班组准点出勤率录入', plan: '—', owner: '刘强', filled: true, progress: '当前值 91%，目标 90%。', risk: '', submittedAt: '2026-08-25 09:00', goal: true }
+      { id: 5, type: 'month', period: '2026-08', task: '部门月报确认催办跟进', plan: '8 月装卸效率提升计划', owner: '刘强', filled: false, progress: '', risk: '' },
+      { id: 6, type: 'month', period: '2026-08', task: '班组准点出勤复盘', plan: '—', owner: '刘强', filled: true, progress: '本月出勤保障措施已复盘。', risk: '', submittedAt: '2026-08-25 09:00' }
     ];
 
     function switchType(type) {
@@ -111,7 +111,7 @@
       document.querySelectorAll('#typeSeg .wecom-seg-btn').forEach(b => b.classList.toggle('on', b.getAttribute('data-type') === type));
       document.getElementById('periodTips').textContent = type === 'week'
         ? '周报 · 周日 23:59 截止 · 责任人须提交进展说明'
-        : '月报 · 月末截止 · 含目标量化值更新与任务进展';
+        : '月报 · 月末截止 · 含任务进展与月会交卷确认';
       const sel = document.getElementById('periodSelect');
       sel.innerHTML = PERIODS[type].map(p => `<option value="${p.id}">${p.label}</option>`).join('');
       renderList();
@@ -149,7 +149,7 @@
           return WECOM.cell({
             title: item.task,
             link: true,
-            desc: (item.goal ? '目标量化 · ' : '') + item.plan,
+            desc: item.plan,
             ft: WECOM.statusBadge('未填报', 'warn'),
             onclick: 'openFill(' + idx + ')'
           });

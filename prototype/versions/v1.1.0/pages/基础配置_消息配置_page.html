@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>消息配置 · 基础配置 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .sw { position:relative; width:40px; height:22px; flex-shrink:0; display:inline-block; }
+    .sw input { opacity:0; width:0; height:0; }
+    .sw span { position:absolute; inset:0; background:#cbd5e1; border-radius:9999px; cursor:pointer; transition:.15s; }
+    .sw span:before { content:""; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:9999px; transition:.15s; }
+    .sw input:checked + span { background:#0f766e; }
+    .sw input:checked + span:before { transform:translateX(18px); }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="cfg-msg" data-title="消息配置">
+  <div id="app-root"></div>
+  <div id="page-main">
+
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+      <div>
+        <h1 class="text-lg font-semibold text-slate-800">消息配置</h1>
+        <p class="text-xs text-slate-400 mt-1">配置周报 / 月报到期自动推企微群，以及催办、下达督办时的企微个人消息。消息发送走企微对接，本页仅配置规则与开关。</p>
+      </div>
+      <button type="button" onclick="saveAll()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2">
+        <i class="fa-solid fa-floppy-disk"></i>保存配置
+      </button>
+    </div>
+
+    <!-- ① 填报到期推群 -->
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden mb-5">
+      <div class="px-5 py-4 border-b flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-800">周报 / 月报填写提醒</h2>
+          <p class="text-xs text-slate-400 mt-0.5">到期扫描未填人员，将<strong class="text-slate-600">周期 + 未填名单</strong>通过企微群机器人 Webhook 自动推送</p>
+        </div>
+        <label class="sw" title="总开关">
+          <input type="checkbox" id="fillAutoOn" checked onchange="syncFillUi()" />
+          <span></span>
+        </label>
+      </div>
+      <div class="p-5 space-y-5" id="fillConfigBody">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="border border-slate-100 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-medium text-slate-800">周报提醒</div>
+              <label class="sw">
+                <input type="checkbox" id="weekOn" checked />
+                <span></span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">提醒日</label>
+                <select id="weekDay" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                  <option value="5" selected>周五</option>
+                  <option value="4">周四</option>
+                  <option value="6">周六</option>
+                  <option value="0">周日</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">提醒时间</label>
+                <input id="weekTime" type="time" value="18:00" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <p class="text-xs text-slate-400">示例：每周五 18:00 扫描本周（如 2026-W34）未填人员并推群</p>
+          </div>
+          <div class="border border-slate-100 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-medium text-slate-800">月报提醒</div>
+              <label class="sw">
+                <input type="checkbox" id="monthOn" checked />
+                <span></span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">提醒日</label>
+                <select id="monthDay" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                  <option value="last" selected>月末最后一天</option>
+                  <option value="25">每月 25 日</option>
+                  <option value="28">每月 28 日</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">提醒时间</label>
+                <input id="monthTime" type="time" value="18:00" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+              </div>
+            </div>
+            <p class="text-xs text-slate-400">示例：月末 18:00 扫描当月未填人员并推群</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">企微群 Webhook 地址 <span class="text-red-500">*</span></label>
+            <input id="wxWebhook" type="url" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=…" value="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+            <p class="text-xs text-slate-400 mt-1">在企微群中添加「群机器人」后复制 Webhook；未填写则不可启用自动推送</p>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">无人未填时</label>
+            <select id="emptyPolicy" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+              <option value="skip" selected>不推送（记日志：本周期已全部填报）</option>
+              <option value="brief">仍推一条「本周期已全部填报」简讯</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <label class="text-sm text-slate-600">群推文案预览（周期 + 未填名单）</label>
+            <button type="button" onclick="previewGroupPush()" class="text-sm text-teal-700 hover:underline">模拟到期推送</button>
+          </div>
+          <div id="groupPreview" class="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm text-slate-700 leading-relaxed whitespace-pre-line">【工作周报提醒】
+周期：2026-W34（08-24 ~ 08-30）
+以下人员尚未提交周报填报，请尽快完成：
+1. 马超 · 装卸队
+2. 王磊 · 综合管理部
+3. 孙伟 · 装卸队
+—— 经营管理系统自动推送</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ② 催办 / 下达 -->
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden mb-5">
+      <div class="px-5 py-4 border-b flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-800">催办与下达 · 企微个人消息</h2>
+          <p class="text-xs text-slate-400 mt-0.5">沿用各页「催办」按钮；下达督办任务时同步发企微消息给责任人</p>
+        </div>
+        <label class="sw">
+          <input type="checkbox" id="urgeWxOn" checked onchange="syncUrgeUi()" />
+          <span></span>
+        </label>
+      </div>
+      <div class="p-5 space-y-4" id="urgeConfigBody">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="border border-slate-100 rounded-xl p-4">
+            <div class="font-medium text-slate-800 mb-1">任务催办</div>
+            <p class="text-xs text-slate-500 leading-relaxed">入口：任务督办列表「催办」。向责任人发送一条企微消息，提示尽快跟进该督办任务。</p>
+            <p class="text-xs text-slate-400 mt-2">频控：同一任务同一人最多催办 1 次 / 天</p>
+          </div>
+          <div class="border border-slate-100 rounded-xl p-4">
+            <div class="font-medium text-slate-800 mb-1">下达督办任务</div>
+            <p class="text-xs text-slate-500 leading-relaxed">入口：任务督办「下达任务」。确认下达后，除写入任务清单外，同步给责任人发企微消息。</p>
+            <p class="text-xs text-slate-400 mt-2">内容含：任务名称、关联计划、截止日期</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">催办文案模板</label>
+            <textarea id="tplUrge" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-28" maxlength="300">【任务催办】{姓名}，请尽快跟进督办任务「{任务名称}」（关联计划：{计划}，截止：{截止日期}）。—— 经营管理系统</textarea>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">下达文案模板</label>
+            <textarea id="tplAssign" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-28" maxlength="300">【督办下达】{姓名}，您有新的督办任务「{任务名称}」。关联计划：{计划}；截止日期：{截止日期}。请在「任务清单」中查看并跟进。—— 经营管理系统</textarea>
+          </div>
+        </div>
+        <div class="bg-slate-50 rounded-xl p-3 text-xs text-slate-500">
+          占位符：<code class="text-slate-700">{姓名}</code> <code class="text-slate-700">{任务名称}</code> <code class="text-slate-700">{计划}</code> <code class="text-slate-700">{截止日期}</code>
+          · 填报一键提醒仍在「工作周报」使用，触达方式与催办一致（企微个人消息）。
+        </div>
+      </div>
+    </section>
+
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    function syncFillUi() {
+      const on = document.getElementById('fillAutoOn').checked;
+      document.getElementById('fillConfigBody').classList.toggle('opacity-50', !on);
+      document.getElementById('fillConfigBody').querySelectorAll('input,select,button,textarea').forEach(el => {
+        if (el.id === 'fillAutoOn') return;
+        el.disabled = !on;
+      });
+    }
+
+    function syncUrgeUi() {
+      const on = document.getElementById('urgeWxOn').checked;
+      document.getElementById('urgeConfigBody').classList.toggle('opacity-50', !on);
+      document.getElementById('urgeConfigBody').querySelectorAll('textarea').forEach(el => { el.disabled = !on; });
+    }
+
+    function buildGroupPreview() {
+      const dayMap = { '0': '周日', '4': '周四', '5': '周五', '6': '周六' };
+      const day = dayMap[document.getElementById('weekDay').value] || '周五';
+      const time = document.getElementById('weekTime').value || '18:00';
+      return '【工作周报提醒】\n周期：2026-W34（08-24 ~ 08-30）\n以下人员尚未提交周报填报，请尽快完成：\n1. 马超 · 装卸队\n2. 王磊 · 综合管理部\n3. 孙伟 · 装卸队\n—— 经营管理系统自动推送（规则：每周' + day + ' ' + time + '）';
+    }
+
+    function refreshPreview() {
+      document.getElementById('groupPreview').textContent = buildGroupPreview();
+    }
+
+    function isValidWebhook(url) {
+      const u = (url || '').trim();
+      return /^https:\/\/qyapi\.weixin\.qq\.com\/cgi-bin\/webhook\/send\?key=.+/i.test(u)
+        || /^https:\/\/.+/i.test(u);
+    }
+
+    function previewGroupPush() {
+      if (!document.getElementById('fillAutoOn').checked) {
+        BMS.toast('请先开启「周报 / 月报填写提醒」总开关', 'error');
+        return;
+      }
+      const wh = document.getElementById('wxWebhook').value.trim();
+      if (!wh) {
+        BMS.toast('请先填写企微群 Webhook 地址', 'error');
+        return;
+      }
+      if (!isValidWebhook(wh)) {
+        BMS.toast('Webhook 地址格式不正确', 'error');
+        return;
+      }
+      refreshPreview();
+      BMS.toast('原型：已模拟通过 Webhook 推送（周期 + 未填 3 人名单）');
+    }
+
+    function saveAll() {
+      const fillOn = document.getElementById('fillAutoOn').checked;
+      const wh = document.getElementById('wxWebhook').value.trim();
+      if (fillOn && !wh) {
+        BMS.toast('启用自动推群时必须填写 Webhook 地址', 'error');
+        return;
+      }
+      if (fillOn && !isValidWebhook(wh)) {
+        BMS.toast('Webhook 地址格式不正确', 'error');
+        return;
+      }
+      refreshPreview();
+      BMS.toast('消息配置已保存（即时生效）');
+    }
+
+    document.getElementById('weekDay').addEventListener('change', refreshPreview);
+    document.getElementById('weekTime').addEventListener('change', refreshPreview);
+    document.addEventListener('DOMContentLoaded', () => {
+      syncFillUi();
+      syncUrgeUi();
+      refreshPreview();
+    });
+  </script>
+</body>
+</html>

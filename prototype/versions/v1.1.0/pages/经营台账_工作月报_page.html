@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>工作月报 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .section-tab-on { background:#0f766e; color:#fff; }
+    .row-hover:hover { background:#f8fafc; }
+    .cell-view {
+      width: 100%;
+      min-height: 96px;
+      max-height: 220px;
+      overflow: auto;
+      white-space: pre-wrap;
+      line-height: 1.55;
+      font-size: 13px;
+      color: #334155;
+      border: 1px solid transparent;
+      border-radius: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: #f8fafc;
+      cursor: text;
+    }
+    .cell-view:hover { border-color: #cbd5e1; background: #fff; }
+    .cell-view.is-empty { color: #94a3b8; }
+    .cell-edit {
+      width: 100%;
+      min-height: 120px;
+      max-height: 220px;
+      resize: vertical;
+      white-space: pre-wrap;
+      line-height: 1.55;
+      font-size: 13px;
+      color: #334155;
+      border: 1px solid #0f766e;
+      border-radius: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      background: #fff;
+      box-shadow: 0 0 0 2px rgba(15,118,110,.12);
+    }
+    .cell-edit:focus { outline: none; }
+    .status-pending { color:#d97706; background:#fffbeb; border:1px solid #fde68a; }
+    .status-done { color:#047857; background:#ecfdf5; border:1px solid #a7f3d0; }
+    .status-empty { color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="reports-month" data-title="工作月报">
+  <div id="app-root"></div>
+  <div id="page-main">
+
+    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+      <div class="flex flex-wrap gap-2 items-center">
+        <button type="button" data-section="dept" class="section-tab px-4 py-2 rounded-xl text-sm section-tab-on" onclick="switchSection('dept')">月度工作</button>
+        <button type="button" data-section="special" class="section-tab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200" onclick="switchSection('special')">专项工作</button>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">月会交卷墙</span>
+      </div>
+      <div class="flex flex-wrap gap-2 text-sm">
+        <span class="px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-600">
+          <span id="statScopeLabel">部门月报</span>已确认
+          <b id="statDone" class="text-teal-700">0</b>/<span id="statTotal">0</span>
+        </span>
+        <span class="px-3 py-1.5 rounded-full bg-white border border-amber-100 text-amber-800">
+          未确认 <b id="statPending" class="text-amber-700">0</b>
+        </span>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 mb-4 items-center">
+      <select id="periodSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="onPeriodChange()">
+        <option value="2026-08" selected>2026-08</option>
+        <option value="2026-07">2026-07</option>
+        <option value="2026-06">2026-06</option>
+      </select>
+      <div class="relative flex-1 min-w-[200px] max-w-sm">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+        <input id="searchInput" type="search" placeholder="搜索部门 / 专项 / 负责人" class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm" oninput="renderTables()" />
+      </div>
+      <button type="button" onclick="batchUrge()" class="bg-white border border-amber-200 text-amber-700 rounded-xl px-4 py-2 text-sm hover:bg-amber-50">
+        <i class="fa-solid fa-bell mr-1"></i>一键催办
+      </button>
+    </div>
+
+    <!-- 月度工作：部门维度 -->
+    <div id="section-dept" class="section-pane">
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm min-w-[1100px]">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-4 py-3 text-left w-14">序号</th>
+                <th class="px-4 py-3 text-left w-36">部门</th>
+                <th class="px-4 py-3 text-left w-28">部门负责人</th>
+                <th class="px-4 py-3 text-left min-w-[280px]">本月完成工作</th>
+                <th class="px-4 py-3 text-left min-w-[280px]">下月工作计划</th>
+                <th class="px-4 py-3 text-left w-24">状态</th>
+                <th class="px-4 py-3 text-left w-36">操作</th>
+              </tr>
+            </thead>
+            <tbody id="deptBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 专项工作：专项负责人维度 -->
+    <div id="section-special" class="section-pane hidden">
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm min-w-[1100px]">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-4 py-3 text-left w-14">序号</th>
+                <th class="px-4 py-3 text-left w-48">专项名称</th>
+                <th class="px-4 py-3 text-left w-28">专项负责人</th>
+                <th class="px-4 py-3 text-left w-28">协同部门</th>
+                <th class="px-4 py-3 text-left min-w-[260px]">本月完成工作</th>
+                <th class="px-4 py-3 text-left min-w-[260px]">下月工作计划</th>
+                <th class="px-4 py-3 text-left w-24">状态</th>
+                <th class="px-4 py-3 text-left w-36">操作</th>
+              </tr>
+            </thead>
+            <tbody id="specialBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="../assets/common.js"></script>
+  <script>
+    const PERIOD_META = {
+      '2026-08': { label: '2026年8月', next: '2026年9月', deadline: '2026-08-31' },
+      '2026-07': { label: '2026年7月', next: '2026年8月', deadline: '2026-07-31' },
+      '2026-06': { label: '2026年6月', next: '2026年7月', deadline: '2026-06-30' }
+    };
+
+    /** 部门维度示意数据 */
+    let DEPT_ROWS = [
+      {
+        id: 'd1', dept: '装卸队', owner: '刘强', status: '待确认',
+        done: '一、装卸作业\n1. 完成桥吊夜班流程复盘，输出整改清单 5 条。\n2. 班前会标准话术与记录模板全班组宣贯。\n\n二、培训考核\n1. 岸桥对位训练第一轮完成，第二轮排班待确认。',
+        plan: '一、效率提升\n1. 完成夜班流程整改闭环复核。\n2. 推进对位训练第二轮并沉淀数据。\n\n二、班组管理\n1. 固化班前会模板，覆盖剩余班组。',
+        taskSource: ['桥吊夜班流程复盘', '班前会标准化宣贯', '岸桥对位训练'],
+        planSource: ['效率复核材料整理', '对位训练第二轮排班', '班前会模板固化']
+      },
+      {
+        id: 'd2', dept: '设备部', owner: '周杰', status: '已确认',
+        done: '一、点检整改\n1. 钢丝绳点检发现问题 8 条，已闭环 5 条。\n2. 季度点检报告已归档并同步安全环保部。',
+        plan: '一、节点冲刺\n1. 闭环剩余 3 条整改项。\n2. 准备季度节点验收材料。',
+        taskSource: ['钢丝绳点检整改', '季度点检报告归档'],
+        planSource: ['季度点检节点冲刺']
+      },
+      {
+        id: 'd3', dept: '调度中心', owner: '陈敏', status: '待确认',
+        done: '一、堆场周转\n1. 完成周转异常复盘，3 项措施进入试点。\n2. 建立箱位周转日报核对机制，本月异常 2 起均已标注原因。',
+        plan: '一、机制固化\n1. 建立周转异常周报机制并试运行。\n2. 协同装卸队召开跨部门协调会。',
+        taskSource: ['堆场周转异常复盘', '箱位周转日报核对'],
+        planSource: ['堆场周转周报机制', '跨部门协同协调会']
+      },
+      {
+        id: 'd4', dept: '安全环保部', owner: '赵敏', status: '未填',
+        done: '',
+        plan: '',
+        taskSource: ['现场隐患排查抽查'],
+        planSource: ['安全月复盘材料']
+      },
+      {
+        id: 'd5', dept: '商务部', owner: '李芳', status: '已确认',
+        done: '一、客户协同\n1. 完成重点客户月度拜访纪要归档。\n2. 合同履约节点核对完成。',
+        plan: '一、商务跟进\n1. 推进 2 家意向客户方案澄清。\n2. 输出下月履约风险清单。',
+        taskSource: ['客户拜访纪要归档', '合同履约节点核对'],
+        planSource: ['意向客户方案澄清', '履约风险清单']
+      },
+      {
+        id: 'd6', dept: '综合管理部', owner: '王磊', status: '待确认',
+        done: '一、跨部门协同\n1. 督办堆场协同会议议题收集。\n2. 月度经营材料初稿整理。',
+        plan: '一、组织推进\n1. 组织调度中心与装卸队协同会议。\n2. 汇总各部门月报确认进度。',
+        taskSource: ['堆场协同会议跟进'],
+        planSource: ['跨部门协同协调会']
+      }
+    ];
+
+    /** 专项维度示意数据 */
+    let SPECIAL_ROWS = [
+      {
+        id: 's1', name: '桥吊效能提升专项', owner: '张港长', depts: '装卸队、设备部', status: '待确认',
+        done: '一、产品与现场\n1. 夜班流程复盘与点检整改并行推进。\n2. 对位训练数据开始沉淀。\n\n二、问题反馈\n1. 训练排班冲突导致部分节点延期。',
+        plan: '一、专项冲刺\n1. 完成效率中期复核。\n2. 闭环点检剩余整改项并组织验收。',
+        taskSource: ['桥吊夜班流程复盘', '钢丝绳点检整改', '岸桥对位训练'],
+        planSource: ['效率复核材料整理', '季度点检节点冲刺', '对位训练第二轮排班']
+      },
+      {
+        id: 's2', name: '堆场周转优化专项', owner: '陈敏', depts: '调度中心、装卸队', status: '已确认',
+        done: '一、周转优化\n1. 异常复盘纪要已同步。\n2. 日报核对机制试运行。',
+        plan: '一、机制落地\n1. 周转异常周报试运行。\n2. 召开跨部门协同会。',
+        taskSource: ['堆场周转异常复盘', '箱位周转日报核对'],
+        planSource: ['堆场周转周报机制', '跨部门协同协调会']
+      },
+      {
+        id: 's3', name: '安全生产月专项', owner: '赵敏', depts: '安全环保部', status: '未填',
+        done: '',
+        plan: '',
+        taskSource: ['现场隐患排查抽查'],
+        planSource: ['安全月复盘材料']
+      }
+    ];
+
+    let currentSection = 'dept';
+
+    function switchSection(name) {
+      currentSection = name;
+      document.querySelectorAll('.section-pane').forEach(p => p.classList.add('hidden'));
+      document.getElementById('section-' + name).classList.remove('hidden');
+      document.querySelectorAll('.section-tab').forEach(b => {
+        const on = b.getAttribute('data-section') === name;
+        b.className = on ? 'section-tab px-4 py-2 rounded-xl text-sm section-tab-on' : 'section-tab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200';
+      });
+      renderTables();
+    }
+
+    function onPeriodChange() {
+      const p = document.getElementById('periodSelect').value;
+      renderTables();
+      BMS.toast('已切换至 ' + PERIOD_META[p].label);
+    }
+
+    function statusBadge(status) {
+      if (status === '已确认') return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs status-done"><i class="fa-solid fa-circle text-[6px]"></i>已确认</span>';
+      if (status === '待确认') return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs status-pending"><i class="fa-solid fa-circle text-[6px]"></i>待确认</span>';
+      return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs status-empty"><i class="fa-solid fa-circle text-[6px]"></i>未填</span>';
+    }
+
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function matchKeyword(row, kw) {
+      if (!kw) return true;
+      const blob = [row.dept, row.name, row.owner, row.depts, row.done, row.plan].filter(Boolean).join(' ');
+      return blob.includes(kw);
+    }
+
+    function actionHtml(type, id, status) {
+      const ai = `<button type="button" class="text-teal-700 hover:underline mr-3" onclick="aiSummarizeRow('${type}','${id}')">AI汇总</button>`;
+      if (status === '已确认') return ai;
+      return ai + `<button type="button" class="text-teal-700 hover:underline" onclick="confirmRow('${type}','${id}')">确认</button>`;
+    }
+
+    function fieldHtml(type, id, field, value) {
+      const empty = !(value && String(value).trim());
+      const text = empty ? '点击填写' : escapeHtml(value);
+      return `<div class="cell-view${empty ? ' is-empty' : ''}" data-type="${type}" data-id="${id}" data-field="${field}" onclick="beginEdit(this)">${text}</div>`;
+    }
+
+    function renderTables() {
+      const kw = (document.getElementById('searchInput').value || '').trim();
+      const deptList = DEPT_ROWS.filter(r => matchKeyword(r, kw));
+      const specialList = SPECIAL_ROWS.filter(r => matchKeyword(r, kw));
+
+      document.getElementById('deptBody').innerHTML = deptList.map((r, i) => `
+        <tr class="border-t border-slate-100 row-hover align-top">
+          <td class="px-4 py-3 text-slate-500">${i + 1}</td>
+          <td class="px-4 py-3 font-medium text-slate-900">${escapeHtml(r.dept)}</td>
+          <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-xs">${escapeHtml(r.owner)}</span></td>
+          <td class="px-4 py-3">${fieldHtml('dept', r.id, 'done', r.done)}</td>
+          <td class="px-4 py-3">${fieldHtml('dept', r.id, 'plan', r.plan)}</td>
+          <td class="px-4 py-3">${statusBadge(r.status)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${actionHtml('dept', r.id, r.status)}</td>
+        </tr>
+      `).join('') || `<tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">无匹配部门</td></tr>`;
+
+      document.getElementById('specialBody').innerHTML = specialList.map((r, i) => `
+        <tr class="border-t border-slate-100 row-hover align-top">
+          <td class="px-4 py-3 text-slate-500">${i + 1}</td>
+          <td class="px-4 py-3 font-medium text-slate-900">${escapeHtml(r.name)}</td>
+          <td class="px-4 py-3"><span class="inline-flex px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-xs">${escapeHtml(r.owner)}</span></td>
+          <td class="px-4 py-3 text-slate-600">${escapeHtml(r.depts)}</td>
+          <td class="px-4 py-3">${fieldHtml('special', r.id, 'done', r.done)}</td>
+          <td class="px-4 py-3">${fieldHtml('special', r.id, 'plan', r.plan)}</td>
+          <td class="px-4 py-3">${statusBadge(r.status)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${actionHtml('special', r.id, r.status)}</td>
+        </tr>
+      `).join('') || `<tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">无匹配专项</td></tr>`;
+
+      updateStats();
+    }
+
+    function updateStats() {
+      const list = currentSection === 'dept' ? DEPT_ROWS : SPECIAL_ROWS;
+      const done = list.filter(r => r.status === '已确认').length;
+      const pending = list.filter(r => r.status !== '已确认').length;
+      const label = document.getElementById('statScopeLabel');
+      const elDone = document.getElementById('statDone');
+      const elTotal = document.getElementById('statTotal');
+      const elPending = document.getElementById('statPending');
+      if (label) label.textContent = currentSection === 'dept' ? '部门月报' : '专项月报';
+      if (elDone) elDone.textContent = done;
+      if (elTotal) elTotal.textContent = list.length;
+      if (elPending) elPending.textContent = pending;
+    }
+
+    function findRow(type, id) {
+      return (type === 'dept' ? DEPT_ROWS : SPECIAL_ROWS).find(r => r.id === id);
+    }
+
+    function syncStatus(row) {
+      if (row.status === '已确认') return;
+      if ((row.done && row.done.trim()) || (row.plan && row.plan.trim())) row.status = '待确认';
+      else row.status = '未填';
+    }
+
+    function refreshRowMeta(tr, type, row) {
+      if (!tr || !row) return;
+      const statusTd = tr.querySelector('td:nth-last-child(2)');
+      if (statusTd) statusTd.innerHTML = statusBadge(row.status);
+      const actionTd = tr.querySelector('td:last-child');
+      if (actionTd) actionTd.innerHTML = actionHtml(type, row.id, row.status);
+      updateStats();
+    }
+
+    function beginEdit(viewEl) {
+      if (!viewEl || viewEl.tagName === 'TEXTAREA') return;
+      const type = viewEl.getAttribute('data-type');
+      const id = viewEl.getAttribute('data-id');
+      const field = viewEl.getAttribute('data-field');
+      const row = findRow(type, id);
+      if (!row) return;
+      const ta = document.createElement('textarea');
+      ta.className = 'cell-edit';
+      ta.setAttribute('data-type', type);
+      ta.setAttribute('data-id', id);
+      ta.setAttribute('data-field', field);
+      ta.value = row[field] || '';
+      ta.placeholder = '直接填写…';
+      ta.onblur = function () { endEdit(ta); };
+      viewEl.replaceWith(ta);
+      ta.focus();
+      const len = ta.value.length;
+      ta.setSelectionRange(len, len);
+    }
+
+    function endEdit(ta) {
+      const type = ta.getAttribute('data-type');
+      const id = ta.getAttribute('data-id');
+      const field = ta.getAttribute('data-field');
+      const row = findRow(type, id);
+      if (!row) return;
+      const prev = row.status;
+      row[field] = ta.value;
+      if (row.status === '已确认') row.status = '待确认';
+      else syncStatus(row);
+      const view = document.createElement('div');
+      const empty = !(row[field] && String(row[field]).trim());
+      view.className = 'cell-view' + (empty ? ' is-empty' : '');
+      view.setAttribute('data-type', type);
+      view.setAttribute('data-id', id);
+      view.setAttribute('data-field', field);
+      view.setAttribute('onclick', 'beginEdit(this)');
+      view.textContent = empty ? '点击填写' : row[field];
+      const tr = ta.closest('tr');
+      ta.replaceWith(view);
+      if (prev !== row.status) refreshRowMeta(tr, type, row);
+    }
+
+    function buildAiDone(row) {
+      const tasks = row.taskSource || [];
+      if (!tasks.length) return '本月暂无关联任务填报记录。';
+      return '一、本月任务汇总\n' + tasks.map((t, i) => (i + 1) + '. ' + t + '：已根据责任人填报进展自动汇总。').join('\n');
+    }
+
+    function buildAiPlan(row) {
+      const plans = row.planSource || [];
+      if (!plans.length) return '下月暂无已登记工作计划。';
+      return '一、下月计划汇总\n' + plans.map((t, i) => (i + 1) + '. ' + t).join('\n');
+    }
+
+    function aiSummarizeRow(type, id) {
+      const row = findRow(type, id);
+      if (!row) return;
+      row.done = buildAiDone(row);
+      row.plan = buildAiPlan(row);
+      if (row.status === '已确认') row.status = '待确认';
+      else syncStatus(row);
+      renderTables();
+      BMS.toast('已生成 AI 汇总，请核对后确认');
+    }
+
+    function confirmRow(type, id) {
+      const row = findRow(type, id);
+      if (!row) return;
+      if (!row.done || !row.done.trim() || !row.plan || !row.plan.trim()) {
+        BMS.toast('本月完成与下月计划均需填写后才能确认', 'error');
+        return;
+      }
+      row.status = '已确认';
+      BMS.toast((type === 'dept' ? row.dept : row.name) + ' 已确认');
+      renderTables();
+    }
+
+    function batchUrge() {
+      const list = currentSection === 'dept' ? DEPT_ROWS : SPECIAL_ROWS;
+      const targets = list.filter(r => r.status !== '已确认');
+      if (!targets.length) {
+        BMS.toast('当前页均已确认，无需催办');
+        return;
+      }
+      const period = PERIOD_META[document.getElementById('periodSelect').value];
+      const names = targets.map(r => r.owner).filter((v, i, a) => a.indexOf(v) === i);
+      BMS.toast('原型：已向 ' + names.length + ' 人一键催办（' + period.label + '，未确认 ' + targets.length + ' 条）');
+    }
+
+    renderTables();
+  </script>
+</body>
+</html>

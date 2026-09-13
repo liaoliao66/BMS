@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>使用范围 · 基础配置 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .tab-on { background:#0f766e; color:#fff; }
+    .row-hover:hover { background:#f8fafc; }
+    .sw { position:relative; width:40px; height:22px; flex-shrink:0; }
+    .sw input { opacity:0; width:0; height:0; }
+    .sw span { position:absolute; inset:0; background:#cbd5e1; border-radius:9999px; cursor:pointer; transition:.15s; }
+    .sw span:before { content:""; position:absolute; width:16px; height:16px; left:3px; top:3px; background:#fff; border-radius:9999px; transition:.15s; }
+    .sw input:checked + span { background:#0f766e; }
+    .sw input:checked + span:before { transform:translateX(18px); }
+    .sw input:disabled + span { opacity:.45; cursor:not-allowed; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="cfg-scope" data-title="使用范围">
+  <div id="app-root"></div>
+  <div id="page-main">
+
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+      <div>
+        <h1 class="text-lg font-semibold text-slate-800">使用范围</h1>
+        <p class="text-xs text-slate-400 mt-1">部门与人员主数据由基础平台同步；仅配置「是否使用本系统」。未启用人员不要求填写目标 / 计划 / 任务 / 周报。</p>
+        <p class="text-xs text-slate-500 mt-1">最近同步：<span id="lastSyncText">2026-09-08 14:20</span> · 变更即时生效</p>
+      </div>
+      <button type="button" onclick="openSyncConfirm()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2">
+        <i class="fa-solid fa-rotate"></i>从基础平台同步
+      </button>
+    </div>
+
+    <div class="flex flex-wrap gap-1 bg-white border border-slate-200 rounded-xl p-1 w-fit mb-4">
+      <button type="button" id="tabDept" class="tab-btn px-4 py-1.5 rounded-lg text-sm tab-on" onclick="switchTab('dept')">部门使用</button>
+      <button type="button" id="tabPerson" class="tab-btn px-4 py-1.5 rounded-lg text-sm text-slate-600" onclick="switchTab('person')">人员使用</button>
+    </div>
+
+    <!-- 部门 -->
+    <div id="pane-dept" class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div class="px-4 py-3 border-b bg-slate-50/80 flex flex-wrap justify-between gap-2 text-sm">
+        <span class="text-slate-600">关闭部门将<strong class="text-slate-800">同时关闭该部门全部人员</strong>；开启部门后，可再关闭指定人员。</span>
+        <span class="text-slate-400" id="deptStat">—</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[640px]">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left">部门</th>
+              <th class="px-5 py-3 text-left">同步人数</th>
+              <th class="px-5 py-3 text-left">已启用</th>
+              <th class="px-5 py-3 text-left">来源</th>
+              <th class="px-5 py-3 text-left">使用本系统</th>
+            </tr>
+          </thead>
+          <tbody id="deptTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 人员 -->
+    <div id="pane-person" class="hidden bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div class="px-4 py-3 border-b bg-slate-50/80 flex flex-wrap items-center gap-2">
+        <select id="personDeptFilter" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-sm" onchange="renderPersonTable()">
+          <option value="all">全部部门</option>
+        </select>
+        <select id="personEnableFilter" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-sm" onchange="renderPersonTable()">
+          <option value="all">全部状态</option>
+          <option value="on">仅已启用</option>
+          <option value="off">仅未启用</option>
+        </select>
+        <input id="personKw" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-sm min-w-[160px]" placeholder="搜索姓名 / 账号" oninput="renderPersonTable()" />
+        <span class="text-xs text-slate-400 ml-auto" id="personStat">—</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[720px]">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left">姓名</th>
+              <th class="px-5 py-3 text-left">账号</th>
+              <th class="px-5 py-3 text-left">部门</th>
+              <th class="px-5 py-3 text-left">岗位</th>
+              <th class="px-5 py-3 text-left">身份</th>
+              <th class="px-5 py-3 text-left">使用本系统</th>
+            </tr>
+          </thead>
+          <tbody id="personTbody"></tbody>
+        </table>
+      </div>
+      <p class="px-5 py-3 border-t text-xs text-slate-400">含港级领导；未启用人员不进入填报与催办范围，历史数据仍可只读查看。</p>
+    </div>
+
+    <!-- 同步确认 -->
+    <div id="modal-sync" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-sync')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="text-lg font-semibold">从基础平台同步</h3>
+          <button type="button" onclick="BMS.closeModal('modal-sync')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed mb-4">将拉取最新部门与人员主数据。已配置的「使用开关」按账号保留；新增人员默认<strong>未启用</strong>，需管理员手动开启。</p>
+        <ul class="text-xs text-slate-500 space-y-1 mb-5 list-disc pl-4">
+          <li>调出 / 离职人员：标记为停用，开关自动关闭</li>
+          <li>部门更名：按组织 ID 对齐，开关保留</li>
+        </ul>
+        <div class="flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-sync')" class="text-sm text-slate-500 px-3 py-2">取消</button>
+          <button type="button" onclick="runSync()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">开始同步</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 关部门确认 -->
+    <div id="modal-dept-off" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="cancelDeptOff()"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="text-lg font-semibold">关闭部门使用</h3>
+          <button type="button" onclick="cancelDeptOff()"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <p class="text-sm text-slate-600 leading-relaxed mb-4" id="deptOffText">关闭后，该部门下全部人员将同步关闭使用，即时生效。</p>
+        <div class="flex gap-2 justify-end">
+          <button type="button" onclick="cancelDeptOff()" class="text-sm text-slate-500 px-3 py-2">取消</button>
+          <button type="button" onclick="confirmDeptOff()" class="bg-red-600 hover:bg-red-500 text-white text-sm px-4 py-2 rounded-xl">确认关闭</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="../assets/common.js"></script>
+  <script>
+    var lastSyncAt = '2026-09-08 14:20';
+    var pendingDeptOff = null;
+    var currentTab = 'dept';
+
+    var DEPTS = [
+      { id: 'd1', name: '港领导班子', enabled: true, source: '基础平台' },
+      { id: 'd2', name: '装卸队', enabled: true, source: '基础平台' },
+      { id: 'd3', name: '设备部', enabled: true, source: '基础平台' },
+      { id: 'd4', name: '调度中心', enabled: true, source: '基础平台' },
+      { id: 'd5', name: '安全环保部', enabled: true, source: '基础平台' },
+      { id: 'd6', name: '综合办公室', enabled: false, source: '基础平台' }
+    ];
+
+    var PEOPLE = [
+      { id: 'p01', name: '张港长', account: 'zhang.gl', dept: '港领导班子', title: '港长', role: '大领导', enabled: true, left: false },
+      { id: 'p02', name: '李书记', account: 'li.sj', dept: '港领导班子', title: '党委书记', role: '大领导', enabled: true, left: false },
+      { id: 'p03', name: '王副港长', account: 'wang.fg', dept: '港领导班子', title: '副港长', role: '大领导', enabled: true, left: false },
+      { id: 'p04', name: '刘强', account: 'liu.q', dept: '装卸队', title: '队长', role: '部门领导', enabled: true, left: false },
+      { id: 'p05', name: '马超', account: 'ma.c', dept: '装卸队', title: '班长', role: '执行人员', enabled: true, left: false },
+      { id: 'p06', name: '孙伟', account: 'sun.w', dept: '装卸队', title: '司机', role: '执行人员', enabled: true, left: false },
+      { id: 'p07', name: '王芳', account: 'wang.f', dept: '装卸队', title: '调度员', role: '执行人员', enabled: false, left: false },
+      { id: 'p08', name: '周杰', account: 'zhou.j', dept: '设备部', title: '部长', role: '部门领导', enabled: true, left: false },
+      { id: 'p09', name: '赵磊', account: 'zhao.l', dept: '设备部', title: '点检员', role: '执行人员', enabled: true, left: false },
+      { id: 'p10', name: '钱进', account: 'qian.j', dept: '设备部', title: '技术员', role: '执行人员', enabled: false, left: false },
+      { id: 'p11', name: '陈敏', account: 'chen.m', dept: '调度中心', title: '主任', role: '部门领导', enabled: true, left: false },
+      { id: 'p12', name: '王磊', account: 'wang.l', dept: '安全环保部', title: '部长', role: '部门领导', enabled: true, left: false },
+      { id: 'p13', name: '李芳', account: 'li.f', dept: '安全环保部', title: '安全员', role: '执行人员', enabled: true, left: false },
+      { id: 'p14', name: '赵文', account: 'zhao.w', dept: '综合办公室', title: '文员', role: '执行人员', enabled: false, left: false }
+    ];
+
+    function deptByName(name) {
+      return DEPTS.find(function (d) { return d.name === name; });
+    }
+
+    function countPeople(deptName) {
+      var list = PEOPLE.filter(function (p) { return p.dept === deptName && !p.left; });
+      return {
+        total: list.length,
+        on: list.filter(function (p) { return p.enabled; }).length
+      };
+    }
+
+    function switchTab(name) {
+      currentTab = name;
+      document.getElementById('pane-dept').classList.toggle('hidden', name !== 'dept');
+      document.getElementById('pane-person').classList.toggle('hidden', name !== 'person');
+      document.querySelectorAll('.tab-btn').forEach(function (btn) {
+        btn.classList.remove('tab-on');
+        btn.classList.add('text-slate-600');
+      });
+      var on = document.getElementById(name === 'dept' ? 'tabDept' : 'tabPerson');
+      on.classList.add('tab-on');
+      on.classList.remove('text-slate-600');
+    }
+
+    function renderDeptFilter() {
+      var sel = document.getElementById('personDeptFilter');
+      var cur = sel.value || 'all';
+      sel.innerHTML = '<option value="all">全部部门</option>' + DEPTS.map(function (d) {
+        return '<option value="' + d.name + '">' + d.name + (d.enabled ? '' : '（部门未启用）') + '</option>';
+      }).join('');
+      sel.value = cur;
+      if (![].some.call(sel.options, function (o) { return o.value === cur; })) sel.value = 'all';
+    }
+
+    function renderDeptTable() {
+      var onDepts = DEPTS.filter(function (d) { return d.enabled; }).length;
+      document.getElementById('deptStat').textContent = '启用部门 ' + onDepts + ' / ' + DEPTS.length;
+      document.getElementById('deptTbody').innerHTML = DEPTS.map(function (d) {
+        var c = countPeople(d.name);
+        return '<tr class="border-t row-hover">' +
+          '<td class="px-5 py-3 font-medium text-slate-800">' + d.name + '</td>' +
+          '<td class="px-5 py-3">' + c.total + '</td>' +
+          '<td class="px-5 py-3 ' + (c.on ? 'text-teal-700 font-medium' : 'text-slate-400') + '">' + c.on + '</td>' +
+          '<td class="px-5 py-3 text-slate-500">' + d.source + '</td>' +
+          '<td class="px-5 py-3"><label class="sw inline-flex align-middle" title="即时生效">' +
+            '<input type="checkbox" ' + (d.enabled ? 'checked' : '') + ' onchange="onDeptToggle(\'' + d.id + '\', this)" />' +
+            '<span></span></label></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function renderPersonTable() {
+      var deptF = document.getElementById('personDeptFilter').value;
+      var enF = document.getElementById('personEnableFilter').value;
+      var kw = (document.getElementById('personKw').value || '').trim();
+      var rows = PEOPLE.filter(function (p) {
+        if (p.left) return false;
+        if (deptF !== 'all' && p.dept !== deptF) return false;
+        if (enF === 'on' && !p.enabled) return false;
+        if (enF === 'off' && p.enabled) return false;
+        if (kw && p.name.indexOf(kw) < 0 && p.account.indexOf(kw) < 0) return false;
+        return true;
+      });
+      var onAll = PEOPLE.filter(function (p) { return !p.left && p.enabled; }).length;
+      var total = PEOPLE.filter(function (p) { return !p.left; }).length;
+      document.getElementById('personStat').textContent = '当前 ' + rows.length + ' 人 · 全库已启用 ' + onAll + ' / ' + total;
+
+      document.getElementById('personTbody').innerHTML = rows.length ? rows.map(function (p) {
+        var d = deptByName(p.dept);
+        var deptOn = d && d.enabled;
+        var roleCls = p.role === '大领导' ? 'bg-slate-800 text-white' : (p.role === '部门领导' ? 'bg-teal-50 text-teal-800 border border-teal-100' : 'bg-slate-100 text-slate-600');
+        return '<tr class="border-t row-hover">' +
+          '<td class="px-5 py-3 font-medium text-slate-800">' + p.name + '</td>' +
+          '<td class="px-5 py-3 text-slate-500">' + p.account + '</td>' +
+          '<td class="px-5 py-3">' + p.dept + (!deptOn ? ' <span class="text-xs text-amber-600">部门未启用</span>' : '') + '</td>' +
+          '<td class="px-5 py-3 text-slate-500">' + p.title + '</td>' +
+          '<td class="px-5 py-3"><span class="text-[11px] px-2 py-0.5 rounded-full ' + roleCls + '">' + p.role + '</span></td>' +
+          '<td class="px-5 py-3"><label class="sw inline-flex align-middle" title="' + (deptOn ? '即时生效' : '请先启用部门') + '">' +
+            '<input type="checkbox" ' + (p.enabled ? 'checked' : '') + (deptOn ? '' : ' disabled') + ' onchange="onPersonToggle(\'' + p.id + '\', this)" />' +
+            '<span></span></label></td>' +
+          '</tr>';
+      }).join('') : '<tr><td colspan="6" class="px-5 py-12 text-center text-slate-400">无匹配人员</td></tr>';
+    }
+
+    function onDeptToggle(id, input) {
+      var d = DEPTS.find(function (x) { return x.id === id; });
+      if (!d) return;
+      if (input.checked) {
+        d.enabled = true;
+        BMS.toast('已启用部门「' + d.name + '」，可再配置下属人员（即时生效）');
+        refreshAll();
+        return;
+      }
+      pendingDeptOff = { id: id, input: input };
+      input.checked = true;
+      var c = countPeople(d.name);
+      document.getElementById('deptOffText').textContent =
+        '确认关闭「' + d.name + '」？将同时关闭其下 ' + c.on + ' 名已启用人员的使用权限，目标 / 计划 / 任务 / 周报填报要求即时取消。';
+      BMS.openModal('modal-dept-off');
+    }
+
+    function cancelDeptOff() {
+      pendingDeptOff = null;
+      BMS.closeModal('modal-dept-off');
+    }
+
+    function confirmDeptOff() {
+      if (!pendingDeptOff) return;
+      var d = DEPTS.find(function (x) { return x.id === pendingDeptOff.id; });
+      if (d) {
+        d.enabled = false;
+        var n = 0;
+        PEOPLE.forEach(function (p) {
+          if (p.dept === d.name && p.enabled) { p.enabled = false; n++; }
+        });
+        BMS.toast('已关闭「' + d.name + '」及 ' + n + ' 名人员（即时生效）', 'warn');
+      }
+      pendingDeptOff = null;
+      BMS.closeModal('modal-dept-off');
+      refreshAll();
+    }
+
+    function onPersonToggle(id, input) {
+      var p = PEOPLE.find(function (x) { return x.id === id; });
+      if (!p) return;
+      var d = deptByName(p.dept);
+      if (!d || !d.enabled) {
+        input.checked = false;
+        BMS.toast('请先启用部门「' + p.dept + '」', 'error');
+        return;
+      }
+      p.enabled = !!input.checked;
+      BMS.toast(p.enabled
+        ? ('已启用「' + p.name + '」，需填写目标 / 计划 / 任务等（即时生效）')
+        : ('已关闭「' + p.name + '」，不再要求填报（即时生效）'), p.enabled ? undefined : 'warn');
+      refreshAll();
+    }
+
+    function openSyncConfirm() {
+      BMS.openModal('modal-sync');
+    }
+
+    function runSync() {
+      BMS.closeModal('modal-sync');
+      BMS.toast('正在同步…');
+      setTimeout(function () {
+        var added = false;
+        if (!PEOPLE.some(function (p) { return p.account === 'new.user'; })) {
+          PEOPLE.push({
+            id: 'p_new', name: '新入职-吴航', account: 'new.user', dept: '装卸队',
+            title: '司机', role: '执行人员', enabled: false, left: false
+          });
+          added = true;
+        }
+        var now = new Date();
+        lastSyncAt = now.getFullYear() + '-' +
+          String(now.getMonth() + 1).padStart(2, '0') + '-' +
+          String(now.getDate()).padStart(2, '0') + ' ' +
+          String(now.getHours()).padStart(2, '0') + ':' +
+          String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('lastSyncText').textContent = lastSyncAt;
+        refreshAll();
+        BMS.toast(added
+          ? '同步完成：新增 1 人（默认未启用），开关已按账号保留'
+          : '同步完成：组织数据已更新，使用开关已保留');
+        switchTab('person');
+        document.getElementById('personDeptFilter').value = '装卸队';
+        document.getElementById('personEnableFilter').value = 'off';
+        renderPersonTable();
+      }, 700);
+    }
+
+    function refreshAll() {
+      document.getElementById('lastSyncText').textContent = lastSyncAt;
+      renderDeptFilter();
+      renderDeptTable();
+      renderPersonTable();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      refreshAll();
+      switchTab('dept');
+    });
+  </script>
+</body>
+</html>

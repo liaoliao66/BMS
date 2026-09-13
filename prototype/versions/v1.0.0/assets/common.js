@@ -4,8 +4,9 @@
     {
       group: "经营台账",
       items: [
-        { id: "depts", name: "任务台账", href: "部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
+        { id: "depts", name: "工作台账", href: "部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
         { id: "reports", name: "工作周报", href: "经营台账_工作汇报_page.html", icon: "fa-file-lines" },
+        { id: "reports-month", name: "工作月报", href: "经营台账_工作月报_page.html", icon: "fa-calendar-days" },
       ],
     },
     {
@@ -29,6 +30,7 @@
       group: "基础配置",
       items: [
         { id: "cfg-scope", name: "使用范围", href: "基础配置_使用范围_page.html", icon: "fa-sliders" },
+        { id: "cfg-msg", name: "消息配置", href: "基础配置_消息配置_page.html", icon: "fa-bell" },
       ],
     },
   ];
@@ -171,6 +173,12 @@
   }
 
   function buildHeader() {
+    const prdHref = "../../../../docs/versions/v1.0.0/prd.html";
+    const monthPrdHref = "../../../../docs/versions/v1.0.0/prd_工作月报.md";
+    const prdExtra =
+      pageId === "reports-month"
+        ? `<a href="${monthPrdHref}" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50" title="工作月报增量 PRD"><i class="fa-solid fa-file-lines text-teal-700"></i>月报PRD</a>`
+        : "";
     return `
       <header class="h-14 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6">
         <div class="flex items-center gap-3 min-w-0">
@@ -181,6 +189,10 @@
             <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs mr-2"></i>
             <input type="text" placeholder="搜索目标 / 任务 / 项目" class="bg-transparent outline-none text-sm w-full text-slate-700 placeholder:text-slate-400" />
           </div>
+          <a href="${prdHref}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-sm text-teal-800 hover:bg-teal-100" title="打开 V1 PRD 阅读页">
+            <i class="fa-solid fa-book-open"></i><span class="hidden sm:inline">PRD</span>
+          </a>
+          ${prdExtra}
           <div class="flex items-center gap-2 text-sm text-slate-600">
             <span class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-medium">刘</span>
             <span class="hidden sm:inline">刘强 · 装卸队负责人</span>

@@ -82,32 +82,52 @@
   <script>
     const WEEK = {
       W34: {
-        goals: [{ name: '桥吊作业效率提升 15%', dept: '装卸队', rate: '+12% / +15%', health: '需关注', st: 'warn', cmp: '正常→需关注' }, { name: '堆场周转优化', dept: '调度中心', rate: '82 / 100', health: '需关注', st: 'warn', cmp: '持平' }],
-        plans: [{ name: '8 月装卸效率提升计划', goal: '桥吊效率', nodes: '2/4', cmp: '+1 节点按期', lag: '滞后 1' }, { name: '堆场周转优化计划', goal: '堆场周转', nodes: '3/4', cmp: '持平', lag: '正常' }],
-        tasks: [{ name: '桥吊夜班流程复盘', plan: '8月装卸效率', owner: '刘强', fill: '未填', status: '本月未更新', st: 'warn' }, { name: '钢丝绳点检整改', plan: '8月装卸效率', owner: '周杰', fill: '已填', status: '进行中', st: 'info' }],
-        next: [{ name: '效率中期复核准备', plan: '8月装卸效率', owner: '刘强', time: '08-25 ~ 08-28', desc: '整理复核材料' }, { name: '周转日报核对', plan: '堆场周转', owner: '陈敏', time: '08-26 ~ 08-30', desc: '每日核对周转指标' }]
+        goals: [
+          { name: '桥吊作业效率提升 15%', type: '季', period: '2026-Q3', dept: '装卸队', rate: '+12% / +15%', health: '需关注', st: 'warn', cmp: '正常→需关注' },
+          { name: '堆场周转天数压降', type: '季', period: '2026-Q3', dept: '调度中心', rate: '82 / 100', health: '需关注', st: 'warn', cmp: '持平' }
+        ],
+        plans: [
+          { name: '8 月装卸效率提升计划', goal: '【季】桥吊作业效率提升 15%', range: '08-01 ~ 08-31', nodes: '2/4', cmp: '+1 节点按期', lag: '滞后 1' },
+          { name: '堆场周转优化计划', goal: '【季】堆场周转天数压降', range: '08-01 ~ 08-31', nodes: '3/4', cmp: '持平', lag: '正常' }
+        ],
+        tasks: [
+          { name: '桥吊夜班流程复盘', week: 'W34', plan: '8月装卸效率', owner: '刘强', fill: '未填', status: '未更新', st: 'warn' },
+          { name: '钢丝绳点检整改', week: 'W34', plan: 'Q3 桥吊点检', owner: '周杰', fill: '已填', status: '进行中', st: 'info' }
+        ],
+        next: [
+          { name: '效率中期复核准备', week: 'W35', plan: '8月装卸效率', owner: '刘强', time: '08-25 ~ 08-28', desc: '整理复核材料' },
+          { name: '周转日报核对', week: 'W35', plan: '堆场周转', owner: '陈敏', time: '08-26 ~ 08-30', desc: '每日核对周转指标' }
+        ]
       },
       W33: {
-        goals: [{ name: '桥吊作业效率提升 15%', dept: '装卸队', rate: '+11% / +15%', health: '正常', st: 'ok', cmp: '改善' }],
-        plans: [{ name: '8 月装卸效率提升计划', goal: '桥吊效率', nodes: '1/4', cmp: '—', lag: '正常' }],
-        tasks: [{ name: '桥吊夜班流程复盘', plan: '8月装卸效率', owner: '刘强', fill: '已填', status: '进行中', st: 'info' }],
-        next: [{ name: '点检整改闭环', plan: '8月装卸效率', owner: '周杰', time: '08-18 ~ 08-22', desc: '闭环剩余 3 项' }]
+        goals: [
+          { name: '桥吊作业效率提升 15%', type: '季', period: '2026-Q3', dept: '装卸队', rate: '+11% / +15%', health: '正常', st: 'ok', cmp: '改善' }
+        ],
+        plans: [
+          { name: '8 月装卸效率提升计划', goal: '【季】桥吊作业效率提升 15%', range: '08-01 ~ 08-31', nodes: '1/4', cmp: '—', lag: '正常' }
+        ],
+        tasks: [
+          { name: '桥吊夜班流程复盘', week: 'W33', plan: '8月装卸效率', owner: '刘强', fill: '已填', status: '进行中', st: 'info' }
+        ],
+        next: [
+          { name: '点检整改闭环', week: 'W34', plan: 'Q3 桥吊点检', owner: '周杰', time: '08-18 ~ 08-22', desc: '闭环剩余 3 项' }
+        ]
       }
     };
 
     function renderLists() {
       const w = WEEK[document.getElementById('periodSelect').value];
       document.getElementById('sec-goals').innerHTML = w.goals.map((g, i) =>
-        WECOM.cell({ title: g.name, desc: g.dept + ' · ' + g.rate + ' · 较上期 ' + g.cmp, ft: WECOM.statusBadge(g.health, g.st), onclick: 'openItem("goal",' + i + ')' })
+        WECOM.cell({ title: g.name, desc: (g.type || '季') + ' · ' + (g.period || '—') + ' · ' + g.dept + ' · ' + g.rate, ft: WECOM.statusBadge(g.health, g.st), onclick: 'openItem("goal",' + i + ')' })
       ).join('');
       document.getElementById('sec-plans').innerHTML = w.plans.map((p, i) =>
-        WECOM.cell({ title: p.name, link: true, desc: p.goal + ' · 节点 ' + p.nodes + ' · ' + p.lag, onclick: 'openItem("plan",' + i + ')' })
+        WECOM.cell({ title: p.name, link: true, desc: '起止 ' + (p.range || '—') + ' · ' + p.goal + ' · 节点 ' + p.nodes, onclick: 'openItem("plan",' + i + ')' })
       ).join('');
       document.getElementById('sec-tasks').innerHTML = w.tasks.map((t, i) =>
-        WECOM.cell({ title: t.name, desc: t.plan + ' · ' + t.owner + ' · 本周' + t.fill, ft: WECOM.statusBadge(t.status, t.st), onclick: 'openItem("task",' + i + ')' })
+        WECOM.cell({ title: t.name, desc: '周 · ' + (t.week || '—') + ' · ' + t.plan + ' · ' + t.owner + ' · ' + t.fill, ft: WECOM.statusBadge(t.status, t.st), onclick: 'openItem("task",' + i + ')' })
       ).join('');
       document.getElementById('sec-next').innerHTML = w.next.map((n, i) =>
-        WECOM.cell({ title: n.name, link: true, desc: n.plan + ' · ' + n.time, onclick: 'openItem("next",' + i + ')' })
+        WECOM.cell({ title: n.name, link: true, desc: '周 · ' + (n.week || '—') + ' · ' + n.plan + ' · ' + n.time, onclick: 'openItem("next",' + i + ')' })
       ).join('');
       document.getElementById('sumGoals').textContent = w.goals.length;
       document.getElementById('sumPlans').textContent = w.plans.length;
@@ -139,10 +159,10 @@
     function openItem(type, i) {
       const w = WEEK[document.getElementById('periodSelect').value];
       let item, rows;
-      if (type === 'goal') { item = w.goals[i]; rows = [['部门', item.dept], ['量化', item.rate], ['健康', item.health], ['较上期', item.cmp]]; }
-      else if (type === 'plan') { item = w.plans[i]; rows = [['关联目标', item.goal], ['节点', item.nodes], ['较上期', item.cmp], ['滞后', item.lag]]; }
-      else if (type === 'task') { item = w.tasks[i]; rows = [['计划', item.plan], ['责任人', item.owner], ['本周填报', item.fill], ['状态', item.status]]; }
-      else { item = w.next[i]; rows = [['计划', item.plan], ['责任人', item.owner], ['时间', item.time], ['概述', item.desc]]; }
+      if (type === 'goal') { item = w.goals[i]; rows = [['类型', item.type || '季'], ['周期', item.period || '—'], ['部门', item.dept], ['健康', item.health], ['较上期', item.cmp]]; }
+      else if (type === 'plan') { item = w.plans[i]; rows = [['关联目标', item.goal], ['起止时间', item.range || '—'], ['节点', item.nodes], ['较上期', item.cmp], ['滞后', item.lag]]; }
+      else if (type === 'task') { item = w.tasks[i]; rows = [['归属周', item.week || '—'], ['计划', item.plan], ['责任人', item.owner], ['本周填报', item.fill], ['状态', item.status]]; }
+      else { item = w.next[i]; rows = [['归属周', item.week || '—'], ['计划', item.plan], ['责任人', item.owner], ['起止时间', item.time], ['概述', item.desc]]; }
       document.getElementById('iTitle').textContent = item.name;
       document.getElementById('iBody').innerHTML = rows.map(r =>
         `<div class="wecom-dialog-row"><span class="lbl">${r[0]}</span><span class="val">${r[1]}</span></div>`

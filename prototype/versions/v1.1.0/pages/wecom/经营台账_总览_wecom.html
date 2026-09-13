@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>经营总览 · 企微</title>
+  <link rel="stylesheet" href="../../assets/wecom-common.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body data-page="dashboard" data-title="经营总览">
+  <div id="app-root"></div>
+  <main id="page-main" class="wecom-main">
+
+    <div class="wecom-hd">
+      <strong>合同 · 开票 · 收款</strong>
+      <span class="wecom-tag">全量累计</span>
+    </div>
+    <p class="wecom-tips">不随年度/季度变化 · 截止 2026-08-26</p>
+    <div class="wecom-panel">
+      <div class="wecom-kpi-grid">
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('contractRate')">
+          <div class="wecom-kpi-label">合同回款率</div>
+          <div class="wecom-kpi-val primary">58%</div>
+          <div class="wecom-kpi-sub">2145 / 3680 万</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('invoiceTotal')">
+          <div class="wecom-kpi-label">累计开票</div>
+          <div class="wecom-kpi-val">2,580<span style="font-size:13px;font-weight:400"> 万</span></div>
+          <div class="wecom-kpi-sub">不含已作废</div>
+        </button>
+        <button type="button" class="wecom-kpi-item span-2" onclick="openDetail('remaining')">
+          <div class="wecom-kpi-label">剩余收款</div>
+          <div class="wecom-kpi-val warn">1,535<span style="font-size:13px;font-weight:400"> 万</span></div>
+          <div class="wecom-kpi-sub">待收合同 5 笔 · 开票率 70%</div>
+          <div class="wecom-progress">
+            <div class="wecom-progress-hd"><span>开票进度</span><span>70%</span></div>
+            <div class="wecom-progress-bar"><div class="wecom-progress-inner" style="width:70%"></div></div>
+          </div>
+          <div class="wecom-progress">
+            <div class="wecom-progress-hd"><span>回款进度</span><span>58%</span></div>
+            <div class="wecom-progress-bar"><div class="wecom-progress-inner" style="width:58%"></div></div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="wecom-hd">
+      <strong>目标 · 计划 · 任务</strong>
+      <span class="wecom-tag wecom-tag-blue">随筛选变化</span>
+    </div>
+    <div class="wecom-form">
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">年度</span>
+        <select id="filterYear" class="wecom-select" onchange="onFilterChange()"><option>2026年</option><option>2025年</option></select>
+      </div>
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">季度</span>
+        <select id="filterQuarter" class="wecom-select" onchange="onFilterChange()"><option>Q3</option><option>Q2</option><option>Q4</option></select>
+      </div>
+      <div class="wecom-form-row">
+        <span class="wecom-form-label">部门</span>
+        <select id="filterDept" class="wecom-select" onchange="onFilterChange()"><option>全部部门</option><option>装卸队</option><option>调度中心</option><option>设备部</option></select>
+      </div>
+    </div>
+    <p class="wecom-tips" id="filterHint">2026年 · Q3 · 全部部门</p>
+
+    <div class="wecom-panel">
+      <div class="wecom-kpi-grid cols-3">
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('goals')">
+          <div class="wecom-kpi-label">需关注目标</div>
+          <div class="wecom-kpi-val warn" id="kGoals">5</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('nodes')">
+          <div class="wecom-kpi-label">到期节点</div>
+          <div class="wecom-kpi-val" id="kNodes">4</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('plans')">
+          <div class="wecom-kpi-label">进行中计划</div>
+          <div class="wecom-kpi-val" id="kPlans">22</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('pending')">
+          <div class="wecom-kpi-label">待汇报</div>
+          <div class="wecom-kpi-val warn" id="kPending">31</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('risk')">
+          <div class="wecom-kpi-label">风险滞后</div>
+          <div class="wecom-kpi-val danger" id="kRisk">7</div>
+        </button>
+        <button type="button" class="wecom-kpi-item" onclick="openDetail('supervise')">
+          <div class="wecom-kpi-label">督办中</div>
+          <div class="wecom-kpi-val" id="kSupervise">9</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="wecom-hd"><strong>部门达成</strong><span class="wecom-tag" id="deptScope">2026-Q3</span></div>
+    <div class="wecom-cells" id="deptList"></div>
+
+    <div class="wecom-hd"><strong>风险 / 滞后任务</strong></div>
+    <div class="wecom-cells" id="riskList"></div>
+
+    <div class="wecom-hd"><strong>重点专项</strong></div>
+    <div class="wecom-cells">
+      <button type="button" class="wecom-cell" onclick="WECOM.toast('跳转专项详情')">
+        <div class="wecom-cell-bd">
+          <div class="wecom-cell-title">桥吊效能提升专项</div>
+          <div class="wecom-cell-desc">装卸队 · 滞后 2</div>
+        </div>
+        <div class="wecom-cell-ft"><span class="wecom-status wecom-status-warn">节点 2/4</span><span class="wecom-cell-arrow">›</span></div>
+      </button>
+      <button type="button" class="wecom-cell" onclick="WECOM.toast('跳转专项详情')">
+        <div class="wecom-cell-bd">
+          <div class="wecom-cell-title">堆场周转优化专项</div>
+          <div class="wecom-cell-desc">调度中心</div>
+        </div>
+        <div class="wecom-cell-ft"><span class="wecom-cell-val">节点 3/4</span><span class="wecom-cell-arrow">›</span></div>
+      </button>
+    </div>
+  </main>
+
+  <div id="modal-detail" data-modal>
+    <div class="wecom-mask" onclick="BMS.closeModal('modal-detail')"></div>
+    <div class="wecom-dialog">
+      <div class="wecom-dialog-hd">
+        <div class="wecom-dialog-title" id="dTitle">明细</div>
+        <div class="wecom-dialog-sub" id="dSub"></div>
+      </div>
+      <div class="wecom-dialog-bd" id="dBody"></div>
+      <div class="wecom-dialog-ft">
+        <button type="button" class="wecom-dialog-btn primary" onclick="BMS.closeModal('modal-detail')">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../assets/wecom-common.js"></script>
+  <script>
+    const PRESETS = {
+      '2026年|Q3|全部部门': { goals: 5, nodes: 4, plans: 22, pending: 31, risk: 7, supervise: 9, scope: '2026-Q3' },
+      '2026年|Q2|全部部门': { goals: 4, nodes: 3, plans: 18, pending: 24, risk: 5, supervise: 7, scope: '2026-Q2' },
+      '2026年|Q3|装卸队': { goals: 2, nodes: 2, plans: 6, pending: 8, risk: 3, supervise: 2, scope: '2026-Q3 · 装卸队' }
+    };
+    const DEPTS = [
+      { name: '装卸队', tag: '需关注', type: 'warn', health: '正常 1 · 需关注 1 · 风险 1', lag: 2 },
+      { name: '调度中心', tag: '正常', type: 'ok', health: '正常 2 · 需关注 0 · 风险 0', lag: 0 },
+      { name: '设备部', tag: '正常', type: 'ok', health: '正常 2 · 需关注 0 · 风险 0', lag: 1 }
+    ];
+    const RISKS = [
+      { task: '岸桥对位训练', dept: '装卸队', status: '已延期', type: 'danger' },
+      { task: '堆场周转异常复盘', dept: '调度中心', status: '已延期', type: 'danger' },
+      { task: '桥吊夜班流程复盘', dept: '装卸队', status: '本月未更新', type: 'warn' }
+    ];
+    const DETAILS = {
+      contractRate: { title: '合同回款', sub: '全量累计', rows: [['合同总额', '3,680 万'], ['回款总额', '2,145 万'], ['回款率', '58%']] },
+      invoiceTotal: { title: '累计开票', sub: '不含已作废', rows: [['累计开票', '2,580 万'], ['待开票', '1,100 万'], ['开票率', '70%']] },
+      remaining: { title: '剩余收款', sub: '全量累计', rows: [['剩余收款', '1,535 万'], ['待收合同', '5 笔']] },
+      goals: { title: '需关注目标', sub: '当前筛选范围', rows: [['桥吊作业效率提升 15%', '需关注 · 装卸队'], ['Q3 桥吊完好率', '风险 · 设备部']] },
+      nodes: { title: '本周到期节点', sub: '自然周 W34', rows: [['效率中期复核', '已逾期'], ['周转复盘', '临期']] },
+      plans: { title: '进行中计划', sub: '当前筛选范围', rows: [['8 月装卸效率提升计划', '节点 2/4'], ['堆场周转优化计划', '节点 3/4']] },
+      pending: { title: '待汇报', sub: '本周未填 8 人', rows: [['刘强', '装卸队 · 2 项'], ['周杰', '设备部 · 3 项']] },
+      risk: { title: '风险 / 滞后', sub: '任务 5 · 目标 2', rows: RISKS.map(r => [r.task, r.dept + ' · ' + r.status]) },
+      supervise: { title: '督办中', sub: '督办下达 9 项', rows: [['岸桥对位训练', '装卸队'], ['堆场周转异常复盘', '调度中心']] }
+    };
+
+    function renderLists() {
+      const key = document.getElementById('filterYear').value + '|' + document.getElementById('filterQuarter').value + '|' + document.getElementById('filterDept').value;
+      const isEmpty = key === '2026年|Q4|设备部';
+      document.getElementById('deptList').innerHTML = isEmpty
+        ? WECOM.emptyState({ title: '暂无部门数据', desc: key.replace(/\|/g, ' · ') + ' 范围内无达成记录' })
+        : DEPTS.map(d =>
+            WECOM.cell({ title: d.name, desc: d.health + ' · 滞后 ' + d.lag, ft: WECOM.statusBadge(d.tag, d.type), onclick: "openDetail('dept')" })
+          ).join('');
+      document.getElementById('riskList').innerHTML = isEmpty
+        ? WECOM.emptyState({ title: '暂无风险任务', desc: '当前筛选范围内运行正常' })
+        : RISKS.map(r =>
+            WECOM.cell({ title: r.task, link: true, desc: r.dept, ft: WECOM.statusBadge(r.status, r.type), onclick: "openDetail('risk')" })
+          ).join('');
+    }
+
+    function onFilterChange() {
+      const key = document.getElementById('filterYear').value + '|' + document.getElementById('filterQuarter').value + '|' + document.getElementById('filterDept').value;
+      const d = PRESETS[key] || PRESETS['2026年|Q3|全部部门'];
+      document.getElementById('filterHint').textContent = key.replace(/\|/g, ' · ');
+      document.getElementById('kGoals').textContent = d.goals;
+      document.getElementById('kNodes').textContent = d.nodes;
+      document.getElementById('kPlans').textContent = d.plans;
+      document.getElementById('kPending').textContent = d.pending;
+      document.getElementById('kRisk').textContent = d.risk;
+      document.getElementById('kSupervise').textContent = d.supervise;
+      document.getElementById('deptScope').textContent = d.scope;
+    }
+
+    function openDetail(key) {
+      const d = DETAILS[key] || { title: '部门详情', sub: '装卸队', rows: [['目标', '3'], ['计划', '6'], ['滞后任务', '2']] };
+      document.getElementById('dTitle').textContent = d.title;
+      document.getElementById('dSub').textContent = d.sub || '';
+      document.getElementById('dBody').innerHTML = d.rows.map(r =>
+        `<div class="wecom-dialog-row"><span class="lbl">${r[0]}</span><span class="val">${r[1]}</span></div>`
+      ).join('');
+      BMS.openModal('modal-detail');
+    }
+
+    renderLists();
+    onFilterChange();
+  </script>
+</body>
+</html>

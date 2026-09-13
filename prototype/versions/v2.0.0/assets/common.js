@@ -5,8 +5,9 @@
       group: "经营台账",
       items: [
         { id: "overview", name: "经营总览", href: "经营台账_总览_page.html", icon: "fa-chart-pie" },
-        { id: "depts", name: "任务台账（V1）", href: "../../v1.0.0/pages/部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
+        { id: "depts", name: "工作台账（V1）", href: "../../v1.0.0/pages/部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
         { id: "reports", name: "工作周报（V1）", href: "../../v1.0.0/pages/经营台账_工作汇报_page.html", icon: "fa-file-lines" },
+        { id: "reports-month", name: "工作月报（V1）", href: "../../v1.0.0/pages/经营台账_工作月报_page.html", icon: "fa-calendar-days" },
       ],
     },
     {
@@ -52,6 +53,7 @@
       group: "基础配置（V1）",
       items: [
         { id: "cfg-scope", name: "使用范围", href: "../../v1.0.0/pages/基础配置_使用范围_page.html", icon: "fa-sliders" },
+        { id: "cfg-msg", name: "消息配置", href: "../../v1.0.0/pages/基础配置_消息配置_page.html", icon: "fa-bell" },
       ],
     },
   ];

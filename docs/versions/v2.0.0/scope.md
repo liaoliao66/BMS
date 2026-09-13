@@ -29,9 +29,12 @@
 - 原型入口：`prototype/versions/v2.0.0/index.html`（草稿页暂链至 v1.0.0/pages）
 - 功能清单：`docs/BMS_Feature_List_Full.xlsx`（工作表「功能清单-V2.0.0」）
 - 范围本文：`docs/versions/v2.0.0/scope.md`
+- **PRD**：`docs/versions/v2.0.0/prd.md`（含自 V1 迁出的经营总览、合同开票收款及占位章）
+- 阅读页：`docs/versions/v2.0.0/prd.html`
 
 ## 修订
 
 | 日期 | 说明 |
 |------|------|
 | 2026-09-08 | 新建 V2.0.0 版本范围 |
+| 2026-09-13 | 新建 `prd.md`：承接 V1 迁出模块 + 生产/CRM/档案/知识库/AI/分析占位 |

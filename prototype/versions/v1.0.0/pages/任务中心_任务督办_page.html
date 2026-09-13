@@ -19,7 +19,7 @@
 <body class="bg-slate-50" data-page="supervise" data-title="任务督办">
   <div id="app-root"></div>
   <div id="page-main">
-    <p class="text-xs text-slate-500 mb-4">领导向指定人员<strong>下达督办任务</strong>，须<strong>关联计划</strong>；下达后出现在对方「任务清单」中，可跟踪执行与催办。</p>
+    <p class="text-xs text-slate-500 mb-4">领导向指定人员<strong>下达督办任务</strong>，须<strong>关联计划</strong>；下达后出现在对方「任务清单」中，并同步发送<strong>企微消息</strong>；可跟踪执行与催办（催办亦发企微消息）。</p>
 
     <div class="flex flex-wrap gap-3 justify-between mb-5">
       <div class="flex flex-wrap gap-2">
@@ -42,6 +42,7 @@
         <thead class="bg-slate-50 text-slate-500">
           <tr>
             <th class="px-5 py-3 text-left">督办任务</th>
+            <th class="px-4 py-3 text-left">归属周</th>
             <th class="px-4 py-3 text-left">关联计划</th>
             <th class="px-4 py-3 text-left">责任人</th>
             <th class="px-4 py-3 text-left">部门</th>
@@ -55,6 +56,7 @@
         <tbody>
           <tr class="border-t row-hover">
             <td class="px-5 py-3 font-medium">Q3 安全隐患现场复核</td>
+            <td class="px-4 py-3"><span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">周 · W34</span></td>
             <td class="px-4 py-3">Q3 桥吊点检专项计划</td>
             <td class="px-4 py-3">刘强</td>
             <td class="px-4 py-3">装卸队</td>
@@ -62,10 +64,11 @@
             <td class="px-4 py-3"><span class="text-emerald-600">已更新</span></td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td>
             <td class="px-4 py-3">张港长</td>
-            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="urgeTask('刘强','Q3 安全隐患现场复核','Q3 桥吊点检专项计划','2026-08-27')" class="hover:text-teal-700">催办</button></td>
           </tr>
           <tr class="border-t row-hover">
             <td class="px-5 py-3 font-medium">桥吊夜班交接问题闭环</td>
+            <td class="px-4 py-3"><span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">周 · W34</span></td>
             <td class="px-4 py-3">8 月装卸效率提升计划</td>
             <td class="px-4 py-3">孙伟</td>
             <td class="px-4 py-3">装卸队</td>
@@ -73,10 +76,11 @@
             <td class="px-4 py-3"><span class="text-emerald-600">已更新</span></td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span></td>
             <td class="px-4 py-3">张港长</td>
-            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="urgeTask('孙伟','桥吊夜班交接问题闭环','8 月装卸效率提升计划','2026-08-30')" class="hover:text-teal-700">催办</button></td>
           </tr>
           <tr class="border-t row-hover">
             <td class="px-5 py-3 font-medium">堆场周转异常复盘纪要</td>
+            <td class="px-4 py-3"><span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">周 · W33</span></td>
             <td class="px-4 py-3">堆场周转优化计划</td>
             <td class="px-4 py-3">陈敏</td>
             <td class="px-4 py-3">调度中心</td>
@@ -84,7 +88,7 @@
             <td class="px-4 py-3"><span class="text-red-500">未更新</span></td>
             <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span></td>
             <td class="px-4 py-3">张港长</td>
-            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="BMS.toast('原型：已发催办提醒')" class="hover:text-teal-700">催办</button></td>
+            <td class="px-5 py-3 space-x-2"><button type="button" onclick="BMS.openModal('modal-detail')" class="text-teal-700">详情</button><button type="button" onclick="urgeTask('陈敏','堆场周转异常复盘纪要','堆场周转优化计划','2026-08-22')" class="hover:text-teal-700">催办</button></td>
           </tr>
         </tbody>
       </table>
@@ -126,6 +130,13 @@
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
+              <label class="block text-sm text-slate-600 mb-1">归属周 <span class="text-red-500">*</span></label>
+              <select id="aWeek" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option value="2026-W34" selected>2026-W34（本周）</option>
+                <option value="2026-W35">2026-W35（下周）</option>
+              </select>
+            </div>
+            <div>
               <label class="block text-sm text-slate-600 mb-1">关联计划 <span class="text-red-500">*</span></label>
               <select id="aPlan" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
                 <option value="">请选择计划</option>
@@ -135,10 +146,10 @@
                 <option>夜班协同保障计划</option>
               </select>
             </div>
-            <div>
-              <label class="block text-sm text-slate-600 mb-1">优先级</label>
-              <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>高</option><option selected>中</option><option>低</option></select>
-            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">优先级</label>
+            <select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>高</option><option selected>中</option><option>低</option></select>
           </div>
           <div>
             <label class="block text-sm text-slate-600 mb-2">配合人员 <span class="text-slate-400 font-normal">（选填，可多选）</span></label>
@@ -228,6 +239,11 @@
       renderAssignImagePreviews();
     }
 
+    function urgeTask(owner, taskName, plan, deadline) {
+      const name = (owner || '').split(' · ')[0];
+      BMS.toast('已向「' + name + '」发送企微催办消息（任务：' + taskName + '）');
+    }
+
     function openAssign() {
       clearAssignImages();
       BMS.openModal('modal-assign');
@@ -244,7 +260,11 @@
       if (!o) { BMS.toast('请选择责任人', 'error'); return; }
       if (!dl) { BMS.toast('请填写截止日期', 'error'); return; }
       const imgN = assignImages.length;
-      BMS.toast(imgN ? ('督办任务已下达（含 ' + imgN + ' 张图片），责任人「任务清单」可见') : '督办任务已下达，责任人「任务清单」可见');
+      const ownerName = o.split(' · ')[0];
+      const base = imgN
+        ? ('督办任务已下达（含 ' + imgN + ' 张图片），责任人「任务清单」可见')
+        : '督办任务已下达，责任人「任务清单」可见';
+      BMS.toast(base + '；已同步向「' + ownerName + '」发送企微消息');
       clearAssignImages();
       BMS.closeModal('modal-assign');
     }

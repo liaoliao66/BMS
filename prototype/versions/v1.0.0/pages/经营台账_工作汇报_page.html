@@ -31,6 +31,7 @@
   <div class="flex flex-wrap gap-3 justify-between mb-4">
     <div class="flex flex-wrap gap-2 items-center">
       <span class="text-sm font-medium text-slate-900">工作周报</span>
+      <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">周会议程包</span>
     </div>
     <div class="flex flex-wrap gap-2 items-center">
       <button type="button" onclick="openPlanForm('create')" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700"><i class="fa-solid fa-plus mr-1"></i>新增计划</button>
@@ -40,7 +41,7 @@
   </div>
 
   <!-- 筛选 -->
-  <div class="flex flex-wrap gap-2 mb-5">
+  <div class="flex flex-wrap gap-2 mb-5 items-center">
     <select id="periodSelect" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderPeriodLabel()">
       <option value="2026-W34">2026-W34（08-18 ~ 08-24）</option>
       <option value="2026-W33">2026-W33（08-11 ~ 08-17）</option>
@@ -52,24 +53,23 @@
     <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
       <option>全部专项</option><option>桥吊效能提升专项</option><option>堆场周转优化专项</option>
     </select>
+    <div class="relative flex-1 min-w-[200px] max-w-sm">
+      <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+      <input id="reportSearch" type="search" class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm" placeholder="搜索目标名称、部门" oninput="onReportSearch()" />
+    </div>
   </div>
 
-  <!-- 摘要卡片 -->
+  <!-- 周会议程卡（与任务台账风险雷达错位） -->
   <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
-    <button type="button" onclick="openSummary('goals')" class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] kpi-card">
-      <div class="text-sm text-slate-500">目标（本周涉及）</div>
-      <div class="text-2xl font-semibold mt-2" id="sumGoals">5</div>
-    </button>
-    <button type="button" onclick="openSummary('plans')" class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] kpi-card">
-      <div class="text-sm text-slate-500">计划进展</div>
-      <div class="text-2xl font-semibold mt-2" id="sumPlans">6</div>
+    <button type="button" onclick="openSummary('agenda')" class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] kpi-card">
+      <div class="text-sm text-slate-500">本周应议事项</div>
+      <div class="text-2xl font-semibold mt-2 text-amber-700" id="sumAgenda">4</div>
+      <div class="text-xs text-slate-400 mt-1">需关注目标 + 异常节点</div>
     </button>
     <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] kpi-card cursor-pointer" onclick="openSummary('tasks')">
-      <div class="text-sm text-slate-500">上周任务汇总</div>
-      <div class="mt-2 flex items-end justify-between gap-2">
-        <div class="text-2xl font-semibold leading-none" id="sumTasks">18</div>
-        <span id="sumTasksPending" class="shrink-0" onclick="event.stopPropagation()"></span>
-      </div>
+      <div class="text-sm text-slate-500">上周任务闭环</div>
+      <div class="mt-2 text-2xl font-semibold leading-none" id="sumTasks">18</div>
+      <div class="text-xs text-slate-400 mt-1" id="sumTasksBreakdown">完成 6 · 未填 4 · 延期 2</div>
     </div>
     <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] kpi-card cursor-pointer" onclick="openSummary('nextWeek')">
       <div class="text-sm text-slate-500">本周任务计划</div>
@@ -77,7 +77,13 @@
         <div class="text-2xl font-semibold leading-none" id="sumNextWeek">12</div>
         <span id="sumNextPending" class="shrink-0" onclick="event.stopPropagation()"></span>
       </div>
+      <div class="text-xs text-slate-400 mt-1">会后落地清单</div>
     </div>
+    <button type="button" onclick="openSummary('change')" class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] kpi-card">
+      <div class="text-sm text-slate-500">较上周变化</div>
+      <div class="text-2xl font-semibold mt-2 text-red-600" id="sumChange">3</div>
+      <div class="text-xs text-slate-400 mt-1">健康变差 / 新增延期</div>
+    </button>
   </div>
 
   <!-- 内容 Tab -->
@@ -95,8 +101,8 @@
           <tr>
             <th class="px-5 py-3 text-left">目标名称</th>
             <th class="px-4 py-3 text-left">类型</th>
+            <th class="px-4 py-3 text-left">周期</th>
             <th class="px-4 py-3 text-left">部门</th>
-            <th class="px-4 py-3 text-left">量化达成</th>
             <th class="px-4 py-3 text-left">较上期健康</th>
             <th class="px-4 py-3 text-left">健康状态</th>
             <th class="px-5 py-3 text-left">操作</th>
@@ -114,6 +120,7 @@
           <tr>
             <th class="px-5 py-3 text-left">计划名称</th>
             <th class="px-4 py-3 text-left">关联目标</th>
+            <th class="px-4 py-3 text-left">起止时间</th>
             <th class="px-4 py-3 text-left">节点达成</th>
             <th class="px-4 py-3 text-left">较上期节点</th>
             <th class="px-4 py-3 text-left">任务/滞后</th>
@@ -131,6 +138,7 @@
         <thead class="bg-slate-50 text-slate-500">
           <tr>
             <th class="px-5 py-3 text-left">任务名称</th>
+            <th class="px-4 py-3 text-left">归属周</th>
             <th class="px-4 py-3 text-left">所属计划</th>
             <th class="px-4 py-3 text-left">责任人</th>
             <th class="px-4 py-3 text-left">上周填报</th>
@@ -150,9 +158,10 @@
         <thead class="bg-slate-50 text-slate-500">
           <tr>
             <th class="px-5 py-3 text-left">任务标题</th>
+            <th class="px-4 py-3 text-left">归属周</th>
             <th class="px-4 py-3 text-left">所属计划</th>
             <th class="px-4 py-3 text-left">责任人</th>
-            <th class="px-4 py-3 text-left">计划时间</th>
+            <th class="px-4 py-3 text-left">起止时间</th>
             <th class="px-4 py-3 text-left">任务概述</th>
             <th class="px-5 py-3 text-left">操作</th>
           </tr>
@@ -217,7 +226,7 @@
             <tbody id="pendingFillBody"></tbody>
           </table>
         </div>
-        <p class="text-xs text-slate-400 mt-3" id="pendingFillNote">勾选后可一键提醒，消息由平台消息中心触达。</p>
+        <p class="text-xs text-slate-400 mt-3" id="pendingFillNote">勾选后可一键提醒；消息以<strong>企微个人消息</strong>触达（规则见「基础配置 · 消息配置」）。</p>
       </div>
       <div class="shrink-0 px-6 py-4 border-t flex flex-wrap gap-2 justify-between items-center">
         <span class="text-sm text-slate-500" id="pendingFillFooter">已勾选 0 人</span>
@@ -236,7 +245,7 @@
         <h3 class="text-lg font-semibold">确认发送汇报提醒</h3>
         <button type="button" onclick="BMS.closeModal('modal-remind')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p class="text-sm text-slate-600 leading-relaxed mb-4">将对已勾选的 <strong id="remindCount">0</strong> 名责任人发送汇报提醒。消息由平台消息中心触达。</p>
+      <p class="text-sm text-slate-600 leading-relaxed mb-4">将对已勾选的 <strong id="remindCount">0</strong> 名责任人发送汇报提醒（企微个人消息）。</p>
       <div class="bg-slate-50 rounded-xl p-3 text-sm text-slate-600 mb-5" id="remindPreview">提醒文案预览</div>
       <div class="flex gap-2">
         <button type="button" onclick="confirmRemind()" class="btn-cta text-white px-5 py-2.5 rounded-xl text-sm">确认提醒</button>
@@ -255,7 +264,7 @@
             <h3 class="text-xl font-semibold" id="gTitle">桥吊作业效率提升 15%</h3>
             <span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700" id="gStatus">需关注</span>
           </div>
-          <p class="text-sm text-slate-500 mt-1" id="gMeta">季目标 · 装卸队 · 量化 +12% / +15% · 较上期 正常→需关注</p>
+          <p class="text-sm text-slate-500 mt-1" id="gMeta">季目标 · 装卸队 · 较上期 正常→需关注</p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0 items-center">
           <button type="button" onclick="openPlanForm('create', { fromGoal: true })" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700"><i class="fa-solid fa-plus mr-1"></i>新增计划</button>
@@ -266,8 +275,8 @@
       <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">目标类型</div><div class="mt-1 font-medium" id="gType">季</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">所属周期</div><div class="mt-1 font-medium" id="gPeriod">2026-Q3</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">责任部门</div><div class="mt-1 font-medium" id="gDept">装卸队</div></div>
-          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">量化达成</div><div class="mt-1 font-medium" id="gRate">+12% / +15%</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">截止时间</div><div class="mt-1 font-medium" id="gDue">2026-09-30</div></div>
         </div>
         <div>
@@ -277,7 +286,7 @@
         <div>
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
             <h4 class="font-medium">落地全景</h4>
-            <div class="text-xs text-slate-500">目标 → 下级 / 计划 → 任务 · 默认展开到任务</div>
+            <div class="text-xs text-slate-500">目标（年/季）→ 计划（起止）→ 任务（周）· 默认展开到任务</div>
           </div>
           <div id="gExecTree" class="exec-tree bg-white"></div>
         </div>
@@ -292,7 +301,7 @@
       <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
         <div class="min-w-0 flex-1">
           <h3 class="text-xl font-semibold" id="pTitle">8 月装卸效率提升计划</h3>
-          <p class="text-sm text-slate-500 mt-1" id="pMeta">关联目标：【月】8 月桥吊效率月目标 · 节点 2/4 按期 · 较上期 +1 节点</p>
+          <p class="text-sm text-slate-500 mt-1" id="pMeta">关联目标：【季】桥吊作业效率提升 15% · 起止 08-01 ~ 08-31 · 节点 2/4 按期</p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0 items-center">
           <button type="button" onclick="openTaskForm('create', { fromPlan: true })" class="btn-cta text-white px-3 py-2 rounded-xl text-sm"><i class="fa-solid fa-plus mr-1"></i>新增任务</button>
@@ -300,8 +309,9 @@
         </div>
       </div>
       <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联目标</div><div class="mt-1 font-medium" id="pGoal">【月】8 月桥吊效率月目标</div></div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联目标</div><div class="mt-1 font-medium" id="pGoal">【季】桥吊作业效率提升 15%</div></div>
+          <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">起止时间</div><div class="mt-1 font-medium" id="pRange">08-01 ~ 08-31</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关键节点</div><div class="mt-1 font-medium" id="pNode">08-25 效率复核</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">节点达成</div><div class="mt-1 font-medium" id="pRate">2/4 按期</div></div>
           <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">任务 / 滞后</div><div class="mt-1 font-medium" id="pLag">3 / 1</div></div>
@@ -328,6 +338,7 @@
               <thead class="bg-slate-50 text-slate-500">
                 <tr>
                   <th class="text-left px-4 py-2.5">任务</th>
+                  <th class="text-left px-4 py-2.5">归属周</th>
                   <th class="text-left px-4 py-2.5">责任人</th>
                   <th class="text-left px-4 py-2.5">业务状态</th>
                   <th class="text-left px-4 py-2.5">本周期填报</th>
@@ -357,7 +368,6 @@
         <div class="flex gap-2 shrink-0" id="viewTabs">
           <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm detail-tab-on" data-vtab="info" onclick="switchReportViewTab('info')">基本信息</button>
           <button type="button" id="viewTabFollow" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600 hidden" data-vtab="follow" onclick="switchReportViewTab('follow')">跟进结果</button>
-          <button type="button" class="detail-tab px-3 py-1.5 rounded-lg text-sm bg-slate-100 text-slate-600" data-vtab="transfer" onclick="switchReportViewTab('transfer')">转派记录</button>
         </div>
         <button type="button" onclick="BMS.closeModal('modal-task-detail')" class="w-9 h-9 rounded-xl border text-slate-400 shrink-0"><i class="fa-solid fa-xmark"></i></button>
       </div>
@@ -402,7 +412,6 @@
           <select id="teOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
             <option>刘强</option><option>孙伟</option><option>马超</option><option>周杰</option><option>陈敏</option><option>李芳</option><option>王磊</option>
           </select>
-          <p id="teOwnerHint" class="text-xs text-amber-700 mt-1 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 hidden">任务已发布，变更责任人请使用「转派」</p>
         </div>
         <p id="teCreateHint" class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-2 hidden">新建任务默认纳入「本周任务计划」；若从计划详情进入则挂接当前计划。</p>
       </div>
@@ -429,6 +438,16 @@
         <div>
           <label class="block text-sm text-slate-600 mb-1">关联目标 <span class="text-red-500">*</span></label>
           <select id="pfGoal" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label>
+            <input id="pfStart" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-01" />
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label>
+            <input id="pfEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-08-31" />
+          </div>
         </div>
         <div>
           <label class="block text-sm text-slate-600 mb-1">关键节点 <span class="text-slate-400 font-normal">（选填）</span></label>
@@ -463,7 +482,7 @@
           <div>
             <label class="block text-sm text-slate-600 mb-1">类型</label>
             <select id="gfType" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-              <option>年</option><option>季</option><option>月</option>
+              <option>年</option><option>季</option>
             </select>
           </div>
           <div>
@@ -472,10 +491,6 @@
               <option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option>
             </select>
           </div>
-        </div>
-        <div>
-          <label class="block text-sm text-slate-600 mb-1">量化达成</label>
-          <input id="gfRate" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="如：+12%/+15%" />
         </div>
         <div>
           <label class="block text-sm text-slate-600 mb-1">健康状态</label>
@@ -545,58 +560,19 @@
     </div>
   </div>
 
-  <!-- 转派（与任务清单一致） -->
-  <div id="modal-task-transfer" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
-    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-task-transfer')"></div>
-    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-      <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
-        <h3 class="text-lg font-semibold">任务转派</h3>
-        <button type="button" onclick="BMS.closeModal('modal-task-transfer')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm">
-        <p class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-2">转派将变更主责责任人，并写入不可删改的转派记录。</p>
-        <div>
-          <label class="block text-slate-500 mb-1">任务名称</label>
-          <div id="tfTaskName" class="font-medium text-slate-900">—</div>
-        </div>
-        <div>
-          <label class="block text-slate-500 mb-1">当前责任人</label>
-          <div id="tfFromOwner" class="font-medium text-slate-900">—</div>
-        </div>
-        <div>
-          <label class="block text-slate-600 mb-1">新责任人 <span class="text-red-500">*</span></label>
-          <select id="tfNewOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
-            <option value="孙伟">孙伟 · 装卸队</option>
-            <option value="马超">马超 · 装卸队</option>
-            <option value="周杰">周杰 · 设备部</option>
-            <option value="陈敏">陈敏 · 调度中心</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-slate-600 mb-1">转派原因 <span class="text-red-500">*</span> <span class="text-slate-400 font-normal">（至少 10 字）</span></label>
-          <textarea id="tfReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="说明转派背景与期望" maxlength="500"></textarea>
-        </div>
-      </div>
-      <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
-        <button type="button" onclick="BMS.closeModal('modal-task-transfer')" class="text-sm text-slate-500 px-3">取消</button>
-        <button type="button" onclick="saveReportTransfer()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确认转派</button>
-      </div>
-    </div>
-  </div>
-  </div>
 
   <script src="../assets/common.js"></script>
   <script>
     const WEEK_GOALS = [
-      ['全年集装箱吞吐量目标', '年', '商务部', '86万/120万TEU', '持平', '正常'],
-      ['桥吊作业效率提升 15%', '季', '装卸队', '+12%/+15%', '正常→需关注', '需关注'],
-      ['8 月桥吊效率月目标', '月', '装卸队', '+3%/+5%', '需关注→需关注', '需关注']
+      ['全年集装箱吞吐量目标', '年', '商务部', '86万/120万TEU', '持平', '正常', '2026', '2026-12-31'],
+      ['桥吊作业效率提升 15%', '季', '装卸队', '+12%/+15%', '正常→需关注', '需关注', '2026-Q3', '2026-09-30'],
+      ['设备完好率 ≥ 98%', '季', '设备部', '97%/98%', '持平', '正常', '2026-Q3', '2026-09-30']
     ];
 
     const PLANS = [
-      ['8 月装卸效率提升计划', '【月】8 月桥吊效率月目标', '08-25 效率复核', '2/4 按期', '+1 节点', '3 / 1', '围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施。'],
-      ['Q3 桥吊点检专项计划', '【季】桥吊作业效率提升 15%', '08-31 季度节点', '2/4 按期', '持平', '2 / 0', '按季度推进桥吊点检与隐患闭环，支撑效率提升目标。'],
-      ['堆场周转优化计划', '【月】8 月堆场周转月目标', '08-20 周转复盘', '3/4 按期', '+1 节点', '4 / 1', '优化堆场箱位周转与异常复盘节奏，提升月度周转指标。']
+      ['8 月装卸效率提升计划', '【季】桥吊作业效率提升 15%', '08-25 效率复核', '2/4 按期', '+1 节点', '3 / 1', '围绕桥吊夜班流程、班前会与对位训练，落实 8 月装卸效率提升措施。', '08-01 ~ 08-31'],
+      ['Q3 桥吊点检专项计划', '【季】桥吊作业效率提升 15%', '08-31 季度节点', '2/4 按期', '持平', '2 / 0', '按季度推进桥吊点检与隐患闭环，支撑效率提升目标。', '07-01 ~ 08-20'],
+      ['堆场周转优化计划', '【季】设备完好率 ≥ 98%', '08-20 周转复盘', '3/4 按期', '+1 节点', '4 / 1', '优化堆场箱位周转与异常复盘节奏，提升季度周转指标。', '08-01 ~ 08-31']
     ];
 
     const PLAN_TASKS = {
@@ -636,40 +612,76 @@
     let pendingFillRows = [];
 
     const SUMMARY_DATA = {
+      agenda: {
+        title: '本周应议事项',
+        sub: '周会优先过异常：需关注目标 + 滞后节点/任务',
+        cols: ['类型', '事项', '部门/责任', '状态', '说明'],
+        rows: [
+          ['目标', '桥吊作业效率提升 15%', '装卸队', '需关注', '健康 正常→需关注'],
+          ['计划节点', '8 月装卸效率提升计划', '装卸队', '临期', '效率复核 · 节点压力'],
+          ['任务', '岸桥对位训练', '马超', '已延期', '上周未闭环'],
+          ['任务', '堆场协同会议跟进', '王磊', '未填', '跨部门协调未更新']
+        ],
+        note: '完整目标/计划列表仍在下方 Tab；本卡只服务周会议程。'
+      },
       goals: {
         title: '本周涉及目标明细',
         sub: '2026-W34 · 共 5 项',
-        cols: ['目标名称', '类型', '部门', '量化达成', '健康状态', '较上周'],
-        rows: WEEK_GOALS.map(r => [r[0], r[1], r[2], r[3], r[5], r[4]]),
+        cols: ['目标名称', '类型', '周期', '部门', '健康状态', '较上周'],
+        rows: WEEK_GOALS.map(r => [r[0], r[1], r[6], r[2], r[5], r[4]]),
         note: ''
       },
       plans: {
         title: '计划进展明细',
         sub: '2026-W34 · 共 6 项计划',
-        cols: ['计划名称', '关联目标', '节点达成', '较上周节点', '任务/滞后'],
-        rows: PLANS.map(r => [r[0], r[1], r[3], r[4], r[5]]),
+        cols: ['计划名称', '关联目标', '起止时间', '节点达成', '较上周节点', '任务/滞后'],
+        rows: PLANS.map(r => [r[0], r[1], r[7] || '—', r[3], r[4], r[5]]),
         note: ''
       },
       tasks: {
-        title: '上周任务汇总明细',
-        sub: '共 18 项',
-        cols: ['任务', '计划', '责任人', '上周填报', '状态', '跟进概述'],
-        rows: TASKS.map(r => [r.name, r.plan, r.owner, r.fill, r.status, r.situationSummary || r.completeSummary || r.delayReason || '—']),
+        title: '上周任务闭环明细',
+        sub: '完成 / 未填 / 延期对照',
+        cols: ['任务', '归属周', '计划', '责任人', '上周填报', '状态', '跟进概述'],
+        rows: TASKS.map(r => [r.name, weekTagText(r.period), r.plan, r.owner, r.fill, r.status, r.situationSummary || r.completeSummary || r.delayReason || '—']),
         note: ''
       },
       nextWeek: {
         title: '本周任务计划明细',
         sub: '共 12 项',
-        cols: ['任务标题', '所属计划', '责任人', '计划时间', '任务概述'],
-        rows: NEXT_WEEK_TASKS.map(r => [r.name, r.plan, r.owner, formatReportRange(r), r.summary]),
+        cols: ['任务标题', '归属周', '所属计划', '责任人', '起止时间', '任务概述'],
+        rows: NEXT_WEEK_TASKS.map(r => [r.name, weekTagText(r.period), r.plan, r.owner, formatReportRange(r), r.summary]),
         note: ''
+      },
+      change: {
+        title: '较上周变化',
+        sub: '健康变差与新增延期（示意）',
+        cols: ['变化类型', '对象', '部门', '上周', '本周'],
+        rows: [
+          ['健康变差', '桥吊作业效率提升 15%', '装卸队', '正常', '需关注'],
+          ['新增延期', '岸桥对位训练', '装卸队', '进行中', '已延期'],
+          ['填报下滑', '堆场协同会议跟进', '综合管理部', '已填', '未填']
+        ],
+        note: '用于周会开场对比；明细仍可下钻 Tab。'
       }
     };
 
     function typeBadge(t) {
       if (t === '年') return '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">年</span>';
       if (t === '季') return '<span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">季</span>';
-      return '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">月</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">' + (t || '—') + '</span>';
+    }
+
+    function weekTagText(code) {
+      if (!code) return '周 · —';
+      return '周 · ' + String(code).replace(/^2026-/, '');
+    }
+
+    function weekBadgeHtml(code) {
+      return '<span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">' + weekTagText(code) + '</span>';
+    }
+
+    function planRangeBadge(range) {
+      return '<span class="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">起止 ' + (range || '—') + '</span>';
     }
 
     function cmpCell(v) {
@@ -714,12 +726,13 @@
       const tasks = PLAN_TASKS[planIdx] || [];
       const tbody = document.getElementById('pTaskRows');
       if (!tasks.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">本计划暂无下属任务</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">本计划暂无下属任务</td></tr>';
         return;
       }
       tbody.innerHTML = tasks.map((t, ti) => `
         <tr class="${taskRowClass(t)}">
           <td class="px-4 py-3 font-medium text-slate-900 align-top">${t.name}</td>
+          <td class="px-4 py-3 align-top">${weekBadgeHtml(t.period)}</td>
           <td class="px-4 py-3 align-top">${t.owner}</td>
           <td class="px-4 py-3 align-top">${statusBadgeTask(t.status)}</td>
           <td class="px-4 py-3 align-top">${fillBadgeTask(t.fill)}</td>
@@ -766,12 +779,12 @@
       document.getElementById('gStatus').className = r[5] === '需关注'
         ? 'text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700'
         : 'text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700';
-      document.getElementById('gMeta').textContent = r[1] + '目标 · ' + r[2] + ' · 量化 ' + r[3] + ' · 较上期 ' + r[4];
+      document.getElementById('gMeta').textContent = r[1] + '目标 · 周期 ' + (r[6] || '—') + ' · ' + r[2] + ' · 较上期 ' + r[4];
       document.getElementById('gType').textContent = r[1];
+      document.getElementById('gPeriod').textContent = r[6] || '—';
       document.getElementById('gDept').textContent = r[2];
-      document.getElementById('gRate').textContent = r[3];
-      document.getElementById('gDue').textContent = idx === 0 ? '2026-12-31' : (idx === 2 ? '2026-08-31' : '2026-09-30');
-      document.getElementById('gDesc').textContent = '「' + r[0] + '」本周期量化达成 ' + r[3] + '（较上期健康 ' + r[4] + '）。责任部门：' + r[2] + '。';
+      document.getElementById('gDue').textContent = r[7] || '—';
+      document.getElementById('gDesc').textContent = '「' + r[0] + '」所属周期 ' + (r[6] || '—') + '，较上期健康 ' + r[4] + '。责任部门：' + r[2] + '。';
       renderGoalExecTree(idx);
       BMS.openModal('modal-goal-detail');
     }
@@ -803,6 +816,7 @@
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">任务</span>
+                ${weekBadgeHtml(t.period)}
                 <span class="text-sm font-medium text-slate-800">${t.name}</span>
                 ${gTaskStatusHtml(t.status)}
                 <span class="text-xs text-slate-500">责任人 ${t.owner}</span>
@@ -827,6 +841,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="text-[11px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-800">计划</span>
+                  ${planRangeBadge(p[7])}
                   <button type="button" class="text-sm font-medium text-teal-800 hover:underline text-left" onclick="BMS.closeModal('modal-goal-detail');openPlanDetail(${pi})">${p[0]}</button>
                   <span class="text-xs text-slate-600">节点 ${p[3]}</span>
                   <span class="text-xs text-slate-500">关键 ${p[2]}</span>
@@ -854,8 +869,8 @@
                   ${gHealthBadge(c.health)}
                 </div>
                 <div class="text-xs text-slate-500 mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                  <span>周期 ${c.period || '—'}</span>
                   <span>${c.dept}</span>
-                  <span>量化 ${c.rate}</span>
                   <span>计划 ${c.plans.length} · 任务 ${c.plans.reduce((n, pi) => n + (PLAN_TASKS[pi] || []).length, 0)}</span>
                 </div>
               </div>
@@ -869,12 +884,12 @@
       0: {
         mode: 'children',
         children: [
-          { name: '桥吊作业效率提升 15%', type: '季', dept: '装卸队', rate: '+12%/+15%', health: '需关注', plans: [0, 1] },
-          { name: '8 月桥吊效率月目标', type: '月', dept: '装卸队', rate: '+3%/+5%', health: '需关注', plans: [0] }
+          { name: '桥吊作业效率提升 15%', type: '季', period: '2026-Q3', dept: '装卸队', rate: '+12%/+15%', health: '需关注', plans: [0, 1] },
+          { name: '设备完好率 ≥ 98%', type: '季', period: '2026-Q3', dept: '设备部', rate: '97%/98%', health: '正常', plans: [2] }
         ]
       },
       1: { mode: 'plans', plans: [0, 1] },
-      2: { mode: 'plans', plans: [0] }
+      2: { mode: 'plans', plans: [2] }
     };
 
     function renderGoalExecTree(idx) {
@@ -894,8 +909,9 @@
       if (!r) return;
       currentPlanIdx = idx;
       document.getElementById('pTitle').textContent = r[0];
-      document.getElementById('pMeta').textContent = '关联目标：' + r[1] + ' · 节点 ' + r[3] + ' · 较上期 ' + r[4];
+      document.getElementById('pMeta').textContent = '关联目标：' + r[1] + ' · 起止 ' + (r[7] || '—') + ' · 节点 ' + r[3] + ' · 较上期 ' + r[4];
       document.getElementById('pGoal').textContent = r[1];
+      document.getElementById('pRange').textContent = r[7] || '—';
       document.getElementById('pNode').textContent = r[2];
       document.getElementById('pRate').textContent = r[3];
       document.getElementById('pLag').textContent = r[5];
@@ -940,20 +956,7 @@
       return t;
     }
 
-    function renderReportTransferTimeline(t) {
-      const list = t.transfers || [];
-      if (!list.length) return '<p class="text-slate-400 text-center py-8">暂无转派记录</p>';
-      return '<div class="space-y-3">' + list.slice().reverse().map(x => `
-        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
-          <div class="flex flex-wrap justify-between gap-2 text-xs text-slate-500 mb-2">
-            <span>${x.at}</span>
-            <span>操作人：${x.operator}</span>
-          </div>
-          <div class="text-sm font-medium text-slate-900">${x.from} → ${x.to}</div>
-          <div class="text-sm text-slate-600 mt-2"><span class="text-slate-500">原因：</span>${x.reason}</div>
-          ${x.note ? '<div class="text-xs text-slate-500 mt-1">备注：' + x.note + '</div>' : ''}
-        </div>`).join('') + '</div>';
-    }
+
 
     function renderReportFollowResult(t) {
       const st = t.status;
@@ -967,7 +970,7 @@
               <div class="text-slate-800 leading-relaxed bg-white rounded-xl p-4 border border-emerald-100">${t.completeSummary || t.summary || '—'}</div>
             </div>
             ${reportViewField('跟进责任人', t.owner)}
-            ${reportViewField('归属周期', t.period || '2026-W34')}
+            ${reportViewField('归属周', t.period || '2026-W34')}
           </div>`;
       }
       if (st === '已延期') {
@@ -979,7 +982,7 @@
               <div class="text-slate-800 leading-relaxed bg-white rounded-xl p-4 border border-red-100">${t.delayReason || t.block || '本期未完成，系统自动标为已延期'}</div>
             </div>
             ${reportViewField('跟进责任人', t.owner)}
-            ${reportViewField('归属周期', t.period || '2026-W34')}
+            ${reportViewField('归属周', t.period || '2026-W34')}
             ${reportViewField('原计划结束', t.end || '—')}
           </div>`;
       }
@@ -990,10 +993,6 @@
       const t = getCurrentReportTask();
       if (!t) return;
       syncReportTaskPlanName(t);
-      if (reportViewTab === 'transfer') {
-        document.getElementById('viewContent').innerHTML = renderReportTransferTimeline(t);
-        return;
-      }
       if (reportViewTab === 'follow') {
         document.getElementById('viewContent').innerHTML = renderReportFollowResult(t);
         return;
@@ -1004,7 +1003,7 @@
         ${reportViewField('责任人', t.owner + ' · 来源：' + (t.src || '自建'))}
         ${reportViewField('配合人员', (t.helpers && t.helpers.length) ? t.helpers.join('、') : '—')}
         ${reportViewField('起止时间', (t.start || '—') + ' ~ ' + (t.end || '—'))}
-        ${reportViewField('归属周期', t.period || '2026-W34')}
+        ${reportViewField('归属周', t.period || '2026-W34')}
         ${reportViewField('任务概述', t.summary || '—')}
         ${st === '进行中' && t.situationSummary ? reportViewField('跟进概述', t.situationSummary) : ''}
         ${reportViewField('本周期填报', t.fill === '已填' ? '已填' : '未填')}
@@ -1039,7 +1038,6 @@
         actions = `<button type="button" onclick="askDelete('task',${currentTaskCtx.idx},'${delScope}')" class="border text-sm px-4 py-2 rounded-xl text-red-600 border-red-200">删除</button>` + actions;
       }
       if (t.status !== '已完成') {
-        actions = `<button type="button" onclick="BMS.closeModal('modal-task-detail');openReportTransfer()" class="border text-sm px-4 py-2 rounded-xl text-amber-700 border-amber-200 bg-amber-50">转派</button>` + actions;
         actions = `<button type="button" onclick="BMS.closeModal('modal-task-detail');openTaskEditFromDetail()" class="border text-sm px-4 py-2 rounded-xl">编辑</button>` + actions;
       }
       if (t.status === '进行中') {
@@ -1123,7 +1121,6 @@
       document.getElementById('teTitle').textContent = mode === 'create' ? '新增任务' : '编辑任务';
       document.getElementById('teCreateHint').classList.toggle('hidden', mode !== 'create');
       const ownerEl = document.getElementById('teOwner');
-      const hint = document.getElementById('teOwnerHint');
       if (mode === 'create') {
         ownerEl.disabled = false;
         ownerEl.classList.remove('bg-slate-100', 'text-slate-500');
@@ -1230,10 +1227,17 @@
         goalLabel = r[1];
         document.getElementById('pfNode').value = r[2];
         document.getElementById('pfDesc').value = r[6] || '';
+        const range = (r[7] || '').split('~').map(s => s.trim());
+        if (range.length === 2) {
+          document.getElementById('pfStart').value = '2026-' + range[0].replace('/', '-');
+          document.getElementById('pfEnd').value = '2026-' + range[1].replace('/', '-');
+        }
       } else {
         document.getElementById('pfName').value = '';
         document.getElementById('pfNode').value = '';
         document.getElementById('pfDesc').value = '';
+        document.getElementById('pfStart').value = '2026-08-01';
+        document.getElementById('pfEnd').value = '2026-08-31';
       }
       fillGoalSelect(goalLabel);
       BMS.openModal('modal-plan-form');
@@ -1244,14 +1248,20 @@
       const goal = document.getElementById('pfGoal').value;
       const node = document.getElementById('pfNode').value.trim() || '待排期';
       const desc = document.getElementById('pfDesc').value.trim() || '（暂无说明）';
+      const start = document.getElementById('pfStart').value;
+      const end = document.getElementById('pfEnd').value;
       if (!name) { BMS.toast('请填写计划名称', 'error'); return; }
       if (!goal) { BMS.toast('请选择关联目标', 'error'); return; }
+      if (!start || !end) { BMS.toast('请填写起止时间', 'error'); return; }
+      if (end < start) { BMS.toast('结束日期不能早于开始日期', 'error'); return; }
+      const range = start.slice(5) + ' ~ ' + end.slice(5);
       if (planFormMode === 'edit' && planFormIdx != null) {
         const oldName = PLANS[planFormIdx][0];
         PLANS[planFormIdx][0] = name;
         PLANS[planFormIdx][1] = goal;
         PLANS[planFormIdx][2] = node;
         PLANS[planFormIdx][6] = desc;
+        PLANS[planFormIdx][7] = range;
         TASKS.forEach(t => { if (t.plan === oldName) t.plan = name; });
         NEXT_WEEK_TASKS.forEach(t => { if (t.plan === oldName) t.plan = name; });
         BMS.closeModal('modal-plan-form');
@@ -1260,7 +1270,7 @@
         if (currentPlanIdx === planFormIdx) openPlanDetail(planFormIdx);
         return;
       }
-      PLANS.push([name, goal, node, '0/0 按期', '新建', '0 / 0', desc]);
+      PLANS.push([name, goal, node, '0/0 按期', '新建', '0 / 0', desc, range]);
       const newIdx = PLANS.length - 1;
       PLAN_TASKS[newIdx] = [];
       const gIdx = WEEK_GOALS.findIndex(g => ('【' + g[1] + '】' + g[0]) === goal);
@@ -1288,7 +1298,6 @@
       document.getElementById('gfName').value = r[0];
       document.getElementById('gfType').value = r[1];
       document.getElementById('gfDept').value = r[2];
-      document.getElementById('gfRate').value = r[3];
       document.getElementById('gfHealth').value = r[5];
       BMS.openModal('modal-goal-form');
     }
@@ -1302,7 +1311,6 @@
       WEEK_GOALS[goalFormIdx][0] = name;
       WEEK_GOALS[goalFormIdx][1] = document.getElementById('gfType').value;
       WEEK_GOALS[goalFormIdx][2] = document.getElementById('gfDept').value;
-      WEEK_GOALS[goalFormIdx][3] = document.getElementById('gfRate').value.trim() || old[3];
       WEEK_GOALS[goalFormIdx][5] = document.getElementById('gfHealth').value;
       const newLabel = '【' + WEEK_GOALS[goalFormIdx][1] + '】' + name;
       PLANS.forEach(p => { if (p[1] === oldLabel) p[1] = newLabel; });
@@ -1398,14 +1406,20 @@
     }
 
     function refreshSummaryCounts() {
-      const elG = document.getElementById('sumGoals');
-      const elP = document.getElementById('sumPlans');
+      const done = TASKS.filter(t => t.status === '已完成').length;
+      const unfilled = TASKS.filter(t => t.fill === '未填').length;
+      const delayed = TASKS.filter(t => t.status === '已延期').length;
+      const watchGoals = WEEK_GOALS.filter(g => g[5] === '需关注' || g[5] === '风险').length;
+      const elA = document.getElementById('sumAgenda');
       const elT = document.getElementById('sumTasks');
+      const elTb = document.getElementById('sumTasksBreakdown');
       const elN = document.getElementById('sumNextWeek');
-      if (elG) elG.textContent = String(WEEK_GOALS.length);
-      if (elP) elP.textContent = String(PLANS.length);
+      const elC = document.getElementById('sumChange');
+      if (elA) elA.textContent = String(Math.max(watchGoals + 2, SUMMARY_DATA.agenda.rows.length));
       if (elT) elT.textContent = String(TASKS.length);
+      if (elTb) elTb.textContent = '完成 ' + done + ' · 未填 ' + unfilled + ' · 延期 ' + delayed;
       if (elN) elN.textContent = String(NEXT_WEEK_TASKS.length);
+      if (elC) elC.textContent = String(SUMMARY_DATA.change.rows.length);
     }
 
     function rowOps(detailFn, editFn, delFn) {
@@ -1483,55 +1497,122 @@
       openReportTaskModal();
     }
 
-    function openReportTransfer() {
-      const t = getCurrentReportTask();
-      if (!t) return;
-      document.getElementById('tfTaskName').textContent = t.name;
-      document.getElementById('tfFromOwner').textContent = t.owner;
-      document.getElementById('tfReason').value = '';
-      const sel = document.getElementById('tfNewOwner');
-      [...sel.options].forEach(o => { o.disabled = o.value === t.owner; });
-      const first = [...sel.options].find(o => !o.disabled);
-      if (first) sel.value = first.value;
-      BMS.openModal('modal-task-transfer');
-    }
-
-    function saveReportTransfer() {
-      const t = getCurrentReportTask();
-      if (!t) return;
-      const to = document.getElementById('tfNewOwner').value;
-      const reason = document.getElementById('tfReason').value.trim();
-      if (!to) { BMS.toast('请选择新责任人', 'error'); return; }
-      if (to === t.owner) { BMS.toast('新责任人不能与当前相同', 'error'); return; }
-      if (reason.length < 10) { BMS.toast('转派原因至少 10 字', 'error'); return; }
-      if (!t.transfers) t.transfers = [];
-      t.transfers.push({
-        at: '2026-08-27 09:50',
-        operator: '刘强',
-        from: t.owner,
-        to,
-        reason,
-        note: ''
-      });
-      t.owner = to;
-      BMS.closeModal('modal-task-transfer');
-      BMS.toast('已转派给「' + to + '」');
-      if (currentTaskCtx.type === 'plan') renderPlanTasks(currentTaskCtx.planIdx);
-      if (typeof renderTables === 'function') renderTables();
-      openReportTaskModal();
-    }
 
     function renderPeriodLabel() {
       /* 周期切换仅刷新列表语境，页面不再展示说明文案 */
     }
 
     function switchSection(name) {
+      currentReportSection = name;
       document.querySelectorAll('.section-pane').forEach(p => p.classList.add('hidden'));
       document.getElementById('section-' + name).classList.remove('hidden');
       document.querySelectorAll('.section-tab').forEach(b => {
         const on = b.getAttribute('data-section') === name;
         b.className = on ? 'section-tab px-4 py-2 rounded-xl text-sm section-tab-on' : 'section-tab px-4 py-2 rounded-xl text-sm bg-white border border-slate-200';
       });
+      updateSearchPlaceholder();
+      renderCurrentSectionTable();
+    }
+
+    let currentReportSection = 'goals';
+
+    function getReportSearchQ() {
+      return (document.getElementById('reportSearch')?.value || '').trim().toLowerCase();
+    }
+
+    function matchReportSearch(...parts) {
+      const q = getReportSearchQ();
+      if (!q) return true;
+      return parts.some(p => String(p || '').toLowerCase().includes(q));
+    }
+
+    function updateSearchPlaceholder() {
+      const map = {
+        goals: '搜索目标名称、部门',
+        plans: '搜索计划名称、关联目标',
+        tasks: '搜索任务名称、计划、责任人',
+        nextweek: '搜索任务名称、计划、责任人'
+      };
+      const el = document.getElementById('reportSearch');
+      if (el) el.placeholder = map[currentReportSection] || '搜索';
+    }
+
+    function onReportSearch() {
+      renderCurrentSectionTable();
+    }
+
+    function emptySearchRow(cols) {
+      return `<tr><td colspan="${cols}" class="px-5 py-10 text-center text-slate-400">无匹配结果，请调整关键词</td></tr>`;
+    }
+
+    function renderGoalsTable() {
+      const rows = WEEK_GOALS.map((r, i) => ({ r, i })).filter(({ r }) => matchReportSearch(r[0], r[2], r[1], r[6]));
+      document.getElementById('goalsBody').innerHTML = rows.length ? rows.map(({ r, i }) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><button type="button" class="font-medium text-teal-700 hover:underline text-left" onclick="openGoalDetail(${i})">${r[0]}</button></td>
+          <td class="px-4 py-3">${typeBadge(r[1])}</td>
+          <td class="px-4 py-3"><span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">${r[6] || '—'}</span></td>
+          <td class="px-4 py-3">${r[2]}</td>
+          <td class="px-4 py-3">${cmpCell(r[4])}</td>
+          <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100">${r[5]}</span></td>
+          <td class="px-5 py-3">${rowOps(`openGoalDetail(${i})`, `openGoalForm(${i})`, `askDelete('goal',${i})`)}</td>
+        </tr>`).join('') : emptySearchRow(7);
+    }
+
+    function renderPlansTable() {
+      const rows = PLANS.map((r, i) => ({ r, i })).filter(({ r }) => matchReportSearch(r[0], r[1], r[5]));
+      document.getElementById('plansBody').innerHTML = rows.length ? rows.map(({ r, i }) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3">
+            <button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanDetail(${i})">${r[0]}</button>
+            <div class="text-xs text-slate-500 mt-1">起止 ${r[7] || '—'}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-600">${r[1]}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${planRangeBadge(r[7])}</td>
+          <td class="px-4 py-3">${r[3]}</td>
+          <td class="px-4 py-3">${cmpCell(r[4])}</td>
+          <td class="px-4 py-3">${r[5]}</td>
+          <td class="px-5 py-3">${rowOps(`openPlanDetail(${i})`, `openPlanForm('edit',{idx:${i}})`, `askDelete('plan',${i})`)}</td>
+        </tr>`).join('') : emptySearchRow(7);
+    }
+
+    function renderTasksTable() {
+      const rows = TASKS.map((r, i) => ({ r, i })).filter(({ r }) => matchReportSearch(r.name, r.plan, r.owner, r.situationSummary, r.completeSummary));
+      document.getElementById('tasksBody').innerHTML = rows.length ? rows.map(({ r, i }) => {
+        const overview = r.situationSummary || r.completeSummary || r.delayReason || '—';
+        return `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openTaskDetail(${i})">${r.name}</button></td>
+          <td class="px-4 py-3">${weekBadgeHtml(r.period)}</td>
+          <td class="px-4 py-3 text-slate-600">${r.plan}</td>
+          <td class="px-4 py-3">${r.owner}</td>
+          <td class="px-4 py-3">${r.fill === '未填' ? '<span class="text-red-500">未填</span>' : '<span class="text-emerald-600">已填</span>'}</td>
+          <td class="px-4 py-3">${statusBadgeTask(r.status)}</td>
+          <td class="px-4 py-3 text-slate-500 max-w-[160px] truncate">${overview}</td>
+          <td class="px-5 py-3">${rowOps(`openTaskDetail(${i})`, `editListTask('week',${i})`, `askDelete('task',${i},'week')`)}</td>
+        </tr>`;
+      }).join('') : emptySearchRow(8);
+    }
+
+    function renderNextWeekTable() {
+      const rows = NEXT_WEEK_TASKS.map((r, i) => ({ r, i })).filter(({ r }) => matchReportSearch(r.name, r.plan, r.owner, r.summary));
+      document.getElementById('nextWeekBody').innerHTML = rows.length ? rows.map(({ r, i }) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openNextWeekDetail(${i})">${r.name}</button></td>
+          <td class="px-4 py-3">${weekBadgeHtml(r.period)}</td>
+          <td class="px-4 py-3 text-slate-600">${r.plan}</td>
+          <td class="px-4 py-3">${r.owner}</td>
+          <td class="px-4 py-3">${formatReportRange(r)}</td>
+          <td class="px-4 py-3 text-slate-500 max-w-[200px] truncate">${r.summary || '—'}</td>
+          <td class="px-5 py-3">${rowOps(`openNextWeekDetail(${i})`, `editListTask('next',${i})`, `askDelete('task',${i},'next')`)}</td>
+        </tr>`).join('') : emptySearchRow(7);
+    }
+
+    function renderCurrentSectionTable() {
+      if (currentReportSection === 'goals') renderGoalsTable();
+      else if (currentReportSection === 'plans') renderPlansTable();
+      else if (currentReportSection === 'tasks') renderTasksTable();
+      else if (currentReportSection === 'nextweek') renderNextWeekTable();
     }
 
     function collectPendingPeople(list) {
@@ -1632,56 +1713,16 @@
     }
 
     function confirmRemind() {
-      BMS.toast('已提交提醒，平台消息发送中');
+      const n = selectedPendingCount();
+      BMS.toast('已向 ' + n + ' 人发送企微汇报提醒');
       BMS.closeModal('modal-remind');
     }
 
     function renderTables() {
-      document.getElementById('goalsBody').innerHTML = WEEK_GOALS.map((r, i) => `
-        <tr class="border-t row-hover">
-          <td class="px-5 py-3"><button type="button" class="font-medium text-teal-700 hover:underline text-left" onclick="openGoalDetail(${i})">${r[0]}</button></td>
-          <td class="px-4 py-3">${typeBadge(r[1])}</td>
-          <td class="px-4 py-3">${r[2]}</td>
-          <td class="px-4 py-3">${r[3]}</td>
-          <td class="px-4 py-3">${cmpCell(r[4])}</td>
-          <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full bg-slate-100">${r[5]}</span></td>
-          <td class="px-5 py-3">${rowOps(`openGoalDetail(${i})`, `openGoalForm(${i})`, `askDelete('goal',${i})`)}</td>
-        </tr>`).join('');
-
-      document.getElementById('plansBody').innerHTML = PLANS.map((r, i) => `
-        <tr class="border-t row-hover">
-          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openPlanDetail(${i})">${r[0]}</button></td>
-          <td class="px-4 py-3 text-slate-600">${r[1]}</td>
-          <td class="px-4 py-3">${r[3]}</td>
-          <td class="px-4 py-3">${cmpCell(r[4])}</td>
-          <td class="px-4 py-3">${r[5]}</td>
-          <td class="px-5 py-3">${rowOps(`openPlanDetail(${i})`, `openPlanForm('edit',{idx:${i}})`, `askDelete('plan',${i})`)}</td>
-        </tr>`).join('');
-
-      document.getElementById('tasksBody').innerHTML = TASKS.map((r, i) => {
-        const overview = r.situationSummary || r.completeSummary || r.delayReason || '—';
-        return `
-        <tr class="border-t row-hover">
-          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openTaskDetail(${i})">${r.name}</button></td>
-          <td class="px-4 py-3 text-slate-600">${r.plan}</td>
-          <td class="px-4 py-3">${r.owner}</td>
-          <td class="px-4 py-3">${r.fill === '未填' ? '<span class="text-red-500">未填</span>' : '<span class="text-emerald-600">已填</span>'}</td>
-          <td class="px-4 py-3">${statusBadgeTask(r.status)}</td>
-          <td class="px-4 py-3 text-slate-500 max-w-[160px] truncate">${overview}</td>
-          <td class="px-5 py-3">${rowOps(`openTaskDetail(${i})`, `editListTask('week',${i})`, `askDelete('task',${i},'week')`)}</td>
-        </tr>`;
-      }).join('');
-
-      document.getElementById('nextWeekBody').innerHTML = NEXT_WEEK_TASKS.map((r, i) => `
-        <tr class="border-t row-hover">
-          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openNextWeekDetail(${i})">${r.name}</button></td>
-          <td class="px-4 py-3 text-slate-600">${r.plan}</td>
-          <td class="px-4 py-3">${r.owner}</td>
-          <td class="px-4 py-3">${formatReportRange(r)}</td>
-          <td class="px-4 py-3 text-slate-500 max-w-[200px] truncate">${r.summary || '—'}</td>
-          <td class="px-5 py-3">${rowOps(`openNextWeekDetail(${i})`, `editListTask('next',${i})`, `askDelete('task',${i},'next')`)}</td>
-        </tr>`).join('');
-
+      renderGoalsTable();
+      renderPlansTable();
+      renderTasksTable();
+      renderNextWeekTable();
       renderPendingHints();
     }
 
@@ -1691,6 +1732,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      updateSearchPlaceholder();
       renderTables();
       refreshSummaryCounts();
       renderPeriodLabel();

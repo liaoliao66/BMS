@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>目标管理 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .card-hover { transition: transform .2s, box-shadow .2s; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .btn-cta:active { transform: scale(.95); }
+    .row-hover:hover { background:#f8fafc; }
+    .tree-toggle { width:1.25rem; height:1.25rem; display:inline-flex; align-items:center; justify-content:center; color:#64748b; border-radius:0.375rem; }
+    .tree-toggle:hover { background:#f1f5f9; color:#0f766e; }
+    .tree-toggle .fa-caret-right { transition: transform .15s; }
+    .tree-toggle.is-open .fa-caret-right { transform: rotate(90deg); }
+    .more-menu { position:absolute; right:0; top:100%; margin-top:4px; min-width:7.5rem; background:#fff; border:1px solid #e2e8f0; border-radius:0.75rem; box-shadow:0 8px 24px rgba(0,0,0,.08); z-index:20; display:none; }
+    .more-wrap.open .more-menu { display:block; }
+    .exec-tree { border:1px solid #e2e8f0; border-radius:1rem; overflow:hidden; }
+    .exec-node { border-top:1px solid #f1f5f9; }
+    .exec-node:first-child { border-top:0; }
+    .exec-rail { width:3px; border-radius:999px; flex-shrink:0; }
+    .exec-rail-goal { background:#94a3b8; }
+    .exec-rail-plan { background:#0f766e; }
+    .exec-rail-task { background:#cbd5e1; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="goals" data-title="目标管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <select id="filterType" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderGoalTree()">
+          <option value="all">全部类型</option><option value="year">年目标</option><option value="quarter">季目标</option>
+        </select>
+        <select id="filterDept" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderGoalTree()">
+          <option value="all">全部部门</option><option>调度中心</option><option>装卸队</option><option>设备部</option><option>安全环保部</option><option>商务部</option>
+        </select>
+        <select id="filterStatus" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderGoalTree()">
+          <option value="all">全部健康状态</option><option>正常</option><option>需关注</option><option>风险</option>
+        </select>
+        <button type="button" onclick="expandAll()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600">全部展开</button>
+        <button type="button" onclick="collapseToYear()" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-600">仅看年</button>
+      </div>
+      <button type="button" onclick="openGoalForm('create','year')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建年目标</button>
+    </div>
+    <p class="text-xs text-slate-500 mb-3">树形列表 · 默认展开到季 · 必显：名称/类型/周期/部门/健康状态/分解状态 · 年仅「拆解下级」· 本期不做量化达成</p>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left min-w-[280px]">目标名称</th>
+            <th class="px-4 py-3 text-left w-16">类型</th>
+            <th class="px-4 py-3 text-left">周期</th>
+            <th class="px-4 py-3 text-left">责任部门</th>
+            <th class="px-4 py-3 text-left">健康状态</th>
+            <th class="px-4 py-3 text-left">分解状态</th>
+            <th class="px-4 py-3 text-left w-44">操作</th>
+          </tr>
+        </thead>
+        <tbody id="goalTreeBody"></tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500" id="goalTreeFooter">树形展示年→季；季为最末级，计划与任务挂季目标下</div>
+    </div>
+
+    <!-- 新建/编辑 -->
+    <div id="modal-goal" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
+        <div class="flex justify-between items-center mb-5">
+          <h3 id="goalFormTitle" class="text-lg font-semibold">新建目标</h3>
+          <button type="button" onclick="BMS.closeModal('modal-goal')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">目标类型 <span class="text-red-500">*</span></label>
+            <select id="goalType" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" onchange="onGoalTypeChange()">
+              <option value="year">年目标</option>
+              <option value="quarter">季目标</option>
+            </select>
+            <p class="text-xs text-slate-400 mt-1">创建顺序：先年、再季；季为最末级，计划与任务挂季目标。</p>
+          </div>
+          <div id="parentWrap" class="hidden">
+            <label class="block text-sm text-slate-600 mb-1">上级目标 <span class="text-red-500">*</span></label>
+            <select id="goalParent" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></select>
+            <p id="parentHint" class="text-xs text-slate-400 mt-1"></p>
+          </div>
+          <div><label class="block text-sm text-slate-600 mb-1">目标名称 <span class="text-red-500">*</span></label><input id="goalName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="桥吊作业效率提升 15%" /></div>
+          <div data-ai-inline="F7"><label class="block text-sm text-slate-600 mb-1">目标介绍 <span class="text-red-500">*</span></label><textarea id="goalIntro" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="说明背景、范围与衡量标准">聚焦桥吊单机效率与班组协同，通过作业流程优化与设备点检，使桥吊平均作业效率较上季提升 15%，支撑码头吞吐目标。</textarea></div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">所属周期 <span class="text-red-500">*</span></label>
+              <select id="goalPeriod" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">截止时间 <span class="text-red-500">*</span></label>
+              <input id="goalDeadline" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-09-30" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">责任部门 <span class="text-red-500">*</span></label><select class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>装卸队</option><option>调度中心</option><option>设备部</option><option>安全环保部</option><option>商务部</option></select></div>
+          </div>
+          <div class="flex gap-3 pt-1">
+            <button type="button" onclick="saveGoal()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存</button>
+            <button type="button" onclick="BMS.closeModal('modal-goal')" class="text-sm text-slate-500 px-3">取消</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-status" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">修改业务状态</h3><button type="button" onclick="BMS.closeModal('modal-status')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-500">目标：<span id="bizStatusGoalName" class="text-slate-800 font-medium">—</span></p>
+        <p class="text-xs text-slate-400">业务状态指目标生命周期：草稿 / 进行中 / 已完成等，与健康状态（正常 / 需关注 / 风险）相互独立。</p>
+        <div><label class="block text-sm text-slate-600 mb-1">新业务状态 <span class="text-red-500">*</span></label><select id="newStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>进行中</option><option>已完成</option><option selected>已延期</option><option>已取消</option><option>草稿</option></select></div>
+        <div><label class="block text-sm text-slate-600 mb-1">变更原因 <span class="text-red-500">*</span></label><textarea id="statusReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="必须填写原因，例如：台风影响作业天数，进度滞后"></textarea></div>
+        <div class="flex gap-2"><button type="button" onclick="saveBizStatus()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认修改</button><button type="button" onclick="BMS.closeModal('modal-status')" class="text-sm text-slate-500">取消</button></div>
+      </div>
+    </div>
+
+    <div id="modal-health" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-health')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6 space-y-4">
+        <div class="flex justify-between"><h3 class="text-lg font-semibold">修改健康状态</h3><button type="button" onclick="BMS.closeModal('modal-health')"><i class="fa-solid fa-xmark text-slate-400"></i></button></div>
+        <p class="text-sm text-slate-500">目标：<span id="healthStatusGoalName" class="text-slate-800 font-medium">—</span></p>
+        <p class="text-xs text-slate-400">健康状态由系统按关键节点、滞后任务与填报更新计算；负责人可人工 override，变更须留原因。本期不做量化达成。</p>
+        <div><label class="block text-sm text-slate-600 mb-1">当前健康状态</label><div id="healthStatusCurrent" class="text-sm font-medium text-amber-600">需关注</div></div>
+        <div><label class="block text-sm text-slate-600 mb-1">新健康状态 <span class="text-red-500">*</span></label><select id="newHealthStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>正常</option><option selected>需关注</option><option>风险</option></select></div>
+        <div><label class="block text-sm text-slate-600 mb-1">变更原因 <span class="text-red-500">*</span></label><textarea id="healthStatusReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-24" placeholder="必须填写原因，例如：连续阴雨影响夜班作业，进度滞后"></textarea></div>
+        <div class="flex gap-2"><button type="button" onclick="saveHealthStatus()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">确认修改</button><button type="button" onclick="BMS.closeModal('modal-health')" class="text-sm text-slate-500">取消</button></div>
+      </div>
+    </div>
+
+    <!-- 详情 -->
+    <div id="modal-goal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="detailTitle" class="text-xl font-semibold text-slate-900">桥吊作业效率提升 15%</h3>
+              <span id="detailTypeBadge" class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">季目标</span>
+              <span id="detailHealthBadge" class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span>
+            </div>
+            <p id="detailPath" class="text-sm text-slate-500 mt-1">年：全年集装箱吞吐量目标 → 季：桥吊作业效率提升 15%</p>
+            <p id="detailMeta" class="text-sm text-slate-500 mt-1">装卸队 · 周期 2026-Q3 · 截止 2026-09-30</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" id="btnBreakDown" onclick="breakFromDetail()" class="border text-sm px-4 py-2 rounded-xl">拆解下级</button>
+            <button type="button" onclick="BMS.closeModal('modal-goal-detail');openGoalForm('edit', currentDetailType)" class="border text-sm px-4 py-2 rounded-xl">编辑目标</button>
+            <button type="button" onclick="BMS.closeModal('modal-goal-detail');openHealthStatusFromDetail()" class="border text-sm px-4 py-2 rounded-xl">改健康状态</button>
+            <button type="button" onclick="BMS.closeModal('modal-goal-detail');openBizStatusFromDetail()" class="border text-sm px-4 py-2 rounded-xl">改业务状态</button>
+            <a id="btnAddPlan" href="计划管理_计划列表_page.html?open=modal-plan&goal=%E6%A1%A5%E5%90%8A%E4%BD%9C%E4%B8%9A%E6%95%88%E7%8E%87%E6%8F%90%E5%8D%87%2015%25" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">新增计划</a>
+            <button type="button" id="btnYearNoPlan" onclick="BMS.toast('年目标禁止挂计划，请先拆解到季后再建计划','error')" class="hidden border text-sm px-4 py-2 rounded-xl text-slate-400">不可挂计划</button>
+            <button type="button" onclick="BMS.closeModal('modal-goal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">健康状态</div><button type="button" id="detailRateBtn" onclick="openHealthStatusFromDetail()" class="mt-1 font-medium text-amber-600 hover:underline text-left">需关注</button></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">下级目标</div><div class="mt-1 font-medium" id="detailChildCount">3</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联计划 / 任务</div><div class="mt-1 font-medium" id="detailPlanTask">2 / 5</div></div>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-1">目标介绍</div>
+            <p id="detailIntro" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3">聚焦桥吊单机效率与班组协同，通过作业流程优化与设备点检，使桥吊平均作业效率较上季提升 15%，支撑码头吞吐目标。</p>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium text-slate-900">落地全景</div>
+              <div class="text-xs text-slate-500">目标（年/季）→ 计划（起止）→ 任务（周）· 默认展开到任务</div>
+            </div>
+            <div id="goalExecTree" class="exec-tree bg-white"></div>
+          </div>
+
+          <div>
+            <div class="text-sm font-medium mb-2">状态变更</div>
+            <ul class="text-sm space-y-2 text-slate-600" id="goalStatusLogs">
+              <li class="border rounded-xl px-4 py-3"><div class="font-medium text-slate-800">08-15 进行中 → 需关注</div><div class="text-xs text-slate-400 mt-1">操作人：张港长</div><div class="mt-1">原因：连续阴雨影响夜班作业，进度滞后</div></li>
+              <li class="border rounded-xl px-4 py-3"><div class="font-medium text-slate-800">07-01 草稿 → 进行中</div><div class="text-xs text-slate-400 mt-1">操作人：张港长</div><div class="mt-1">原因：Q3 目标正式下达装卸队</div></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-plan-from-goal" data-modal class="fixed inset-0 z-[55] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-from-goal')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[85vh] overflow-y-auto p-6">
+        <div class="flex justify-between mb-4">
+          <div>
+            <h3 id="planFromGoalTitle" class="text-lg font-semibold">8 月装卸效率提升计划</h3>
+            <p id="planFromGoalMeta" class="text-sm text-slate-500 mt-1">归属目标：桥吊作业效率提升 15% · 起止 08-01 ~ 08-31 · 负责人 刘强</p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-plan-from-goal')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="text-sm font-medium mb-2">本计划下任务</div>
+        <div class="border border-slate-100 rounded-2xl overflow-hidden mb-4">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500"><tr><th class="text-left px-4 py-2.5">任务</th><th class="text-left px-4 py-2.5">归属周</th><th class="text-left px-4 py-2.5">责任人</th><th class="text-left px-4 py-2.5">本周期更新</th><th class="text-left px-4 py-2.5">状态</th><th class="text-left px-4 py-2.5">操作</th></tr></thead>
+            <tbody id="planFromGoalTasks"></tbody>
+          </table>
+        </div>
+        <button type="button" onclick="BMS.closeModal('modal-plan-from-goal')" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">关闭</button>
+      </div>
+    </div>
+
+    <script>
+      let currentDetailType = 'quarter';
+      let currentEditNodeId = null;
+      const expandedIds = new Set();
+
+      function healthStatusClass(status) {
+        if (status === '风险') return 'bg-red-50 text-red-600';
+        if (status === '需关注') return 'bg-amber-50 text-amber-700';
+        return 'bg-emerald-50 text-emerald-700';
+      }
+
+      function healthStatusTextClass(status) {
+        if (status === '风险') return 'text-red-600';
+        if (status === '需关注') return 'text-amber-600';
+        return 'text-emerald-600';
+      }
+
+      function findGoalNode(id, nodes) {
+        for (const n of (nodes || [])) {
+          if (n.id === id) return n;
+          const found = findGoalNode(id, n.children);
+          if (found) return found;
+        }
+        return null;
+      }
+
+      function findGoalNodeByDetailKey(key, nodes) {
+        for (const n of (nodes || [])) {
+          if (n.detailKey === key) return n;
+          const found = findGoalNodeByDetailKey(key, n.children);
+          if (found) return found;
+        }
+        return null;
+      }
+
+      const GOAL_TREE = [
+        {
+          id: 'y1', type: 'year', name: '全年集装箱吞吐量目标', period: '2026', dept: '商务部', achievement: '86万/120万TEU', decompose: '已分解', status: '正常', statusClass: 'bg-emerald-50 text-emerald-700', detailKey: 'year',
+          children: [
+            {
+              id: 'q1', type: 'quarter', name: '桥吊作业效率提升 15%', period: '2026-Q3', dept: '装卸队', achievement: '+12%/+15%', decompose: '末级', status: '需关注', statusClass: 'bg-amber-50 text-amber-700', detailKey: 'quarter',
+              children: []
+            },
+            {
+              id: 'q2', type: 'quarter', name: '设备完好率 ≥ 98%', period: '2026-Q3', dept: '设备部', achievement: '97%/98%', decompose: '末级', status: '正常', statusClass: 'bg-sky-50 text-sky-700', detailKey: 'quarter',
+              children: []
+            }
+          ]
+        },
+        {
+          id: 'y2', type: 'year', name: '安全生产零事故', period: '2026', dept: '安全环保部', achievement: '0/0', decompose: '已分解', status: '正常', statusClass: 'bg-emerald-50 text-emerald-700', detailKey: 'year',
+          children: [
+            {
+              id: 'q3', type: 'quarter', name: 'Q3 安全隐患清零', period: '2026-Q3', dept: '安全环保部', achievement: '达标', decompose: '末级', status: '正常', statusClass: 'bg-emerald-50 text-emerald-700', detailKey: 'quarter',
+              children: []
+            }
+          ]
+        }
+      ];
+
+      function initExpandedDefault() {
+        expandedIds.clear();
+        GOAL_TREE.forEach(y => expandedIds.add(y.id));
+      }
+
+      function typeBadge(type) {
+        if (type === 'year') return '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">年</span>';
+        return '<span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">季</span>';
+      }
+
+      function matchFilters(node) {
+        const ft = document.getElementById('filterType').value;
+        const fd = document.getElementById('filterDept').value;
+        const fs = document.getElementById('filterStatus').value;
+        if (ft !== 'all' && node.type !== ft) return false;
+        if (fd !== 'all' && node.dept !== fd) return false;
+        if (fs !== 'all' && node.status !== fs) return false;
+        return true;
+      }
+
+      function nodeOrDescendantMatch(node) {
+        if (matchFilters(node)) return true;
+        return (node.children || []).some(nodeOrDescendantMatch);
+      }
+
+      function collectVisible(nodes, depth, rows) {
+        (nodes || []).forEach(node => {
+          if (!nodeOrDescendantMatch(node)) return;
+          const hasChildren = !!(node.children && node.children.length);
+          const open = expandedIds.has(node.id);
+          rows.push({ node, depth, hasChildren, open });
+          if (hasChildren && open) collectVisible(node.children, depth + 1, rows);
+        });
+      }
+
+      function statusHtml(node) {
+        return `<span class="text-xs px-2 py-0.5 rounded-full ${node.statusClass}">${node.status}</span>`;
+      }
+
+      function actionHtml(node) {
+        const breakBtn = node.type === 'year'
+          ? `<button type="button" onclick="openBreakDown('${node.type}','${node.name.replace(/'/g, "\\'")}')" class="btn-cta text-white text-xs px-3 py-1.5 rounded-xl">拆解下级</button>`
+          : '';
+        return `<div class="flex items-center gap-2 justify-start">
+          ${breakBtn}
+          <div class="more-wrap relative">
+            <button type="button" class="text-slate-500 text-xs px-2 py-1.5 rounded-lg border border-slate-200" onclick="toggleMore(event, this)">更多</button>
+            <div class="more-menu py-1">
+              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openGoalForm('edit','${node.type}')">编辑</button>
+              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openHealthStatus('${node.id}')">改健康状态</button>
+              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openBizStatus('${node.id}')">改业务状态</button>
+              <button type="button" class="block w-full text-left px-3 py-2 text-sm hover:bg-slate-50" onclick="openGoalDetail('${node.detailKey}', '${node.id}')">详情</button>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      function renderGoalTree() {
+        const body = document.getElementById('goalTreeBody');
+        const rows = [];
+        collectVisible(GOAL_TREE, 0, rows);
+        body.innerHTML = '';
+        if (!rows.length) {
+          body.innerHTML = '<tr><td colspan="7" class="px-5 py-10 text-center text-slate-400">无匹配目标</td></tr>';
+          document.getElementById('goalTreeFooter').textContent = '无匹配结果';
+          return;
+        }
+        rows.forEach(({ node, depth, hasChildren, open }) => {
+          const pad = 12 + depth * 22;
+          const toggle = hasChildren
+            ? `<button type="button" class="tree-toggle ${open ? 'is-open' : ''}" onclick="toggleNode('${node.id}')" aria-label="展开或折叠"><i class="fa-solid fa-caret-right text-xs"></i></button>`
+            : `<span class="inline-block w-5"></span>`;
+          const tr = document.createElement('tr');
+          tr.className = 'border-t row-hover';
+          tr.innerHTML = `
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-1.5" style="padding-left:${pad}px">
+                ${toggle}
+                <button type="button" class="text-teal-700 hover:underline text-left font-medium" onclick="openGoalDetail('${node.detailKey}', '${node.id}')">${node.name}</button>
+              </div>
+            </td>
+            <td class="px-4 py-3">${typeBadge(node.type)}</td>
+            <td class="px-4 py-3">${node.period}</td>
+            <td class="px-4 py-3">${node.dept}</td>
+            <td class="px-4 py-3">${statusHtml(node)}</td>
+            <td class="px-4 py-3">${node.decompose || '已分解'}</td>
+            <td class="px-5 py-3">${actionHtml(node)}</td>`;
+          body.appendChild(tr);
+        });
+        document.getElementById('goalTreeFooter').textContent = `展示 ${rows.length} 行 · 树形年→季 · 默认展开到季 · 健康状态不做下级加总`;
+      }
+
+      function toggleNode(id) {
+        if (expandedIds.has(id)) expandedIds.delete(id);
+        else expandedIds.add(id);
+        renderGoalTree();
+      }
+
+      function expandAll() {
+        initExpandedDefault();
+        renderGoalTree();
+      }
+
+      function collapseToYear() {
+        expandedIds.clear();
+        GOAL_TREE.forEach(y => expandedIds.add(y.id));
+        renderGoalTree();
+      }
+
+      function toggleMore(e, btn) {
+        e.stopPropagation();
+        document.querySelectorAll('.more-wrap.open').forEach(w => { if (w !== btn.parentElement) w.classList.remove('open'); });
+        btn.parentElement.classList.toggle('open');
+      }
+      document.addEventListener('click', () => document.querySelectorAll('.more-wrap.open').forEach(w => w.classList.remove('open')));
+
+      const YEAR_OPTS = ['2026', '2027'];
+      const QUARTER_OPTS = ['2026-Q1', '2026-Q2', '2026-Q3', '2026-Q4'];
+      const PARENTS = {
+        quarter: [
+          { value: '全年集装箱吞吐量目标', label: '全年集装箱吞吐量目标（年 · 2026）' },
+          { value: '安全生产零事故', label: '安全生产零事故（年 · 2026）' }
+        ]
+      };
+      const DETAIL = {
+        year: {
+          title: '全年集装箱吞吐量目标',
+          typeLabel: '年目标',
+          path: '年目标（顶级）',
+          meta: '商务部 · 周期 2026 · 截止 2026-12-31',
+          value: '120 万 TEU',
+          rate: '正常',
+          childCount: '4',
+          planTask: '6 / 18',
+          intro: '全年集装箱吞吐量达成 120 万 TEU，支撑码头经营预算与航线开发节奏。',
+          breakLabel: '拆解季目标',
+          planGoal: '全年集装箱吞吐量目标',
+          logs: [
+            { title: '01-05 草稿 → 进行中', who: '张港长', reason: '年度吞吐目标正式下达商务部' }
+          ]
+        },
+        quarter: {
+          title: '桥吊作业效率提升 15%',
+          typeLabel: '季目标',
+          path: '年：全年集装箱吞吐量目标 → 季：桥吊作业效率提升 15%',
+          meta: '装卸队 · 周期 2026-Q3 · 截止 2026-09-30',
+          value: '+15%',
+          rate: '需关注',
+          childCount: '0（最末级）',
+          planTask: '2 / 5',
+          intro: '聚焦桥吊单机效率与班组协同，通过作业流程优化与设备点检，使桥吊平均作业效率较上季提升 15%，支撑码头吞吐目标。',
+          breakLabel: '',
+          planGoal: '桥吊作业效率提升 15%',
+          logs: [
+            { title: '08-15 进行中 → 需关注', who: '张港长', reason: '连续阴雨影响夜班作业，进度滞后' },
+            { title: '07-01 草稿 → 进行中', who: '张港长', reason: 'Q3 目标正式下达装卸队' }
+          ]
+        }
+      };
+
+      const QUARTER_PLANS = [
+        {
+          key: '8月',
+          name: '8 月装卸效率提升计划',
+          range: '08-01 ~ 08-31',
+          owner: '刘强',
+          nodes: '2/4 按期',
+          nextNode: '08-25 效率复核',
+          tasks: [
+            { name: '桥吊夜班流程复盘', week: '2026-W34', owner: '刘强', update: '未更新', status: '进行中', summary: '本周期尚未提交进展；上周已形成初版整改清单。' },
+            { name: '班前会标准化宣贯', week: '2026-W34', owner: '孙伟', update: '已更新', status: '进行中', summary: '全班组第一轮宣贯完成，记录模板已下发。' },
+            { name: '岸桥对位训练', week: '2026-W34', owner: '马超', update: '已更新', status: '已延期', summary: '训练排班冲突，延期至下周第二轮。' }
+          ]
+        },
+        {
+          key: 'Q3',
+          name: 'Q3 桥吊点检专项计划',
+          range: '07-01 ~ 08-20',
+          owner: '刘强',
+          nodes: '2/4 按期',
+          nextNode: '08-31 季度节点',
+          tasks: [
+            { name: '钢丝绳点检整改', week: '2026-W34', owner: '周杰', update: '已更新', status: '进行中', summary: '整改项 8 条已闭环 5 条，余 3 条待设备窗口期。' },
+            { name: '点检台账周复核', week: '2026-W34', owner: '周杰', update: '已更新', status: '进行中', summary: '本周台账已复核，无新增隐患。' }
+          ]
+        }
+      ];
+
+      const YEAR_CHILD_TREE = [
+        {
+          name: '桥吊作业效率提升 15%',
+          typeLabel: '季',
+          period: '2026-Q3',
+          dept: '装卸队',
+          achievement: '+12%/+15%',
+          health: '需关注',
+          detailKey: 'quarter',
+          plans: QUARTER_PLANS
+        },
+        {
+          name: '设备完好率 ≥ 98%',
+          typeLabel: '季',
+          period: '2026-Q3',
+          dept: '设备部',
+          achievement: '97%/98%',
+          health: '正常',
+          detailKey: 'quarter',
+          plans: [
+            {
+              key: '设备',
+              name: 'Q3 设备完好率保障计划',
+              range: '07-01 ~ 09-30',
+              owner: '赵工',
+              nodes: '3/4 按期',
+              nextNode: '09-15 完好率复核',
+              tasks: [
+                { name: '关键设备巡检排程', week: '2026-W34', owner: '赵工', update: '已更新', status: '进行中', summary: '桥吊/场桥巡检排程已锁定，本周执行率 100%。' },
+                { name: '备件库存核对', week: '2026-W33', owner: '钱磊', update: '已更新', status: '已完成', summary: '高周转备件库存已核对并补货。' }
+              ]
+            }
+          ]
+        },
+        {
+          name: '堆场周转天数压降',
+          typeLabel: '季',
+          period: '2026-Q3',
+          dept: '调度中心',
+          achievement: '待录入',
+          health: '正常',
+          detailKey: 'quarter',
+          plans: [
+            {
+              key: '堆场',
+              name: '堆场周转优化计划',
+              range: '08-01 ~ 08-31',
+              owner: '陈敏',
+              nodes: '3/4 按期',
+              nextNode: '08-20 周转复盘',
+              tasks: [
+                { name: '堆场周转异常复盘', week: '2026-W33', owner: '陈敏', update: '已更新', status: '已完成', summary: '已形成复盘纪要，3 项措施进入试点。' },
+                { name: '箱位周转日报核对', week: '2026-W34', owner: '陈敏', update: '已更新', status: '进行中', summary: '日报核对机制已建立，本周异常 2 起。' }
+              ]
+            }
+          ]
+        },
+        {
+          name: '航线班期兑现率',
+          typeLabel: '季',
+          period: '2026-Q2',
+          dept: '商务部',
+          achievement: '达标',
+          health: '正常',
+          detailKey: 'quarter',
+          plans: []
+        }
+      ];
+
+      function healthBadge(h) {
+        if (h === '需关注') return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">需关注</span>';
+        if (h === '风险') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">风险</span>';
+        return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">正常</span>';
+      }
+
+      function taskUpdateHtml(u) {
+        if (u === '未更新') return '<span class="text-red-500">未更新</span>';
+        return '<span class="text-emerald-600">已更新</span>';
+      }
+
+      function taskStatusHtml(s) {
+        if (s === '已完成') return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">已完成</span>';
+        if (s === '已延期') return '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span>';
+        return '<span class="text-xs px-2 py-0.5 rounded-full bg-sky-50 text-sky-700">进行中</span>';
+      }
+
+      function weekBadge(week) {
+        const w = week || '—';
+        return `<span class="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700" title="任务归属周">${w === '—' ? '周 · —' : '周 · ' + w.replace(/^2026-/, '')}</span>`;
+      }
+
+      function planRangeBadge(range) {
+        const r = range || '—';
+        return `<span class="text-[11px] px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700" title="计划起止时间">起止 ${r}</span>`;
+      }
+
+      function renderTaskNodes(tasks, pad) {
+        if (!tasks || !tasks.length) {
+          return `<div class="exec-node px-4 py-2.5 text-sm text-slate-400" style="padding-left:${pad}px">暂无任务</div>`;
+        }
+        return tasks.map(t => `
+          <div class="exec-node px-4 py-3" style="padding-left:${pad}px">
+            <div class="flex gap-3 items-start">
+              <div class="exec-rail exec-rail-task mt-1.5"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">任务</span>
+                  ${weekBadge(t.week)}
+                  <span class="text-sm font-medium text-slate-800">${t.name}</span>
+                  ${taskStatusHtml(t.status)}
+                  <span class="text-xs text-slate-500">责任人 ${t.owner}</span>
+                  <span class="text-xs">${taskUpdateHtml(t.update)}</span>
+                </div>
+                <p class="text-sm text-slate-600 mt-1 leading-relaxed">${t.summary || '—'}</p>
+              </div>
+            </div>
+          </div>`).join('');
+      }
+
+      function renderPlanNodes(plans, pad) {
+        if (!plans || !plans.length) {
+          return `<div class="exec-node px-4 py-2.5 text-sm text-slate-400" style="padding-left:${pad}px">暂无关联计划</div>`;
+        }
+        return plans.map(p => `
+          <div class="exec-node">
+            <div class="px-4 py-3 bg-slate-50/60" style="padding-left:${pad}px">
+              <div class="flex gap-3 items-start">
+                <div class="exec-rail exec-rail-plan mt-1.5"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-800">计划</span>
+                    ${planRangeBadge(p.range || p.period)}
+                    <button type="button" class="text-sm font-medium text-teal-800 hover:underline text-left" onclick="openPlanFromGoal('${p.key}')">${p.name}</button>
+                    <span class="text-xs text-slate-500">负责人 ${p.owner}</span>
+                    <span class="text-xs text-slate-600">节点 ${p.nodes}</span>
+                    <span class="text-xs text-slate-500">下一节点 ${p.nextNode}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ${renderTaskNodes(p.tasks, pad + 28)}
+          </div>`).join('');
+      }
+
+      function renderChildGoalNodes(children) {
+        return children.map(c => `
+          <div class="exec-node">
+            <div class="px-4 py-3.5 bg-white">
+              <div class="flex gap-3 items-start">
+                <div class="exec-rail exec-rail-goal mt-1.5"></div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[11px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">下级目标</span>
+                    <button type="button" class="text-sm font-semibold text-slate-900 hover:text-teal-800 text-left" onclick="openGoalDetail('${c.detailKey}')">${c.name}</button>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-teal-50 text-teal-800">${c.typeLabel}</span>
+                    ${healthBadge(c.health)}
+                  </div>
+                  <div class="text-xs text-slate-500 mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                    <span>周期 ${c.period}</span>
+                    <span>${c.dept}</span>
+                    <span>计划 ${(c.plans || []).length} · 任务 ${(c.plans || []).reduce((n, p) => n + (p.tasks || []).length, 0)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            ${renderPlanNodes(c.plans, 44)}
+          </div>`).join('');
+      }
+
+      function renderGoalExecTree(type) {
+        const root = document.getElementById('goalExecTree');
+        if (type === 'year') {
+          root.innerHTML = renderChildGoalNodes(YEAR_CHILD_TREE) ||
+            '<div class="px-4 py-8 text-center text-sm text-slate-400">暂无下级目标</div>';
+          return;
+        }
+        if (type === 'quarter') {
+          root.innerHTML = `
+            <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-100 text-xs text-slate-500">本目标为最末级，以下为直接挂接的计划与任务</div>
+            ${renderPlanNodes(QUARTER_PLANS, 16)}`;
+          return;
+        }
+        root.innerHTML = '<div class="px-4 py-8 text-center text-sm text-slate-400">暂无落地内容</div>';
+      }
+
+      function renderGoalStatusLogs(type) {
+        const logs = (DETAIL[type] && DETAIL[type].logs) || [];
+        const el = document.getElementById('goalStatusLogs');
+        if (!logs.length) {
+          el.innerHTML = '<li class="text-sm text-slate-400 px-1">暂无状态变更记录</li>';
+          return;
+        }
+        el.innerHTML = logs.map(l => `
+          <li class="border rounded-xl px-4 py-3">
+            <div class="font-medium text-slate-800">${l.title}</div>
+            <div class="text-xs text-slate-400 mt-1">操作人：${l.who}</div>
+            <div class="mt-1">原因：${l.reason}</div>
+          </li>`).join('');
+      }
+
+      function fillSelect(sel, items, selected) {
+        sel.innerHTML = '';
+        items.forEach(v => {
+          const o = document.createElement('option');
+          if (typeof v === 'string') { o.value = v; o.textContent = v; }
+          else { o.value = v.value; o.textContent = v.label; }
+          if ((selected || '') === o.value) o.selected = true;
+          sel.appendChild(o);
+        });
+      }
+
+      function onGoalTypeChange() {
+        const type = document.getElementById('goalType').value;
+        const parentWrap = document.getElementById('parentWrap');
+        const parentSel = document.getElementById('goalParent');
+        const periodSel = document.getElementById('goalPeriod');
+        const hint = document.getElementById('parentHint');
+        if (type === 'year') {
+          parentWrap.classList.add('hidden');
+          fillSelect(periodSel, YEAR_OPTS, '2026');
+          document.getElementById('goalDeadline').value = '2026-12-31';
+        } else {
+          parentWrap.classList.remove('hidden');
+          fillSelect(parentSel, PARENTS.quarter);
+          fillSelect(periodSel, QUARTER_OPTS, '2026-Q3');
+          hint.textContent = '季目标必须挂靠年目标；季为最末级。';
+          document.getElementById('goalDeadline').value = '2026-09-30';
+        }
+      }
+
+      function openGoalForm(mode, type, opts) {
+        opts = opts || {};
+        document.getElementById('goalFormTitle').textContent = mode === 'create' ? '新建目标' : '编辑目标';
+        const typeSel = document.getElementById('goalType');
+        typeSel.value = type || 'year';
+        typeSel.disabled = !!opts.lockType;
+        onGoalTypeChange();
+        if (opts.parent) {
+          const parentSel = document.getElementById('goalParent');
+          const hit = Array.from(parentSel.options).find(o => o.value === opts.parent);
+          if (hit) parentSel.value = opts.parent;
+        }
+        if (type === 'year') {
+          document.getElementById('goalName').value = '全年集装箱吞吐量目标';
+          document.getElementById('goalIntro').value = '全年集装箱吞吐量达成 120 万 TEU。';
+        } else {
+          document.getElementById('goalName').value = '桥吊作业效率提升 15%';
+          document.getElementById('goalIntro').value = '聚焦桥吊单机效率与班组协同，较上季提升 15%。';
+        }
+        BMS.openModal('modal-goal');
+      }
+
+      function openBreakDown(fromType, parentName) {
+        if (fromType === 'year') openGoalForm('create', 'quarter', { lockType: true, parent: parentName || '全年集装箱吞吐量目标' });
+        else BMS.toast('季目标为最末级，不可再拆下级', 'error');
+      }
+
+      function breakFromDetail() {
+        BMS.closeModal('modal-goal-detail');
+        openBreakDown(currentDetailType);
+      }
+
+      function saveGoal() {
+        const type = document.getElementById('goalType').value;
+        const n = document.getElementById('goalName').value.trim();
+        const intro = document.getElementById('goalIntro').value.trim();
+        const d = document.getElementById('goalDeadline').value;
+        const parent = document.getElementById('goalParent').value;
+        if (!n || !intro || !d) { BMS.toast('请完整填写名称、介绍、截止时间', 'error'); return; }
+        if (type === 'quarter' && !parent) {
+          BMS.toast('季目标必须选择上级年目标', 'error');
+          return;
+        }
+        BMS.toast('目标已保存（' + ({ year: '年', quarter: '季' }[type]) + '）');
+        document.getElementById('goalType').disabled = false;
+        BMS.closeModal('modal-goal');
+      }
+
+      function syncDetailHealthDisplay(rate) {
+        const badge = document.getElementById('detailHealthBadge');
+        const btn = document.getElementById('detailRateBtn');
+        badge.textContent = rate;
+        badge.className = 'text-xs px-2 py-0.5 rounded-full ' + healthStatusClass(rate);
+        btn.textContent = rate;
+        btn.className = 'mt-1 font-medium hover:underline text-left ' + healthStatusTextClass(rate);
+      }
+
+      function openHealthStatus(nodeId) {
+        const node = findGoalNode(nodeId, GOAL_TREE);
+        if (!node) return;
+        currentEditNodeId = nodeId;
+        document.getElementById('healthStatusGoalName').textContent = node.name;
+        document.getElementById('healthStatusCurrent').textContent = node.status;
+        document.getElementById('healthStatusCurrent').className = 'text-sm font-medium ' + healthStatusTextClass(node.status);
+        document.getElementById('newHealthStatus').value = node.status;
+        document.getElementById('healthStatusReason').value = '';
+        BMS.openModal('modal-health');
+      }
+
+      function openBizStatus(nodeId) {
+        const node = findGoalNode(nodeId, GOAL_TREE);
+        if (!node) return;
+        currentEditNodeId = nodeId;
+        document.getElementById('bizStatusGoalName').textContent = node.name;
+        document.getElementById('statusReason').value = '';
+        BMS.openModal('modal-status');
+      }
+
+      function openHealthStatusFromDetail() {
+        const node = currentEditNodeId ? findGoalNode(currentEditNodeId, GOAL_TREE) : findGoalNodeByDetailKey(currentDetailType, GOAL_TREE);
+        if (!node) { BMS.toast('未找到目标节点', 'error'); return; }
+        openHealthStatus(node.id);
+      }
+
+      function openBizStatusFromDetail() {
+        const node = currentEditNodeId ? findGoalNode(currentEditNodeId, GOAL_TREE) : findGoalNodeByDetailKey(currentDetailType, GOAL_TREE);
+        if (!node) { BMS.toast('未找到目标节点', 'error'); return; }
+        openBizStatus(node.id);
+      }
+
+      function saveHealthStatus() {
+        const reason = document.getElementById('healthStatusReason').value.trim();
+        const next = document.getElementById('newHealthStatus').value;
+        if (!reason) { BMS.toast('修改健康状态必须填写变更原因', 'error'); return; }
+        const node = findGoalNode(currentEditNodeId, GOAL_TREE);
+        if (!node) return;
+        const prev = node.status;
+        node.status = next;
+        node.statusClass = healthStatusClass(next);
+        if (DETAIL[node.detailKey]) DETAIL[node.detailKey].rate = next;
+        syncDetailHealthDisplay(next);
+        renderGoalTree();
+        BMS.toast('健康状态已更新：' + prev + ' → ' + next);
+        document.getElementById('healthStatusReason').value = '';
+        BMS.closeModal('modal-health');
+      }
+
+      function saveBizStatus() {
+        const reason = document.getElementById('statusReason').value.trim();
+        if (!reason) { BMS.toast('修改业务状态必须填写变更原因', 'error'); return; }
+        const node = findGoalNode(currentEditNodeId, GOAL_TREE);
+        BMS.toast('业务状态已更新：' + document.getElementById('newStatus').value + (node ? '（' + node.name + '）' : ''));
+        document.getElementById('statusReason').value = '';
+        BMS.closeModal('modal-status');
+      }
+
+      function saveStatus() { saveBizStatus(); }
+
+      function openGoalDetail(type, nodeId) {
+        currentDetailType = type;
+        if (nodeId) currentEditNodeId = nodeId;
+        else {
+          const n = findGoalNodeByDetailKey(type, GOAL_TREE);
+          if (n) currentEditNodeId = n.id;
+        }
+        const d = DETAIL[type];
+        const node = currentEditNodeId ? findGoalNode(currentEditNodeId, GOAL_TREE) : null;
+        const rate = node ? node.status : d.rate;
+        document.getElementById('detailTitle').textContent = node ? node.name : d.title;
+        document.getElementById('detailTypeBadge').textContent = d.typeLabel;
+        document.getElementById('detailPath').textContent = d.path;
+        document.getElementById('detailMeta').textContent = d.meta;
+        syncDetailHealthDisplay(rate);
+        document.getElementById('detailChildCount').textContent = d.childCount;
+        document.getElementById('detailPlanTask').textContent = d.planTask;
+        document.getElementById('detailIntro').textContent = d.intro;
+        document.getElementById('btnAddPlan').href = '计划管理_计划列表_page.html?open=modal-plan&goal=' + encodeURIComponent(d.planGoal);
+        const btn = document.getElementById('btnBreakDown');
+        const btnPlan = document.getElementById('btnAddPlan');
+        const btnYearNo = document.getElementById('btnYearNoPlan');
+        btn.className = 'border text-sm px-4 py-2 rounded-xl';
+        btnPlan.className = 'btn-cta text-white text-sm px-4 py-2 rounded-xl';
+        if (type === 'quarter') {
+          btn.classList.add('hidden');
+          btnPlan.classList.remove('hidden');
+          btnPlan.textContent = '新增计划';
+          btnYearNo.classList.add('hidden');
+        } else if (type === 'year') {
+          btn.classList.remove('hidden');
+          btn.className = 'btn-cta text-white text-sm px-4 py-2 rounded-xl';
+          btn.textContent = d.breakLabel;
+          btnPlan.classList.add('hidden');
+          btnYearNo.classList.remove('hidden');
+        }
+        renderGoalExecTree(type);
+        renderGoalStatusLogs(type);
+        BMS.openModal('modal-goal-detail');
+      }
+
+      const planTasks = {
+        '8月': [['桥吊夜班流程复盘', 'W34', '刘强', '未更新', '进行中'], ['班前会标准化宣贯', 'W34', '孙伟', '已更新', '进行中'], ['岸桥对位训练', 'W34', '马超', '已更新', '已延期']],
+        'Q3': [['钢丝绳点检整改', 'W34', '周杰', '已更新', '进行中'], ['点检台账周复核', 'W34', '周杰', '已更新', '进行中']],
+        '设备': [['关键设备巡检排程', 'W34', '赵工', '已更新', '进行中'], ['备件库存核对', 'W33', '钱磊', '已更新', '已完成']],
+        '堆场': [['堆场周转异常复盘', 'W33', '陈敏', '已更新', '已完成'], ['箱位周转日报核对', 'W34', '陈敏', '已更新', '进行中']]
+      };
+      const planTitles = {
+        '8月': '8 月装卸效率提升计划',
+        'Q3': 'Q3 桥吊点检专项计划',
+        '设备': 'Q3 设备完好率保障计划',
+        '堆场': '堆场周转优化计划'
+      };
+      const planRanges = {
+        '8月': '08-01 ~ 08-31',
+        'Q3': '07-01 ~ 08-20',
+        '设备': '07-01 ~ 09-30',
+        '堆场': '08-01 ~ 08-31'
+      };
+      function openPlanFromGoal(key) {
+        document.getElementById('planFromGoalTitle').textContent = planTitles[key] || key;
+        document.getElementById('planFromGoalMeta').textContent =
+          '归属目标：桥吊作业效率提升 15% · 起止 ' + (planRanges[key] || '—') + ' · 负责人 刘强 · 节点 2/4 按期';
+        const body = document.getElementById('planFromGoalTasks');
+        body.innerHTML = '';
+        (planTasks[key] || []).forEach(row => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-t row-hover';
+          tr.innerHTML = `<td class="px-4 py-2.5">${row[0]}</td><td class="px-4 py-2.5"><span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">周 · ${row[1]}</span></td><td class="px-4 py-2.5">${row[2]}</td><td class="px-4 py-2.5">${row[3]}</td><td class="px-4 py-2.5">${row[4]}</td><td class="px-4 py-2.5"><a href="任务中心_我的任务_page.html" class="text-teal-700">详情</a></td>`;
+          body.appendChild(tr);
+        });
+        BMS.openModal('modal-plan-from-goal');
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initExpandedDefault();
+        renderGoalTree();
+        onGoalTypeChange();
+      });
+    </script>
+  </div>
+  <script src="../assets/common.js"></script>
+</body>
+</html>
