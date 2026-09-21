@@ -1,0 +1,577 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>任务管理 · v1.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="weeks" data-title="任务管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-4 items-center">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-medium text-slate-900">任务管理</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">v1.0.0</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">按部门新建并指定部门负责人；须关联计划；支持手动催办；保存后回写目标%与计划%</p>
+      </div>
+      <div id="roleToolbar"></div>
+    </div>
+    <div id="filterBar"></div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">周次</th>
+            <th class="px-4 py-3 text-left">部门</th>
+            <th class="px-4 py-3 text-left">负责人</th>
+            <th class="px-4 py-3 text-left">关联计划</th>
+            <th class="px-4 py-3 text-left">上周工作计划</th>
+            <th class="px-4 py-3 text-left">上周工作总结</th>
+            <th class="px-4 py-3 text-left">本周工作计划</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="weeksBody"></tbody>
+      </table>
+    </div>
+
+    <div id="modal-week" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-week')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="weekModalTitle">新建任务</h3>
+          <button type="button" onclick="BMS.closeModal('modal-week')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="weekEditId" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">周次 <span class="text-red-500">*</span></label>
+              <input id="weekCode" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" value="2026-W34" oninput="onWeekOrDeptChange()" />
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">紧急程度 <span class="text-red-500">*</span></label>
+              <select id="weekUrgency" class="w-full border border-slate-200 rounded-xl px-3 py-2.5">
+                <option value="">请选择</option>
+                <option value="高">高</option>
+                <option value="中">中</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">部门 <span class="text-red-500">*</span></label>
+              <select id="weekDept" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" onchange="onWeekOrDeptChange()"></select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">负责人 <span class="text-xs text-slate-400 font-normal">（随部门自动指定，不可改）</span></label>
+              <input id="weekOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50 text-slate-700" readonly placeholder="请先选择部门" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">上周工作计划 <span class="text-xs text-slate-400 font-normal">（自动带出，只读）</span></label>
+            <textarea id="weekPrevPlan" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-16 bg-slate-50 text-slate-600" readonly placeholder="无上一周记录时为空"></textarea>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">上周工作总结 <span class="text-red-500">*</span></label>
+            <textarea id="weekDone" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20"></textarea>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">本周工作计划 <span class="text-red-500">*</span></label>
+            <textarea id="weekNext" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20"></textarea>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+              <label class="block text-slate-600">关联计划（至少 1 个） <span class="text-red-500">*</span></label>
+              <button type="button" class="text-teal-700 text-xs" onclick="openPlanPickModal()">选择计划</button>
+            </div>
+            <p id="weekPlanMonthHint" class="text-xs text-slate-400 mb-2"></p>
+            <div id="weekSelectedPlans" class="border border-slate-200 rounded-xl p-3 min-h-[52px] space-y-2"></div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-2 font-medium">回写完成百分比（计划 / 目标）</label>
+            <div id="weekPctFields" class="space-y-3"></div>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-week')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveWeek()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存并回写%</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 选择关联计划 -->
+    <div id="modal-plan-pick" data-modal class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-pick')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center gap-3">
+          <div>
+            <h3 class="text-lg font-semibold">选择关联计划</h3>
+            <p class="text-xs text-slate-400 mt-0.5">本部门 · 进行中 / 已延期 · 可多选</p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-plan-pick')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-2" id="planPickList"></div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-plan-pick')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="confirmPlanPick()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务管理详情 · 大弹窗（只读，无编辑入口） -->
+    <div id="modal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="detailTitle" class="text-xl font-semibold text-slate-900">任务详情</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">只读</span>
+            </div>
+            <p id="detailMeta" class="text-sm text-slate-500 mt-1"></p>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <button type="button" id="detailUrgeBtn" class="border text-sm px-4 py-2 rounded-xl text-teal-700 border-teal-200" onclick="urgeFromDetail()">催办</button>
+            <button type="button" onclick="BMS.closeModal('modal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm" id="detailStats"></div>
+
+          <div class="grid md:grid-cols-1 gap-4">
+            <div>
+              <div class="text-sm font-medium mb-1">上周工作计划 <span class="text-xs text-slate-400 font-normal">（自动带出）</span></div>
+              <p id="detailPrevPlan" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3"></p>
+            </div>
+            <div>
+              <div class="text-sm font-medium mb-1">上周工作总结</div>
+              <p id="detailDone" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3"></p>
+            </div>
+            <div>
+              <div class="text-sm font-medium mb-1">本周工作计划</div>
+              <p id="detailNext" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3"></p>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium text-slate-900">关联计划</div>
+              <span class="text-xs text-slate-400">可跳转计划详情</span>
+            </div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">计划名称</th>
+                    <th class="text-left px-4 py-2.5">所属目标</th>
+                    <th class="text-left px-4 py-2.5">月份</th>
+                    <th class="text-left px-4 py-2.5">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="detailPlansBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-sm font-medium text-slate-900 mb-2">本次回写完成%</div>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                <div class="px-4 py-2.5 bg-slate-50 text-xs text-slate-500">计划完成%</div>
+                <div id="detailPlanPcts" class="divide-y text-sm"></div>
+              </div>
+              <div class="border border-slate-100 rounded-2xl overflow-hidden">
+                <div class="px-4 py-2.5 bg-slate-50 text-xs text-slate-500">目标完成%</div>
+                <div id="detailGoalPcts" class="divide-y text-sm"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-detail')" class="text-sm text-slate-500 px-3 py-2">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/ledger-store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    let weekSelectedPlanIds = [];
+    let detailWeekId = null;
+
+    function formatPlansCell(planIds) {
+      const names = (planIds || []).map(id => Ledger.planById(id)?.name).filter(Boolean);
+      if (!names.length) return '—';
+      if (names.length === 1) return names[0];
+      return `${names[0]}<span class="text-slate-400"> 等 ${names.length} 个</span>`;
+    }
+
+    function syncWeekOwner() {
+      const dept = document.getElementById('weekDept').value;
+      const owner = Ledger.ownerOfDept(dept);
+      const el = document.getElementById('weekOwner');
+      if (el) el.value = owner || '';
+      return owner;
+    }
+
+    function renderPage() {
+      Ledger.syncHeaderRole();
+      document.getElementById('roleToolbar').innerHTML = Ledger.roleToolbar('新建任务', 'openWeekForm(null)');
+      document.getElementById('filterBar').innerHTML = Ledger.filterBar();
+      Ledger.syncHeaderRole();
+      const rows = Ledger.weeks().filter(w => Ledger.deptFilter(w.dept) && Ledger.matchQ(w.week + w.done + w.next + (Ledger.prevWeekPlan(w.week, w.dept) || '') + (w.owner || '')));
+      const body = document.getElementById('weeksBody');
+      body.innerHTML = rows.length ? rows.map(w => {
+        const plansHtml = formatPlansCell(w.planIds);
+        const plansTip = (w.planIds || []).map(id => Ledger.planById(id)?.name || id).join('、');
+        const prevPlan = Ledger.prevWeekPlan(w.week, w.dept) || '—';
+        const owner = w.owner || Ledger.ownerOfDept(w.dept) || '—';
+        const esc = (s) => String(s).replace(/"/g, '&quot;');
+        const ops = `<button type="button" class="text-teal-700" onclick="viewWeek(${w.id})">详情</button>
+             <button type="button" class="text-teal-700" onclick="urgeWeek(${w.id})">催办</button>` +
+          (Ledger.isLeader() ? '' : ` <button type="button" class="text-slate-600" onclick="openWeekForm(${w.id})">编辑</button>`);
+        return `<tr class="border-t row-hover">
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-2 min-w-0">
+              <button type="button" class="font-medium text-left hover:text-teal-700" onclick="viewWeek(${w.id})">${w.week}</button>
+              ${Ledger.urgencyBadge(w.urgency)}
+            </div>
+          </td>
+          <td class="px-4 py-3">${w.dept}</td>
+          <td class="px-4 py-3">${owner}</td>
+          <td class="px-4 py-3 text-slate-600 max-w-[160px]" title="${esc(plansTip)}">${plansHtml}</td>
+          <td class="px-4 py-3 text-slate-600 max-w-[180px] truncate" title="${esc(prevPlan)}">${prevPlan}</td>
+          <td class="px-4 py-3 text-slate-600 max-w-[180px] truncate" title="${esc(w.done)}">${w.done}</td>
+          <td class="px-4 py-3 text-slate-600 max-w-[180px] truncate" title="${esc(w.next)}">${w.next}</td>
+          <td class="px-5 py-3"><div class="flex flex-wrap gap-2">${ops}</div></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="8" class="px-5 py-10 text-center text-slate-400">暂无任务</td></tr>';
+    }
+    window.renderPage = renderPage;
+
+    function selectedPlanIds() {
+      return weekSelectedPlanIds.slice();
+    }
+
+    function updatePlanMonthHint() {
+      const week = document.getElementById('weekCode').value.trim();
+      const month = Ledger.monthOfWeekByMonday(week);
+      const el = document.getElementById('weekPlanMonthHint');
+      if (!month) {
+        el.textContent = '周次格式须为 YYYY-Wxx，将按周一所在月默认带出计划';
+        return;
+      }
+      el.textContent = '默认带出本周（周一）所在月 ' + month + ' 的计划；改周次/部门会重新默认；可通过「选择计划」增删';
+    }
+
+    function renderSelectedPlans() {
+      updatePlanMonthHint();
+      const wrap = document.getElementById('weekSelectedPlans');
+      if (!weekSelectedPlanIds.length) {
+        wrap.innerHTML = '<p class="text-slate-400 text-xs">暂无关联计划，请点击「选择计划」或确认当月是否有进行中/已延期计划</p>';
+        refreshWeekPctFields();
+        return;
+      }
+      wrap.innerHTML = weekSelectedPlanIds.map(pid => {
+        const p = Ledger.planById(pid);
+        const g = p ? Ledger.goalById(p.goalId) : null;
+        const badge = p && (Ledger.planStatus(p) === '已延期' || p.delayed)
+          ? '<span class="text-xs px-1.5 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span>'
+          : p && Ledger.planStatus(p) === '已完成'
+            ? '<span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">已完成</span>'
+            : '<span class="text-xs px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">进行中</span>';
+        if (!p) {
+          return `<div class="flex items-center justify-between gap-2 text-slate-400"><span>计划 #${pid}（已不存在）</span>
+            <button type="button" class="text-red-500 text-xs" onclick="removeSelectedPlan(${pid})">移除</button></div>`;
+        }
+        return `<div class="flex items-start justify-between gap-2">
+          <div class="min-w-0">
+            <div class="font-medium text-slate-800 flex flex-wrap items-center gap-2">${p.name} ${badge}</div>
+            <div class="text-xs text-slate-400 mt-0.5">${g ? g.name : '—'} · ${p.month}</div>
+            <div class="text-xs text-slate-600 mt-1">当前计划完成 <span class="font-medium text-teal-700">${p.pct}%</span>${g ? ' · 当前目标完成 <span class="font-medium text-teal-700">' + g.pct + '%</span>' : ''}</div>
+          </div>
+          <button type="button" class="text-red-500 text-xs shrink-0" onclick="removeSelectedPlan(${pid})">移除</button>
+        </div>`;
+      }).join('');
+      refreshWeekPctFields();
+    }
+
+    function removeSelectedPlan(pid) {
+      weekSelectedPlanIds = weekSelectedPlanIds.filter(id => id !== Number(pid));
+      renderSelectedPlans();
+    }
+
+    function applyDefaultPlans() {
+      const week = document.getElementById('weekCode').value.trim();
+      const dept = document.getElementById('weekDept').value;
+      weekSelectedPlanIds = Ledger.defaultPlansForWeek(week, dept).map(p => p.id);
+      renderSelectedPlans();
+    }
+
+    function onWeekOrDeptChange() {
+      syncWeekOwner();
+      refreshPrevWeekPlan();
+      applyDefaultPlans();
+    }
+
+    function openPlanPickModal() {
+      const dept = document.getElementById('weekDept').value;
+      const list = Ledger.selectablePlansByDept(dept);
+      const wrap = document.getElementById('planPickList');
+      if (!list.length) {
+        wrap.innerHTML = '<p class="text-sm text-slate-400 py-6 text-center">该部门暂无「进行中 / 已延期」计划</p>';
+      } else {
+        wrap.innerHTML = list.map(p => {
+          const g = Ledger.goalById(p.goalId);
+          const on = weekSelectedPlanIds.includes(p.id) ? 'checked' : '';
+          const badge = p.delayed || Ledger.planStatus(p) === '已延期'
+            ? '<span class="text-xs px-1.5 py-0.5 rounded-full bg-red-50 text-red-600">已延期</span>'
+            : Ledger.planStatus(p) === '已完成'
+              ? '<span class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">已完成</span>'
+              : '<span class="text-xs px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">进行中</span>';
+          return `<label class="flex items-start gap-3 border border-slate-100 rounded-xl px-3 py-2.5 hover:bg-slate-50 cursor-pointer">
+            <input type="checkbox" class="mt-1 plan-pick-cb" value="${p.id}" ${on} />
+            <span class="min-w-0 flex-1">
+              <span class="font-medium text-slate-800 flex flex-wrap items-center gap-2">${p.name} ${badge}</span>
+              <span class="block text-xs text-slate-400 mt-0.5">${g ? g.name : '—'} · ${p.month}</span>
+              <span class="block text-xs text-slate-600 mt-1">当前计划 ${p.pct}%${g ? ' · 当前目标 ' + g.pct + '%' : ''}</span>
+            </span>
+          </label>`;
+        }).join('');
+      }
+      BMS.openModal('modal-plan-pick');
+    }
+
+    function confirmPlanPick() {
+      weekSelectedPlanIds = Array.from(document.querySelectorAll('#planPickList .plan-pick-cb:checked')).map(el => Number(el.value));
+      BMS.closeModal('modal-plan-pick');
+      renderSelectedPlans();
+      if (!weekSelectedPlanIds.length) BMS.toast('请至少选择一个计划', 'error');
+    }
+
+    function refreshWeekPctFields() {
+      const ids = selectedPlanIds();
+      const wrap = document.getElementById('weekPctFields');
+      if (!ids.length) {
+        wrap.innerHTML = '<p class="text-xs text-slate-400">请先关联计划</p>';
+        return;
+      }
+      const goalMap = new Map();
+      ids.forEach(pid => {
+        const p = Ledger.planById(pid);
+        if (!p) return;
+        const g = Ledger.goalById(p.goalId);
+        if (g) goalMap.set(g.id, g);
+      });
+      let html = '<div class="space-y-2"><div class="text-xs text-slate-500">计划完成% <span class="text-slate-400 font-normal">（左侧为当前值，右侧填写本次回写）</span></div>';
+      ids.forEach(pid => {
+        const p = Ledger.planById(pid);
+        if (!p) return;
+        html += `<div class="flex items-center gap-2 flex-wrap">
+          <span class="flex-1 min-w-[120px] truncate">${p.name}</span>
+          <span class="text-xs text-slate-500 shrink-0">当前 <span class="font-medium text-teal-700">${p.pct}%</span></span>
+          <span class="text-xs text-slate-400 shrink-0">回写</span>
+          <input type="number" min="0" max="100" data-plan-pct="${pid}" class="w-20 border border-slate-200 rounded-lg px-2 py-1.5" value="${p.pct}" />
+          <span class="text-xs text-slate-400">%</span>
+        </div>`;
+      });
+      html += '</div><div class="space-y-2 mt-3"><div class="text-xs text-slate-500">目标完成% <span class="text-slate-400 font-normal">（左侧为当前值，右侧填写本次回写）</span></div>';
+      goalMap.forEach(g => {
+        html += `<div class="flex items-center gap-2 flex-wrap">
+          <span class="flex-1 min-w-[120px] truncate">${g.name}</span>
+          <span class="text-xs text-slate-500 shrink-0">当前 <span class="font-medium text-teal-700">${g.pct}%</span></span>
+          <span class="text-xs text-slate-400 shrink-0">回写</span>
+          <input type="number" min="0" max="100" data-goal-pct="${g.id}" class="w-20 border border-slate-200 rounded-lg px-2 py-1.5" value="${g.pct}" />
+          <span class="text-xs text-slate-400">%</span>
+        </div>`;
+      });
+      html += '</div>';
+      wrap.innerHTML = html;
+    }
+
+    function refreshPrevWeekPlan() {
+      const week = document.getElementById('weekCode').value.trim();
+      const dept = document.getElementById('weekDept').value;
+      const text = Ledger.prevWeekPlan(week, dept);
+      document.getElementById('weekPrevPlan').value = text || '';
+    }
+
+    function openWeekForm(id) {
+      document.getElementById('weekEditId').value = id || '';
+      document.getElementById('weekModalTitle').textContent = id ? '编辑任务' : '新建任务';
+      const w = id ? Ledger.weekById(id) : null;
+      document.getElementById('weekCode').value = w ? w.week : '2026-W34';
+      const preferDept = w ? w.dept : Ledger.myDept();
+      Ledger.fillDeptSelect('weekDept', preferDept, { includeDisabled: !!w });
+      if (!w && !Ledger.enabledDeptNames().length) {
+        BMS.toast('暂无启用部门，请先在「使用范围」开启', 'error');
+        return;
+      }
+      document.getElementById('weekUrgency').value = w && w.urgency ? w.urgency : '';
+      syncWeekOwner();
+      document.getElementById('weekDone').value = w ? w.done : '';
+      document.getElementById('weekNext').value = w ? w.next : '';
+      refreshPrevWeekPlan();
+      if (w) {
+        weekSelectedPlanIds = (w.planIds || []).slice();
+        renderSelectedPlans();
+        setTimeout(() => {
+          Object.entries(w.planPcts || {}).forEach(([pid, pct]) => {
+            const el = document.querySelector(`[data-plan-pct="${pid}"]`);
+            if (el) el.value = pct;
+          });
+          Object.entries(w.goalPcts || {}).forEach(([gid, pct]) => {
+            const el = document.querySelector(`[data-goal-pct="${gid}"]`);
+            if (el) el.value = pct;
+          });
+        }, 0);
+      } else {
+        applyDefaultPlans();
+      }
+      BMS.openModal('modal-week');
+    }
+
+    function saveWeek() {
+      const week = document.getElementById('weekCode').value.trim();
+      const urgency = document.getElementById('weekUrgency').value.trim();
+      const dept = document.getElementById('weekDept').value;
+      const owner = syncWeekOwner() || Ledger.ownerOfDept(dept);
+      const done = document.getElementById('weekDone').value.trim();
+      const next = document.getElementById('weekNext').value.trim();
+      const planIds = selectedPlanIds();
+      if (!week || !done || !next) { BMS.toast('请填写周次、上周工作总结与本周工作计划', 'error'); return; }
+      const id = document.getElementById('weekEditId').value;
+      if (!id && !Ledger.isDeptEnabled(dept)) { BMS.toast('该部门未启用，请先在「使用范围」开启', 'error'); return; }
+      if (!owner) { BMS.toast('该部门未配置负责人，请先在组织映射中维护', 'error'); return; }
+      if (!urgency || !['高', '中', '低'].includes(urgency)) { BMS.toast('请选择紧急程度', 'error'); return; }
+      if (!planIds.length) { BMS.toast('请至少关联一个计划', 'error'); return; }
+      const planPcts = {};
+      const goalPcts = {};
+      for (const pid of planIds) {
+        const v = Number(document.querySelector(`[data-plan-pct="${pid}"]`)?.value);
+        if (isNaN(v) || v < 0 || v > 100) { BMS.toast('计划完成%须为 0–100', 'error'); return; }
+        planPcts[pid] = v;
+      }
+      const goalEls = document.querySelectorAll('[data-goal-pct]');
+      if (!goalEls.length) { BMS.toast('请填写目标完成%', 'error'); return; }
+      for (const el of goalEls) {
+        const v = Number(el.value);
+        if (isNaN(v) || v < 0 || v > 100) { BMS.toast('目标完成%须为 0–100', 'error'); return; }
+        goalPcts[Number(el.getAttribute('data-goal-pct'))] = v;
+      }
+      const row = { week, urgency, dept, owner, planIds, done, next, planPcts, goalPcts };
+      if (id) Object.assign(Ledger.weekById(id), row);
+      else Ledger.weeks().unshift({ id: Ledger.nextId(), ...row });
+      Object.entries(planPcts).forEach(([pid, pct]) => { const p = Ledger.planById(pid); if (p) p.pct = pct; });
+      Object.entries(goalPcts).forEach(([gid, pct]) => { const g = Ledger.goalById(gid); if (g) g.pct = pct; });
+      Ledger.persist();
+      BMS.closeModal('modal-week');
+      BMS.toast('已保存，任务已指定给 ' + owner + '；完成%已回写');
+      renderPage();
+    }
+
+    function urgeWeek(id) {
+      const r = Ledger.urgeWeek(id);
+      if (r.ok) BMS.toast('已发送企微催办');
+      else BMS.toast(r.reason || '催办失败', 'warn');
+    }
+
+    function urgeFromDetail() {
+      if (!detailWeekId) return;
+      urgeWeek(detailWeekId);
+    }
+
+    function viewWeek(id) {
+      const w = Ledger.weekById(id);
+      if (!w) { BMS.toast('未找到该任务', 'error'); return; }
+      detailWeekId = Number(id);
+      const prevPlan = Ledger.prevWeekPlan(w.week, w.dept);
+      const planIds = w.planIds || [];
+      const planPcts = w.planPcts || {};
+      const goalPcts = w.goalPcts || {};
+      const owner = w.owner || Ledger.ownerOfDept(w.dept) || '—';
+      const goalIds = new Set();
+      planIds.forEach(pid => {
+        const p = Ledger.planById(pid);
+        if (p) goalIds.add(p.goalId);
+      });
+
+      document.getElementById('detailTitle').textContent = w.week + ' · ' + w.dept;
+      document.getElementById('detailMeta').textContent =
+        '负责人 ' + owner + ' · 紧急程度 ' + (w.urgency || '未设') + ' · 关联计划 ' + planIds.length + ' 个 · 上周工作计划' + (prevPlan ? '已带出' : '暂无');
+      document.getElementById('detailStats').innerHTML = `
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">周次</div><div class="mt-1 font-medium">${w.week}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">紧急程度</div><div class="mt-1">${Ledger.urgencyBadge(w.urgency)}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">部门 / 负责人</div><div class="mt-1 font-medium">${w.dept} · ${owner}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联计划</div><div class="mt-1 font-medium">${planIds.length}</div></div>`;
+
+      document.getElementById('detailPrevPlan').textContent = prevPlan || '无上一周记录，未带出';
+      document.getElementById('detailDone').textContent = w.done || '—';
+      document.getElementById('detailNext').textContent = w.next || '—';
+
+      document.getElementById('detailPlansBody').innerHTML = planIds.length ? planIds.map(pid => {
+        const p = Ledger.planById(pid);
+        const g = p ? Ledger.goalById(p.goalId) : null;
+        if (!p) {
+          return `<tr class="border-t"><td class="px-4 py-2.5" colspan="4">计划 #${pid}（已不存在）</td></tr>`;
+        }
+        return `<tr class="border-t row-hover">
+          <td class="px-4 py-2.5 font-medium"><span class="inline-flex items-center gap-1.5">${p.name} ${Ledger.urgencyBadge(p.urgency)}</span></td>
+          <td class="px-4 py-2.5 text-slate-600">${g ? g.name : '—'}</td>
+          <td class="px-4 py-2.5">${p.month}</td>
+          <td class="px-4 py-2.5"><a class="text-teal-700" href="月度计划_page.html?open=detail&id=${p.id}">详情</a></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">未关联计划</td></tr>';
+
+      const planPctRows = planIds.map(pid => {
+        const p = Ledger.planById(pid);
+        const pct = planPcts[pid] != null ? planPcts[pid] : (p ? p.pct : '—');
+        return `<div class="flex items-center justify-between gap-3 px-4 py-2.5">
+          <span class="truncate text-slate-700">${p ? p.name : ('计划 #' + pid)}</span>
+          <span class="font-medium shrink-0">${pct}%</span>
+        </div>`;
+      }).join('');
+      document.getElementById('detailPlanPcts').innerHTML = planPctRows ||
+        '<div class="px-4 py-6 text-center text-slate-400 text-sm">无回写记录</div>';
+
+      const gids = Object.keys(goalPcts).length
+        ? Object.keys(goalPcts).map(Number)
+        : Array.from(goalIds);
+      const goalPctRows = gids.map(gid => {
+        const g = Ledger.goalById(gid);
+        const pct = goalPcts[gid] != null ? goalPcts[gid] : (g ? g.pct : '—');
+        return `<div class="flex items-center justify-between gap-3 px-4 py-2.5">
+          <span class="truncate text-slate-700">${g ? g.name : ('目标 #' + gid)}</span>
+          <span class="font-medium shrink-0">${pct}%</span>
+        </div>`;
+      }).join('');
+      document.getElementById('detailGoalPcts').innerHTML = goalPctRows ||
+        '<div class="px-4 py-6 text-center text-slate-400 text-sm">无回写记录</div>';
+
+      BMS.openModal('modal-detail');
+    }
+
+    function init() {
+      renderPage();
+      const params = new URLSearchParams(location.search);
+      if (params.get('open') === 'detail') {
+        const id = Number(params.get('id'));
+        if (id) setTimeout(() => viewWeek(id), 80);
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  </script>
+</body>
+</html>

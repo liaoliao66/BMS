@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>催办提醒 · v1.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="remind" data-title="催办提醒">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-4 items-start">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-medium text-slate-900">催办提醒</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">v1.0.0</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">扫描任务未填与计划临期；一键发送企微个人消息（原型流水）。目标/计划也可在业务页手动催办。规则见「消息配置」。</p>
+      </div>
+      <div id="roleToolbar"></div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] p-4 mb-5">
+      <div class="flex flex-wrap gap-3 items-end">
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">演示日期（用于计算自然周 / 临期）</label>
+          <input id="demoDate" type="date" class="border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderPage()" />
+        </div>
+        <div class="text-sm text-slate-600 pb-2" id="weekHint"></div>
+        <div class="flex flex-wrap gap-2 ml-auto">
+          <a href="基础配置_消息配置_page.html" class="border border-slate-200 text-sm px-3 py-2 rounded-xl">消息配置</a>
+          <button type="button" onclick="urgeSelected()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2">
+            <i class="fa-solid fa-bell"></i>一键催办已选
+          </button>
+        </div>
+      </div>
+      <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm" id="statCards"></div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden mb-5">
+      <div class="px-5 py-3 border-b flex flex-wrap items-center justify-between gap-2">
+        <div class="text-sm font-medium text-slate-800">待催办清单</div>
+        <label class="text-xs text-slate-500 inline-flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" id="checkAll" onchange="toggleAll(this.checked)" /> 全选
+        </label>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-4 py-3 text-left w-10"></th>
+            <th class="px-4 py-3 text-left">类型</th>
+            <th class="px-4 py-3 text-left">事项</th>
+            <th class="px-4 py-3 text-left">部门 / 负责人</th>
+            <th class="px-4 py-3 text-left">说明</th>
+            <th class="px-4 py-3 text-left">今日已催</th>
+            <th class="px-4 py-3 text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody id="remindBody"></tbody>
+      </table>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div class="px-5 py-3 border-b flex flex-wrap items-center justify-between gap-2">
+        <div class="text-sm font-medium text-slate-800">消息流水（模拟企微个人消息）</div>
+        <button type="button" onclick="clearLogs()" class="text-xs text-slate-500 hover:text-red-600">清空流水</button>
+      </div>
+      <div id="logBody" class="divide-y max-h-80 overflow-y-auto text-sm"></div>
+    </div>
+
+    <div id="modal-urge" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-urge')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">确认发送催办</h3>
+          <button type="button" onclick="BMS.closeModal('modal-urge')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-3 text-sm">
+          <p class="text-slate-600">将对已选 <strong id="urgeCount">0</strong> 条发送企微个人消息。</p>
+          <div id="urgePreview" class="bg-slate-50 rounded-xl p-3 text-slate-600 whitespace-pre-line text-xs leading-relaxed max-h-48 overflow-y-auto"></div>
+        </div>
+        <div class="px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-urge')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="confirmUrge()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确认催办</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/ledger-store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    let cacheRows = [];
+    let pendingUrgeKeys = [];
+
+    function demoDay() {
+      return document.getElementById('demoDate').value || Ledger.todayStr();
+    }
+
+    function typeBadge(t) {
+      if (t === 'week') return '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">周任务未填</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-100">计划临期</span>';
+    }
+
+    function freqKeyOf(item) {
+      return item.type === 'week' ? 'week:' + item.week + ':' + item.dept : 'plan:' + item.planId;
+    }
+
+    function renderPage() {
+      Ledger.syncHeaderRole();
+      document.getElementById('roleToolbar').innerHTML = Ledger.roleToolbar('刷新扫描', 'renderPage()');
+      const btn = document.getElementById('btnPrimary');
+      if (btn) {
+        btn.classList.remove('hidden');
+        btn.innerHTML = '<i class="fa-solid fa-rotate mr-1"></i>刷新扫描';
+      }
+      Ledger.syncHeaderRole();
+
+      const day = demoDay();
+      const week = Ledger.isoWeekOfDate(day);
+      document.getElementById('weekHint').textContent = '对应自然周：' + week;
+
+      const cfg = Ledger.getMsgConfig();
+      cacheRows = Ledger.scanAllReminders(day);
+      const weekN = cacheRows.filter(r => r.type === 'week').length;
+      const planN = cacheRows.filter(r => r.type === 'plan').length;
+      document.getElementById('statCards').innerHTML = `
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">周任务未填</div><div class="mt-1 font-medium">${cfg.weekOn ? weekN : '已关闭'}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">计划临期</div><div class="mt-1 font-medium">${cfg.planOn ? planN : '已关闭'}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">高/中/低临期日</div><div class="mt-1 font-medium text-xs">${(cfg.urgencyDays['高']||'—')} / ${(cfg.urgencyDays['中']||'—')} / ${(cfg.urgencyDays['低']||'—')}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">消息流水</div><div class="mt-1 font-medium">${Ledger.msgLogs().length}</div></div>`;
+
+      const body = document.getElementById('remindBody');
+      if (!cacheRows.length) {
+        body.innerHTML = '<tr><td colspan="7" class="px-5 py-10 text-center text-slate-400">当前演示日期下暂无待催办项（可改日期或调整消息配置中的临期天数）</td></tr>';
+      } else {
+        body.innerHTML = cacheRows.map((r, i) => {
+          const sent = Ledger.hasSentToday(freqKeyOf(r), day);
+          const urg = r.urgency ? Ledger.urgencyBadge(r.urgency) : '';
+          return `<tr class="border-t row-hover">
+            <td class="px-4 py-3"><input type="checkbox" class="urge-cb" value="${i}" ${sent ? 'disabled' : ''} /></td>
+            <td class="px-4 py-3">${typeBadge(r.type)}</td>
+            <td class="px-4 py-3"><div class="font-medium flex flex-wrap items-center gap-1.5">${r.title} ${urg}</div></td>
+            <td class="px-4 py-3 text-slate-600">${r.dept} · ${r.owner}</td>
+            <td class="px-4 py-3 text-slate-500 text-xs max-w-[200px]">${r.reason}</td>
+            <td class="px-4 py-3">${sent ? '<span class="text-xs text-emerald-700">是</span>' : '<span class="text-xs text-slate-400">否</span>'}</td>
+            <td class="px-4 py-3 text-right">
+              <button type="button" class="text-teal-700 ${sent ? 'opacity-40 pointer-events-none' : ''}" onclick="urgeOne(${i})">催办</button>
+            </td>
+          </tr>`;
+        }).join('');
+      }
+      document.getElementById('checkAll').checked = false;
+      renderLogs();
+    }
+    window.renderPage = renderPage;
+
+    function toggleAll(on) {
+      document.querySelectorAll('.urge-cb:not(:disabled)').forEach(el => { el.checked = on; });
+    }
+
+    function selectedItems() {
+      return Array.from(document.querySelectorAll('.urge-cb:checked')).map(el => cacheRows[Number(el.value)]).filter(Boolean);
+    }
+
+    function urgeOne(i) {
+      pendingUrgeKeys = [cacheRows[i]].filter(Boolean);
+      openUrgeConfirm();
+    }
+
+    function urgeSelected() {
+      pendingUrgeKeys = selectedItems();
+      if (!pendingUrgeKeys.length) { BMS.toast('请先勾选待催办项', 'error'); return; }
+      openUrgeConfirm();
+    }
+
+    function openUrgeConfirm() {
+      document.getElementById('urgeCount').textContent = String(pendingUrgeKeys.length);
+      const cfg = Ledger.getMsgConfig();
+      const previews = pendingUrgeKeys.slice(0, 3).map(item => {
+        if (item.type === 'week') {
+          return Ledger.fillTpl(cfg.tplWeek, { 姓名: item.owner, 部门: item.dept, 周次: item.week });
+        }
+        return Ledger.fillTpl(cfg.tplPlan, {
+          姓名: item.owner, 计划: item.planName, 紧急程度: item.urgency || '未设',
+          结束日期: item.endDate, 剩余天数: item.leftDays
+        });
+      });
+      document.getElementById('urgePreview').textContent =
+        previews.join('\n\n——\n\n') + (pendingUrgeKeys.length > 3 ? '\n\n…共 ' + pendingUrgeKeys.length + ' 条' : '');
+      BMS.openModal('modal-urge');
+    }
+
+    function confirmUrge() {
+      const day = demoDay();
+      let ok = 0, skip = 0;
+      pendingUrgeKeys.forEach(item => {
+        const r = Ledger.sendReminder(item, day);
+        if (r.ok) ok++; else skip++;
+      });
+      BMS.closeModal('modal-urge');
+      if (ok) BMS.toast('已发送 ' + ok + ' 条企微催办' + (skip ? '（跳过 ' + skip + ' 条频控）' : ''));
+      else BMS.toast(skip ? '均已今日催办过（频控）' : '未发送', 'warn');
+      renderPage();
+    }
+
+    function renderLogs() {
+      const logs = Ledger.msgLogs();
+      const wrap = document.getElementById('logBody');
+      if (!logs.length) {
+        wrap.innerHTML = '<div class="px-5 py-8 text-center text-slate-400">暂无消息流水</div>';
+        return;
+      }
+      wrap.innerHTML = logs.map(m => `
+        <div class="px-5 py-3">
+          <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400 mb-1">
+            <span>${m.at}</span>
+            <span>·</span>
+            <span>${m.channel}</span>
+            <span>·</span>
+            <span>至 ${m.to}</span>
+            <span class="ml-auto">${m.type === 'week' ? '周任务' : '计划临期'}</span>
+          </div>
+          <div class="text-slate-700 whitespace-pre-line leading-relaxed">${m.body}</div>
+        </div>`).join('');
+    }
+
+    function clearLogs() {
+      Ledger.clearMsgLogs();
+      BMS.toast('已清空消息流水');
+      renderPage();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // 默认演示日：便于同时看到周未填 + 高紧急计划临期（8/31 结束 → 剩 7 天）
+      document.getElementById('demoDate').value = '2026-08-24';
+      renderPage();
+    });
+  </script>
+</body>
+</html>

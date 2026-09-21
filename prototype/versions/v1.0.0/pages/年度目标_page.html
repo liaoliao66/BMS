@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>目标管理 · v1.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="goals" data-title="目标管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-4 items-center">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-medium text-slate-900">目标管理</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">v1.0.0</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">部门负责人录入目标；领导只读查阅并可催办；完成%可由任务回写</p>
+      </div>
+      <div id="roleToolbar"></div>
+    </div>
+    <div id="filterBar"></div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">目标名称</th>
+            <th class="px-4 py-3 text-left">部门</th>
+            <th class="px-4 py-3 text-left">年度</th>
+            <th class="px-4 py-3 text-left">目标完成%</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="goalsBody"></tbody>
+      </table>
+    </div>
+
+    <div id="modal-goal" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center gap-3">
+          <h3 class="text-lg font-semibold" id="goalModalTitle">新建目标</h3>
+          <button type="button" onclick="BMS.closeModal('modal-goal')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="goalEditId" />
+          <div>
+            <label class="block text-slate-600 mb-1">目标名称 <span class="text-red-500">*</span></label>
+            <input id="goalName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">优先级 <span class="text-red-500">*</span></label>
+            <select id="goalPriority" class="w-full border border-slate-200 rounded-xl px-3 py-2.5">
+              <option value="">请选择</option>
+              <option value="高">高</option>
+              <option value="中">中</option>
+              <option value="低">低</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">所属部门 <span class="text-red-500">*</span></label>
+              <select id="goalDept" class="w-full border border-slate-200 rounded-xl px-3 py-2.5"></select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">年度 <span class="text-red-500">*</span></label>
+              <input id="goalYear" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" value="2026" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">目标结束日期</label>
+            <input id="goalEndDate" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+            <p class="text-xs text-slate-400 mt-1">延期时可调整；默认当年 12-31</p>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">目标说明</label>
+            <textarea id="goalDesc" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20"></textarea>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">目标完成%（0–100）</label>
+            <input id="goalPct" type="number" min="0" max="100" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" value="0" />
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-goal')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveGoal()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-goal-status" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-goal-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">修改目标状态</h3>
+          <button type="button" onclick="BMS.closeModal('modal-goal-status')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="gsGoalId" />
+          <p class="text-slate-500" id="gsLabel"></p>
+          <div>
+            <label class="block text-slate-600 mb-1">状态 <span class="text-red-500">*</span></label>
+            <select id="gsStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" onchange="syncGsDelayFields()">
+              <option value="正常">正常</option>
+              <option value="已完成">已完成</option>
+              <option value="已延期">已延期</option>
+            </select>
+          </div>
+          <div id="gsDelayWrap" class="hidden space-y-4">
+            <div>
+              <label class="block text-slate-600 mb-1">是否责任延期 <span class="text-red-500">*</span></label>
+              <div class="flex gap-4">
+                <label class="inline-flex items-center gap-2"><input type="radio" name="gsRespDelay" value="yes" /> 是</label>
+                <label class="inline-flex items-center gap-2"><input type="radio" name="gsRespDelay" value="no" /> 否</label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">延期原因 <span class="text-red-500">*</span></label>
+              <textarea id="gsReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20" placeholder="请填写延期原因"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">新的结束日期 <span class="text-red-500">*</span></label>
+              <input id="gsNewEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+              <p class="text-xs text-slate-400 mt-1" id="gsEndHint"></p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-goal-status')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveGoalStatus()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 年目标详情 · 大弹窗 -->
+    <div id="modal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="detailTitle" class="text-xl font-semibold text-slate-900">目标详情</h3>
+              <span id="detailStatusBadge"></span>
+            </div>
+            <p id="detailMeta" class="text-sm text-slate-500 mt-1"></p>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <button type="button" id="detailUrgeBtn" class="border text-sm px-4 py-2 rounded-xl text-teal-700 border-teal-200" onclick="urgeFromDetail()">催办</button>
+            <button type="button" id="detailEditBtn" class="border text-sm px-4 py-2 rounded-xl" onclick="editFromDetail()">编辑目标</button>
+            <button type="button" id="detailDelayBtn" class="border text-sm px-4 py-2 rounded-xl" onclick="delayFromDetail()">修改状态</button>
+            <a id="detailAddPlanBtn" href="月度计划_page.html" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">去建计划</a>
+            <button type="button" onclick="BMS.closeModal('modal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm" id="detailStats"></div>
+          <div>
+            <div class="text-sm font-medium mb-1">目标说明</div>
+            <p id="detailIntro" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3"></p>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">延期记录</div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">时间</th>
+                    <th class="text-left px-4 py-2.5">动作</th>
+                    <th class="text-left px-4 py-2.5">责任延期</th>
+                    <th class="text-left px-4 py-2.5">结束日变更</th>
+                    <th class="text-left px-4 py-2.5">原因</th>
+                    <th class="text-left px-4 py-2.5">操作人</th>
+                  </tr>
+                </thead>
+                <tbody id="detailDelayLogsBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium text-slate-900">关联计划</div>
+              <span class="text-xs text-slate-400">点击可打开计划详情</span>
+            </div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">计划名称</th>
+                    <th class="text-left px-4 py-2.5">月份</th>
+                    <th class="text-left px-4 py-2.5">完成%</th>
+                    <th class="text-left px-4 py-2.5">节点</th>
+                    <th class="text-left px-4 py-2.5">状态</th>
+                    <th class="text-left px-4 py-2.5">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="detailPlansBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div class="text-sm font-medium text-slate-900">关联任务</div>
+              <span class="text-xs text-slate-400">经关联计划汇总</span>
+            </div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">周次</th>
+                    <th class="text-left px-4 py-2.5">部门</th>
+                    <th class="text-left px-4 py-2.5">上周工作总结</th>
+                    <th class="text-left px-4 py-2.5">本周工作计划</th>
+                    <th class="text-left px-4 py-2.5">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="detailWeeksBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/ledger-store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    let detailGoalId = null;
+
+    function yearEndDefault(year) {
+      const y = String(year || new Date().getFullYear()).trim() || String(new Date().getFullYear());
+      return y + '-12-31';
+    }
+
+    function goalStatusBtn(g, leader) {
+      const badge = Ledger.goalStatusBadge(g);
+      if (leader) return badge;
+      return `<button type="button" class="inline-flex" onclick="openGoalStatus(${g.id})" title="点击修改状态">${badge}</button>`;
+    }
+
+    function renderPage() {
+      Ledger.syncHeaderRole();
+      document.getElementById('roleToolbar').innerHTML = Ledger.roleToolbar('新建目标', 'openGoalForm(null)');
+      document.getElementById('filterBar').innerHTML = Ledger.filterBar();
+      Ledger.syncHeaderRole();
+      const rows = Ledger.goals().filter(g => Ledger.deptFilter(g.dept) && Ledger.yearFilter(g.year) && Ledger.matchQ(g.name));
+      const body = document.getElementById('goalsBody');
+      const leader = Ledger.isLeader();
+      body.innerHTML = rows.length ? rows.map(g => {
+        const ops = `<button type="button" class="text-teal-700" onclick="viewGoal(${g.id})">详情</button>
+             <button type="button" class="text-teal-700" onclick="urgeGoal(${g.id})">催办</button>` +
+          (leader ? '' : ` <button type="button" class="text-slate-600" onclick="openGoalForm(${g.id})">编辑</button>`);
+        return `<tr class="border-t row-hover">
+          <td class="px-5 py-3">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <button type="button" class="font-medium text-left hover:text-teal-700 truncate" onclick="viewGoal(${g.id})">${g.name}</button>
+              ${Ledger.urgencyBadge(g.priority)}
+            </div>
+          </td>
+          <td class="px-4 py-3">${g.dept}</td>
+          <td class="px-4 py-3">${g.year}</td>
+          <td class="px-4 py-3">${Ledger.pctCell(g.pct)}</td>
+          <td class="px-4 py-3">${goalStatusBtn(g, leader)}</td>
+          <td class="px-5 py-3"><div class="flex flex-wrap gap-2">${ops}</div></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="6" class="px-5 py-10 text-center text-slate-400">暂无目标</td></tr>';
+    }
+    window.renderPage = renderPage;
+
+    function openGoalForm(id) {
+      document.getElementById('goalEditId').value = id || '';
+      document.getElementById('goalModalTitle').textContent = id ? '编辑目标' : '新建目标';
+      const g = id ? Ledger.goalById(id) : null;
+      const prefer = g ? g.dept : Ledger.myDept();
+      Ledger.fillDeptSelect('goalDept', prefer, { includeDisabled: !!g });
+      if (!Ledger.enabledDeptNames().length && !g) {
+        BMS.toast('暂无启用部门，请先在「使用范围」开启', 'error');
+        return;
+      }
+      document.getElementById('goalName').value = g ? g.name : '';
+      document.getElementById('goalPriority').value = g && g.priority ? g.priority : '';
+      document.getElementById('goalYear').value = g ? g.year : '2026';
+      document.getElementById('goalEndDate').value = g?.endDate || yearEndDefault(g?.year || '2026');
+      document.getElementById('goalDesc').value = g ? g.desc : '';
+      document.getElementById('goalPct').value = g ? g.pct : 0;
+      BMS.openModal('modal-goal');
+    }
+
+    function saveGoal() {
+      const name = document.getElementById('goalName').value.trim();
+      const priority = document.getElementById('goalPriority').value.trim();
+      const dept = document.getElementById('goalDept').value;
+      const year = document.getElementById('goalYear').value.trim();
+      const endDate = document.getElementById('goalEndDate').value.trim() || yearEndDefault(year);
+      const desc = document.getElementById('goalDesc').value.trim();
+      const pct = Number(document.getElementById('goalPct').value);
+      const id = document.getElementById('goalEditId').value;
+      if (!name || !dept || !year) { BMS.toast('请填写名称、部门与年度', 'error'); return; }
+      if (!priority || !['高', '中', '低'].includes(priority)) { BMS.toast('请选择优先级', 'error'); return; }
+      if (!id && !Ledger.isDeptEnabled(dept)) { BMS.toast('该部门未启用，请先在「使用范围」开启', 'error'); return; }
+      if (isNaN(pct) || pct < 0 || pct > 100) { BMS.toast('完成%须为 0–100', 'error'); return; }
+      let savedId = id ? Number(id) : null;
+      if (id) {
+        Object.assign(Ledger.goalById(id), { name, priority, dept, year, endDate, desc, pct });
+      } else {
+        savedId = Ledger.nextId();
+        Ledger.goals().unshift({
+          id: savedId, name, priority, dept, year, endDate, desc, pct,
+          status: '正常', delayed: false, delayReason: '', responsibleDelay: false, delayLogs: []
+        });
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-goal');
+      BMS.toast('目标已保存');
+      renderPage();
+      if (detailGoalId && savedId === detailGoalId) viewGoal(detailGoalId);
+    }
+
+    function urgeGoal(id) {
+      const r = Ledger.urgeGoal(id);
+      if (r.ok) BMS.toast('已发送企微催办');
+      else BMS.toast(r.reason || '催办失败', 'warn');
+    }
+
+    function syncGsDelayFields() {
+      document.getElementById('gsDelayWrap').classList.toggle('hidden', document.getElementById('gsStatus').value !== '已延期');
+    }
+
+    function openGoalStatus(id) {
+      const g = Ledger.goalById(id);
+      if (!g) return;
+      document.getElementById('gsGoalId').value = id;
+      document.getElementById('gsLabel').textContent = '目标：' + g.name;
+      document.getElementById('gsStatus').value = Ledger.goalStatus(g);
+      document.getElementById('gsReason').value = g.delayReason || '';
+      const curEnd = g.endDate || yearEndDefault(g.year);
+      document.getElementById('gsNewEnd').value = curEnd;
+      document.getElementById('gsEndHint').textContent = '当前结束：' + curEnd + '；延期后须不早于当前结束日';
+      const resp = g.responsibleDelay === true ? 'yes' : (Ledger.goalStatus(g) === '已延期' ? 'no' : '');
+      document.querySelectorAll('input[name="gsRespDelay"]').forEach(el => { el.checked = el.value === resp; });
+      syncGsDelayFields();
+      BMS.openModal('modal-goal-status');
+    }
+
+    function saveGoalStatus() {
+      const id = Number(document.getElementById('gsGoalId').value);
+      const g = Ledger.goalById(id);
+      if (!g) return;
+      const status = document.getElementById('gsStatus').value;
+      const reason = document.getElementById('gsReason').value.trim();
+      const newEnd = document.getElementById('gsNewEnd').value.trim();
+      const respEl = document.querySelector('input[name="gsRespDelay"]:checked');
+      const prevStatus = Ledger.goalStatus(g);
+      const prevEnd = g.endDate || yearEndDefault(g.year);
+      if (status === '已延期') {
+        if (!respEl) { BMS.toast('请选择是否责任延期', 'error'); return; }
+        if (!reason) { BMS.toast('已延期须填写原因', 'error'); return; }
+        if (!newEnd) { BMS.toast('请设置新的结束日期', 'error'); return; }
+        if (prevEnd && newEnd < prevEnd) { BMS.toast('新的结束日期不能早于原结束日期', 'error'); return; }
+        g.status = '已延期';
+        g.delayed = true;
+        g.delayReason = reason;
+        g.responsibleDelay = respEl.value === 'yes';
+        g.endDate = newEnd;
+        Ledger.pushDelayLog(g, {
+          action: prevStatus === '已延期' ? '更新延期' : '标注延期',
+          fromEnd: prevEnd,
+          toEnd: newEnd,
+          reason,
+          responsibleDelay: respEl.value === 'yes'
+        });
+      } else {
+        g.status = status;
+        g.delayed = false;
+        g.delayReason = '';
+        g.responsibleDelay = false;
+        if (status === '已完成' && Number(g.pct) < 100) g.pct = 100;
+        if (prevStatus === '已延期') {
+          Ledger.pushDelayLog(g, {
+            action: '取消延期',
+            reason: '状态改为' + status,
+            responsibleDelay: null,
+            fromEnd: prevEnd,
+            toEnd: prevEnd
+          });
+        }
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-goal-status');
+      BMS.toast('目标状态已更新');
+      renderPage();
+      if (detailGoalId === id) viewGoal(id);
+    }
+
+    function openDelay(id) { openGoalStatus(id); }
+
+    function editFromDetail() {
+      if (!detailGoalId) return;
+      BMS.closeModal('modal-detail');
+      openGoalForm(detailGoalId);
+    }
+
+    function delayFromDetail() {
+      if (!detailGoalId) return;
+      openGoalStatus(detailGoalId);
+    }
+
+    function urgeFromDetail() {
+      if (!detailGoalId) return;
+      urgeGoal(detailGoalId);
+    }
+
+    function viewGoal(id) {
+      const g = Ledger.goalById(id);
+      if (!g) { BMS.toast('未找到该目标', 'error'); return; }
+      detailGoalId = Number(id);
+      const plans = Ledger.plansByGoal(g.id);
+      const weeks = Ledger.weeksByGoal(g.id);
+      const leader = Ledger.isLeader();
+      const st = Ledger.goalStatus(g);
+
+      document.getElementById('detailTitle').textContent = g.name;
+      document.getElementById('detailStatusBadge').innerHTML =
+        Ledger.urgencyBadge(g.priority) + Ledger.goalStatusBadge(g);
+      document.getElementById('detailMeta').textContent =
+        g.dept + ' · ' + g.year + ' 年 · 结束 ' + (g.endDate || yearEndDefault(g.year)) +
+        (st === '已延期' ? (' · ' + (g.responsibleDelay ? '责任延期' : '非责任延期') + (g.delayReason ? ' · ' + g.delayReason : '')) : '');
+      document.getElementById('detailIntro').textContent = g.desc || '暂无说明';
+      document.getElementById('detailDelayLogsBody').innerHTML = Ledger.delayLogRowsHtml(g.delayLogs || [], false);
+      document.getElementById('detailStats').innerHTML = `
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">优先级</div><div class="mt-1">${Ledger.urgencyBadge(g.priority)}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">目标完成%</div><div class="mt-1 font-medium">${g.pct}%</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联计划</div><div class="mt-1 font-medium">${plans.length}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联任务</div><div class="mt-1 font-medium">${weeks.length}</div></div>`;
+
+      document.getElementById('detailEditBtn').classList.toggle('hidden', leader);
+      document.getElementById('detailDelayBtn').classList.toggle('hidden', leader);
+      document.getElementById('detailAddPlanBtn').classList.toggle('hidden', leader);
+      document.getElementById('detailAddPlanBtn').href = '月度计划_page.html?goalId=' + g.id;
+
+      document.getElementById('detailPlansBody').innerHTML = plans.length ? plans.map(p => {
+        const nodeN = (p.nodes || []).length;
+        const nodeDelay = (p.nodes || []).filter(n => Ledger.nodeStatus(n) === '已延期').length;
+        return `<tr class="border-t row-hover">
+          <td class="px-4 py-2.5 font-medium"><span class="inline-flex items-center gap-1.5">${p.name} ${Ledger.urgencyBadge(p.urgency)}</span></td>
+          <td class="px-4 py-2.5">${p.month}</td>
+          <td class="px-4 py-2.5">${p.pct}%</td>
+          <td class="px-4 py-2.5">${nodeN ? nodeN + ' 个' + (nodeDelay ? ' · 延期 ' + nodeDelay : '') : '—'}</td>
+          <td class="px-4 py-2.5">${Ledger.planStatusBadge(p)}</td>
+          <td class="px-4 py-2.5"><a class="text-teal-700" href="月度计划_page.html?open=detail&id=${p.id}">详情</a></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无关联计划</td></tr>';
+
+      document.getElementById('detailWeeksBody').innerHTML = weeks.length ? weeks.map(w => {
+        const done = (w.done || '').slice(0, 36) + ((w.done || '').length > 36 ? '…' : '');
+        const next = (w.next || '').slice(0, 36) + ((w.next || '').length > 36 ? '…' : '');
+        return `<tr class="border-t row-hover">
+          <td class="px-4 py-2.5 font-medium"><span class="inline-flex items-center gap-1.5">${w.week} ${Ledger.urgencyBadge(w.urgency)}</span></td>
+          <td class="px-4 py-2.5">${w.dept}</td>
+          <td class="px-4 py-2.5 text-slate-600 max-w-[200px] truncate" title="${(w.done || '').replace(/"/g, '&quot;')}">${done || '—'}</td>
+          <td class="px-4 py-2.5 text-slate-600 max-w-[200px] truncate" title="${(w.next || '').replace(/"/g, '&quot;')}">${next || '—'}</td>
+          <td class="px-4 py-2.5"><a class="text-teal-700" href="周工作任务_page.html?open=detail&id=${w.id}">详情</a></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">暂无关联任务</td></tr>';
+
+      BMS.openModal('modal-detail');
+    }
+
+    function init() {
+      renderPage();
+      const params = new URLSearchParams(location.search);
+      if (params.get('open') === 'detail') {
+        const id = Number(params.get('id'));
+        if (id) setTimeout(() => viewGoal(id), 80);
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  </script>
+</body>
+</html>

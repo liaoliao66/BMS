@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>工作督办 · v1.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="work-supervise" data-title="工作督办">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-4 items-center">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-medium text-slate-900">工作督办</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">v1.0.0</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">公司领导下发紧急事项并指定部门负责人与截止时间。负责人只改状态：完成，或延期并填写原因、新的完成时间。</p>
+      </div>
+      <div id="roleToolbar"></div>
+    </div>
+    <div id="filterBar"></div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">事项名称</th>
+            <th class="px-4 py-3 text-left">部门</th>
+            <th class="px-4 py-3 text-left">负责人</th>
+            <th class="px-4 py-3 text-left">紧急程度</th>
+            <th class="px-4 py-3 text-left">截止时间</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="body"></tbody>
+      </table>
+    </div>
+
+    <div id="modal-form" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-form')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="formTitle">下发督办</h3>
+          <button type="button" onclick="BMS.closeModal('modal-form')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="editId" />
+          <div>
+            <label class="block text-slate-600 mb-1">事项名称 <span class="text-red-500">*</span></label>
+            <input id="fName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">所属部门 <span class="text-red-500">*</span></label>
+              <select id="fDept" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" onchange="syncOwner()"></select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">负责人 <span class="text-xs text-slate-400 font-normal">（自动指定）</span></label>
+              <input id="fOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 bg-slate-50" readonly />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">紧急程度 <span class="text-red-500">*</span></label>
+              <select id="fUrgency" class="w-full border border-slate-200 rounded-xl px-3 py-2.5">
+                <option value="">请选择</option>
+                <option value="高">高</option>
+                <option value="中">中</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">截止时间 <span class="text-red-500">*</span></label>
+              <input id="fEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">事项说明</label>
+            <textarea id="fDesc" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20" placeholder="明确要求与交付物"></textarea>
+          </div>
+          <p class="text-xs text-slate-400">不关联月计划。下发后负责人只能改状态，不能改正文。</p>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-form')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveForm()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">下发</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-status" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">修改督办状态</h3>
+          <button type="button" onclick="BMS.closeModal('modal-status')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="stId" />
+          <p class="text-slate-500" id="stLabel"></p>
+          <div>
+            <label class="block text-slate-600 mb-1">状态 <span class="text-red-500">*</span></label>
+            <select id="stStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" onchange="syncDelay()">
+              <option value="正常">正常</option>
+              <option value="已完成">已完成</option>
+              <option value="已延期">已延期</option>
+            </select>
+          </div>
+          <div id="delayWrap" class="hidden space-y-4">
+            <div>
+              <label class="block text-slate-600 mb-1">延期原因 <span class="text-red-500">*</span></label>
+              <textarea id="stReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20" placeholder="请填写延期原因"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">新的完成时间 <span class="text-red-500">*</span></label>
+              <input id="stNewEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+              <p class="text-xs text-slate-400 mt-1" id="stEndHint"></p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-status')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveStatus()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="detailTitle" class="text-xl font-semibold text-slate-900">督办详情</h3>
+              <span id="detailBadge"></span>
+            </div>
+            <p id="detailMeta" class="text-sm text-slate-500 mt-1"></p>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <button type="button" id="detailStatusBtn" class="border text-sm px-4 py-2 rounded-xl" onclick="statusFromDetail()">修改状态</button>
+            <button type="button" onclick="BMS.closeModal('modal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm" id="detailStats"></div>
+          <div>
+            <div class="text-sm font-medium mb-1">事项说明</div>
+            <p id="detailDesc" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3"></p>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">延期记录</div>
+            <p class="text-xs text-slate-400 mb-2">记录每次延期的原截止时间、新的完成时间与原因</p>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">记录时间</th>
+                    <th class="text-left px-4 py-2.5">原截止时间</th>
+                    <th class="text-left px-4 py-2.5">新的完成时间</th>
+                    <th class="text-left px-4 py-2.5">原因</th>
+                    <th class="text-left px-4 py-2.5">操作人</th>
+                  </tr>
+                </thead>
+                <tbody id="detailLogs"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/ledger-store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    let detailId = null;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    }
+
+    function canChangeStatus(row) {
+      return !Ledger.isLeader() && row && row.dept === Ledger.myDept();
+    }
+
+    function statusBtn(row) {
+      const badge = Ledger.planStatusBadge(row);
+      if (!canChangeStatus(row)) return badge;
+      return `<button type="button" class="inline-flex" onclick="openStatus(${row.id})" title="点击修改状态">${badge}</button>`;
+    }
+
+    function syncOwner() {
+      const dept = document.getElementById('fDept').value;
+      document.getElementById('fOwner').value = Ledger.ownerOfDept(dept) || '';
+    }
+
+    function syncDelay() {
+      const on = document.getElementById('stStatus').value === '已延期';
+      document.getElementById('delayWrap').classList.toggle('hidden', !on);
+    }
+
+    function renderPage() {
+      Ledger.syncHeaderRole();
+      document.getElementById('roleToolbar').innerHTML = Ledger.roleToolbar('下发督办', 'openForm(null)');
+      const btn = document.getElementById('btnPrimary');
+      if (btn) btn.classList.toggle('hidden', !Ledger.isLeader());
+      document.getElementById('filterBar').innerHTML = Ledger.filterBar();
+      const year = document.getElementById('filterYear');
+      if (year) year.classList.add('hidden');
+      Ledger.syncHeaderRole();
+
+      const leader = Ledger.isLeader();
+      const rows = Ledger.supervises().filter(s => {
+        if (!leader && s.dept !== Ledger.myDept()) return false;
+        return Ledger.deptFilter(s.dept) && Ledger.matchQ(s.name + s.desc + (s.owner || '') + s.dept);
+      });
+      const body = document.getElementById('body');
+      body.innerHTML = rows.length ? rows.map(s => {
+        const owner = s.owner || Ledger.ownerOfDept(s.dept) || '—';
+        const ops = `<button type="button" class="text-teal-700" onclick="viewDetail(${s.id})">详情</button>` +
+          (leader ? ` <button type="button" class="text-slate-600" onclick="openForm(${s.id})">编辑</button>` : '');
+        const delayTip = Ledger.superviseStatus(s) === '已延期' && s.delayReason
+          ? `<div class="text-xs text-slate-400 mt-0.5 truncate" title="${esc(s.delayReason)}">${esc(s.delayReason)}</div>` : '';
+        return `<tr class="border-t row-hover">
+          <td class="px-5 py-3">
+            <button type="button" class="font-medium text-left hover:text-teal-700" onclick="viewDetail(${s.id})">${esc(s.name)}</button>
+            ${delayTip}
+          </td>
+          <td class="px-4 py-3">${esc(s.dept)}</td>
+          <td class="px-4 py-3">${esc(owner)}</td>
+          <td class="px-4 py-3">${Ledger.urgencyBadge(s.urgency)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${esc(s.endDate || '—')}</td>
+          <td class="px-4 py-3">${statusBtn(s)}</td>
+          <td class="px-5 py-3"><div class="flex flex-wrap gap-2">${ops}</div></td>
+        </tr>`;
+      }).join('') : '<tr><td colspan="7" class="px-5 py-10 text-center text-slate-400">暂无督办事项</td></tr>';
+    }
+    window.renderPage = renderPage;
+
+    function openForm(id) {
+      if (!Ledger.isLeader()) { BMS.toast('仅公司领导可下发督办', 'error'); return; }
+      const row = id ? Ledger.superviseById(id) : null;
+      if (id && !row) return;
+      if (!id && !Ledger.enabledDeptNames().length) {
+        BMS.toast('暂无启用部门，请先在「使用范围」开启', 'error');
+        return;
+      }
+      document.getElementById('editId').value = id || '';
+      document.getElementById('formTitle').textContent = id ? '编辑督办' : '下发督办';
+      document.querySelector('#modal-form button.btn-cta').textContent = id ? '保存' : '下发';
+      Ledger.fillDeptSelect('fDept', row ? row.dept : '', { includeDisabled: !!row });
+      document.getElementById('fName').value = row ? row.name : '';
+      document.getElementById('fUrgency').value = row && row.urgency ? row.urgency : '';
+      document.getElementById('fEnd').value = row ? (row.endDate || '') : '';
+      document.getElementById('fEnd').disabled = !!(row && Ledger.superviseStatus(row) === '已延期');
+      document.getElementById('fDesc').value = row ? (row.desc || '') : '';
+      syncOwner();
+      BMS.openModal('modal-form');
+    }
+
+    function saveForm() {
+      if (!Ledger.isLeader()) return;
+      const name = document.getElementById('fName').value.trim();
+      const dept = document.getElementById('fDept').value;
+      const owner = Ledger.ownerOfDept(dept);
+      const urgency = document.getElementById('fUrgency').value.trim();
+      const endDate = document.getElementById('fEnd').value.trim();
+      const desc = document.getElementById('fDesc').value.trim();
+      const id = document.getElementById('editId').value;
+      if (!name || !dept || !endDate) { BMS.toast('请填写事项名称、部门与截止时间', 'error'); return; }
+      if (!urgency || !['高', '中', '低'].includes(urgency)) { BMS.toast('请选择紧急程度', 'error'); return; }
+      if (!owner) { BMS.toast('该部门未配置负责人', 'error'); return; }
+      if (!id && !Ledger.isDeptEnabled(dept)) { BMS.toast('该部门未启用', 'error'); return; }
+      if (id) {
+        const row = Ledger.superviseById(id);
+        if (!row) return;
+        const keepEnd = Ledger.superviseStatus(row) === '已延期' ? row.endDate : endDate;
+        Object.assign(row, { name, dept, owner, urgency, endDate: keepEnd, desc });
+      } else {
+        Ledger.supervises().unshift({
+          id: Ledger.nextId(), name, dept, owner, urgency, endDate, desc,
+          status: '正常', delayed: false, delayReason: '', delayLogs: []
+        });
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-form');
+      BMS.toast(id ? '督办已保存' : '已下发给 ' + owner);
+      renderPage();
+      if (detailId) viewDetail(detailId);
+    }
+
+    function openStatus(id) {
+      const row = Ledger.superviseById(id);
+      if (!row) return;
+      if (!canChangeStatus(row)) { BMS.toast('仅本部门负责人可修改状态', 'error'); return; }
+      document.getElementById('stId').value = id;
+      document.getElementById('stLabel').textContent = row.name + ' · 当前截止 ' + (row.endDate || '—');
+      document.getElementById('stStatus').value = Ledger.superviseStatus(row);
+      document.getElementById('stReason').value = row.delayReason || '';
+      document.getElementById('stNewEnd').value = row.endDate || '';
+      document.getElementById('stEndHint').textContent = '新的完成时间不能早于当前截止时间 ' + (row.endDate || '—');
+      syncDelay();
+      BMS.openModal('modal-status');
+    }
+
+    function saveStatus() {
+      const id = document.getElementById('stId').value;
+      const row = Ledger.superviseById(id);
+      if (!row || !canChangeStatus(row)) return;
+      const status = document.getElementById('stStatus').value;
+      const prevEnd = row.endDate || '';
+      if (status === '已延期') {
+        const reason = document.getElementById('stReason').value.trim();
+        const newEnd = document.getElementById('stNewEnd').value.trim();
+        if (!reason) { BMS.toast('请填写延期原因', 'error'); return; }
+        if (!newEnd) { BMS.toast('请设置新的完成时间', 'error'); return; }
+        if (prevEnd && newEnd < prevEnd) { BMS.toast('新的完成时间不能早于当前截止时间', 'error'); return; }
+        row.status = '已延期';
+        row.delayed = true;
+        row.delayReason = reason;
+        row.endDate = newEnd;
+        Ledger.pushDelayLog(row, { action: '标注延期', reason, fromEnd: prevEnd, toEnd: newEnd, responsibleDelay: null });
+      } else {
+        row.status = status;
+        row.delayed = false;
+        if (status !== '已延期') row.delayReason = status === '已完成' ? (row.delayReason || '') : '';
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-status');
+      BMS.toast('状态已更新');
+      renderPage();
+      if (detailId === Number(id)) viewDetail(id);
+    }
+
+    function statusFromDetail() {
+      if (!detailId) return;
+      openStatus(detailId);
+    }
+
+    function viewDetail(id) {
+      const row = Ledger.superviseById(id);
+      if (!row) return;
+      detailId = Number(id);
+      const owner = row.owner || Ledger.ownerOfDept(row.dept) || '—';
+      const st = Ledger.superviseStatus(row);
+      document.getElementById('detailTitle').textContent = row.name;
+      document.getElementById('detailBadge').innerHTML = Ledger.urgencyBadge(row.urgency) + Ledger.planStatusBadge(row);
+      document.getElementById('detailMeta').textContent =
+        row.dept + ' · ' + owner + ' · 截止 ' + (row.endDate || '—') +
+        (st === '已延期' && row.delayReason ? ' · ' + row.delayReason : '');
+      document.getElementById('detailStats').innerHTML = `
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">负责人</div><div class="mt-1 font-medium">${esc(owner)}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">紧急程度</div><div class="mt-1">${Ledger.urgencyBadge(row.urgency)}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">截止时间</div><div class="mt-1 font-medium">${esc(row.endDate || '—')}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">状态</div><div class="mt-1">${Ledger.planStatusBadge(row)}</div></div>`;
+      document.getElementById('detailDesc').textContent = row.desc || '暂无说明';
+      document.getElementById('detailStatusBtn').classList.toggle('hidden', !canChangeStatus(row));
+      const logs = row.delayLogs || [];
+      document.getElementById('detailLogs').innerHTML = logs.length ? logs.map(log => `
+        <tr class="border-t">
+          <td class="px-4 py-2.5 text-slate-500 whitespace-nowrap">${esc(log.at || '—')}</td>
+          <td class="px-4 py-2.5 whitespace-nowrap">${esc(log.fromEnd || '—')}</td>
+          <td class="px-4 py-2.5 whitespace-nowrap">${esc(log.toEnd || '—')}</td>
+          <td class="px-4 py-2.5 text-slate-700">${esc(log.reason || '—')}</td>
+          <td class="px-4 py-2.5 text-slate-500">${esc(log.operator || '—')}</td>
+        </tr>`).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">暂无延期记录</td></tr>';
+      BMS.openModal('modal-detail');
+    }
+
+    function init() {
+      renderPage();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  </script>
+</body>
+</html>

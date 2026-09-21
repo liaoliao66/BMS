@@ -1,36 +1,21 @@
-/* 经营管理系统 v1.0.0 · PC 公共壳（第一期：目标/计划/任务） */
+/* 经营管理系统 v1.0.0 · PC 公共壳（精简：经营清单） */
 (function () {
   const NAV = [
     {
-      group: "经营台账",
+      group: "经营清单",
       items: [
-        { id: "depts", name: "工作台账", href: "部门工作台_部门工作台_page.html", icon: "fa-sitemap" },
-        { id: "reports", name: "工作周报", href: "经营台账_工作汇报_page.html", icon: "fa-file-lines" },
-        { id: "reports-month", name: "工作月报", href: "经营台账_工作月报_page.html", icon: "fa-calendar-days" },
+        { id: "goals", name: "目标管理", href: "年度目标_page.html", icon: "fa-bullseye" },
+        { id: "plans", name: "计划管理", href: "月度计划_page.html", icon: "fa-calendar-check" },
+        { id: "weeks", name: "任务管理", href: "周工作任务_page.html", icon: "fa-list-check" },
+        { id: "work-supervise", name: "工作督办", href: "任务督办_page.html", icon: "fa-clipboard-check" },
       ],
     },
     {
-      group: "目标计划",
+      group: "催办与配置",
       items: [
-        { id: "goals", name: "目标管理", href: "目标管理_目标列表_page.html", icon: "fa-bullseye" },
-        { id: "plans", name: "计划管理", href: "计划管理_计划列表_page.html", icon: "fa-calendar-check" },
-      ],
-    },
-    {
-      group: "任务中心",
-      items: [
-        { id: "my-tasks", name: "任务清单", href: "任务中心_我的任务_page.html", icon: "fa-list-check" },
-        { id: "supervise", name: "任务督办", href: "任务中心_任务督办_page.html", icon: "fa-clipboard-check" },
-        // 本期隐藏：汇报提醒（能力并入工作周报，后续版本再开放菜单）
-        // { id: "fill-remind", name: "汇报提醒", href: "经营台账_工作汇报_page.html?section=tasks&open=pending", icon: "fa-bell" },
-        { id: "projects", name: "专项管理", href: "专项管理_专项列表_page.html", icon: "fa-folder-open" },
-      ],
-    },
-    {
-      group: "基础配置",
-      items: [
-        { id: "cfg-scope", name: "使用范围", href: "基础配置_使用范围_page.html", icon: "fa-sliders" },
-        { id: "cfg-msg", name: "消息配置", href: "基础配置_消息配置_page.html", icon: "fa-bell" },
+        { id: "remind", name: "催办提醒", href: "催办提醒_page.html", icon: "fa-bell" },
+        { id: "cfg-scope", name: "使用范围", href: "基础配置_使用范围_page.html", icon: "fa-sitemap" },
+        { id: "cfg-msg", name: "消息配置", href: "基础配置_消息配置_page.html", icon: "fa-sliders" },
       ],
     },
   ];
@@ -45,26 +30,16 @@
     style.textContent = `
       [data-modal].bms-modal-fs { padding: 0 !important; align-items: stretch !important; justify-content: stretch !important; }
       [data-modal].bms-modal-fs > .bms-modal-panel {
-        width: 100% !important;
-        max-width: none !important;
-        height: 100% !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        margin: 0 !important;
+        width: 100% !important; max-width: none !important; height: 100% !important; max-height: none !important;
+        border-radius: 0 !important; margin: 0 !important;
       }
-      .bms-fs-group {
-        display: inline-flex !important;
-        align-items: center;
-        gap: 0.35rem;
-        flex-shrink: 0;
-        margin-left: auto;
-      }
-      .bms-fs-btn {
+      .bms-fs-group { display: inline-flex !important; align-items: center; gap: 0.35rem; flex-shrink: 0; margin-left: auto; }
+      .bms-fs-btn, .bms-close-btn {
         width: 2.25rem; height: 2.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;
         color: #94a3b8; background: #fff; display: inline-flex; align-items: center; justify-content: center;
         flex-shrink: 0; padding: 0; line-height: 1;
       }
-      .bms-fs-btn:hover { color: #475569; background: #f8fafc; }
+      .bms-fs-btn:hover, .bms-close-btn:hover { color: #475569; background: #f8fafc; }
     `;
     document.head.appendChild(style);
   }
@@ -85,64 +60,59 @@
   }
 
   function setModalFullscreen(modal, on) {
-    if (!modal) return;
+    const panel = getModalPanel(modal);
+    if (!panel) return;
+    modal.classList.toggle("bms-modal-fs", !!on);
     const btn = modal.querySelector(".bms-fs-btn");
-    const icon = btn && btn.querySelector("i");
-    if (on) {
-      modal.classList.add("bms-modal-fs");
-      if (icon) icon.className = "fa-solid fa-compress";
-      if (btn) btn.title = "还原窗口";
-    } else {
-      modal.classList.remove("bms-modal-fs");
-      if (icon) icon.className = "fa-solid fa-expand";
-      if (btn) btn.title = "全屏查看";
-    }
-  }
-
-  function findCloseButton(panel) {
-    if (!panel) return null;
-    const buttons = Array.from(panel.querySelectorAll("button"));
-    const byIcon = buttons.find((b) => b.querySelector(".fa-xmark, .fa-times"));
-    if (byIcon) return byIcon;
-    return (
-      buttons.find((b) => {
-        const oc = b.getAttribute("onclick") || "";
-        return /closeModal\s*\(/.test(oc) && !/openModal/.test(oc);
-      }) || null
-    );
+    if (btn) btn.innerHTML = on ? '<i class="fa-solid fa-compress"></i>' : '<i class="fa-solid fa-expand"></i>';
   }
 
   function enhanceModal(modal) {
     if (!modal || modal.dataset.bmsFsReady === "1") return;
     const panel = getModalPanel(modal);
     if (!panel) return;
-    const closeBtn = findCloseButton(panel);
-    if (!closeBtn) return;
-    if (panel.querySelector(".bms-fs-btn") || closeBtn.closest(".bms-fs-group")) {
-      modal.dataset.bmsFsReady = "1";
-      return;
+    const header =
+      panel.querySelector(".shrink-0.px-6.py-4") ||
+      panel.querySelector(".border-b") ||
+      panel.firstElementChild;
+    if (!header) return;
+
+    const closeBtn =
+      header.querySelector('button[onclick*="closeModal"]') ||
+      Array.from(header.querySelectorAll("button.w-9")).find((b) => b.querySelector(".fa-xmark, .fa-solid.fa-xmark")) ||
+      null;
+
+    let group = header.querySelector(":scope > .bms-fs-group") || header.querySelector(".bms-fs-group");
+    if (!group) {
+      group = document.createElement("div");
+      group.className = "bms-fs-group";
     }
-    const fsBtn = document.createElement("button");
-    fsBtn.type = "button";
-    fsBtn.className = "bms-fs-btn";
-    fsBtn.title = "全屏查看";
-    fsBtn.setAttribute("aria-label", "全屏查看");
-    fsBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
-    fsBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setModalFullscreen(modal, !modal.classList.contains("bms-modal-fs"));
-    });
-    if (closeBtn.querySelector(".fa-xmark, .fa-times") && !/\bw-9\b/.test(closeBtn.className)) {
-      closeBtn.classList.add("w-9", "h-9", "rounded-xl", "border", "inline-flex", "items-center", "justify-center");
+    // 始终挂到标题栏末尾，保证整组靠右
+    header.appendChild(group);
+
+    let fsBtn = group.querySelector(".bms-fs-btn");
+    if (!fsBtn) {
+      fsBtn = document.createElement("button");
+      fsBtn.type = "button";
+      fsBtn.className = "bms-fs-btn";
+      fsBtn.title = "全屏";
+      fsBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+      fsBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setModalFullscreen(modal, !modal.classList.contains("bms-modal-fs"));
+      });
+      group.appendChild(fsBtn);
+    } else {
+      group.appendChild(fsBtn); // 保证全屏在关闭左侧
     }
-    // 与关闭按钮绑成紧挨一组，避免落在 justify-between 中间被撑开
-    const parent = closeBtn.parentNode;
-    const group = document.createElement("div");
-    group.className = "bms-fs-group";
-    parent.insertBefore(group, closeBtn);
-    group.appendChild(fsBtn);
-    group.appendChild(closeBtn);
+
+    // 关闭固定最右侧：全屏 → 关闭
+    if (closeBtn) {
+      closeBtn.classList.add("bms-close-btn");
+      group.appendChild(closeBtn);
+    }
+
     modal.dataset.bmsFsReady = "1";
   }
 
@@ -151,22 +121,20 @@
   }
 
   function buildSidebar() {
-    let html = `
-      <aside class="w-64 shrink-0 bg-slate-800 text-slate-200 min-h-screen flex flex-col">
-        <div class="px-5 py-5 border-b border-slate-700">
-          <div class="text-white font-semibold text-base tracking-wide">经营管理系统</div>
-          <div class="text-xs text-slate-400 mt-1">v1.0.0 · 目标计划任务</div>
-        </div>
-        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-5">`;
+    let html = `<aside class="w-56 shrink-0 bg-slate-800 text-slate-200 min-h-screen flex flex-col">
+      <div class="px-5 py-5 border-b border-slate-700">
+        <div class="text-sm font-semibold text-white">经营管理系统</div>
+        <div class="text-xs text-slate-400 mt-1">v1.0.0 · 精简清单</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto py-3">`;
     NAV.forEach((g) => {
-      html += `<div><div class="px-3 mb-2 text-[11px] uppercase tracking-wider text-slate-500">${g.group}</div><ul class="space-y-1">`;
+      html += `<div class="px-4 pt-3 pb-1 text-[11px] uppercase tracking-wide text-slate-500">${g.group}</div>`;
       g.items.forEach((item) => {
-        const active = item.id === pageId;
-        html += `<li><a href="${item.href}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition ${
-          active ? "bg-slate-700 text-white" : "text-slate-300 hover:bg-slate-700/60 hover:text-white"
-        }"><i class="fa-solid ${item.icon} w-4 text-center opacity-80"></i><span>${item.name}</span></a></li>`;
+        const on = pageId === item.id;
+        html += `<a href="${item.href}" class="flex items-center gap-2.5 mx-2 px-3 py-2.5 rounded-xl text-sm ${
+          on ? "bg-slate-700 text-white" : "text-slate-300 hover:bg-slate-700/60 hover:text-white"
+        }"><i class="fa-solid ${item.icon} w-4 text-center opacity-80"></i>${item.name}</a>`;
       });
-      html += `</ul></div>`;
     });
     html += `</nav></aside>`;
     return html;
@@ -174,28 +142,18 @@
 
   function buildHeader() {
     const prdHref = "../../../../docs/versions/v1.0.0/prd.html";
-    const monthPrdHref = "../../../../docs/versions/v1.0.0/prd_工作月报.md";
-    const prdExtra =
-      pageId === "reports-month"
-        ? `<a href="${monthPrdHref}" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-sm text-slate-600 hover:bg-slate-50" title="工作月报增量 PRD"><i class="fa-solid fa-file-lines text-teal-700"></i>月报PRD</a>`
-        : "";
     return `
       <header class="h-14 shrink-0 bg-white border-b border-slate-200 flex items-center justify-between px-6">
         <div class="flex items-center gap-3 min-w-0">
           <h1 class="text-base font-semibold text-slate-900 truncate">${title}</h1>
         </div>
         <div class="flex items-center gap-3">
-          <div class="hidden md:flex items-center bg-slate-100 rounded-xl px-3 py-1.5 w-64">
-            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs mr-2"></i>
-            <input type="text" placeholder="搜索目标 / 任务 / 项目" class="bg-transparent outline-none text-sm w-full text-slate-700 placeholder:text-slate-400" />
-          </div>
-          <a href="${prdHref}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-sm text-teal-800 hover:bg-teal-100" title="打开 V1 PRD 阅读页">
+          <a href="${prdHref}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-200 bg-teal-50 text-sm text-teal-800 hover:bg-teal-100" title="打开 V1 PRD">
             <i class="fa-solid fa-book-open"></i><span class="hidden sm:inline">PRD</span>
           </a>
-          ${prdExtra}
-          <div class="flex items-center gap-2 text-sm text-slate-600">
-            <span class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-medium">刘</span>
-            <span class="hidden sm:inline">刘强 · 装卸队负责人</span>
+          <div class="flex items-center gap-2 text-sm text-slate-600" id="header-user-slot">
+            <span class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-medium">负</span>
+            <span class="hidden sm:inline" id="header-user-label">装卸队 · 部门负责人</span>
           </div>
         </div>
       </header>`;
@@ -223,7 +181,7 @@
   enhanceAllModals();
 
   window.BMS = {
-    currentUser: { name: "刘强", dept: "装卸队", title: "装卸队负责人", role: "dept_head", subordinates: ["孙伟", "马超", "王芳"] },
+    currentUser: { name: "刘强", dept: "装卸队", role: "dept_head" },
     toast(msg, type) {
       const el = document.createElement("div");
       el.className =
@@ -257,25 +215,5 @@
       );
       if (!anyOpen) document.body.classList.remove("overflow-hidden");
     },
-    toggleModalFullscreen(id) {
-      const m = document.getElementById(id);
-      if (!m) return;
-      setModalFullscreen(m, !m.classList.contains("bms-modal-fs"));
-    },
   };
-
-  const params = new URLSearchParams(location.search);
-  const openId = params.get("open");
-  if (openId) {
-    setTimeout(() => window.BMS.openModal(openId), 50);
-  }
-
-  (function loadAiAssistant() {
-    const ref = document.querySelector('script[src*="common.js"]');
-    const src = ref ? ref.src.replace(/common\.js(\?.*)?$/, "ai-assistant.js") : "../assets/ai-assistant.js";
-    const s = document.createElement("script");
-    s.src = src;
-    s.defer = true;
-    document.body.appendChild(s);
-  })();
 })();

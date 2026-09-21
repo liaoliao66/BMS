@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>计划管理 · v1.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .more-menu { display:none; }
+    .more-wrap.open .more-menu { display:block; }
+    .month-panel { display:none; }
+    .month-wrap.open .month-panel { display:block; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="plans" data-title="计划管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-4 items-center">
+      <div>
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-sm font-medium text-slate-900">计划管理</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">v1.0.0</span>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">树表展示；年月一体筛选（默认当月）；行内「···」快捷新建子节点；支持手动催办</p>
+      </div>
+      <div id="roleToolbar"></div>
+    </div>
+    <div id="filterBar"></div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-4 py-3 text-left w-16">序号</th>
+            <th class="px-4 py-3 text-left">名称</th>
+            <th class="px-4 py-3 text-left">起止时间</th>
+            <th class="px-4 py-3 text-left w-36">完成%</th>
+            <th class="px-4 py-3 text-left w-36">状态</th>
+            <th class="px-4 py-3 text-left min-w-[160px]">说明</th>
+            <th class="px-4 py-3 text-right w-40">操作</th>
+          </tr>
+        </thead>
+        <tbody id="plansTree"></tbody>
+      </table>
+    </div>
+
+    <!-- 新建/编辑月计划 -->
+    <div id="modal-plan" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="planModalTitle">新建计划</h3>
+          <button type="button" onclick="BMS.closeModal('modal-plan')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="planEditId" />
+          <div>
+            <label class="block text-slate-600 mb-1">计划名称 <span class="text-red-500">*</span></label>
+            <input id="planName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">紧急程度 <span class="text-red-500">*</span></label>
+              <select id="planUrgency" class="w-full border border-slate-200 rounded-xl px-3 py-2.5">
+                <option value="">请选择</option>
+                <option value="高">高</option>
+                <option value="中">中</option>
+                <option value="低">低</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">所属目标 <span class="text-red-500">*</span></label>
+              <select id="planGoalId" class="w-full border border-slate-200 rounded-xl px-3 py-2.5"></select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">月份 <span class="text-red-500">*</span></label>
+            <input id="planMonth" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" value="2026-08" placeholder="2026-08" onchange="onPlanMonthChange()" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label>
+              <input id="planStartDate" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label>
+              <input id="planEndDate" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">计划说明</label>
+            <textarea id="planDesc" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-16"></textarea>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">计划完成%（0–100）</label>
+            <input id="planPct" type="number" min="0" max="100" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" value="0" />
+          </div>
+          <p class="text-xs text-slate-400">子节点请在列表行「···」→「新建子节点」快捷创建</p>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-plan')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="savePlan()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快捷：新建/编辑子节点 -->
+    <div id="modal-node" data-modal class="fixed inset-0 z-[65] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-node')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="nodeModalTitle">新建子节点</h3>
+          <button type="button" onclick="BMS.closeModal('modal-node')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="nodePlanId" />
+          <input type="hidden" id="nodeEditId" />
+          <p class="text-xs text-slate-500" id="nodePlanLabel"></p>
+          <div>
+            <label class="block text-slate-600 mb-1">节点名称 <span class="text-red-500">*</span></label>
+            <input id="nodeName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label>
+              <input id="nodeStartDate" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label>
+              <input id="nodeEndDate" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">状态 <span class="text-red-500">*</span></label>
+            <select id="nodeStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" onchange="syncNodeReasonVisible()">
+              <option value="进行中">进行中</option>
+              <option value="已完成">已完成</option>
+              <option value="已延期">已延期</option>
+            </select>
+          </div>
+          <div id="nodeReasonWrap" class="hidden space-y-4">
+            <div>
+              <label class="block text-slate-600 mb-1">是否责任延期 <span class="text-red-500">*</span></label>
+              <div class="flex gap-4">
+                <label class="inline-flex items-center gap-2"><input type="radio" name="nodeRespDelay" value="yes" /> 是</label>
+                <label class="inline-flex items-center gap-2"><input type="radio" name="nodeRespDelay" value="no" /> 否</label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">延期原因 <span class="text-red-500">*</span></label>
+              <textarea id="nodeDelayReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20" placeholder="请填写延期原因"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-node')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveNode()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快捷：改节点状态 -->
+    <div id="modal-node-status" data-modal class="fixed inset-0 z-[70] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-node-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">修改节点状态</h3>
+          <button type="button" onclick="BMS.closeModal('modal-node-status')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="nsPlanId" />
+          <input type="hidden" id="nsNodeId" />
+          <p class="text-slate-500" id="nsLabel"></p>
+          <div>
+            <label class="block text-slate-600 mb-1">状态 <span class="text-red-500">*</span></label>
+            <select id="nsStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" onchange="syncNsDelayFields()">
+              <option value="进行中">进行中</option>
+              <option value="已完成">已完成</option>
+              <option value="已延期">已延期</option>
+            </select>
+          </div>
+          <div id="nsDelayWrap" class="hidden space-y-4">
+            <div>
+              <label class="block text-slate-600 mb-1">是否责任延期 <span class="text-red-500">*</span></label>
+              <div class="flex gap-4">
+                <label class="inline-flex items-center gap-2"><input type="radio" name="nsRespDelay" value="yes" /> 是</label>
+                <label class="inline-flex items-center gap-2"><input type="radio" name="nsRespDelay" value="no" /> 否</label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">延期原因 <span class="text-red-500">*</span></label>
+              <textarea id="nsReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20" placeholder="请填写延期原因"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">新的结束日期 <span class="text-red-500">*</span></label>
+              <input id="nsNewEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+              <p class="text-xs text-slate-400 mt-1" id="nsEndHint"></p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-node-status')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveNodeStatus()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快捷：改计划状态 -->
+    <div id="modal-plan-status" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-plan-status')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold">修改计划状态</h3>
+          <button type="button" onclick="BMS.closeModal('modal-plan-status')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-4 text-sm">
+          <input type="hidden" id="psPlanId" />
+          <p class="text-slate-500" id="psLabel"></p>
+          <div>
+            <label class="block text-slate-600 mb-1">状态 <span class="text-red-500">*</span></label>
+            <select id="psStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" onchange="syncPsDelayFields()">
+              <option value="正常">正常</option>
+              <option value="已完成">已完成</option>
+              <option value="已延期">已延期</option>
+            </select>
+          </div>
+          <div id="psDelayWrap" class="hidden space-y-4">
+            <div>
+              <label class="block text-slate-600 mb-1">是否责任延期 <span class="text-red-500">*</span></label>
+              <div class="flex gap-4">
+                <label class="inline-flex items-center gap-2"><input type="radio" name="psRespDelay" value="yes" /> 是</label>
+                <label class="inline-flex items-center gap-2"><input type="radio" name="psRespDelay" value="no" /> 否</label>
+              </div>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">延期原因 <span class="text-red-500">*</span></label>
+              <textarea id="psReason" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20" placeholder="请填写延期原因"></textarea>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">新的结束日期 <span class="text-red-500">*</span></label>
+              <input id="psNewEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" />
+              <p class="text-xs text-slate-400 mt-1" id="psEndHint"></p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t flex gap-2 justify-end">
+          <button type="button" onclick="BMS.closeModal('modal-plan-status')" class="text-sm text-slate-500 px-3">取消</button>
+          <button type="button" onclick="savePlanStatus()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b border-slate-100 flex flex-wrap items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h3 id="detailTitle" class="text-xl font-semibold text-slate-900">计划详情</h3>
+              <span id="detailStatusBadge" class="inline-flex flex-wrap items-center gap-1.5"></span>
+            </div>
+            <p id="detailMeta" class="text-sm text-slate-500 mt-1"></p>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center">
+            <button type="button" id="detailUrgeBtn" class="border text-sm px-4 py-2 rounded-xl text-teal-700 border-teal-200" onclick="urgeFromDetail()">催办</button>
+            <button type="button" id="detailEditBtn" class="border text-sm px-4 py-2 rounded-xl" onclick="editFromDetail()">编辑计划</button>
+            <button type="button" id="detailDelayBtn" class="border text-sm px-4 py-2 rounded-xl" onclick="delayFromDetail()">修改状态</button>
+            <a id="detailGoalLink" href="年度目标_page.html" class="border text-sm px-4 py-2 rounded-xl">查看目标</a>
+            <button type="button" onclick="BMS.closeModal('modal-detail')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm" id="detailStats"></div>
+          <div>
+            <div class="text-sm font-medium mb-1">计划说明</div>
+            <p id="detailIntro" class="text-sm text-slate-700 leading-relaxed bg-slate-50 rounded-xl p-3"></p>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">计划节点</div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">节点名称</th>
+                    <th class="text-left px-4 py-2.5">起止时间</th>
+                    <th class="text-left px-4 py-2.5">状态</th>
+                    <th class="text-left px-4 py-2.5">延期原因</th>
+                  </tr>
+                </thead>
+                <tbody id="detailNodesBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">延期记录</div>
+            <p class="text-xs text-slate-400 mb-2">含本计划与下属节点的历次延期 / 取消延期</p>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">时间</th>
+                    <th class="text-left px-4 py-2.5">对象</th>
+                    <th class="text-left px-4 py-2.5">动作</th>
+                    <th class="text-left px-4 py-2.5">责任延期</th>
+                    <th class="text-left px-4 py-2.5">结束日变更</th>
+                    <th class="text-left px-4 py-2.5">原因</th>
+                    <th class="text-left px-4 py-2.5">操作人</th>
+                  </tr>
+                </thead>
+                <tbody id="detailDelayLogsBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div class="text-sm font-medium mb-2">关联任务</div>
+            <div class="border border-slate-100 rounded-2xl overflow-hidden">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="text-left px-4 py-2.5">周次</th>
+                    <th class="text-left px-4 py-2.5">部门</th>
+                    <th class="text-left px-4 py-2.5">上周工作总结</th>
+                    <th class="text-left px-4 py-2.5">本周工作计划</th>
+                    <th class="text-left px-4 py-2.5">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="detailWeeksBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/ledger-store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    let delayId = null;
+    let detailPlanId = null;
+    const expandedPlanIds = new Set();
+    /** 年月一体筛选：当前选中年 */
+    let filterYearValue = String(new Date().getFullYear());
+    /** 月份多选 YYYY-MM，默认当月 */
+    let selectedMonths = null;
+
+    function currentMonthKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    }
+
+    function ensureSelectedMonths() {
+      if (!selectedMonths) selectedMonths = new Set([currentMonthKey()]);
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    }
+
+    function closeAllMenus() {
+      document.querySelectorAll('.more-wrap.open').forEach(el => el.classList.remove('open'));
+      document.querySelectorAll('.month-wrap.open').forEach(el => el.classList.remove('open'));
+    }
+
+    function toggleMore(e, id) {
+      e.stopPropagation();
+      const wrap = document.getElementById(id);
+      const wasOpen = wrap.classList.contains('open');
+      closeAllMenus();
+      if (!wasOpen) wrap.classList.add('open');
+    }
+
+    function toggleYearMonthPanel(e) {
+      e.stopPropagation();
+      const wrap = document.getElementById('yearMonthFilterWrap');
+      const wasOpen = wrap.classList.contains('open');
+      closeAllMenus();
+      if (!wasOpen) wrap.classList.add('open');
+    }
+
+    document.addEventListener('click', closeAllMenus);
+
+    function yearMonthTip() {
+      ensureSelectedMonths();
+      const y = filterYearValue;
+      const list = [...selectedMonths].filter(m => m.startsWith(y + '-')).sort();
+      if (!list.length) return y + '年 · 全部月';
+      if (list.length === 1) return list[0].replace('-', '年') + '月';
+      return y + '年 · ' + list.length + '个月';
+    }
+
+    function buildYearMonthFilterHtml() {
+      ensureSelectedMonths();
+      const y = filterYearValue;
+      const years = [String(new Date().getFullYear()), String(new Date().getFullYear() - 1)];
+      if (!years.includes(y)) years.unshift(y);
+      const yearBtns = years.map(yr =>
+        `<button type="button" class="px-2.5 py-1 rounded-lg text-xs ${yr === y ? 'bg-teal-700 text-white' : 'bg-slate-100 text-slate-600'}" onclick="setFilterYear('${yr}')">${yr}年</button>`
+      ).join('');
+      const labels = [];
+      for (let i = 1; i <= 12; i++) {
+        const key = y + '-' + String(i).padStart(2, '0');
+        const on = selectedMonths.has(key) ? 'checked' : '';
+        labels.push(`<label class="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-sm">
+          <input type="checkbox" ${on} onclick="event.stopPropagation()" onchange="toggleMonthFilter('${key}', this.checked)" />
+          ${i} 月
+        </label>`);
+      }
+      return `<div class="relative month-wrap" id="yearMonthFilterWrap">
+        <button type="button" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm min-w-[168px] text-left" onclick="toggleYearMonthPanel(event)">
+          ${yearMonthTip()} <i class="fa-solid fa-caret-down text-slate-400 ml-1"></i>
+        </button>
+        <div class="month-panel absolute left-0 top-11 z-40 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-2 max-h-80 overflow-y-auto" onclick="event.stopPropagation()">
+          <div class="px-3 pb-2 border-b border-slate-100 mb-1">
+            <div class="text-[11px] text-slate-400 mb-1.5">年度</div>
+            <div class="flex flex-wrap gap-1.5 mb-2">${yearBtns}</div>
+            <div class="flex gap-2">
+              <button type="button" class="text-xs text-teal-700" onclick="selectOnlyCurrentMonth()">仅当月</button>
+              <button type="button" class="text-xs text-slate-500" onclick="selectAllMonths()">全选月</button>
+              <button type="button" class="text-xs text-slate-500" onclick="clearMonthFilter()">清空月</button>
+            </div>
+          </div>
+          <div class="text-[11px] text-slate-400 px-3 py-1">月份（可多选）</div>
+          ${labels.join('')}
+        </div>
+        <input type="hidden" id="filterYear" value="${y}" />
+      </div>`;
+    }
+
+    function setFilterYear(year) {
+      const nums = [...(selectedMonths || [])].map(m => m.slice(5)).filter(Boolean);
+      filterYearValue = String(year);
+      selectedMonths = new Set(nums.length ? nums.map(n => filterYearValue + '-' + n) : [filterYearValue + '-' + currentMonthKey().slice(5)]);
+      renderPage();
+    }
+
+    function toggleMonthFilter(key, on) {
+      ensureSelectedMonths();
+      if (on) selectedMonths.add(key);
+      else selectedMonths.delete(key);
+      renderPage();
+    }
+
+    function selectOnlyCurrentMonth() {
+      const mm = currentMonthKey().slice(5);
+      selectedMonths = new Set([filterYearValue + '-' + mm]);
+      renderPage();
+    }
+
+    function selectAllMonths() {
+      selectedMonths = new Set();
+      for (let i = 1; i <= 12; i++) selectedMonths.add(filterYearValue + '-' + String(i).padStart(2, '0'));
+      renderPage();
+    }
+
+    function clearMonthFilter() {
+      selectedMonths = new Set();
+      renderPage();
+    }
+
+    function monthFilter(planMonth) {
+      ensureSelectedMonths();
+      const selected = [...selectedMonths].filter(m => m.startsWith(filterYearValue + '-'));
+      if (!selected.length) return true;
+      return selected.includes(String(planMonth));
+    }
+
+    function renderFilters() {
+      const prevDept = document.getElementById('filterDept')?.value ?? '';
+      const prevQ = document.getElementById('filterQ')?.value ?? '';
+      const ymOpen = document.getElementById('yearMonthFilterWrap')?.classList.contains('open');
+      ensureSelectedMonths();
+      document.getElementById('filterBar').innerHTML = `<div class="flex flex-wrap gap-2 mb-4 items-center">
+        <select id="filterDept" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderPage()">
+          ${Ledger.deptSelectOptionsHtml(prevDept, { includeAll: true })}
+        </select>
+        ${buildYearMonthFilterHtml()}
+        <div class="relative flex-1 min-w-[180px] max-w-xs">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
+          <input id="filterQ" type="search" class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-sm" placeholder="搜索名称" oninput="renderPage()" />
+        </div>
+      </div>`;
+      const deptSel = document.getElementById('filterDept');
+      if (deptSel) deptSel.value = prevDept;
+      const qEl = document.getElementById('filterQ');
+      if (qEl) qEl.value = prevQ;
+      if (ymOpen) document.getElementById('yearMonthFilterWrap')?.classList.add('open');
+    }
+
+    function togglePlan(id) {
+      const n = Number(id);
+      if (expandedPlanIds.has(n)) expandedPlanIds.delete(n);
+      else expandedPlanIds.add(n);
+      renderPage();
+    }
+
+    function moreBtn(menuId, itemsHtml, leader) {
+      if (leader) return '';
+      return `<span class="more-wrap relative inline-flex" id="${menuId}">
+        <button type="button" class="w-7 h-7 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" onclick="toggleMore(event,'${menuId}')" title="快捷操作">
+          <i class="fa-solid fa-ellipsis"></i>
+        </button>
+        <div class="more-menu absolute left-0 top-8 z-30 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1 text-sm">
+          ${itemsHtml}
+        </div>
+      </span>`;
+    }
+
+    function statusBtn(planId, nodeId, n, leader) {
+      const badge = Ledger.nodeStatusBadge(n);
+      if (leader) return badge;
+      return `<button type="button" class="inline-flex" onclick="openNodeStatus(${planId},${nodeId})" title="点击修改状态">${badge}</button>`;
+    }
+
+    function planStatusBtn(p, leader) {
+      const badge = Ledger.planStatusBadge(p);
+      if (leader) return badge;
+      return `<button type="button" class="inline-flex" onclick="openPlanStatus(${p.id})" title="点击修改状态">${badge}</button>`;
+    }
+
+    function renderPage() {
+      Ledger.syncHeaderRole();
+      document.getElementById('roleToolbar').innerHTML = Ledger.roleToolbar('新建计划', 'openPlanForm(null)');
+      renderFilters();
+      Ledger.syncHeaderRole();
+      const rows = Ledger.plans().filter(p => {
+        const g = Ledger.goalById(p.goalId);
+        if (!g) return false;
+        if (!Ledger.deptFilter(g.dept) || !Ledger.yearFilter(g.year)) return false;
+        if (!monthFilter(p.month)) return false;
+        return Ledger.matchQ(p.name) || Ledger.matchQ(g.name);
+      });
+      const body = document.getElementById('plansTree');
+      if (!rows.length) {
+        body.innerHTML = '<tr><td colspan="7" class="px-5 py-10 text-center text-slate-400">暂无计划</td></tr>';
+        return;
+      }
+      const leader = Ledger.isLeader();
+      let html = '';
+      rows.forEach((p, idx) => {
+        const g = Ledger.goalById(p.goalId);
+        const nodes = p.nodes || [];
+        const open = expandedPlanIds.has(p.id);
+        const seq = String(idx + 1);
+        const nodeDelay = nodes.filter(n => Ledger.nodeStatus(n) === '已延期').length;
+        const planSt = planStatusBtn(p, leader);
+
+        const planMenu = moreBtn('more-plan-' + p.id, `
+          <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2" onclick="quickAddNode(${p.id})">
+            <i class="fa-solid fa-sitemap text-slate-400 w-4"></i>新建子节点
+          </button>
+          <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2" onclick="openPlanForm(${p.id})">
+            <i class="fa-solid fa-pen text-slate-400 w-4"></i>编辑计划
+          </button>
+          <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2" onclick="openPlanStatus(${p.id})">
+            <i class="fa-solid fa-flag text-slate-400 w-4"></i>修改状态
+          </button>
+          <button type="button" class="w-full text-left px-3 py-2 hover:bg-teal-50 text-teal-700 flex items-center gap-2" onclick="urgePlan(${p.id})">
+            <i class="fa-solid fa-bell w-4"></i>催办
+          </button>
+          <button type="button" class="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2" onclick="deletePlan(${p.id})">
+            <i class="fa-solid fa-trash w-4"></i>删除计划
+          </button>
+        `, leader);
+
+        const urgeBtn = `<button type="button" class="text-teal-700" onclick="urgePlan(${p.id})">催办</button>`;
+
+        html += `<tr class="border-t row-hover ${open ? 'bg-slate-50/40' : ''}">
+          <td class="px-4 py-3 text-slate-500">${seq}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <button type="button" class="w-6 h-6 shrink-0 text-teal-700" onclick="togglePlan(${p.id})">
+                <i class="fa-solid fa-caret-${open ? 'down' : 'right'}"></i>
+              </button>
+              <button type="button" class="font-medium text-left hover:text-teal-700 truncate" onclick="viewPlan(${p.id})">${esc(p.name)}</button>
+              ${Ledger.urgencyBadge(p.urgency)}
+              ${leader ? '' : `<button type="button" class="w-7 h-7 shrink-0 rounded-lg text-slate-400 hover:bg-slate-100" onclick="openPlanForm(${p.id})" title="编辑"><i class="fa-regular fa-pen-to-square text-xs"></i></button>`}
+              ${planMenu}
+            </div>
+            <div class="text-xs text-slate-400 mt-0.5 pl-7">${esc(g ? g.name : '—')} · ${esc(g ? g.dept : '')} · 节点 ${nodes.length}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-600 whitespace-nowrap">${esc(p.startDate || '—')} ~ ${esc(p.endDate || '—')}</td>
+          <td class="px-4 py-3">${Ledger.pctCell(p.pct)}</td>
+          <td class="px-4 py-3">${planSt}</td>
+          <td class="px-4 py-3 text-slate-600 max-w-[220px]"><span class="line-clamp-2" title="${esc(p.desc || '')}">${esc(p.desc || '—')}</span></td>
+          <td class="px-4 py-3 text-right">
+            <div class="inline-flex flex-wrap gap-2 justify-end">
+              <button type="button" class="text-teal-700" onclick="viewPlan(${p.id})">详情</button>
+              ${urgeBtn}
+            </div>
+          </td>
+        </tr>`;
+
+        if (open) {
+          if (!nodes.length) {
+            html += `<tr class="border-t bg-white"><td></td><td colspan="6" class="px-4 py-3 text-slate-400 text-xs pl-14">暂无子节点${leader ? '' : '，可通过「··· → 新建子节点」添加'}</td></tr>`;
+          }
+          nodes.forEach((n, ni) => {
+            const nodeMenu = moreBtn('more-node-' + p.id + '-' + n.id, `
+              <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2" onclick="openNodeForm(${p.id},${n.id})">
+                <i class="fa-solid fa-pen text-slate-400 w-4"></i>编辑节点
+              </button>
+              <button type="button" class="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2" onclick="openNodeStatus(${p.id},${n.id})">
+                <i class="fa-solid fa-flag text-slate-400 w-4"></i>修改状态
+              </button>
+              <button type="button" class="w-full text-left px-3 py-2 hover:bg-red-50 text-red-600 flex items-center gap-2" onclick="deleteNode(${p.id},${n.id})">
+                <i class="fa-solid fa-trash w-4"></i>删除
+              </button>
+            `, leader);
+            html += `<tr class="border-t row-hover bg-white">
+              <td class="px-4 py-2.5 text-slate-400">${seq}.${ni + 1}</td>
+              <td class="px-4 py-2.5">
+                <div class="flex items-center gap-1.5 pl-6 min-w-0">
+                  <span class="text-slate-300 text-xs">└</span>
+                  <span class="truncate">${esc(n.name)}</span>
+                  ${leader ? '' : `<button type="button" class="w-7 h-7 shrink-0 rounded-lg text-slate-400 hover:bg-slate-100" onclick="openNodeForm(${p.id},${n.id})" title="编辑"><i class="fa-regular fa-pen-to-square text-xs"></i></button>`}
+                  ${nodeMenu}
+                </div>
+                ${Ledger.nodeStatus(n) === '已延期' && n.delayReason ? `<div class="text-xs text-slate-400 pl-12 mt-0.5 truncate" title="${esc(n.delayReason)}">${n.responsibleDelay ? '责任延期 · ' : ''}${esc(n.delayReason)}</div>` : ''}
+              </td>
+              <td class="px-4 py-2.5 text-slate-600 whitespace-nowrap">${esc(n.startDate || '—')} ~ ${esc(n.endDate || n.due || '—')}</td>
+              <td class="px-4 py-2.5 text-slate-400">—</td>
+              <td class="px-4 py-2.5">${statusBtn(p.id, n.id, n, leader)}</td>
+              <td class="px-4 py-2.5 text-slate-400">—</td>
+              <td class="px-4 py-2.5 text-right text-xs text-slate-400">${leader ? '只读' : ''}</td>
+            </tr>`;
+          });
+        }
+      });
+      body.innerHTML = html;
+    }
+    window.renderPage = renderPage;
+
+    function monthRange(month) {
+      const m = String(month || '').match(/^(\d{4})-(\d{2})$/);
+      if (!m) return { start: '', end: '' };
+      const last = new Date(Number(m[1]), Number(m[2]), 0).getDate();
+      return {
+        start: m[1] + '-' + m[2] + '-01',
+        end: m[1] + '-' + m[2] + '-' + String(last).padStart(2, '0')
+      };
+    }
+
+    function onPlanMonthChange() {
+      const range = monthRange(document.getElementById('planMonth').value.trim());
+      if (!range.start) return;
+      document.getElementById('planStartDate').value = range.start;
+      document.getElementById('planEndDate').value = range.end;
+    }
+
+    function fillGoalSelect(preferredGoalId, keepGoalId) {
+      const enabled = new Set(Ledger.enabledDeptNames());
+      let list = Ledger.goals().filter(g => enabled.has(g.dept));
+      if (keepGoalId) {
+        const keep = Ledger.goalById(keepGoalId);
+        if (keep && !list.some(x => x.id === keep.id)) list = [keep].concat(list);
+      }
+      document.getElementById('planGoalId').innerHTML = list.map(g => {
+        const mark = enabled.has(g.dept) ? '' : '（未启用）';
+        return `<option value="${g.id}">【${g.dept}${mark}】${g.name}</option>`;
+      }).join('');
+      if (preferredGoalId) document.getElementById('planGoalId').value = String(preferredGoalId);
+    }
+
+    function openPlanForm(id) {
+      closeAllMenus();
+      if (!id || Number(id) !== detailPlanId) detailPlanId = null;
+      const params = new URLSearchParams(location.search);
+      const prefGoal = params.get('goalId');
+      const p = id ? Ledger.planById(id) : null;
+      if (!id && !Ledger.enabledDeptNames().length) {
+        BMS.toast('暂无启用部门，请先在「使用范围」开启', 'error');
+        return;
+      }
+      fillGoalSelect(prefGoal || (p ? p.goalId : null), p ? p.goalId : null);
+      document.getElementById('planEditId').value = id || '';
+      document.getElementById('planModalTitle').textContent = id ? '编辑计划' : '新建计划';
+      const defaultMonth = p ? p.month : '2026-08';
+      const range = monthRange(defaultMonth);
+      const enabledGoals = Ledger.goals().filter(g => Ledger.isDeptEnabled(g.dept));
+      document.getElementById('planName').value = p ? p.name : '';
+      document.getElementById('planUrgency').value = p && p.urgency ? p.urgency : '';
+      document.getElementById('planGoalId').value = p ? String(p.goalId) : String(prefGoal || enabledGoals[0]?.id || '');
+      document.getElementById('planMonth').value = defaultMonth;
+      document.getElementById('planStartDate').value = p?.startDate || range.start;
+      document.getElementById('planEndDate').value = p?.endDate || range.end;
+      document.getElementById('planDesc').value = p ? p.desc : '';
+      document.getElementById('planPct').value = p ? p.pct : 0;
+      BMS.openModal('modal-plan');
+    }
+
+    function savePlan() {
+      const name = document.getElementById('planName').value.trim();
+      const urgency = document.getElementById('planUrgency').value.trim();
+      const goalId = Number(document.getElementById('planGoalId').value);
+      const month = document.getElementById('planMonth').value.trim();
+      const startDate = document.getElementById('planStartDate').value.trim();
+      const endDate = document.getElementById('planEndDate').value.trim();
+      const desc = document.getElementById('planDesc').value.trim();
+      const pct = Number(document.getElementById('planPct').value);
+      if (!name || !goalId || !month) { BMS.toast('请填写计划名称、目标与月份', 'error'); return; }
+      const goal = Ledger.goalById(goalId);
+      const id = document.getElementById('planEditId').value;
+      if (!id && goal && !Ledger.isDeptEnabled(goal.dept)) {
+        BMS.toast('该目标所属部门未启用，请先在「使用范围」开启', 'error');
+        return;
+      }
+      if (!urgency || !['高', '中', '低'].includes(urgency)) { BMS.toast('请选择紧急程度', 'error'); return; }
+      if (!startDate || !endDate) { BMS.toast('请填写计划开始日期与结束日期', 'error'); return; }
+      if (endDate < startDate) { BMS.toast('计划结束日期不能早于开始日期', 'error'); return; }
+      if (isNaN(pct) || pct < 0 || pct > 100) { BMS.toast('完成%须为 0–100', 'error'); return; }
+      let savedId = id ? Number(id) : null;
+      if (id) {
+        Object.assign(Ledger.planById(id), { name, urgency, goalId, month, startDate, endDate, desc, pct });
+      } else {
+        savedId = Ledger.nextId();
+        Ledger.plans().unshift({
+          id: savedId, name, urgency, goalId, month, startDate, endDate, desc, pct,
+          status: '正常', delayed: false, delayReason: '', responsibleDelay: false, delayLogs: [], nodes: []
+        });
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-plan');
+      BMS.toast('计划已保存');
+      if (savedId) expandedPlanIds.add(savedId);
+      renderPage();
+      if (detailPlanId && savedId === detailPlanId) viewPlan(detailPlanId);
+    }
+
+    function deletePlan(id) {
+      closeAllMenus();
+      if (!confirm('确认删除该计划及其全部子节点？')) return;
+      const list = Ledger.plans();
+      const i = list.findIndex(p => p.id === Number(id));
+      if (i >= 0) list.splice(i, 1);
+      expandedPlanIds.delete(Number(id));
+      Ledger.persist();
+      BMS.toast('计划已删除');
+      renderPage();
+    }
+
+    function quickAddNode(planId) {
+      closeAllMenus();
+      openNodeForm(planId, null);
+    }
+
+    function syncNodeReasonVisible() {
+      document.getElementById('nodeReasonWrap').classList.toggle('hidden', document.getElementById('nodeStatus').value !== '已延期');
+    }
+
+    function openNodeForm(planId, nodeId) {
+      closeAllMenus();
+      const p = Ledger.planById(planId);
+      if (!p) return;
+      const n = nodeId ? (p.nodes || []).find(x => x.id === Number(nodeId)) : null;
+      document.getElementById('nodePlanId').value = planId;
+      document.getElementById('nodeEditId').value = nodeId || '';
+      document.getElementById('nodeModalTitle').textContent = n ? '编辑子节点' : '新建子节点';
+      document.getElementById('nodePlanLabel').textContent = '所属计划：' + p.name;
+      document.getElementById('nodeName').value = n ? n.name : '';
+      document.getElementById('nodeStartDate').value = n ? (n.startDate || '') : (p.startDate || '');
+      document.getElementById('nodeEndDate').value = n ? (n.endDate || n.due || '') : (p.endDate || '');
+      document.getElementById('nodeStatus').value = n ? Ledger.nodeStatus(n) : '进行中';
+      document.getElementById('nodeDelayReason').value = n && Ledger.nodeStatus(n) === '已延期' ? (n.delayReason || '') : '';
+      const resp = n && n.responsibleDelay === true ? 'yes' : (n && Ledger.nodeStatus(n) === '已延期' ? 'no' : '');
+      document.querySelectorAll('input[name="nodeRespDelay"]').forEach(el => { el.checked = el.value === resp; });
+      syncNodeReasonVisible();
+      expandedPlanIds.add(Number(planId));
+      BMS.openModal('modal-node');
+    }
+
+    function saveNode() {
+      const planId = Number(document.getElementById('nodePlanId').value);
+      const nodeId = document.getElementById('nodeEditId').value;
+      const p = Ledger.planById(planId);
+      if (!p) return;
+      const name = document.getElementById('nodeName').value.trim();
+      const startDate = document.getElementById('nodeStartDate').value.trim();
+      const endDate = document.getElementById('nodeEndDate').value.trim();
+      const status = document.getElementById('nodeStatus').value;
+      const delayReason = document.getElementById('nodeDelayReason').value.trim();
+      const respEl = document.querySelector('input[name="nodeRespDelay"]:checked');
+      if (!name || !startDate || !endDate) { BMS.toast('请填写节点名称与起止日期', 'error'); return; }
+      if (endDate < startDate) { BMS.toast('节点结束日期不能早于开始日期', 'error'); return; }
+      if (p.startDate && startDate < p.startDate) { BMS.toast('节点开始日期不能早于计划开始日期', 'error'); return; }
+      if (p.endDate && endDate > p.endDate) { BMS.toast('节点结束日期不能晚于计划结束日期', 'error'); return; }
+      if (status === '已延期') {
+        if (!respEl) { BMS.toast('请选择是否责任延期', 'error'); return; }
+        if (!delayReason) { BMS.toast('已延期须填写原因', 'error'); return; }
+      }
+      if (!p.nodes) p.nodes = [];
+      const payload = {
+        name, startDate, endDate, status,
+        delayReason: status === '已延期' ? delayReason : '',
+        delayed: status === '已延期',
+        responsibleDelay: status === '已延期' ? respEl.value === 'yes' : false
+      };
+      if (nodeId) {
+        const n = p.nodes.find(x => x.id === Number(nodeId));
+        if (!n) { BMS.toast('节点不存在', 'error'); return; }
+        const prevStatus = Ledger.nodeStatus(n);
+        const prevEnd = n.endDate || n.due || '';
+        Object.assign(n, payload);
+        if (status === '已延期' && prevStatus !== '已延期') {
+          Ledger.pushDelayLog(n, {
+            action: '标注延期',
+            fromEnd: prevEnd,
+            toEnd: endDate,
+            reason: delayReason,
+            responsibleDelay: respEl.value === 'yes'
+          });
+        } else if (status === '已延期' && (prevEnd !== endDate || n.delayReason !== delayReason)) {
+          Ledger.pushDelayLog(n, {
+            action: '更新延期',
+            fromEnd: prevEnd,
+            toEnd: endDate,
+            reason: delayReason,
+            responsibleDelay: respEl.value === 'yes'
+          });
+        } else if (status !== '已延期' && prevStatus === '已延期') {
+          Ledger.pushDelayLog(n, { action: '取消延期', reason: '状态改为' + status, responsibleDelay: false, fromEnd: prevEnd, toEnd: endDate });
+        }
+      } else {
+        const row = { id: Ledger.nextId(), ...payload, delayLogs: [] };
+        if (status === '已延期') {
+          Ledger.pushDelayLog(row, {
+            action: '标注延期',
+            fromEnd: '',
+            toEnd: endDate,
+            reason: delayReason,
+            responsibleDelay: respEl.value === 'yes'
+          });
+        }
+        p.nodes.push(row);
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-node');
+      BMS.toast('子节点已保存');
+      expandedPlanIds.add(planId);
+      renderPage();
+    }
+
+    function deleteNode(planId, nodeId) {
+      closeAllMenus();
+      if (!confirm('确认删除该子节点？')) return;
+      const p = Ledger.planById(planId);
+      if (!p || !p.nodes) return;
+      p.nodes = p.nodes.filter(x => x.id !== Number(nodeId));
+      Ledger.persist();
+      BMS.toast('节点已删除');
+      expandedPlanIds.add(Number(planId));
+      renderPage();
+    }
+
+    function syncNsDelayFields() {
+      const on = document.getElementById('nsStatus').value === '已延期';
+      document.getElementById('nsDelayWrap').classList.toggle('hidden', !on);
+    }
+
+    function openNodeStatus(planId, nodeId) {
+      closeAllMenus();
+      const p = Ledger.planById(planId);
+      const n = (p?.nodes || []).find(x => x.id === Number(nodeId));
+      if (!n) return;
+      document.getElementById('nsPlanId').value = planId;
+      document.getElementById('nsNodeId').value = nodeId;
+      document.getElementById('nsLabel').textContent = '节点：' + n.name;
+      document.getElementById('nsStatus').value = Ledger.nodeStatus(n);
+      document.getElementById('nsReason').value = n.delayReason || '';
+      document.getElementById('nsNewEnd').value = n.endDate || n.due || '';
+      document.getElementById('nsEndHint').textContent = '当前结束：' + (n.endDate || n.due || '—') + '；延期后须不早于当前结束日，且不晚于计划结束日 ' + (p.endDate || '—');
+      const resp = n.responsibleDelay === true ? 'yes' : (Ledger.nodeStatus(n) === '已延期' ? 'no' : '');
+      document.querySelectorAll('input[name="nsRespDelay"]').forEach(el => { el.checked = el.value === resp; });
+      syncNsDelayFields();
+      BMS.openModal('modal-node-status');
+    }
+
+    function saveNodeStatus() {
+      const planId = Number(document.getElementById('nsPlanId').value);
+      const nodeId = Number(document.getElementById('nsNodeId').value);
+      const status = document.getElementById('nsStatus').value;
+      const reason = document.getElementById('nsReason').value.trim();
+      const newEnd = document.getElementById('nsNewEnd').value.trim();
+      const respEl = document.querySelector('input[name="nsRespDelay"]:checked');
+      const p = Ledger.planById(planId);
+      const n = (p?.nodes || []).find(x => x.id === nodeId);
+      if (!n) return;
+      const prevStatus = Ledger.nodeStatus(n);
+      const prevEnd = n.endDate || n.due || '';
+      if (status === '已延期') {
+        if (!respEl) { BMS.toast('请选择是否责任延期', 'error'); return; }
+        if (!reason) { BMS.toast('已延期须填写原因', 'error'); return; }
+        if (!newEnd) { BMS.toast('请设置新的结束日期', 'error'); return; }
+        const oldEnd = n.endDate || n.due || '';
+        if (oldEnd && newEnd < oldEnd) { BMS.toast('新的结束日期不能早于原结束日期', 'error'); return; }
+        if (n.startDate && newEnd < n.startDate) { BMS.toast('新的结束日期不能早于节点开始日期', 'error'); return; }
+        if (p.endDate && newEnd > p.endDate) { BMS.toast('节点结束日期不能晚于计划结束日期', 'error'); return; }
+        n.status = '已延期';
+        n.delayed = true;
+        n.delayReason = reason;
+        n.responsibleDelay = respEl.value === 'yes';
+        n.endDate = newEnd;
+        Ledger.pushDelayLog(n, {
+          action: prevStatus === '已延期' ? '更新延期' : '标注延期',
+          fromEnd: prevEnd,
+          toEnd: newEnd,
+          reason,
+          responsibleDelay: respEl.value === 'yes'
+        });
+      } else {
+        n.status = status;
+        n.delayed = false;
+        n.delayReason = '';
+        n.responsibleDelay = false;
+        if (prevStatus === '已延期') {
+          Ledger.pushDelayLog(n, { action: '取消延期', reason: '状态改为' + status, responsibleDelay: false, fromEnd: prevEnd, toEnd: prevEnd });
+        }
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-node-status');
+      BMS.toast('状态已更新');
+      expandedPlanIds.add(planId);
+      renderPage();
+      if (detailPlanId === planId) viewPlan(planId);
+    }
+
+    function syncPsDelayFields() {
+      const on = document.getElementById('psStatus').value === '已延期';
+      document.getElementById('psDelayWrap').classList.toggle('hidden', !on);
+    }
+
+    function openPlanStatus(id) {
+      closeAllMenus();
+      const p = Ledger.planById(id);
+      if (!p) return;
+      document.getElementById('psPlanId').value = id;
+      document.getElementById('psLabel').textContent = '计划：' + p.name;
+      document.getElementById('psStatus').value = Ledger.planStatus(p);
+      document.getElementById('psReason').value = p.delayReason || '';
+      document.getElementById('psNewEnd').value = p.endDate || '';
+      document.getElementById('psEndHint').textContent = '当前结束：' + (p.endDate || '—') + '；延期后须不早于当前结束日，且不早于开始日 ' + (p.startDate || '—');
+      const resp = p.responsibleDelay === true ? 'yes' : (Ledger.planStatus(p) === '已延期' ? 'no' : '');
+      document.querySelectorAll('input[name="psRespDelay"]').forEach(el => { el.checked = el.value === resp; });
+      syncPsDelayFields();
+      BMS.openModal('modal-plan-status');
+    }
+
+    function savePlanStatus() {
+      const id = Number(document.getElementById('psPlanId').value);
+      const p = Ledger.planById(id);
+      if (!p) return;
+      const status = document.getElementById('psStatus').value;
+      const reason = document.getElementById('psReason').value.trim();
+      const newEnd = document.getElementById('psNewEnd').value.trim();
+      const respEl = document.querySelector('input[name="psRespDelay"]:checked');
+      const prevStatus = Ledger.planStatus(p);
+      const prevEnd = p.endDate || '';
+      if (status === '已延期') {
+        if (!respEl) { BMS.toast('请选择是否责任延期', 'error'); return; }
+        if (!reason) { BMS.toast('已延期须填写原因', 'error'); return; }
+        if (!newEnd) { BMS.toast('请设置新的结束日期', 'error'); return; }
+        if (p.endDate && newEnd < p.endDate) { BMS.toast('新的结束日期不能早于原结束日期', 'error'); return; }
+        if (p.startDate && newEnd < p.startDate) { BMS.toast('新的结束日期不能早于开始日期', 'error'); return; }
+        p.status = '已延期';
+        p.delayed = true;
+        p.delayReason = reason;
+        p.responsibleDelay = respEl.value === 'yes';
+        p.endDate = newEnd;
+        Ledger.pushDelayLog(p, {
+          action: prevStatus === '已延期' ? '更新延期' : '标注延期',
+          fromEnd: prevEnd,
+          toEnd: newEnd,
+          reason,
+          responsibleDelay: respEl.value === 'yes'
+        });
+      } else {
+        p.status = status;
+        p.delayed = false;
+        p.delayReason = '';
+        p.responsibleDelay = false;
+        if (status === '已完成' && Number(p.pct) < 100) p.pct = 100;
+        if (prevStatus === '已延期') {
+          Ledger.pushDelayLog(p, { action: '取消延期', reason: '状态改为' + status, responsibleDelay: false, fromEnd: prevEnd, toEnd: prevEnd });
+        }
+      }
+      Ledger.persist();
+      BMS.closeModal('modal-plan-status');
+      BMS.toast('计划状态已更新');
+      renderPage();
+      if (detailPlanId === id) viewPlan(id);
+    }
+
+    function openDelay(id) {
+      openPlanStatus(id);
+    }
+
+    function saveDelay() {
+      /* 兼容旧入口，已并入 savePlanStatus */
+    }
+
+    function editFromDetail() {
+      if (!detailPlanId) return;
+      BMS.closeModal('modal-detail');
+      openPlanForm(detailPlanId);
+    }
+
+    function delayFromDetail() {
+      if (!detailPlanId) return;
+      openPlanStatus(detailPlanId);
+    }
+
+    function urgePlan(id) {
+      closeAllMenus();
+      const r = Ledger.urgePlan(id);
+      if (r.ok) BMS.toast('已发送企微催办');
+      else BMS.toast(r.reason || '催办失败', 'warn');
+    }
+
+    function urgeFromDetail() {
+      if (!detailPlanId) return;
+      urgePlan(detailPlanId);
+    }
+
+    function viewPlan(id) {
+      const p = Ledger.planById(id);
+      if (!p) { BMS.toast('未找到该计划', 'error'); return; }
+      detailPlanId = Number(id);
+      const g = Ledger.goalById(p.goalId);
+      const weeks = Ledger.weeksByPlan(p.id);
+      const nodes = p.nodes || [];
+      const nodeDelay = nodes.filter(n => Ledger.nodeStatus(n) === '已延期').length;
+      const nodeDone = nodes.filter(n => Ledger.nodeStatus(n) === '已完成').length;
+      const leader = Ledger.isLeader();
+      const st = Ledger.planStatus(p);
+
+      document.getElementById('detailTitle').textContent = p.name;
+      document.getElementById('detailStatusBadge').innerHTML =
+        Ledger.urgencyBadge(p.urgency) + Ledger.planStatusBadge(p);
+      document.getElementById('detailMeta').textContent =
+        (g ? '目标：' + g.name + ' · ' + g.dept : '目标：—') + ' · ' + p.month +
+        ' · ' + (p.startDate || '—') + ' ~ ' + (p.endDate || '—') +
+        (st === '已延期' ? (' · ' + (p.responsibleDelay ? '责任延期' : '非责任延期') + (p.delayReason ? ' · ' + p.delayReason : '')) : '');
+      document.getElementById('detailIntro').textContent = p.desc || '暂无说明';
+      document.getElementById('detailStats').innerHTML = `
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">紧急程度</div><div class="mt-1">${Ledger.urgencyBadge(p.urgency)}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">计划完成%</div><div class="mt-1 font-medium">${p.pct}%</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">计划节点</div><div class="mt-1 font-medium">${nodes.length}${nodeDone ? ' · 完成 ' + nodeDone : ''}${nodeDelay ? ' · 延期 ' + nodeDelay : ''}</div></div>
+        <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">关联任务</div><div class="mt-1 font-medium">${weeks.length}</div></div>`;
+      document.getElementById('detailEditBtn').classList.toggle('hidden', leader);
+      document.getElementById('detailDelayBtn').classList.toggle('hidden', leader);
+      document.getElementById('detailGoalLink').href = g ? ('年度目标_page.html?open=detail&id=' + g.id) : '年度目标_page.html';
+      document.getElementById('detailNodesBody').innerHTML = nodes.length ? nodes.map(n => `
+        <tr class="border-t row-hover">
+          <td class="px-4 py-2.5 font-medium">${esc(n.name)}</td>
+          <td class="px-4 py-2.5">${esc(n.startDate || '—')} ~ ${esc(n.endDate || n.due || '—')}</td>
+          <td class="px-4 py-2.5">${Ledger.nodeStatusBadge(n)}</td>
+          <td class="px-4 py-2.5 text-slate-600">${Ledger.nodeStatus(n) === '已延期' ? ((n.responsibleDelay ? '责任延期 · ' : '') + esc(n.delayReason || '—')) : '—'}</td>
+        </tr>`).join('') : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">未拆节点</td></tr>';
+      document.getElementById('detailDelayLogsBody').innerHTML = Ledger.delayLogRowsHtml(Ledger.collectPlanDelayLogs(p), true);
+      document.getElementById('detailWeeksBody').innerHTML = weeks.length ? weeks.map(w => `
+        <tr class="border-t row-hover">
+          <td class="px-4 py-2.5 font-medium"><span class="inline-flex items-center gap-1.5">${esc(w.week)} ${Ledger.urgencyBadge(w.urgency)}</span></td>
+          <td class="px-4 py-2.5">${esc(w.dept)}</td>
+          <td class="px-4 py-2.5 text-slate-600 truncate max-w-[200px]">${esc(w.done || '—')}</td>
+          <td class="px-4 py-2.5 text-slate-600 truncate max-w-[200px]">${esc(w.next || '—')}</td>
+          <td class="px-4 py-2.5"><a class="text-teal-700" href="周工作任务_page.html?open=detail&id=${w.id}">详情</a></td>
+        </tr>`).join('') : '<tr><td colspan="5" class="px-4 py-8 text-center text-slate-400">暂无关联任务</td></tr>';
+      BMS.openModal('modal-detail');
+    }
+
+    function init() {
+      renderPage();
+      const params = new URLSearchParams(location.search);
+      if (params.get('open') === 'detail') {
+        const id = Number(params.get('id'));
+        if (id) setTimeout(() => viewPlan(id), 80);
+      } else if (params.get('open') === 'create' || params.get('goalId')) {
+        if (!Ledger.isLeader()) setTimeout(() => openPlanForm(null), 80);
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  </script>
+</body>
+</html>
