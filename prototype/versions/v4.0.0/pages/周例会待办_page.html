@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>周例会待办 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="meeting" data-title="周例会待办">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap justify-between gap-3 mb-4">
+      <p class="text-xs text-slate-500">周例会产生的跨部门待办，已纳入落实驾驶舱统一催办闭环（与任务催办同一套流程）。</p>
+      <a id="linkCockpit" href="落实驾驶舱_page.html" class="text-sm text-teal-700 hover:underline hidden">落实驾驶舱</a>
+    </div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500"><tr>
+        <th class="px-4 py-3 text-left">待办</th><th class="px-4 py-3 text-left">责任人</th>
+        <th class="px-4 py-3 text-left">配合人</th><th class="px-4 py-3 text-left">周次</th>
+        <th class="px-4 py-3 text-left">状态</th><th class="px-4 py-3 text-left">操作</th>
+      </tr></thead><tbody id="tbody"></tbody></table>
+    </div>
+
+    <div id="modalUrge" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalUrge')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <h3 class="text-lg font-semibold">发起催办</h3>
+        <input type="hidden" id="uTarget" />
+        <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
+          <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalUrge')" class="text-slate-500 px-3">取消</button>
+          <button type="button" id="btnUrgeSave" class="btn-cta text-white px-4 py-2 rounded-xl">确认催办</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  const u = BMS4.getRoleUser();
+  const isGm = u.role === '总经理';
+  if (isGm) document.getElementById('linkCockpit').classList.remove('hidden');
+  let list = BMS4.meetingTodos;
+  if (!isGm) list = list.filter(m => m.ownerId===u.id || (m.helper&&m.helper.includes(u.name)));
+  document.getElementById('tbody').innerHTML = list.map(m => {
+    const ou = BMS4.userById(m.ownerId);
+    const act = isGm && m.status !== '已完成' && m.ownerId
+      ? `<button type="button" class="text-teal-700 text-sm hover:underline" data-uid="${m.ownerId}" data-title="${(m.title||'').replace(/"/g,'&quot;')}">催办</button>`
+      : '—';
+    return `<tr class="border-t row-hover"><td class="px-4 py-3">${m.title}</td><td class="px-4 py-3">${ou?ou.name:''}</td>
+      <td class="px-4 py-3">${m.helper||'—'}</td><td class="px-4 py-3">${m.week}</td>
+      <td class="px-4 py-3">${BMSUI.statusBadge(m.status)}</td><td class="px-4 py-3">${act}</td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">暂无例会待办</td></tr>';
+
+  document.querySelectorAll('[data-uid]').forEach(btn => {
+    btn.onclick = () => {
+      document.getElementById('uTarget').value = btn.getAttribute('data-uid');
+      document.getElementById('uTitle').value = '催办（例会）：' + btn.getAttribute('data-title');
+      document.getElementById('uExpect').value = '2026-08-21';
+      BMSUI.openModal('modalUrge');
+    };
+  });
+  document.getElementById('btnUrgeSave').onclick = () => {
+    const r = BMS4.createUrge({
+      targetUserId: document.getElementById('uTarget').value,
+      title: document.getElementById('uTitle').value.trim(),
+      expectReplyDate: document.getElementById('uExpect').value,
+      exceptionType: '例会待办',
+    });
+    if (!r.ok) return BMSUI.toast(r.reason, false);
+    BMSUI.closeModal('modalUrge');
+    BMSUI.toast('已催办');
+  };
+});
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>部门计划表 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .tag { display: inline-flex; padding: 1px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #e8eaed; background: #f1f3f4; color: #5f6368; }
+    .caret-btn { color: #0f766e; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; padding: 0; cursor: pointer; }
+    .row-hot td { background: #fff8f7; }
+    .col-name { min-width: 22rem; max-width: 30rem; position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 4px 0 8px -4px rgba(15,23,42,0.1); }
+    thead .col-name { background: #f5f6f8; z-index: 3; }
+    .row-hot .col-name { background: #fff8f7; }
+    tr[data-cp-row] .col-name { background: #f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="deptPlans" data-title="部门计划表">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
+      <p class="text-xs text-slate-500 max-w-3xl">经营主表②：总经理只读<strong>计划树</strong>（公司目标 → 一级部门计划，更深默认收起）。部门问责请用「绩效考核」；日常催办回「落实驾驶舱」。维护请走「计划管理」。</p>
+      <div class="flex flex-wrap gap-2 text-sm">
+        <a href="经营总台账_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">公司计划表</a>
+        <a href="整体计划_任务监督_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">整体任务表</a>
+        <a href="绩效考核_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">绩效考核</a>
+        <a href="计划管理_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">计划管理（编辑）</a>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 items-center mb-4 text-sm">
+      <select id="fCp" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white"></select>
+      <select id="fDept" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white"></select>
+      <label class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-slate-200 bg-white cursor-pointer">
+        <input type="checkbox" id="onlyProblem" class="rounded" /> 仅问题节点
+      </label>
+      <input type="search" id="kw" placeholder="搜索计划名称" class="border border-slate-200 rounded-xl px-3 py-1.5 w-52" />
+      <button type="button" id="btnCollapse" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white">收起至一级</button>
+      <button type="button" id="btnExpand" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white">全部展开</button>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="kpi"></div>
+
+    <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1100px]">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th class="col-name">公司目标 / 计划名称</th>
+            <th>优先级</th>
+            <th>负责人</th>
+            <th>配合人员</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+            <th>完成进度</th>
+            <th>状态</th>
+            <th>关联任务</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  let collapsed = new Set();
+  let cpFilter = "";
+  let deptFilter = "";
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function statusTag(st) {
+    const map = {
+      未开始: "background:#f1f3f4;color:#5f6368",
+      进行中: "background:#e8f0fe;color:#1a73e8",
+      关注: "background:#fef7e0;color:#e37400",
+      延期: "background:#fce8e6;color:#c5221f",
+      已完成: "background:#e6f4ea;color:#137333",
+    };
+    return `<span class="tag" style="${map[st] || ""}">${st}</span>`;
+  }
+  function prioTag(p) {
+    const map = { P0: "background:#fce8e6;color:#c5221f", P1: "background:#fef7e0;color:#e37400", P2: "background:#f1f3f4;color:#5f6368" };
+    return `<span class="tag" style="${map[p] || map.P2}">${p || "P2"}</span>`;
+  }
+  function isProblemPlan(p) {
+    const st = BMS4.resolvePlanStatus ? BMS4.resolvePlanStatus(p) : p.status;
+    if (st === "延期" || st === "关注") return true;
+    if (BMS4.isPlanNearDue && BMS4.isPlanNearDue(p)) return true;
+    const under = BMS4.taskItems.filter((t) => t.annualId === p.id);
+    return under.some((t) => BMS4.isTaskOverdue(t));
+  }
+  function deptHead(dept) {
+    return BMS4.USERS.find((u) => u.dept === dept && u.role === "部门长");
+  }
+  function cpKey(cpId) {
+    return "cp:" + cpId;
+  }
+
+  /** 默认：公司目标展开，一级部门计划可见，更深层级收起 */
+  function collapseToLevel1() {
+    collapsed.clear();
+    BMS4.PLAN_ITEMS.forEach((p) => {
+      const kids = BMS4.PLAN_ITEMS.filter((c) => c.parentId === p.id);
+      if (kids.length) collapsed.add(p.id);
+    });
+  }
+
+  function visiblePool() {
+    let list = BMS4.PLAN_ITEMS.slice();
+    if (cpFilter) list = list.filter((p) => p.companyPlanId === cpFilter);
+    if (deptFilter) list = list.filter((p) => p.dept === deptFilter);
+    const onlyProblem = document.getElementById("onlyProblem").checked;
+    const kw = (document.getElementById("kw").value || "").trim();
+    let hit = new Set(list.map((p) => p.id));
+    if (onlyProblem) hit = new Set(list.filter(isProblemPlan).map((p) => p.id));
+    if (kw) hit = new Set(list.filter((p) => hit.has(p.id) && (p.name || "").includes(kw)).map((p) => p.id));
+    if (onlyProblem || kw) {
+      [...hit].forEach((id) => {
+        let cur = BMS4.planById(id);
+        while (cur && cur.parentId) {
+          hit.add(cur.parentId);
+          cur = BMS4.planById(cur.parentId);
+        }
+      });
+      return list.filter((p) => hit.has(p.id));
+    }
+    return list;
+  }
+
+  function buildRows(pool) {
+    const idSet = new Set(pool.map((p) => p.id));
+    const rows = [];
+    let cps = BMS4.COMPANY_PLANS.slice();
+    if (cpFilter) cps = cps.filter((c) => c.id === cpFilter);
+    cps = cps.filter((cp) => pool.some((p) => p.companyPlanId === cp.id));
+
+    function walk(p, depth, path) {
+      const kids = pool.filter((c) => c.parentId === p.id);
+      const hasKids = kids.length > 0;
+      const isCol = collapsed.has(p.id);
+      rows.push({ kind: "plan", p, depth, path, hasKids, isCol });
+      if (hasKids && !isCol) kids.forEach((c, i) => walk(c, depth + 1, path + "." + (i + 1)));
+    }
+
+    cps.forEach((cp, ci) => {
+      const roots = pool.filter((p) => p.companyPlanId === cp.id && (!p.parentId || !idSet.has(p.parentId)));
+      const key = cpKey(cp.id);
+      const isCol = collapsed.has(key);
+      rows.push({
+        kind: "company",
+        company: cp,
+        depth: 0,
+        path: String(ci + 1),
+        hasKids: roots.length > 0,
+        isCol,
+      });
+      if (!isCol) roots.forEach((r, i) => walk(r, 1, String(ci + 1) + "." + (i + 1)));
+    });
+    return rows;
+  }
+
+  function render() {
+    const pool = visiblePool();
+    const rows = buildRows(pool);
+    const problems = pool.filter(isProblemPlan).length;
+    const lateTasks = BMS4.taskItems.filter((t) => {
+      const pl = BMS4.planById(t.annualId);
+      if (!pl) return false;
+      if (cpFilter && pl.companyPlanId !== cpFilter) return false;
+      if (deptFilter && pl.dept !== deptFilter) return false;
+      return BMS4.isTaskOverdue(t);
+    }).length;
+    document.getElementById("kpi").innerHTML = [
+      ["计划节点", pool.length],
+      ["问题节点", problems],
+      ["延期任务", lateTasks],
+      ["部门数", new Set(pool.map((p) => p.dept)).size],
+    ]
+      .map(([k, v]) => {
+        const hot = (k === "问题节点" || k === "延期任务") && Number(v) > 0;
+        return `<div class="bg-white rounded-2xl border p-4"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1 ${hot ? "text-rose-600" : ""}">${v}</div></div>`;
+      })
+      .join("");
+
+    document.getElementById("tbody").innerHTML = rows.length
+      ? rows
+          .map((row) => {
+            if (row.kind === "company") {
+              const cp = row.company;
+              const caret = row.hasKids
+                ? `<button type="button" class="caret-btn" data-toggle="${cpKey(cp.id)}"><i class="fa-solid fa-caret-${row.isCol ? "right" : "down"}"></i></button>`
+                : `<span style="display:inline-block;width:16px"></span>`;
+              return `<tr data-cp-row class="bg-slate-50/80">
+                <td class="text-slate-400 text-xs">${row.path}</td>
+                <td class="col-name">
+                  <div class="flex items-center gap-1">
+                    ${caret}
+                    <div>
+                      <span class="tag" style="background:#e8f0fe;color:#1a73e8;border-color:#c6dafc">公司目标</span>
+                      <span class="font-semibold text-slate-800 ml-1 leading-snug">${escapeHtml(cp.name)}</span>
+                    </div>
+                  </div>
+                </td>
+                <td>${prioTag(cp.priority)}</td>
+                <td>${escapeHtml(cp.owner || "—")}</td>
+                <td class="text-slate-400">—</td>
+                <td class="text-slate-400">${escapeHtml(cp.startDate || "—")}</td>
+                <td class="text-slate-400">${escapeHtml(cp.endDate || "—")}</td>
+                <td class="text-slate-400">${BMS4.clampPct ? BMS4.clampPct(cp.progressPct) : 0}%</td>
+                <td>${statusTag(cp.status)}</td>
+                <td class="text-slate-400">—</td>
+              </tr>`;
+            }
+            const { p, depth, path, hasKids, isCol } = row;
+            const tasks = BMS4.taskItems.filter((t) => t.annualId === p.id);
+            const done = tasks.filter((t) => t.status === "已完成" || t.status === "已关闭").length;
+            const hot = isProblemPlan(p);
+            const head = deptHead(p.dept);
+            const owner = BMS4.userById(p.ownerId) || head;
+            const helpers = (p.helperIds || [])
+              .map((id) => {
+                const u = BMS4.userById(id);
+                return u ? u.name : "";
+              })
+              .filter(Boolean);
+            const pct = BMS4.clampPct ? BMS4.clampPct(p.progressPct) : Number(p.progressPct) || 0;
+            const st = BMS4.resolvePlanStatus ? BMS4.resolvePlanStatus(p) : p.status;
+            const pad = depth * 18;
+            const caret = hasKids
+              ? `<button type="button" class="caret-btn" data-toggle="${p.id}"><i class="fa-solid fa-caret-${isCol ? "right" : "down"}"></i></button>`
+              : `<span style="display:inline-block;width:16px"></span>`;
+            return `<tr class="${hot ? "row-hot" : ""}">
+              <td class="text-slate-400 text-xs">${path}</td>
+              <td class="col-name">
+                <div style="padding-left:${pad}px" class="flex items-center gap-1">
+                  ${caret}
+                  <div>
+                    <span class="font-medium leading-snug ${hot ? "text-rose-700" : "text-slate-800"}">${escapeHtml(p.name)}${
+              hot ? '<span class="ml-1 text-[10px] text-rose-500">问题</span>' : ""
+            }</span>
+                    <div class="text-[11px] text-slate-400">${escapeHtml(p.dept)}</div>
+                  </div>
+                </div>
+              </td>
+              <td>${prioTag(p.priority)}</td>
+              <td class="whitespace-nowrap">${owner ? escapeHtml(owner.name) : "—"}</td>
+              <td class="max-w-[7rem] truncate" title="${escapeHtml(helpers.join("、"))}">${helpers.length ? escapeHtml(helpers.slice(0, 2).join("、") + (helpers.length > 2 ? "…" : "")) : "—"}</td>
+              <td class="text-xs text-slate-600 whitespace-nowrap">${escapeHtml(p.startDate || "—")}</td>
+              <td class="text-xs text-slate-600 whitespace-nowrap">${escapeHtml(p.endDate || "—")}</td>
+              <td><span class="font-medium">${pct}%</span></td>
+              <td>${statusTag(st)}</td>
+              <td>${done}/${tasks.length}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="10" class="text-center text-slate-400 py-10">无匹配的部门计划</td></tr>`;
+
+    document.querySelectorAll("[data-toggle]").forEach((btn) => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-toggle");
+        if (collapsed.has(id)) collapsed.delete(id);
+        else collapsed.add(id);
+        render();
+      };
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (BMS4.getRoleUser().role !== "总经理") {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页为总经理只读主表。部门长请使用「计划管理」维护本部门计划树。</div>';
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    cpFilter = params.get("cp") || "";
+    deptFilter = params.get("dept") || "";
+
+    const fCp = document.getElementById("fCp");
+    fCp.innerHTML =
+      '<option value="">全部公司计划</option>' +
+      BMS4.COMPANY_PLANS.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+    fCp.value = cpFilter;
+    fCp.onchange = () => {
+      cpFilter = fCp.value;
+      render();
+    };
+
+    const fDept = document.getElementById("fDept");
+    fDept.innerHTML =
+      '<option value="">全部部门</option>' + BMS4.DEPTS.map((d) => `<option value="${d}">${d}</option>`).join("");
+    fDept.value = deptFilter;
+    fDept.onchange = () => {
+      deptFilter = fDept.value;
+      render();
+    };
+
+    document.getElementById("onlyProblem").onchange = render;
+    document.getElementById("kw").addEventListener("input", render);
+    document.getElementById("btnCollapse").onclick = () => {
+      collapseToLevel1();
+      render();
+    };
+    document.getElementById("btnExpand").onclick = () => {
+      collapsed.clear();
+      render();
+    };
+
+    collapseToLevel1();
+    render();
+  });
+})();
+  </script>
+</body>
+</html>

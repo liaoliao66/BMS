@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>我的待办 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .cal-cell { min-height: 6.5rem; }
+    .cal-chip { font-size: 11px; line-height: 1.25; }
+    .view-tab-active { background:#0f766e; color:#fff; }
+    .view-tab { border: 1px solid #e2e8f0; }
+    .seg-on { background:#0f766e; color:#fff; }
+    .seg-off { background:#fff; color:#64748b; }
+    .mod-item { width:100%; text-align:left; border:none; background:transparent; border-radius:12px; padding:10px 12px; cursor:pointer; display:flex; align-items:center; gap:10px; color:#475569; font-size:13px; }
+    .mod-item:hover { background:#f1f5f9; }
+    .mod-item.on { background:#ecfdf5; color:#0f766e; font-weight:600; }
+    .mod-badge { margin-left:auto; min-width:1.25rem; height:1.25rem; padding:0 6px; border-radius:999px; background:#e2e8f0; color:#64748b; font-size:11px; display:inline-flex; align-items:center; justify-content:center; }
+    .mod-item.on .mod-badge { background:#0f766e; color:#fff; }
+    .mod-badge.warn { background:#fce8e6; color:#c5221f; }
+    .mod-item.on .mod-badge.warn { background:#c5221f; color:#fff; }
+    .tag-p0 { display:inline-flex;padding:1px 6px;border-radius:4px;font-size:11px;background:#fce8e6;color:#c5221f;border:1px solid #f5c6c4; }
+    .tag-p1 { display:inline-flex;padding:1px 6px;border-radius:4px;font-size:11px;background:#fef7e0;color:#e37400;border:1px solid #fde293; }
+    .tag-p2 { display:inline-flex;padding:1px 6px;border-radius:4px;font-size:11px;background:#f1f3f4;color:#5f6368;border:1px solid #e8eaed; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="todo" data-title="我的待办">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+      <p class="text-xs text-slate-500 max-w-2xl">按业务模块处理待办；左侧切换模块，顶部看紧急总览。保留「全部」汇总与全局日历。临期=3天。</p>
+      <div class="inline-flex rounded-xl overflow-hidden text-sm shrink-0">
+        <button type="button" id="tabList" class="view-tab view-tab-active px-4 py-2">模块列表</button>
+        <button type="button" id="tabCal" class="view-tab px-4 py-2 bg-white text-slate-600">全局日历</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4" id="kpi"></div>
+
+    <div id="viewList" class="flex flex-col lg:flex-row gap-4 items-start">
+      <aside class="w-full lg:w-56 shrink-0 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] p-2">
+        <div class="px-3 py-2 text-[11px] font-medium text-slate-400 uppercase tracking-wide">业务模块</div>
+        <nav id="modNav" class="space-y-0.5"></nav>
+      </aside>
+
+      <div class="flex-1 min-w-0 w-full space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 id="modTitle" class="text-base font-semibold text-slate-800">全部</h2>
+            <p id="modHint" class="text-xs text-slate-400 mt-0.5">跨模块未完成汇总</p>
+          </div>
+          <div id="bucketBar" class="inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm">
+            <button type="button" data-bucket="全部" class="seg-on px-3 py-1.5">全部</button>
+            <button type="button" data-bucket="逾期" class="seg-off px-3 py-1.5">逾期</button>
+            <button type="button" data-bucket="今日" class="seg-off px-3 py-1.5">今日</button>
+            <button type="button" data-bucket="临期" class="seg-off px-3 py-1.5">临期</button>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden border border-slate-100">
+          <div class="overflow-auto">
+            <table class="w-full text-sm min-w-[880px]">
+              <thead class="bg-slate-50 text-slate-500" id="thead"></thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+          <div class="px-4 py-3 border-b text-sm font-medium text-slate-800">近 7 日已办</div>
+          <div id="doneList" class="px-4 py-2 text-sm text-slate-500">暂无</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="viewCal" class="hidden">
+      <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden">
+        <div class="px-4 py-3 border-b flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <button type="button" id="prevMonth" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-chevron-left"></i></button>
+            <div id="calTitle" class="text-sm font-semibold text-slate-900 min-w-[7rem] text-center"></div>
+            <button type="button" id="nextMonth" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50"><i class="fa-solid fa-chevron-right"></i></button>
+            <button type="button" id="btnToday" class="ml-1 text-xs px-3 py-1.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">回到演示月</button>
+          </div>
+          <div class="text-[11px] text-slate-400">全局日历：跨模块待办按截止日排布，点击可查看并跳转模块</div>
+        </div>
+        <div class="grid grid-cols-7 border-b bg-slate-50 text-xs text-slate-500">
+          <div class="px-2 py-2 text-center">一</div><div class="px-2 py-2 text-center">二</div><div class="px-2 py-2 text-center">三</div>
+          <div class="px-2 py-2 text-center">四</div><div class="px-2 py-2 text-center">五</div><div class="px-2 py-2 text-center">六</div>
+          <div class="px-2 py-2 text-center">日</div>
+        </div>
+        <div id="calGrid" class="grid grid-cols-7"></div>
+      </div>
+      <div class="mt-4 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_12px_rgba(0,0,0,0.04)] p-4">
+        <div class="text-sm font-medium text-slate-900 mb-2" id="dayTitle">点击日期查看当日待办</div>
+        <div id="dayList" class="text-sm text-slate-500">尚未选择日期</div>
+      </div>
+    </div>
+
+    <div id="modalReply" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalReply')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <h3 class="text-lg font-semibold">回复催办</h3>
+        <input type="hidden" id="replyUrgeId" />
+        <p id="replyTitle" class="text-slate-600 text-sm"></p>
+        <div><label class="block text-slate-600 mb-1">原因 <span class="text-red-500">*</span></label>
+          <textarea id="replyReason" class="w-full border rounded-xl px-3 py-2.5 h-16"></textarea></div>
+        <div><label class="block text-slate-600 mb-1">补救措施 <span class="text-red-500">*</span></label>
+          <textarea id="replyRemedy" class="w-full border rounded-xl px-3 py-2.5 h-16"></textarea></div>
+        <div><label class="block text-slate-600 mb-1">新承诺日期 <span class="text-red-500">*</span></label>
+          <input type="date" id="replyPromise" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-25" /></div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalReply')" class="text-slate-500 px-3">取消</button>
+          <button type="button" id="btnReplySave" class="btn-cta text-white px-4 py-2 rounded-xl">提交回复</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  const CHIP = {
+    任务周报: "bg-teal-50 text-teal-800 border-teal-100",
+    任务月报: "bg-cyan-50 text-cyan-800 border-cyan-100",
+    任务: "bg-amber-50 text-amber-800 border-amber-100",
+    周例会待办: "bg-violet-50 text-violet-800 border-violet-100",
+    计划推进: "bg-indigo-50 text-indigo-800 border-indigo-100",
+    计划配合: "bg-sky-50 text-sky-800 border-sky-100",
+    催办回复: "bg-rose-50 text-rose-800 border-rose-100",
+    催办复检: "bg-amber-50 text-amber-800 border-amber-100",
+  };
+  const PRIO_W = { P0: 0, P1: 1, P2: 2 };
+  const MODULES = [
+    { id: "all", name: "全部", icon: "fa-layer-group", hint: "跨模块未完成汇总（只读聚合）", types: null },
+    { id: "report", name: "填报中心", icon: "fa-file-lines", hint: "任务周报/月报填写与缺口清理", types: ["任务周报", "任务月报"] },
+    { id: "task", name: "任务执行", icon: "fa-list-check", hint: "本人未完成任务处理与勾完", types: ["任务"] },
+    { id: "plan", name: "计划协同", icon: "fa-sitemap", hint: "我负责的推进 + 我配合的计划", types: ["计划推进", "计划配合"] },
+    { id: "meeting", name: "例会闭环", icon: "fa-people-group", hint: "周例会待办闭环", types: ["周例会待办"] },
+    { id: "urge", name: "督办往来", icon: "fa-bullhorn", hint: "催办回复与总经理复检", types: ["催办回复", "催办复检"] },
+  ];
+
+  const DEMO_TODAY = new Date(2026, 7, 18);
+  const NEAR = BMS4.NEAR_DUE_DAYS || 3;
+
+  let view = "list";
+  let moduleId = "all";
+  let bucket = "全部";
+  let calYear = 2026;
+  let calMonth = 7;
+  let selectedKey = null;
+  let enriched = [];
+  let currentUser;
+
+  function pad(n) { return String(n).padStart(2, "0"); }
+  function keyOf(d) {
+    if (!d || isNaN(d.getTime())) return "";
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function parseKey(k) {
+    if (!k) return null;
+    const [y, m, d] = k.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function mondayOfIsoWeek(year, week) {
+    const simple = new Date(year, 0, 1 + (week - 1) * 7);
+    const dow = simple.getDay();
+    const monday = new Date(simple);
+    monday.setDate(simple.getDate() + (dow === 0 ? -6 : 1 - dow));
+    return monday;
+  }
+  function dayDiff(from, to) { return Math.round((to - from) / 86400000); }
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function prioTag(p) {
+    const cls = p === "P0" ? "tag-p0" : p === "P1" ? "tag-p1" : "tag-p2";
+    return `<span class="${cls}">${p || "P2"}</span>`;
+  }
+  function shortTitle(s, n) {
+    const t = String(s || "");
+    return t.length > (n || 10) ? t.slice(0, n) + "…" : t;
+  }
+  function moduleOfType(type) {
+    return MODULES.find((m) => m.types && m.types.includes(type)) || MODULES[0];
+  }
+
+  function dueDateForTodo(t) {
+    if (t.dueDate) return parseKey(t.dueDate);
+    if ((t.type === "任务周报" || t.type === "周月报") && t.week) {
+      const [y, w] = t.week.split("-W");
+      return mondayOfIsoWeek(Number(y), Number(w));
+    }
+    if ((t.type === "任务月报" || t.type === "周月报") && t.month) {
+      const [y, m] = t.month.split("-").map(Number);
+      const last = new Date(y, m, 0);
+      last.setDate(last.getDate() - 2);
+      return last;
+    }
+    if (t.type === "任务" && t.taskId) {
+      const task = BMS4.taskItems.find((x) => x.id === t.taskId);
+      if (task && task.deadline) return parseKey(task.deadline);
+    }
+    if ((t.type === "计划配合" || t.type === "计划推进") && t.planId) {
+      const plan = BMS4.planById(t.planId);
+      if (plan && plan.endDate) return parseKey(plan.endDate);
+    }
+    if (t.type === "周例会待办") {
+      const mt = t.meetingId ? BMS4.meetingTodos.find((x) => x.id === t.meetingId) : null;
+      const week = t.week || (mt && mt.week);
+      if (week) {
+        const [y, w] = week.split("-W");
+        return mondayOfIsoWeek(Number(y), Number(w));
+      }
+    }
+    if (t.expectReplyDate) return parseKey(t.expectReplyDate);
+    return new Date(DEMO_TODAY);
+  }
+
+  function urgencyOf(t) {
+    const dueKey = t.dueKey;
+    const todayKey = keyOf(DEMO_TODAY);
+    if (t.status === "逾期" || (dueKey && dueKey < todayKey)) return "逾期";
+    if (dueKey === todayKey) return "今日";
+    if (t.due) {
+      const d = dayDiff(DEMO_TODAY, t.due);
+      if (d > 0 && d <= NEAR) return "临期";
+    }
+    return "其他";
+  }
+
+  function sortTodos(list) {
+    const rank = { 逾期: 0, 今日: 1, 临期: 2, 其他: 3 };
+    return list.slice().sort((a, b) => {
+      const ua = rank[a.urgency] != null ? rank[a.urgency] : 9;
+      const ub = rank[b.urgency] != null ? rank[b.urgency] : 9;
+      if (ua !== ub) return ua - ub;
+      const pa = PRIO_W[a.priority] != null ? PRIO_W[a.priority] : 9;
+      const pb = PRIO_W[b.priority] != null ? PRIO_W[b.priority] : 9;
+      if (pa !== pb) return pa - pb;
+      return (a.dueKey || "9999").localeCompare(b.dueKey || "9999");
+    });
+  }
+
+  function hrefFor(t) {
+    if (t.type === "任务周报" || (t.type === "周月报" && t.week)) return "任务周报_page.html";
+    if (t.type === "任务月报" || (t.type === "周月报" && t.month)) return "任务月报_page.html";
+    if (t.type === "任务" && t.taskId) return "任务管理_page.html?task=" + encodeURIComponent(t.taskId);
+    if (t.type === "周例会待办") return "周例会待办_page.html";
+    if ((t.type === "计划配合" || t.type === "计划推进") && t.planId) {
+      return "计划管理_page.html?plan=" + encodeURIComponent(t.planId);
+    }
+    if (t.type === "催办复检") return "落实驾驶舱_page.html";
+    return "#";
+  }
+
+  function actionHtml(t) {
+    const parts = [];
+    if (t.type === "催办回复" && t.urgeId) {
+      parts.push(`<button type="button" class="text-teal-700 hover:underline text-sm" data-reply="${t.urgeId}">回复催办</button>`);
+    } else if (t.type === "催办复检") {
+      parts.push(`<a class="text-teal-700 hover:underline text-sm" href="落实驾驶舱_page.html">去复检</a>`);
+    } else {
+      parts.push(`<a class="text-teal-700 hover:underline text-sm" href="${hrefFor(t)}">去处理</a>`);
+    }
+    if (t.type === "周例会待办" && t.meetingId) {
+      parts.push(`<button type="button" class="text-slate-500 hover:underline text-sm ml-2" data-done-mt="${t.meetingId}">完成</button>`);
+    }
+    if (t.type === "任务" && t.taskId) {
+      parts.push(`<button type="button" class="text-slate-500 hover:underline text-sm ml-2" data-done-task="${t.taskId}">完成</button>`);
+    }
+    return parts.join("");
+  }
+
+  function currentMod() {
+    return MODULES.find((m) => m.id === moduleId) || MODULES[0];
+  }
+
+  function moduleItems(mod) {
+    const base = !mod.types ? enriched : enriched.filter((t) => mod.types.includes(t.type));
+    return sortTodos(
+      base.filter((t) => (bucket === "全部" ? true : t.urgency === bucket))
+    );
+  }
+
+  function countMod(mod) {
+    if (!mod.types) return enriched.length;
+    return enriched.filter((t) => mod.types.includes(t.type)).length;
+  }
+
+  function overdueInMod(mod) {
+    const list = !mod.types ? enriched : enriched.filter((t) => mod.types.includes(t.type));
+    return list.filter((t) => t.urgency === "逾期").length;
+  }
+
+  function setView(v) {
+    view = v;
+    document.getElementById("viewList").classList.toggle("hidden", v !== "list");
+    document.getElementById("viewCal").classList.toggle("hidden", v !== "cal");
+    document.getElementById("tabList").className =
+      "view-tab px-4 py-2 " + (v === "list" ? "view-tab-active" : "bg-white text-slate-600");
+    document.getElementById("tabCal").className =
+      "view-tab px-4 py-2 " + (v === "cal" ? "view-tab-active" : "bg-white text-slate-600");
+    if (v === "cal") renderCal();
+  }
+
+  function bindActions() {
+    document.querySelectorAll("[data-reply]").forEach((btn) => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-reply");
+        const u = BMS4.getUrge(id);
+        document.getElementById("replyUrgeId").value = id;
+        document.getElementById("replyTitle").textContent = u
+          ? u.title + (u.note ? "（" + u.note + "）" : "") + " · 期望回复 " + u.expectReplyDate
+          : "";
+        document.getElementById("replyReason").value = "";
+        document.getElementById("replyRemedy").value = "";
+        document.getElementById("replyPromise").value = "2026-08-25";
+        BMSUI.openModal("modalReply");
+      };
+    });
+    document.querySelectorAll("[data-done-mt]").forEach((btn) => {
+      btn.onclick = () => {
+        const r = BMS4.completeMeetingTodo(btn.getAttribute("data-done-mt"));
+        if (!r.ok) return BMSUI.toast(r.reason, false);
+        BMSUI.toast("已完成");
+        rebuildAndRender();
+      };
+    });
+    document.querySelectorAll("[data-done-task]").forEach((btn) => {
+      btn.onclick = () => {
+        const r = BMS4.completeTaskFromTodo(btn.getAttribute("data-done-task"));
+        if (!r.ok) return BMSUI.toast(r.reason, false);
+        BMSUI.toast("任务已完成");
+        rebuildAndRender();
+      };
+    });
+    document.querySelectorAll("[data-goto-mod]").forEach((btn) => {
+      btn.onclick = () => {
+        moduleId = btn.getAttribute("data-goto-mod");
+        setView("list");
+        renderAll();
+      };
+    });
+  }
+
+  function theadHtml(mod) {
+    const th = (s) => `<th class="px-4 py-3 text-left whitespace-nowrap">${s}</th>`;
+    if (mod.id === "report") return `<tr>${th("周期")}${th("待办内容")}${th("截止日")}${th("状态")}${th("操作")}</tr>`;
+    if (mod.id === "task") return `<tr>${th("优先级")}${th("任务名称")}${th("关联")}${th("截止日")}${th("状态")}${th("操作")}</tr>`;
+    if (mod.id === "plan") return `<tr>${th("角色")}${th("优先级")}${th("计划名称")}${th("部门")}${th("结束日")}${th("状态")}${th("操作")}</tr>`;
+    if (mod.id === "meeting") return `<tr>${th("事项")}${th("关联")}${th("计划日")}${th("状态")}${th("操作")}</tr>`;
+    if (mod.id === "urge") return `<tr>${th("方向")}${th("催办内容")}${th("关联")}${th("关键日期")}${th("状态")}${th("操作")}</tr>`;
+    return `<tr>${th("模块")}${th("类型")}${th("优先级")}${th("待办内容")}${th("关联")}${th("截止日")}${th("状态")}${th("操作")}</tr>`;
+  }
+
+  function rowHtml(t, mod) {
+    const dueCls =
+      t.urgency === "逾期"
+        ? "text-rose-600 font-medium"
+        : t.urgency === "今日"
+        ? "text-teal-700 font-medium"
+        : t.urgency === "临期"
+        ? "text-amber-600"
+        : "text-slate-600";
+    const due = `<td class="px-4 py-3 whitespace-nowrap ${dueCls}">${t.dueKey || "—"}</td>`;
+    const st = `<td class="px-4 py-3">${BMSUI.statusBadge(t.status)}</td>`;
+    const act = `<td class="px-4 py-3 whitespace-nowrap">${actionHtml(t)}</td>`;
+    const typeChip = `<span class="inline-flex px-2 py-0.5 rounded-full text-xs border ${CHIP[t.type] || "bg-slate-50"}">${t.type}</span>`;
+
+    if (mod.id === "report") {
+      const period = t.week || t.month || "—";
+      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap">${period}</td><td class="px-4 py-3">${escapeHtml(t.title)}</td>${due}${st}${act}</tr>`;
+    }
+    if (mod.id === "task") {
+      return `<tr class="border-t row-hover"><td class="px-4 py-3">${prioTag(t.priority)}</td><td class="px-4 py-3">${escapeHtml(t.title)}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
+    }
+    if (mod.id === "plan") {
+      const role = t.type === "计划推进" ? "负责人" : "配合人";
+      const roleCls = t.type === "计划推进" ? "text-indigo-700" : "text-sky-700";
+      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap"><span class="${roleCls} text-xs font-medium">${role}</span></td><td class="px-4 py-3">${prioTag(t.priority)}</td><td class="px-4 py-3">${escapeHtml(t.title.replace(/^【延期】|^【临期】|^配合计划：/, ""))}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
+    }
+    if (mod.id === "meeting") {
+      return `<tr class="border-t row-hover"><td class="px-4 py-3">${escapeHtml(t.title)}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
+    }
+    if (mod.id === "urge") {
+      const dir = t.type === "催办复检" ? "待我复检" : "待我回复";
+      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap text-xs font-medium ${t.type === "催办复检" ? "text-amber-700" : "text-rose-700"}">${dir}</td><td class="px-4 py-3">${escapeHtml(t.title)}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
+    }
+    const m = moduleOfType(t.type);
+    return `<tr class="border-t row-hover">
+      <td class="px-4 py-3 whitespace-nowrap"><button type="button" class="text-teal-700 hover:underline text-xs" data-goto-mod="${m.id}">${m.name}</button></td>
+      <td class="px-4 py-3 whitespace-nowrap">${typeChip}</td>
+      <td class="px-4 py-3">${prioTag(t.priority)}</td>
+      <td class="px-4 py-3">${escapeHtml(t.title)}</td>
+      <td class="px-4 py-3 text-xs text-slate-500 max-w-[8rem] truncate">${escapeHtml(t.refLabel || "—")}</td>
+      ${due}${st}${act}
+    </tr>`;
+  }
+
+  function emptyHint(mod) {
+    const map = {
+      all: "当前视角下暂无未完成待办",
+      report: "任务周报/月报已填齐，暂无填报待办",
+      task: "暂无待执行任务（或已由催办接管）",
+      plan: "暂无延期/临期的计划推进或配合事项",
+      meeting: "暂无未完成的例会待办",
+      urge: "暂无催办往来",
+    };
+    return map[mod.id] || "暂无待办";
+  }
+
+  function renderNav() {
+    document.getElementById("modNav").innerHTML = MODULES.map((m) => {
+      const n = countMod(m);
+      const od = overdueInMod(m);
+      const badgeCls = od ? "mod-badge warn" : "mod-badge";
+      return `<button type="button" class="mod-item ${moduleId === m.id ? "on" : ""}" data-mod="${m.id}">
+        <i class="fa-solid ${m.icon} w-4 text-center opacity-80"></i>
+        <span>${m.name}</span>
+        <span class="${badgeCls}">${n}</span>
+      </button>`;
+    }).join("");
+    document.querySelectorAll("[data-mod]").forEach((btn) => {
+      btn.onclick = () => {
+        moduleId = btn.getAttribute("data-mod");
+        renderAll();
+      };
+    });
+  }
+
+  function renderKpi() {
+    const cards = [
+      ["全部未完成", enriched.length, ""],
+      ["逾期", enriched.filter((t) => t.urgency === "逾期").length, "text-rose-600"],
+      ["今日", enriched.filter((t) => t.urgency === "今日").length, "text-teal-700"],
+      ["临期", enriched.filter((t) => t.urgency === "临期").length, "text-amber-600"],
+      ["督办往来", countMod(MODULES.find((m) => m.id === "urge")), ""],
+    ];
+    document.getElementById("kpi").innerHTML = cards
+      .map(
+        ([k, v, cls]) =>
+          `<div class="bg-white rounded-2xl border border-slate-100 p-4 shadow-[0_4px_12px_rgba(0,0,0,0.04)]"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1 ${cls}">${v}</div></div>`
+      )
+      .join("");
+  }
+
+  function renderModuleTable() {
+    const mod = currentMod();
+    document.getElementById("modTitle").textContent = mod.name;
+    document.getElementById("modHint").textContent = mod.hint;
+    document.getElementById("thead").innerHTML = theadHtml(mod);
+    const list = moduleItems(mod);
+    const colSpan = mod.id === "all" ? 8 : mod.id === "plan" ? 7 : mod.id === "task" || mod.id === "urge" ? 6 : 5;
+    document.getElementById("tbody").innerHTML = list.length
+      ? list.map((t) => rowHtml(t, mod)).join("")
+      : `<tr><td colspan="${colSpan}" class="px-4 py-10 text-center text-slate-400">${emptyHint(mod)}</td></tr>`;
+
+    const done = BMS4.recentTodoArchive(currentUser.id, 7);
+    document.getElementById("doneList").innerHTML = done.length
+      ? `<ul class="divide-y divide-slate-100">${done
+          .map((d) => {
+            const m = moduleOfType(d.type);
+            return `<li class="py-2.5 flex flex-wrap items-center gap-2">
+              <button type="button" class="text-xs text-teal-700 hover:underline" data-goto-mod="${m.id}">${m.name}</button>
+              <span class="inline-flex px-2 py-0.5 rounded-full text-xs border ${CHIP[d.type] || "bg-slate-50"}">${d.type}</span>
+              <span class="text-slate-700">${escapeHtml(d.title)}</span>
+              <span class="text-xs text-slate-400 ml-auto">${d.doneAt}</span>
+            </li>`;
+          })
+          .join("")}</ul>`
+      : `<div class="py-4 text-slate-400">近 7 日暂无已办记录（任务/例会可点「完成」归档）</div>`;
+    bindActions();
+  }
+
+  function todosOnDay(key) {
+    return sortTodos(enriched.filter((t) => t.dueKey === key));
+  }
+
+  function renderDayPanel(key) {
+    selectedKey = key;
+    const items = todosOnDay(key);
+    document.getElementById("dayTitle").textContent = key + " · 当日待办（" + items.length + "）";
+    document.getElementById("dayList").innerHTML = items.length
+      ? `<ul class="divide-y divide-slate-100">${items
+          .map((t) => {
+            const m = moduleOfType(t.type);
+            return `<li class="py-3 flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0">
+              <button type="button" class="text-xs text-teal-700 hover:underline mr-1" data-goto-mod="${m.id}">${m.name}</button>
+              <span class="inline-flex px-2 py-0.5 rounded-full text-xs border ${CHIP[t.type] || "bg-slate-50"}">${t.type}</span>
+              ${prioTag(t.priority)}
+              <span class="ml-2 text-slate-800">${escapeHtml(t.title)}</span>
+              <div class="mt-1">${BMSUI.statusBadge(t.status)}</div>
+            </div>
+            <span class="shrink-0">${actionHtml(t)}</span>
+          </li>`;
+          })
+          .join("")}</ul>`
+      : `<div class="text-slate-400 py-4">该日暂无待办</div>`;
+    bindActions();
+  }
+
+  function renderCal() {
+    document.getElementById("calTitle").textContent = calYear + "年" + (calMonth + 1) + "月";
+    const first = new Date(calYear, calMonth, 1);
+    let startPad = first.getDay() - 1;
+    if (startPad < 0) startPad = 6;
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const cells = [];
+    for (let i = 0; i < startPad; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(calYear, calMonth, d));
+    while (cells.length % 7 !== 0) cells.push(null);
+    const todayKey = keyOf(DEMO_TODAY);
+    document.getElementById("calGrid").innerHTML = cells
+      .map((d) => {
+        if (!d) return `<div class="cal-cell border-b border-r border-slate-100 bg-slate-50/50"></div>`;
+        const k = keyOf(d);
+        const items = todosOnDay(k);
+        const chips = items
+          .slice(0, 3)
+          .map(
+            (t) =>
+              `<div class="cal-chip truncate px-1.5 py-0.5 rounded border mb-0.5 ${CHIP[t.type] || "bg-slate-50"}" title="${escapeHtml(t.title)}">${escapeHtml(shortTitle(t.title, 8))}</div>`
+          )
+          .join("");
+        const more = items.length > 3 ? `<div class="text-[10px] text-slate-400">+${items.length - 3}</div>` : "";
+        return `<button type="button" data-day="${k}" class="cal-cell border-b border-r border-slate-100 p-1.5 text-left hover:bg-slate-50 ${
+          k === selectedKey ? "ring-2 ring-inset ring-teal-600" : ""
+        } ${k === todayKey ? "bg-teal-50/40" : "bg-white"}">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-medium ${k === todayKey ? "text-teal-700" : "text-slate-700"}">${d.getDate()}</span>
+            ${items.length ? `<span class="text-[10px] text-slate-400">${items.length}</span>` : ""}
+          </div>${chips}${more}
+        </button>`;
+      })
+      .join("");
+    document.querySelectorAll("#calGrid [data-day]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        renderDayPanel(btn.getAttribute("data-day"));
+        renderCal();
+      });
+    });
+  }
+
+  function loadEnriched() {
+    enriched = BMS4.todos
+      .filter((t) => t.userId === currentUser.id)
+      .map((t) => {
+        const due = dueDateForTodo(t);
+        const item = { ...t, due, dueKey: keyOf(due), priority: t.priority || "P2" };
+        item.urgency = urgencyOf(item);
+        if (item.urgency === "逾期" && item.status !== "逾期") item.status = "逾期";
+        return item;
+      });
+    enriched = sortTodos(enriched);
+  }
+
+  function renderAll() {
+    renderNav();
+    renderKpi();
+    renderModuleTable();
+  }
+
+  function rebuildAndRender() {
+    BMS4.rebuildTodos();
+    loadEnriched();
+    renderAll();
+    if (view === "cal") {
+      renderCal();
+      if (selectedKey) renderDayPanel(selectedKey);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    currentUser = BMS4.getRoleUser();
+    const params = new URLSearchParams(location.search);
+    if (params.get("module") && MODULES.some((m) => m.id === params.get("module"))) {
+      moduleId = params.get("module");
+    }
+    loadEnriched();
+    renderAll();
+
+    document.querySelectorAll("[data-bucket]").forEach((btn) => {
+      btn.onclick = () => {
+        bucket = btn.getAttribute("data-bucket");
+        document.querySelectorAll("[data-bucket]").forEach((b) => {
+          b.className = (b.getAttribute("data-bucket") === bucket ? "seg-on" : "seg-off") + " px-3 py-1.5";
+        });
+        renderModuleTable();
+      };
+    });
+
+    document.getElementById("tabList").onclick = () => setView("list");
+    document.getElementById("tabCal").onclick = () => setView("cal");
+    document.getElementById("prevMonth").onclick = () => {
+      calMonth -= 1;
+      if (calMonth < 0) { calMonth = 11; calYear -= 1; }
+      renderCal();
+    };
+    document.getElementById("nextMonth").onclick = () => {
+      calMonth += 1;
+      if (calMonth > 11) { calMonth = 0; calYear += 1; }
+      renderCal();
+    };
+    document.getElementById("btnToday").onclick = () => {
+      calYear = DEMO_TODAY.getFullYear();
+      calMonth = DEMO_TODAY.getMonth();
+      selectedKey = keyOf(DEMO_TODAY);
+      renderCal();
+      renderDayPanel(selectedKey);
+    };
+    selectedKey = keyOf(DEMO_TODAY);
+
+    document.getElementById("btnReplySave").onclick = () => {
+      const r = BMS4.replyUrge(document.getElementById("replyUrgeId").value, {
+        replyReason: document.getElementById("replyReason").value,
+        replyRemedy: document.getElementById("replyRemedy").value,
+        replyPromiseDate: document.getElementById("replyPromise").value,
+      });
+      if (!r.ok) return BMSUI.toast(r.reason, false);
+      BMSUI.closeModal("modalReply");
+      BMSUI.toast("已提交回复");
+      rebuildAndRender();
+    };
+  });
+})();
+  </script>
+</body>
+</html>

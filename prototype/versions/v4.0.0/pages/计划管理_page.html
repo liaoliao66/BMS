@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>计划管理 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .col-head { display: inline-flex; align-items: center; gap: 4px; }
+    .tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; font-size: 12px; line-height: 20px; border: 1px solid #e8eaed; background: #f1f3f4; color: #5f6368; white-space: nowrap; }
+    .tag-p0 { background:#fce8e6;color:#c5221f;border-color:#f5c6c4; }
+    .tag-p1 { background:#fef7e0;color:#e37400;border-color:#fde293; }
+    .tag-p2 { background:#f1f3f4;color:#5f6368;border-color:#e8eaed; }
+    .name-link { color: #1a73e8; cursor: pointer; }
+    .name-link:hover { text-decoration: underline; }
+    .caret-btn { color: #0f766e; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; padding: 0; cursor: pointer; }
+    .cell-edit { cursor: pointer; min-height: 24px; display: inline-flex; align-items: center; gap: 4px; }
+    .cell-edit:hover { background: #eef5f4; border-radius: 4px; }
+    .inline-input { border: 1px solid #1a73e8; border-radius: 4px; padding: 2px 6px; font-size: 13px; background: #fff; max-width: 100%; min-width: 5rem; }
+    .name-wrap { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; position: relative; }
+    .frac { color: #9aa0a6; font-size: 12px; margin-left: 4px; }
+    .name-tools { display: inline-flex; align-items: center; gap: 2px; opacity: 0; margin-left: 2px; }
+    .name-wrap:hover .name-tools, .name-menu-open .name-tools { opacity: 1; }
+    .icon-btn { width: 22px; height: 22px; border: none; background: transparent; border-radius: 4px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+    .icon-btn:hover { background: #eef2f7; color: #0f766e; }
+    .name-menu { position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; min-width: 168px; background: #fff; border: 1px solid #e8eaed; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,0.12); padding: 6px; display: none; }
+    .name-menu-open .name-menu { display: block; }
+    .menu-item { width: 100%; text-align: left; border: none; background: transparent; border-radius: 8px; padding: 8px 10px; font-size: 13px; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .menu-item:hover { background: #f1f5f9; }
+    .menu-item.danger { color: #c5221f; }
+    .menu-item.danger:hover { background: #fef2f2; }
+    .menu-item i { width: 16px; text-align: center; color: #64748b; }
+    .menu-item.danger i { color: #c5221f; }
+    .pct-num { font-variant-numeric: tabular-nums; }
+    .helper-box { max-height: 140px; overflow: auto; border: 1px solid #e8eaed; border-radius: 12px; padding: 8px; }
+    .helper-box label { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .helper-box label:hover { background: #f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="plans" data-title="计划管理">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <p class="text-xs text-slate-500 mb-3">计划树以<strong>公司目标为一级</strong>，其下为部门计划及拆解。必填起止；负责人可跨部门；配合人进待办；进度手填；结束日已过且进度未满自动「延期」。总经理日常浏览请用「部门计划表」。</p>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>新建部门计划</button>
+        <button type="button" id="btnCollapse" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">一键收起</button>
+        <button type="button" id="btnExpand" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">全部展开</button>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center text-sm">
+        <label id="wrapProblem" class="hidden items-center gap-1.5 text-slate-600 px-2 py-1.5 rounded-xl border border-slate-200 bg-white cursor-pointer">
+          <input type="checkbox" id="onlyProblem" class="rounded" /> 仅问题节点
+        </label>
+        <select id="fDept" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white"></select>
+        <input type="search" id="kw" placeholder="搜索计划名称" class="border border-slate-200 rounded-xl px-3 py-1.5 w-52" />
+      </div>
+    </div>
+
+    <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1280px]">
+        <thead>
+          <tr>
+            <th><span class="col-head">序号</span></th>
+            <th><span class="col-head">公司目标 / 计划名称</span></th>
+            <th><span class="col-head">优先级</span></th>
+            <th><span class="col-head">负责人</span></th>
+            <th><span class="col-head">配合人员</span></th>
+            <th><span class="col-head">开始时间</span></th>
+            <th><span class="col-head">结束时间</span></th>
+            <th><span class="col-head">完成进度</span></th>
+            <th><span class="col-head">状态</span></th>
+            <th><span class="col-head">关联任务</span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-xl overflow-hidden flex flex-col shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-[90vh]">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="modalTitle">新建计划</h3>
+          <button type="button" onclick="BMSUI.closeModal('modal')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-6 py-4 space-y-3 text-sm overflow-y-auto">
+          <input type="hidden" id="fParentId" />
+          <input type="hidden" id="fMode" value="root" />
+          <input type="hidden" id="fRefId" />
+          <div id="parentHint" class="text-xs text-slate-500 hidden"></div>
+          <div>
+            <label class="block text-slate-600 mb-1">计划名称 <span class="text-red-500">*</span></label>
+            <input id="fName" class="w-full border rounded-xl px-3 py-2.5" />
+          </div>
+          <div id="rootFields" class="space-y-3">
+            <div>
+              <label class="block text-slate-600 mb-1">所属部门</label>
+              <select id="fDeptModal" class="w-full border rounded-xl px-3 py-2.5"></select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">所属公司计划</label>
+              <select id="fCompany" class="w-full border rounded-xl px-3 py-2.5"></select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">优先级</label>
+              <select id="fPriority" class="w-full border rounded-xl px-3 py-2.5">
+                <option value="P0">P0</option><option value="P1" selected>P1</option><option value="P2">P2</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">计划状态</label>
+              <select id="fStatus" class="w-full border rounded-xl px-3 py-2.5">
+                <option>未开始</option><option selected>进行中</option><option>关注</option><option>已完成</option>
+              </select>
+              <p class="text-[11px] text-slate-400 mt-1">延期由系统按结束日自动判定</p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">计划负责人 <span class="text-red-500">*</span>（可跨部门）</label>
+            <select id="fOwner" class="w-full border rounded-xl px-3 py-2.5"></select>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">配合人员（进入待办）</label>
+            <div id="fHelpers" class="helper-box"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label>
+              <input type="date" id="fStart" class="w-full border rounded-xl px-3 py-2.5" />
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label>
+              <input type="date" id="fEnd" class="w-full border rounded-xl px-3 py-2.5" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">完成进度（%）</label>
+            <input type="number" id="fPct" min="0" max="100" value="0" class="w-full border rounded-xl px-3 py-2.5" />
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">进展说明</label>
+            <textarea id="fProgress" class="w-full border rounded-xl px-3 py-2.5 h-20" placeholder="可选，描述当前进展与风险"></textarea>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modal')" class="text-slate-500 px-3 text-sm">取消</button>
+          <button type="button" id="btnSave" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  let user;
+  let canEdit = false;
+  let collapsed = new Set();
+  let editCell = null;
+  let deptFilter = "";
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escapeAttr(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  }
+  function isEditing(id, field) {
+    return editCell && editCell.id === id && editCell.field === field;
+  }
+  function statusTag(st) {
+    const map = {
+      未开始: "background:#f1f3f4;color:#5f6368",
+      进行中: "background:#e8f0fe;color:#1a73e8",
+      关注: "background:#fef7e0;color:#e37400",
+      延期: "background:#fce8e6;color:#c5221f",
+      已完成: "background:#e6f4ea;color:#137333",
+    };
+    return `<span class="tag" style="${map[st] || ""}">${st}</span>`;
+  }
+  function prioTag(p) {
+    const cls = p === "P0" ? "tag-p0" : p === "P1" ? "tag-p1" : "tag-p2";
+    return `<span class="tag ${cls}">${p || "P2"}</span>`;
+  }
+  function userOpts(selected) {
+    return BMS4.USERS.filter((u) => u.role !== "总经理")
+      .map((u) => `<option value="${u.id}" ${u.id === selected ? "selected" : ""}>${escapeHtml(u.name)} · ${escapeHtml(u.dept)}</option>`)
+      .join("");
+  }
+  function fillHelpers(selectedIds, ownerId) {
+    const box = document.getElementById("fHelpers");
+    const sel = new Set(selectedIds || []);
+    box.innerHTML = BMS4.USERS.filter((u) => u.role !== "总经理")
+      .map((u) => {
+        const dis = u.id === ownerId ? "disabled" : "";
+        const checked = sel.has(u.id) && u.id !== ownerId ? "checked" : "";
+        return `<label><input type="checkbox" value="${u.id}" ${checked} ${dis} /> ${escapeHtml(u.name)} · ${escapeHtml(u.dept)}</label>`;
+      })
+      .join("");
+  }
+  function selectedHelpers() {
+    return Array.from(document.querySelectorAll("#fHelpers input:checked")).map((el) => el.value);
+  }
+  function isProblemPlan(p) {
+    const st = BMS4.resolvePlanStatus(p);
+    if (st === "延期" || st === "关注") return true;
+    if (BMS4.isPlanNearDue(p)) return true;
+    const under = BMS4.taskItems.filter((t) => t.annualId === p.id);
+    return under.some((t) => BMS4.isTaskOverdue(t));
+  }
+
+  function cpKey(cpId) {
+    return "cp:" + cpId;
+  }
+
+  function visiblePool() {
+    let list = BMS4.PLAN_ITEMS.slice();
+    if (user.role !== "总经理") list = list.filter((p) => p.dept === user.dept);
+    if (deptFilter) list = list.filter((p) => p.dept === deptFilter);
+    const onlyProblem = document.getElementById("onlyProblem") && document.getElementById("onlyProblem").checked;
+    const kw = (document.getElementById("kw").value || "").trim();
+    let hit = new Set(list.map((p) => p.id));
+    if (onlyProblem) hit = new Set(list.filter(isProblemPlan).map((p) => p.id));
+    if (kw) {
+      const byName = list.filter((p) => (p.name || "").includes(kw)).map((p) => p.id);
+      const byCp = BMS4.COMPANY_PLANS.filter((c) => (c.name || "").includes(kw)).map((c) => c.id);
+      const next = new Set();
+      byName.forEach((id) => next.add(id));
+      list.filter((p) => byCp.includes(p.companyPlanId)).forEach((p) => next.add(p.id));
+      hit = onlyProblem ? new Set([...hit].filter((id) => next.has(id))) : next;
+    }
+    if (onlyProblem || kw) {
+      [...hit].forEach((id) => {
+        let cur = BMS4.planById(id);
+        while (cur && cur.parentId) {
+          hit.add(cur.parentId);
+          cur = BMS4.planById(cur.parentId);
+        }
+      });
+      return list.filter((p) => hit.has(p.id));
+    }
+    return list;
+  }
+
+  /** 一级=公司目标，二级起=部门计划树 */
+  function buildRows(pool) {
+    const idSet = new Set(pool.map((p) => p.id));
+    const rows = [];
+    const cpIds = BMS4.COMPANY_PLANS.filter((cp) => pool.some((p) => p.companyPlanId === cp.id)).map((cp) => cp.id);
+    const orphans = pool.filter(
+      (p) => (!p.parentId || !idSet.has(p.parentId)) && !BMS4.COMPANY_PLANS.some((c) => c.id === p.companyPlanId)
+    );
+    if (orphans.length) cpIds.push("__none__");
+
+    function walkPlan(node, prefix, depth) {
+      const kids = pool.filter((p) => p.parentId === node.id);
+      const taskCnt = BMS4.taskItems.filter((t) => t.annualId === node.id).length;
+      rows.push({ kind: "plan", plan: node, idx: prefix, depth, childCount: kids.length, taskCnt });
+      if (collapsed.has(node.id)) return;
+      kids.forEach((k, i) => walkPlan(k, prefix + "." + (i + 1), depth + 1));
+    }
+
+    cpIds.forEach((cpId, ci) => {
+      const cp =
+        cpId === "__none__"
+          ? { id: "__none__", name: "未归属公司目标", priority: "P2", status: "—", progress: "", owner: "—" }
+          : BMS4.COMPANY_PLANS.find((c) => c.id === cpId);
+      const roots =
+        cpId === "__none__"
+          ? orphans
+          : pool.filter((p) => p.companyPlanId === cpId && (!p.parentId || !idSet.has(p.parentId)));
+      const key = cpKey(cpId);
+      const taskCnt = roots.reduce((n, r) => {
+        const ids = BMS4.planDescendantIds(r.id);
+        return n + BMS4.taskItems.filter((t) => ids.includes(t.annualId)).length;
+      }, 0);
+      rows.push({ kind: "company", company: cp, cpId, idx: String(ci + 1), depth: 0, childCount: roots.length, taskCnt });
+      if (collapsed.has(key)) return;
+      roots.forEach((r, i) => walkPlan(r, String(ci + 1) + "." + (i + 1), 1));
+    });
+    return rows;
+  }
+
+  function caret(id, hasKids) {
+    if (!hasKids) return `<span style="width:16px;display:inline-block"></span>`;
+    const open = !collapsed.has(id);
+    return `<button type="button" class="caret-btn" data-toggle="${id}"><i class="fa-solid fa-caret-${open ? "down" : "right"}"></i></button>`;
+  }
+
+  function cellCompanyName(cp, cpId) {
+    const menu =
+      canEdit && cpId !== "__none__"
+        ? `<span class="name-tools">
+            <button type="button" class="icon-btn" title="更多操作" data-menu-cp="${cpId}"><i class="fa-solid fa-ellipsis"></i></button>
+          </span>
+          <div class="name-menu" data-menu-panel-cp="${cpId}">
+            <button type="button" class="menu-item" data-add-under-cp="${cpId}"><i class="fa-solid fa-sitemap"></i>新建部门计划</button>
+          </div>`
+        : "";
+    return `<div class="name-wrap" data-name-wrap-cp="${cpId}">
+      <span class="inline-flex items-center gap-2">
+        <span class="tag" style="background:#e8f0fe;color:#1a73e8;border-color:#c6dafc">公司目标</span>
+        <span class="font-semibold text-slate-800">${escapeHtml(cp.name)}</span>
+      </span>
+      ${menu}
+    </div>`;
+  }
+
+  function cellName(p) {
+    const meta = `<div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(p.dept)}</div>`;
+    if (!canEdit) {
+      const hot = isProblemPlan(p);
+      return `<div><span class="font-medium ${hot ? "text-rose-700" : "text-slate-800"}">${escapeHtml(p.name)}${
+        hot ? '<span class="ml-1 text-[10px] text-rose-500">问题</span>' : ""
+      }</span>${meta}</div>`;
+    }
+    if (isEditing(p.id, "name")) {
+      return `<input class="inline-input" style="min-width:14rem" data-inline="name" data-id="${p.id}" data-inline-focus value="${escapeAttr(p.name)}" />`;
+    }
+    return `<div>
+      <div class="name-wrap" data-name-wrap="${p.id}">
+        <span class="name-link cell-edit" data-start-edit="name" data-id="${p.id}">${escapeHtml(p.name)}</span>
+        <span class="name-tools">
+          <button type="button" class="icon-btn" title="编辑名称" data-start-edit="name" data-id="${p.id}"><i class="fa-solid fa-pen"></i></button>
+          <button type="button" class="icon-btn" title="更多操作" data-menu="${p.id}"><i class="fa-solid fa-ellipsis"></i></button>
+        </span>
+        <div class="name-menu" data-menu-panel="${p.id}">
+          <button type="button" class="menu-item" data-add-sibling="${p.id}"><i class="fa-solid fa-location-dot"></i>新建同级计划</button>
+          <button type="button" class="menu-item" data-add-child="${p.id}"><i class="fa-solid fa-sitemap"></i>新建子计划</button>
+          <button type="button" class="menu-item danger" data-del="${p.id}"><i class="fa-regular fa-trash-can"></i>删除</button>
+        </div>
+      </div>
+      ${meta}
+    </div>`;
+  }
+
+  function cellPct(p) {
+    const pct = BMS4.clampPct(p.progressPct);
+    if (!canEdit) return `<span class="pct-num text-slate-700">${pct}%</span>`;
+    if (isEditing(p.id, "progressPct")) {
+      return `<span class="inline-flex items-center gap-0.5"><input type="number" min="0" max="100" class="inline-input w-16" data-inline="progressPct" data-id="${p.id}" data-inline-focus value="${pct}" />%</span>`;
+    }
+    return `<span class="cell-edit pct-num text-slate-700" data-start-edit="progressPct" data-id="${p.id}">${pct}%</span>`;
+  }
+
+  function cellStatus(p) {
+    const st = BMS4.resolvePlanStatus(p);
+    if (!canEdit) return statusTag(st);
+    if (st === "延期") return `${statusTag(st)}<div class="text-[10px] text-slate-400 mt-0.5">系统自动</div>`;
+    if (isEditing(p.id, "status")) {
+      const opts = ["未开始", "进行中", "关注", "已完成"];
+      return `<select class="inline-input" data-inline="status" data-id="${p.id}" data-inline-focus>
+        ${opts.map((o) => `<option value="${o}" ${o === st ? "selected" : ""}>${o}</option>`).join("")}
+      </select>`;
+    }
+    return `<span class="cell-edit" data-start-edit="status" data-id="${p.id}">${statusTag(st)}</span>`;
+  }
+
+  function helpersLabel(p) {
+    const ids = p.helperIds || [];
+    if (!ids.length) return `<span class="text-slate-400">—</span>`;
+    const names = ids.map((id) => {
+      const u = BMS4.userById(id);
+      return u ? u.name : id;
+    });
+    const show = names.slice(0, 2).join("、");
+    const more = names.length > 2 ? ` +${names.length - 2}` : "";
+    return `<span class="text-slate-600" title="${escapeAttr(names.join("、"))}">${escapeHtml(show + more)}</span>`;
+  }
+
+  function renderCompanyRow(row) {
+    const cp = row.company;
+    const key = cpKey(row.cpId);
+    return `<tr class="bg-slate-50/80">
+      <td class="text-slate-500 whitespace-nowrap">${row.idx}</td>
+      <td>
+        <div class="flex items-start gap-1">
+          ${caret(key, row.childCount > 0)}
+          <div class="min-w-0">
+            ${cellCompanyName(cp, row.cpId)}
+            ${row.childCount ? `<span class="frac">${row.childCount}项部门计划</span>` : ""}
+          </div>
+        </div>
+      </td>
+      <td>${cp.priority ? prioTag(cp.priority) : "—"}</td>
+      <td class="whitespace-nowrap text-slate-600">${escapeHtml(cp.owner || "—")}</td>
+      <td class="text-slate-400">—</td>
+      <td class="text-slate-400 text-xs">—</td>
+      <td class="text-slate-400 text-xs">—</td>
+      <td class="text-slate-400">—</td>
+      <td>${cp.status && cp.status !== "—" ? statusTag(cp.status) : "—"}</td>
+      <td class="text-right text-slate-600">${row.taskCnt}</td>
+    </tr>`;
+  }
+
+  function renderRow(row) {
+    if (row.kind === "company") return renderCompanyRow(row);
+    const p = row.plan;
+    const owner = BMS4.userById(p.ownerId);
+    const near = BMS4.isPlanNearDue(p);
+    return `<tr>
+      <td class="text-slate-500 whitespace-nowrap">${row.idx}</td>
+      <td>
+        <div class="flex items-start gap-1" style="padding-left:${row.depth * 18}px">
+          ${caret(p.id, row.childCount > 0)}
+          <div class="min-w-0">
+            ${cellName(p)}
+            ${row.childCount ? `<span class="frac">${row.childCount}子</span>` : ""}
+          </div>
+        </div>
+      </td>
+      <td>${prioTag(p.priority)}</td>
+      <td class="whitespace-nowrap">${owner ? `${escapeHtml(owner.name)}<div class="text-[10px] text-slate-400">${escapeHtml(owner.dept)}</div>` : "—"}</td>
+      <td class="max-w-[7rem]">${helpersLabel(p)}</td>
+      <td class="whitespace-nowrap text-slate-600 text-xs">${escapeHtml(p.startDate || "—")}</td>
+      <td class="whitespace-nowrap text-slate-600 text-xs">
+        ${escapeHtml(p.endDate || "—")}
+        ${near ? '<div class="text-amber-600 mt-0.5">临期</div>' : ""}
+      </td>
+      <td class="whitespace-nowrap">${cellPct(p)}</td>
+      <td>${cellStatus(p)}</td>
+      <td class="text-right text-slate-600">${row.taskCnt}</td>
+    </tr>`;
+  }
+
+  function bindActiveEditor() {
+    const el = document.querySelector("[data-inline]");
+    if (!el) return;
+    let done = false;
+    const finish = (save) => {
+      if (done) return;
+      done = true;
+      if (save) {
+        const id = el.getAttribute("data-id");
+        const field = el.getAttribute("data-inline");
+        const plan = BMS4.planById(id);
+        if (plan) {
+          if (field === "name") {
+            const name = el.value.trim();
+            if (!name) BMSUI.toast("名称不能为空", false);
+            else if (name !== plan.name) {
+              BMS4.updatePlan(id, { name });
+              BMSUI.toast("已保存");
+            }
+          } else if (field === "progressPct") {
+            const pct = BMS4.clampPct(el.value);
+            const patch = { progressPct: pct };
+            if (pct >= 100) patch.status = "已完成";
+            BMS4.updatePlan(id, patch);
+            BMSUI.toast("已保存");
+          } else if (field === "status") {
+            const patch = { status: el.value };
+            if (el.value === "已完成") patch.progressPct = 100;
+            BMS4.updatePlan(id, patch);
+            BMSUI.toast("已保存");
+          }
+        }
+      }
+      editCell = null;
+      render();
+    };
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        finish(true);
+      }
+      if (e.key === "Escape") finish(false);
+    });
+    if (el.tagName === "SELECT") {
+      el.addEventListener("change", () => finish(true));
+      el.addEventListener("blur", () => setTimeout(() => finish(false), 150));
+    } else {
+      el.addEventListener("blur", () => setTimeout(() => finish(true), 120));
+    }
+  }
+
+  function render() {
+    const pool = visiblePool();
+    const rows = buildRows(pool);
+    document.getElementById("tbody").innerHTML = rows.length
+      ? rows.map(renderRow).join("")
+      : `<tr><td colspan="10" class="text-center text-slate-400 py-10">暂无计划，请在公司目标下新建部门计划</td></tr>`;
+
+    document.querySelectorAll("[data-toggle]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-toggle");
+        if (collapsed.has(id)) collapsed.delete(id);
+        else collapsed.add(id);
+        render();
+      };
+    });
+    document.querySelectorAll("[data-start-edit]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        editCell = { id: el.getAttribute("data-id"), field: el.getAttribute("data-start-edit") };
+        render();
+        requestAnimationFrame(() => {
+          const focusEl = document.querySelector("[data-inline-focus]");
+          if (focusEl) focusEl.focus();
+        });
+      };
+    });
+    document.querySelectorAll("[data-menu]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-menu");
+        const wrap = document.querySelector(`[data-name-wrap="${id}"]`);
+        const open = wrap && wrap.classList.contains("name-menu-open");
+        closeAllMenus();
+        if (wrap && !open) wrap.classList.add("name-menu-open");
+      };
+    });
+    document.querySelectorAll("[data-menu-cp]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-menu-cp");
+        const wrap = document.querySelector(`[data-name-wrap-cp="${id}"]`);
+        const open = wrap && wrap.classList.contains("name-menu-open");
+        closeAllMenus();
+        if (wrap && !open) wrap.classList.add("name-menu-open");
+      };
+    });
+    document.querySelectorAll("[data-add-under-cp]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        openModal({ mode: "underCp", companyPlanId: btn.getAttribute("data-add-under-cp") });
+      };
+    });
+    document.querySelectorAll("[data-add-child]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        openModal({ mode: "child", refId: btn.getAttribute("data-add-child") });
+      };
+    });
+    document.querySelectorAll("[data-add-sibling]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        openModal({ mode: "sibling", refId: btn.getAttribute("data-add-sibling") });
+      };
+    });
+    document.querySelectorAll("[data-del]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        const id = btn.getAttribute("data-del");
+        const r = BMS4.removePlan(id);
+        if (!r.ok) return BMSUI.toast(r.reason, false);
+        BMSUI.toast("已删除");
+        render();
+      };
+    });
+    bindActiveEditor();
+  }
+
+  function closeAllMenus() {
+    document.querySelectorAll(".name-menu-open").forEach((el) => el.classList.remove("name-menu-open"));
+  }
+
+  function openModal(opts) {
+    const mode = (opts && opts.mode) || "root";
+    const refId = (opts && opts.refId) || "";
+    const presetCp = (opts && opts.companyPlanId) || "";
+    document.getElementById("fMode").value = mode;
+    document.getElementById("fRefId").value = refId;
+    document.getElementById("fName").value = "";
+    document.getElementById("fProgress").value = "";
+    document.getElementById("fStatus").value = "进行中";
+    document.getElementById("fPriority").value = "P1";
+    document.getElementById("fPct").value = "0";
+    document.getElementById("fStart").value = "";
+    document.getElementById("fEnd").value = "";
+    const hint = document.getElementById("parentHint");
+    const rootFields = document.getElementById("rootFields");
+    const ref = refId ? BMS4.planById(refId) : null;
+    let defaultOwner = user.id;
+    let defaultHelpers = [];
+
+    if (mode === "child" && ref) {
+      document.getElementById("fParentId").value = ref.id;
+      document.getElementById("modalTitle").textContent = "新建子计划";
+      hint.classList.remove("hidden");
+      hint.textContent = "上级：" + BMS4.planPathLabel(ref.id);
+      rootFields.classList.add("hidden");
+      document.getElementById("fPriority").value = ref.priority || "P1";
+      document.getElementById("fStart").value = ref.startDate || "";
+      document.getElementById("fEnd").value = ref.endDate || "";
+      defaultOwner = ref.ownerId || user.id;
+      defaultHelpers = ref.helperIds || [];
+    } else if (mode === "sibling" && ref) {
+      document.getElementById("fParentId").value = ref.parentId || "";
+      document.getElementById("modalTitle").textContent = "新建同级计划";
+      if (ref.parentId) {
+        hint.classList.remove("hidden");
+        hint.textContent = "与「" + ref.name + "」同级 · 上级：" + BMS4.planPathLabel(ref.parentId);
+        rootFields.classList.add("hidden");
+        const parent = BMS4.planById(ref.parentId);
+        defaultOwner = (parent && parent.ownerId) || ref.ownerId || user.id;
+        defaultHelpers = (parent && parent.helperIds) || [];
+        document.getElementById("fStart").value = (parent && parent.startDate) || "";
+        document.getElementById("fEnd").value = (parent && parent.endDate) || "";
+      } else {
+        const cp = BMS4.COMPANY_PLANS.find((c) => c.id === ref.companyPlanId);
+        hint.classList.remove("hidden");
+        hint.textContent = "与「" + ref.name + "」同级 · 归属公司目标：" + (cp ? cp.name : "—");
+        rootFields.classList.remove("hidden");
+        document.getElementById("fDeptModal").value = ref.dept || user.dept;
+        if (ref.companyPlanId) document.getElementById("fCompany").value = ref.companyPlanId;
+        defaultOwner = ref.ownerId || user.id;
+      }
+    } else {
+      document.getElementById("fParentId").value = "";
+      document.getElementById("modalTitle").textContent = "新建部门计划";
+      rootFields.classList.remove("hidden");
+      document.getElementById("fDeptModal").value = user.dept;
+      if (presetCp) {
+        document.getElementById("fCompany").value = presetCp;
+        const cp = BMS4.COMPANY_PLANS.find((c) => c.id === presetCp);
+        hint.classList.remove("hidden");
+        hint.textContent = "归属公司目标：" + (cp ? cp.name : "");
+      } else {
+        hint.classList.add("hidden");
+      }
+      defaultOwner = user.id;
+    }
+    document.getElementById("fOwner").innerHTML = userOpts(defaultOwner);
+    fillHelpers(defaultHelpers, defaultOwner);
+    document.getElementById("fOwner").onchange = () => fillHelpers(selectedHelpers(), document.getElementById("fOwner").value);
+    BMSUI.openModal("modal");
+  }
+
+  function savePlan() {
+    const name = document.getElementById("fName").value.trim();
+    if (!name) return BMSUI.toast("请填写计划名称", false);
+    const startDate = document.getElementById("fStart").value;
+    const endDate = document.getElementById("fEnd").value;
+    if (!startDate || !endDate) return BMSUI.toast("请填写开始与结束日期", false);
+    if (endDate < startDate) return BMSUI.toast("结束日期不能早于开始日期", false);
+    const ownerId = document.getElementById("fOwner").value;
+    if (!ownerId) return BMSUI.toast("请选择计划负责人", false);
+    const mode = document.getElementById("fMode").value || "root";
+    const refId = document.getElementById("fRefId").value;
+    const ref = refId ? BMS4.planById(refId) : null;
+    const parentId = document.getElementById("fParentId").value || null;
+    let status = document.getElementById("fStatus").value;
+    let progressPct = BMS4.clampPct(document.getElementById("fPct").value);
+    if (status === "已完成") progressPct = 100;
+    const payload = {
+      name,
+      parentId,
+      status,
+      progress: document.getElementById("fProgress").value.trim(),
+      priority: document.getElementById("fPriority").value,
+      ownerId,
+      helperIds: selectedHelpers().filter((id) => id !== ownerId),
+      startDate,
+      endDate,
+      progressPct,
+    };
+    if (!parentId) {
+      payload.dept = document.getElementById("fDeptModal").value || (ref && ref.dept) || user.dept;
+      payload.companyPlanId = document.getElementById("fCompany").value || (ref && ref.companyPlanId) || "";
+    }
+    const item = BMS4.addPlan(payload);
+    if (parentId) collapsed.delete(parentId);
+    if (payload.companyPlanId) collapsed.delete(cpKey(payload.companyPlanId));
+    BMSUI.closeModal("modal");
+    BMSUI.toast(item.status === "延期" ? "已创建（已过结束日，状态自动为延期）" : "已创建，配合人已进入待办");
+    render();
+    return item;
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    user = BMS4.getRoleUser();
+    canEdit = user.role === "部门长";
+    document.getElementById("btnNew").classList.toggle("hidden", !canEdit);
+
+    const fd = document.getElementById("fDept");
+    if (user.role === "总经理") {
+      document.getElementById("wrapProblem").classList.remove("hidden");
+      document.getElementById("wrapProblem").classList.add("inline-flex");
+      document.getElementById("onlyProblem").onchange = render;
+      fd.innerHTML = '<option value="">全部部门</option>' + BMS4.DEPTS.map((d) => `<option value="${d}">${d}</option>`).join("");
+      fd.onchange = () => {
+        deptFilter = fd.value;
+        render();
+      };
+    } else {
+      deptFilter = user.dept;
+      fd.innerHTML = `<option value="${user.dept}">${user.dept}</option>`;
+      fd.disabled = true;
+    }
+
+    document.getElementById("fDeptModal").innerHTML = BMS4.DEPTS.map((d) => `<option value="${d}">${d}</option>`).join("");
+    document.getElementById("fCompany").innerHTML = BMS4.COMPANY_PLANS.map(
+      (c) => `<option value="${c.id}">${c.name}</option>`
+    ).join("");
+
+    document.getElementById("btnNew").onclick = () => openModal({ mode: "root" });
+    document.getElementById("btnSave").onclick = savePlan;
+    document.getElementById("btnCollapse").onclick = () => {
+      visiblePool().forEach((p) => {
+        if (BMS4.planChildren(p.id).length) collapsed.add(p.id);
+      });
+      BMS4.COMPANY_PLANS.forEach((cp) => collapsed.add(cpKey(cp.id)));
+      render();
+    };
+    document.getElementById("btnExpand").onclick = () => {
+      collapsed.clear();
+      render();
+    };
+    document.getElementById("kw").addEventListener("input", render);
+    document.addEventListener("click", () => closeAllMenus());
+    render();
+  });
+})();
+  </script>
+</body>
+</html>

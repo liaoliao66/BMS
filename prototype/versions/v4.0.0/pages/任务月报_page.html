@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>任务月报 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 10px 12px; vertical-align: top; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; vertical-align: middle; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .col-head { display: inline-flex; align-items: center; gap: 4px; }
+    .col-head i { font-size: 10px; color: #9aa0a6; }
+    .tag-p0 { display: inline-flex; padding: 1px 6px; border-radius: 4px; font-size: 11px; background: #fce8e6; color: #c5221f; border: 1px solid #f5c6c4; }
+    .tag-p1 { display: inline-flex; padding: 1px 6px; border-radius: 4px; font-size: 11px; background: #fef7e0; color: #e37400; border: 1px solid #fde293; }
+    .tag-p2 { display: inline-flex; padding: 1px 6px; border-radius: 4px; font-size: 11px; background: #f1f3f4; color: #5f6368; border: 1px solid #e8eaed; }
+    .name-link { color: #1a73e8; font-weight: 500; }
+    .period-bar { display: inline-flex; align-items: center; gap: 10px; }
+    .period-btn { width: 28px; height: 28px; border: 1px solid #e8eaed; border-radius: 6px; background: #fff; color: #5f6368; cursor: pointer; }
+    .period-btn:hover { background: #f8fafc; }
+    .mode-on { background: #0f766e; color: #fff; }
+    .mode-off { background: #fff; color: #64748b; }
+    .cell-ta { width: 100%; min-height: 72px; border: 1px solid transparent; border-radius: 6px; padding: 6px 8px; font-size: 13px; line-height: 1.5; resize: vertical; background: transparent; }
+    .cell-ta:hover, .cell-ta:focus { border-color: #1a73e8; background: #fff; outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.12); }
+    .cell-ro { min-height: 72px; padding: 6px 8px; font-size: 13px; line-height: 1.5; color: #475569; white-space: pre-wrap; background: #f8fafc; border-radius: 6px; border: 1px solid #eef2f7; }
+    .empty-hint { color: #9aa0a6; }
+    .save-hint { font-size: 11px; color: #94a3b8; }
+    .save-hint.ok { color: #0f766e; }
+    .att-list { display: flex; flex-direction: column; gap: 6px; }
+    .att-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid #e8eaed; border-radius: 8px; background: #fafbfc; font-size: 12px; }
+    .att-ico { width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 1px solid #e8eaed; color: #0f766e; flex-shrink: 0; }
+    .att-ico.img { color: #0284c7; }
+    .att-ico.word { color: #2563eb; }
+    .att-ico.prd { color: #b45309; }
+    .att-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; }
+    .att-act { color: #0f766e; cursor: pointer; white-space: nowrap; }
+    .att-act:hover { text-decoration: underline; }
+    .att-del { color: #94a3b8; cursor: pointer; }
+    .att-del:hover { color: #c5221f; }
+    .att-upload { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #0f766e; cursor: pointer; margin-top: 6px; }
+    .att-upload:hover { text-decoration: underline; }
+    .att-upload input { display: none; }
+    .preview-img { max-width: 100%; max-height: 70vh; margin: 0 auto; display: block; border-radius: 8px; }
+    .preview-doc { white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: #334155; background: #f8fafc; border: 1px solid #e8eaed; border-radius: 10px; padding: 16px; max-height: 60vh; overflow: auto; }
+    .caret-btn { color: #0f766e; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; padding: 0; cursor: pointer; flex-shrink: 0; }
+    .person-row { background: #f8fafc; cursor: pointer; }
+    .person-row:hover { background: #f1f5f9; }
+    .person-row td { vertical-align: middle; }
+    .child-row td:first-child { color: #94a3b8; }
+    .chip { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px; font-size: 11px; background: #eef2f7; color: #64748b; border: 1px solid #e2e8f0; white-space: nowrap; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="taskMonthReport" data-title="任务月报" data-period-lock="month">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <p class="text-xs text-slate-500 mb-3" id="pageDesc">按<strong>公司整体计划</strong>填写：回显上期计划 + 上期完成 + 本期计划 + <strong>附件</strong>（图片 / Word / PRD）。部门长可编（失焦自动保存）；总经理 / 员工只读查看。</p>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" id="btnReset" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">
+          <i class="fa-solid fa-rotate-right mr-1"></i>重置
+        </button>
+        <div id="periodToggle" class="inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm hidden">
+          <button type="button" id="btnWeek" class="mode-on px-3 py-1.5">周报</button>
+          <button type="button" id="btnMonth" class="mode-off px-3 py-1.5">月报</button>
+        </div>
+        <a id="linkSibling" href="任务月报_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">任务月报</a>
+        <div id="viewSwitch" class="inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm hidden">
+          <button type="button" id="btnViewTable" class="mode-on px-3 py-1.5">按计划表</button>
+          <button type="button" id="btnViewCards" class="mode-off px-3 py-1.5">按人列表</button>
+        </div>
+        <div id="peopleFoldBar" class="hidden inline-flex gap-2">
+          <button type="button" id="btnPeopleCollapse" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">一键收起</button>
+          <button type="button" id="btnPeopleExpand" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">全部展开</button>
+        </div>
+        <span id="autoSaveHint" class="save-hint hidden">编辑后移出焦点即自动保存</span>
+      </div>
+      <div class="period-bar">
+        <button type="button" class="period-btn" id="btnPrev"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+        <span id="periodLabel" class="text-sm font-medium text-slate-800 min-w-[9rem] text-center">—</span>
+        <button type="button" class="period-btn" id="btnNext"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="search" id="kw" placeholder="请输入" class="border border-slate-200 rounded-xl px-3 py-1.5 text-sm w-44" />
+      </div>
+    </div>
+
+    <div id="viewTable" class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1280px]">
+        <thead>
+          <tr>
+            <th style="width:48px"><span class="col-head">序号</span></th>
+            <th><span class="col-head">公司计划名称</span></th>
+            <th style="min-width:180px"><span class="col-head" id="colPrevPlan">上周计划</span></th>
+            <th style="min-width:180px"><span class="col-head" id="colDone">上周完成情况 <i class="fa-solid fa-pen"></i></span></th>
+            <th style="min-width:180px"><span class="col-head" id="colPlan">本周计划 <i class="fa-solid fa-pen"></i></span></th>
+            <th style="min-width:220px"><span class="col-head">附件 <span class="text-[10px] text-slate-400 font-normal">图片/Word/PRD</span></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="viewCards" class="hidden bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1200px]">
+        <thead>
+          <tr>
+            <th style="width:56px"><span class="col-head">序号</span></th>
+            <th style="min-width:220px"><span class="col-head">填写人 / 公司计划</span></th>
+            <th style="min-width:160px"><span class="col-head" id="colPrevPlanPeople">上周计划</span></th>
+            <th style="min-width:160px"><span class="col-head" id="colDonePeople">上周完成情况</span></th>
+            <th style="min-width:160px"><span class="col-head" id="colPlanPeople">本周计划</span></th>
+            <th style="min-width:200px"><span class="col-head">附件</span></th>
+          </tr>
+        </thead>
+        <tbody id="tbodyPeople"></tbody>
+      </table>
+    </div>
+
+    <div id="modalPreview" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/45" onclick="BMSUI.closeModal('modalPreview')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-3xl shadow-[0_12px_40px_rgba(0,0,0,0.14)] overflow-hidden">
+        <div class="px-5 py-3 border-b flex items-center justify-between gap-3">
+          <div>
+            <div class="text-sm font-semibold text-slate-800" id="previewTitle">附件预览</div>
+            <div class="text-[11px] text-slate-400" id="previewMeta"></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <a id="previewDownload" href="#" download class="text-sm text-teal-700 hover:underline">下载</a>
+            <button type="button" onclick="BMSUI.closeModal('modalPreview')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="p-5" id="previewBody"></div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  const WEEKS = ["2026-W33", "2026-W34", "2026-W35"];
+  const MONTHS = ["2026-07", "2026-08", "2026-09"];
+  const ACCEPT =
+    ".jpg,.jpeg,.png,.gif,.webp,.bmp,.doc,.docx,.pdf,.md,.prd,.prd.md,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/pdf,image/*";
+  let user;
+  let canEdit = false;
+  let canViewAll = false;
+  let periodLock = (document.body.getAttribute("data-period-lock") || "").trim();
+  let periodType = periodLock === "month" ? "month" : "week";
+  let weekIdx = 1;
+  let monthIdx = 1;
+  let draft = {};
+  let viewMode = "table";
+  /** 按人列表：展开的人员 id；默认全部折叠 */
+  let peopleExpanded = new Set();
+  const reportNoun = () => (periodType === "week" ? "任务周报" : "任务月报");
+
+  function periodKey() {
+    return periodType === "week" ? WEEKS[weekIdx] : MONTHS[monthIdx];
+  }
+  function prevPeriodKey() {
+    if (periodType === "week") return weekIdx > 0 ? WEEKS[weekIdx - 1] : "";
+    return monthIdx > 0 ? MONTHS[monthIdx - 1] : "";
+  }
+  function periodLabelText() {
+    if (periodType === "week") {
+      const [y, w] = periodKey().split("-W");
+      return y + "年第" + Number(w) + "周";
+    }
+    const [y, m] = periodKey().split("-");
+    return y + "年" + Number(m) + "月";
+  }
+  function prioCls(p) {
+    return p === "P0" ? "tag-p0" : p === "P1" ? "tag-p1" : "tag-p2";
+  }
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function cloneAtts(list) {
+    return (list || []).map((a) => ({ ...a }));
+  }
+  function detectKind(fileName, mime) {
+    const n = (fileName || "").toLowerCase();
+    const m = (mime || "").toLowerCase();
+    if (m.startsWith("image/") || /\.(png|jpe?g|gif|webp|bmp)$/.test(n)) return "image";
+    if (/\.prd(\.md)?$/.test(n) || n.endsWith(".prd") || (n.includes("prd") && n.endsWith(".md"))) return "prd";
+    if (m.includes("word") || /\.(docx?|docm)$/.test(n)) return "word";
+    if (m === "application/pdf" || n.endsWith(".pdf")) return "pdf";
+    if (n.endsWith(".md") || m.includes("markdown") || m === "text/plain") return "prd";
+    return "file";
+  }
+  function kindMeta(kind) {
+    if (kind === "image") return { cls: "img", icon: "fa-image", label: "图片" };
+    if (kind === "word") return { cls: "word", icon: "fa-file-word", label: "Word" };
+    if (kind === "prd") return { cls: "prd", icon: "fa-file-lines", label: "PRD" };
+    if (kind === "pdf") return { cls: "word", icon: "fa-file-pdf", label: "PDF" };
+    return { cls: "", icon: "fa-paperclip", label: "文件" };
+  }
+  function formatSize(n) {
+    if (!n && n !== 0) return "";
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1024 / 1024).toFixed(1) + " MB";
+  }
+
+  function loadDraft() {
+    draft = {};
+    BMS4.COMPANY_PLANS.forEach((cp) => {
+      const r = canEdit ? BMS4.getPeriodReport(user.id, periodType, periodKey(), cp.id) : null;
+      draft[cp.id] = {
+        planText: r ? r.planText || "" : "",
+        doneText: r ? r.doneText || "" : "",
+        attachments: cloneAtts(r && r.attachments),
+      };
+    });
+  }
+
+  function prevPlanText(cpId) {
+    const pk = prevPeriodKey();
+    if (!pk || !canEdit) return "";
+    const r = BMS4.getPeriodReport(user.id, periodType, pk, cpId);
+    return r ? r.planText || "" : "";
+  }
+
+  function gmPrevPlan(cpId) {
+    const pk = prevPeriodKey();
+    if (!pk) return `<span class="empty-hint">无上期</span>`;
+    const rows = BMS4.periodReports.filter(
+      (r) => r.periodType === periodType && r.periodKey === pk && r.companyPlanId === cpId
+    );
+    if (!rows.length) return `<span class="empty-hint">上期未填计划</span>`;
+    return rows
+      .map((r) => {
+        const u = BMS4.userById(r.userId);
+        return `<div class="mb-2 last:mb-0"><div class="text-[11px] text-slate-400 mb-0.5">${
+          u ? u.dept + " · " + u.name : ""
+        }</div><div class="text-slate-700 whitespace-pre-wrap">${escapeHtml(r.planText || "—")}</div></div>`;
+      })
+      .join("");
+  }
+
+  function gmCell(cpId, field) {
+    const rows = BMS4.periodReports.filter(
+      (r) => r.periodType === periodType && r.periodKey === periodKey() && r.companyPlanId === cpId
+    );
+    if (!rows.length) return `<span class="empty-hint">暂无填写</span>`;
+    return rows
+      .map((r) => {
+        const u = BMS4.userById(r.userId);
+        const text = field === "plan" ? r.planText : r.doneText;
+        return `<div class="mb-2 last:mb-0"><div class="text-[11px] text-slate-400 mb-0.5">${
+          u ? u.dept + " · " + u.name : ""
+        }</div><div class="text-slate-700 whitespace-pre-wrap">${escapeHtml(text || "—")}</div></div>`;
+      })
+      .join("");
+  }
+
+  function flashSaved() {
+    const el = document.getElementById("autoSaveHint");
+    if (!el || !canEdit) return;
+    el.classList.remove("hidden");
+    el.classList.add("ok");
+    el.textContent = "已自动保存";
+    clearTimeout(flashSaved._t);
+    flashSaved._t = setTimeout(() => {
+      el.classList.remove("ok");
+      el.textContent = "编辑后移出焦点即自动保存";
+    }, 1600);
+  }
+
+  function openPreview(att) {
+    const meta = kindMeta(att.kind);
+    document.getElementById("previewTitle").textContent = att.name || "附件预览";
+    document.getElementById("previewMeta").textContent =
+      meta.label + (att.size ? " · " + formatSize(att.size) : "") + (att.mime ? " · " + att.mime : "");
+    const dl = document.getElementById("previewDownload");
+    if (att.dataUrl) {
+      dl.href = att.dataUrl;
+      dl.download = att.name || "attachment";
+      dl.classList.remove("hidden");
+    } else if (att.text) {
+      const blob = new Blob([att.text], { type: "text/plain;charset=utf-8" });
+      dl.href = URL.createObjectURL(blob);
+      dl.download = att.name || "attachment.txt";
+      dl.classList.remove("hidden");
+    } else {
+      dl.classList.add("hidden");
+    }
+    const body = document.getElementById("previewBody");
+    if (att.kind === "image" && att.dataUrl) {
+      body.innerHTML = `<img class="preview-img" src="${att.dataUrl}" alt="${escapeHtml(att.name)}" />`;
+    } else if (att.kind === "pdf" && att.dataUrl) {
+      body.innerHTML = `<iframe class="w-full h-[70vh] rounded-lg border" src="${att.dataUrl}"></iframe>`;
+    } else if (att.text) {
+      body.innerHTML = `<div class="preview-doc">${escapeHtml(att.text)}</div>`;
+    } else if (att.dataUrl && (att.kind === "word" || att.kind === "prd")) {
+      body.innerHTML = `<div class="preview-doc text-slate-600">该 Word/二进制文件已上传。浏览器无法直接渲染，请点击右上角「下载」查看。\n\n文件名：${escapeHtml(
+        att.name
+      )}</div>`;
+    } else {
+      body.innerHTML = `<div class="text-slate-500 text-sm">暂无可预览内容，请下载查看。</div>`;
+    }
+    BMSUI.openModal("modalPreview");
+  }
+
+  function attListHtml(cpId, attachments, editable) {
+    const list = attachments || [];
+    const rows = list.length
+      ? list
+          .map((a) => {
+            const meta = kindMeta(a.kind);
+            return `<div class="att-row">
+              <span class="att-ico ${meta.cls}"><i class="fa-solid ${meta.icon}"></i></span>
+              <span class="att-name" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</span>
+              <button type="button" class="att-act" data-preview="${escapeHtml(cpId)}" data-att="${escapeHtml(a.id)}">预览</button>
+              ${
+                editable
+                  ? `<button type="button" class="att-del" data-del="${escapeHtml(cpId)}" data-att="${escapeHtml(
+                      a.id
+                    )}" title="删除"><i class="fa-solid fa-trash-can"></i></button>`
+                  : ""
+              }
+            </div>`;
+          })
+          .join("")
+      : `<span class="empty-hint text-xs">暂无附件</span>`;
+    const upload = editable
+      ? `<label class="att-upload"><i class="fa-solid fa-cloud-arrow-up"></i>上传附件
+          <input type="file" multiple accept="${ACCEPT}" data-upload="${cpId}" />
+        </label>
+        <div class="text-[10px] text-slate-400 mt-1">支持图片、Word（.doc/.docx）、PRD（.prd/.md/.pdf）</div>`
+      : "";
+    return `<div class="att-list" data-att-box="${cpId}">${rows}${upload}</div>`;
+  }
+
+  function gmAttachments(cpId) {
+    const rows = BMS4.periodReports.filter(
+      (r) => r.periodType === periodType && r.periodKey === periodKey() && r.companyPlanId === cpId
+    );
+    const all = [];
+    rows.forEach((r) => {
+      (r.attachments || []).forEach((a) => {
+        all.push({ ...a, _uid: r.userId });
+      });
+    });
+    if (!all.length) return `<span class="empty-hint">暂无附件</span>`;
+    return all
+      .map((a) => {
+        const u = BMS4.userById(a._uid);
+        const meta = kindMeta(a.kind);
+        return `<div class="att-row">
+          <span class="att-ico ${meta.cls}"><i class="fa-solid ${meta.icon}"></i></span>
+          <div class="flex-1 min-w-0">
+            <div class="att-name" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</div>
+            <div class="text-[10px] text-slate-400">${u ? u.dept + " · " + u.name : ""}</div>
+          </div>
+          <button type="button" class="att-act" data-preview-obj='${JSON.stringify(a).replace(/'/g, "&#39;")}'>预览</button>
+        </div>`;
+      })
+      .join("");
+  }
+
+  function findAtt(cpId, attId) {
+    const list = (draft[cpId] && draft[cpId].attachments) || [];
+    return list.find((a) => a.id === attId);
+  }
+
+  function bindAttActions() {
+    document.querySelectorAll("[data-preview]").forEach((btn) => {
+      btn.onclick = () => {
+        const att = findAtt(btn.getAttribute("data-preview"), btn.getAttribute("data-att"));
+        if (att) openPreview(att);
+      };
+    });
+    document.querySelectorAll("[data-preview-obj]").forEach((btn) => {
+      btn.onclick = () => {
+        try {
+          openPreview(JSON.parse(btn.getAttribute("data-preview-obj")));
+        } catch (e) {
+          BMSUI.toast("预览失败", false);
+        }
+      };
+    });
+    document.querySelectorAll("[data-del]").forEach((btn) => {
+      btn.onclick = () => {
+        const cpId = btn.getAttribute("data-del");
+        const attId = btn.getAttribute("data-att");
+        if (!draft[cpId]) return;
+        draft[cpId].attachments = (draft[cpId].attachments || []).filter((a) => a.id !== attId);
+        saveOne(cpId, true);
+        flashSaved();
+        render();
+      };
+    });
+    document.querySelectorAll("[data-upload]").forEach((input) => {
+      input.onchange = async () => {
+        const cpId = input.getAttribute("data-upload");
+        const files = Array.from(input.files || []);
+        if (!files.length) return;
+        if (!draft[cpId]) draft[cpId] = { planText: "", doneText: "", attachments: [] };
+        for (const file of files) {
+          const kind = detectKind(file.name, file.type);
+          if (!["image", "word", "prd", "pdf"].includes(kind) && !/\.(prd|md|docx?|pdf|png|jpe?g|gif|webp)$/i.test(file.name)) {
+            BMSUI.toast("仅支持图片、Word、PRD/PDF/Markdown：" + file.name, false);
+            continue;
+          }
+          if (file.size > 8 * 1024 * 1024) {
+            BMSUI.toast("单文件请小于 8MB：" + file.name, false);
+            continue;
+          }
+          const att = {
+            id: "att_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+            name: file.name,
+            kind: kind === "pdf" ? (/\.prd/i.test(file.name) ? "prd" : "pdf") : kind,
+            mime: file.type || "application/octet-stream",
+            size: file.size,
+          };
+          if (att.kind === "image" || att.kind === "pdf" || file.type.startsWith("image/") || file.type === "application/pdf") {
+            att.dataUrl = await readAsDataURL(file);
+          } else if (
+            file.type.startsWith("text/") ||
+            /\.(md|prd|txt)$/i.test(file.name) ||
+            /\.prd\.md$/i.test(file.name)
+          ) {
+            att.text = await readAsText(file);
+            att.kind = "prd";
+          } else {
+            // Word 等二进制：存 dataUrl 供下载，预览给说明
+            att.dataUrl = await readAsDataURL(file);
+            if (att.kind === "word") {
+              att.text =
+                "【Word 原型预览】\n已上传：" +
+                file.name +
+                "\n大小：" +
+                formatSize(file.size) +
+                "\n正式环境将对接 Office/WPS 在线预览；当前请下载查看原文。";
+            }
+          }
+          draft[cpId].attachments.push(att);
+        }
+        input.value = "";
+        saveOne(cpId, true);
+        flashSaved();
+        render();
+      };
+    });
+  }
+
+  function readAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+  }
+  function readAsText(file) {
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result || ""));
+      fr.onerror = reject;
+      fr.readAsText(file);
+    });
+  }
+
+  function renderToolbar() {
+    const locked = !!periodLock;
+    document.getElementById("periodToggle").classList.toggle("hidden", locked);
+    if (!locked) {
+      document.getElementById("btnWeek").className = "px-3 py-1.5 " + (periodType === "week" ? "mode-on" : "mode-off");
+      document.getElementById("btnMonth").className = "px-3 py-1.5 " + (periodType === "month" ? "mode-on" : "mode-off");
+    }
+    const sib = document.getElementById("linkSibling");
+    if (sib) {
+      sib.classList.toggle("hidden", !locked);
+      if (periodType === "week") {
+        sib.href = "任务月报_page.html";
+        sib.textContent = "任务月报";
+      } else {
+        sib.href = "任务周报_page.html";
+        sib.textContent = "任务周报";
+      }
+    }
+    document.getElementById("periodLabel").textContent = periodLabelText();
+    document.getElementById("colPrevPlan").innerHTML =
+      (periodType === "week" ? "上周计划" : "上月计划") + ' <span class="text-[10px] text-slate-400 font-normal">回显</span>';
+    document.getElementById("colDone").innerHTML =
+      (periodType === "week" ? "上周完成情况" : "上月完成情况") + (canEdit ? ' <i class="fa-solid fa-pen"></i>' : "");
+    document.getElementById("colPlan").innerHTML =
+      (periodType === "week" ? "本周计划" : "本月计划") + (canEdit ? ' <i class="fa-solid fa-pen"></i>' : "");
+    document.getElementById("autoSaveHint").classList.toggle("hidden", !canEdit);
+    document.getElementById("btnReset").classList.toggle("hidden", !canEdit);
+    const vs = document.getElementById("viewSwitch");
+    if (canViewAll) {
+      vs.classList.remove("hidden");
+      document.getElementById("btnViewTable").className = "px-3 py-1.5 " + (viewMode === "table" ? "mode-on" : "mode-off");
+      document.getElementById("btnViewCards").className = "px-3 py-1.5 " + (viewMode === "cards" ? "mode-on" : "mode-off");
+    } else {
+      vs.classList.add("hidden");
+      viewMode = "table";
+    }
+    document.getElementById("viewTable").classList.toggle("hidden", viewMode === "cards");
+    document.getElementById("viewCards").classList.toggle("hidden", viewMode !== "cards");
+    document.getElementById("peopleFoldBar").classList.toggle("hidden", !(canViewAll && viewMode === "cards"));
+  }
+
+  function attRowsHtml(atts) {
+    if (!(atts && atts.length)) return `<span class="empty-hint text-xs">暂无附件</span>`;
+    return `<div class="att-list">${atts
+      .map((a) => {
+        const meta = kindMeta(a.kind);
+        return `<div class="att-row">
+          <span class="att-ico ${meta.cls}"><i class="fa-solid ${meta.icon}"></i></span>
+          <span class="att-name" title="${escapeHtml(a.name)}">${escapeHtml(a.name)}</span>
+          <button type="button" class="att-act" data-preview-obj='${JSON.stringify(a).replace(/'/g, "&#39;")}'>预览</button>
+        </div>`;
+      })
+      .join("")}</div>`;
+  }
+
+  function groupReportsByPerson(reps) {
+    const map = new Map();
+    reps.forEach((r) => {
+      if (!map.has(r.userId)) map.set(r.userId, []);
+      map.get(r.userId).push(r);
+    });
+    return Array.from(map.entries())
+      .map(([userId, items]) => {
+        const u = BMS4.userById(userId);
+        items.sort((a, b) => {
+          const ca = BMS4.COMPANY_PLANS.find((c) => c.id === a.companyPlanId);
+          const cb = BMS4.COMPANY_PLANS.find((c) => c.id === b.companyPlanId);
+          return ((ca && ca.name) || "").localeCompare((cb && cb.name) || "", "zh");
+        });
+        return { userId, user: u, items };
+      })
+      .sort((a, b) => {
+        const da = (a.user && a.user.dept) || "";
+        const db = (b.user && b.user.dept) || "";
+        if (da !== db) return da.localeCompare(db, "zh");
+        return ((a.user && a.user.name) || "").localeCompare((b.user && b.user.name) || "", "zh");
+      });
+  }
+
+  function renderPeopleList() {
+    const kw = (document.getElementById("kw").value || "").trim();
+    const prevKey = prevPeriodKey();
+    document.getElementById("colPrevPlanPeople").innerHTML =
+      (periodType === "week" ? "上周计划" : "上月计划") +
+      ' <span class="text-[10px] text-slate-400 font-normal">回显</span>';
+    document.getElementById("colDonePeople").textContent =
+      periodType === "week" ? "上周完成情况" : "上月完成情况";
+    document.getElementById("colPlanPeople").textContent =
+      periodType === "week" ? "本周计划" : "本月计划";
+
+    const reps = BMS4.periodReports
+      .filter((r) => r.periodType === periodType && r.periodKey === periodKey())
+      .filter((r) => {
+        if (!kw) return true;
+        const u = BMS4.userById(r.userId);
+        const cp = BMS4.COMPANY_PLANS.find((c) => c.id === r.companyPlanId);
+        return (u && (u.name.includes(kw) || u.dept.includes(kw))) || (cp && cp.name.includes(kw));
+      });
+
+    const groups = groupReportsByPerson(reps);
+    // 搜索命中公司计划时自动展开对应人员，便于定位
+    if (kw) {
+      groups.forEach((g) => {
+        const hitPlan = g.items.some((r) => {
+          const cp = BMS4.COMPANY_PLANS.find((c) => c.id === r.companyPlanId);
+          return cp && cp.name.includes(kw);
+        });
+        if (hitPlan) peopleExpanded.add(g.userId);
+      });
+    }
+
+    if (!groups.length) {
+      document.getElementById("tbodyPeople").innerHTML =
+        `<tr><td colspan="6" class="text-center text-slate-400 py-10">该周期暂无部门长提交的${reportNoun()}</td></tr>`;
+      return;
+    }
+
+    let html = "";
+    groups.forEach((g, gi) => {
+      const expanded = peopleExpanded.has(g.userId);
+      const filled = g.items.filter((r) => (r.planText || "").trim() || (r.doneText || "").trim()).length;
+      const attCnt = g.items.reduce((n, r) => n + ((r.attachments && r.attachments.length) || 0), 0);
+      const caret = `<button type="button" class="caret-btn" data-toggle-person="${g.userId}" aria-label="${
+        expanded ? "收起" : "展开"
+      }"><i class="fa-solid fa-caret-${expanded ? "down" : "right"}"></i></button>`;
+      html += `<tr class="person-row" data-person-row="${g.userId}">
+        <td class="text-slate-500 whitespace-nowrap">${gi + 1}</td>
+        <td>
+          <div class="flex items-center gap-2">
+            ${caret}
+            <div class="min-w-0">
+              <div class="font-medium text-slate-800">${escapeHtml(g.user ? g.user.name : "—")}
+                <span class="text-slate-400 font-normal"> · ${escapeHtml(g.user ? g.user.dept : "—")}</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                <span class="chip">${g.items.length} 条公司计划</span>
+                <span class="chip">已填 ${filled}/${g.items.length}</span>
+                ${attCnt ? `<span class="chip">附件 ${attCnt}</span>` : ""}
+              </div>
+            </div>
+          </div>
+        </td>
+        <td colspan="3" class="text-slate-500 text-xs">
+          ${expanded ? "已展开明细，点击行或三角收起" : "点击展开查看各公司计划填写内容"}
+        </td>
+        <td class="text-slate-500 text-xs whitespace-nowrap">${attCnt ? attCnt + " 个附件" : "—"}</td>
+      </tr>`;
+
+      if (!expanded) return;
+      g.items.forEach((r, ri) => {
+        const cp = BMS4.COMPANY_PLANS.find((c) => c.id === r.companyPlanId);
+        const prev = prevKey ? BMS4.getPeriodReport(r.userId, periodType, prevKey, r.companyPlanId) : null;
+        const prevTxt = (prev && prev.planText) || "";
+        html += `<tr class="child-row">
+          <td class="text-slate-400 whitespace-nowrap">${gi + 1}.${ri + 1}</td>
+          <td>
+            <div class="pl-6">
+              <span class="name-link">${escapeHtml(cp ? cp.name : "—")}</span>
+            </div>
+          </td>
+          <td><div class="cell-ro">${
+            prevTxt ? escapeHtml(prevTxt) : '<span class="empty-hint">上期未填计划</span>'
+          }</div></td>
+          <td><div class="text-slate-700 whitespace-pre-wrap leading-relaxed">${escapeHtml(r.doneText || "—")}</div></td>
+          <td><div class="text-slate-700 whitespace-pre-wrap leading-relaxed">${escapeHtml(r.planText || "—")}</div></td>
+          <td>${attRowsHtml(r.attachments)}</td>
+        </tr>`;
+      });
+    });
+
+    document.getElementById("tbodyPeople").innerHTML = html;
+
+    document.querySelectorAll("[data-toggle-person]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-toggle-person");
+        if (peopleExpanded.has(id)) peopleExpanded.delete(id);
+        else peopleExpanded.add(id);
+        renderPeopleList();
+      };
+    });
+    document.querySelectorAll("[data-person-row]").forEach((tr) => {
+      tr.onclick = () => {
+        const id = tr.getAttribute("data-person-row");
+        if (peopleExpanded.has(id)) peopleExpanded.delete(id);
+        else peopleExpanded.add(id);
+        renderPeopleList();
+      };
+    });
+    bindAttActions();
+  }
+
+  function bindAutosave() {
+    document.querySelectorAll("[data-field]").forEach((el) => {
+      const sync = () => {
+        const id = el.getAttribute("data-id");
+        const field = el.getAttribute("data-field");
+        if (!draft[id]) draft[id] = { planText: "", doneText: "", attachments: [] };
+        draft[id][field] = el.value;
+      };
+      el.addEventListener("input", sync);
+      el.addEventListener("change", sync);
+      el.addEventListener("blur", () => {
+        sync();
+        if (saveOne(el.getAttribute("data-id"), true)) flashSaved();
+      });
+    });
+  }
+
+  function render() {
+    renderToolbar();
+    if (viewMode === "cards" && canViewAll) {
+      renderPeopleList();
+      return;
+    }
+    const kw = (document.getElementById("kw").value || "").trim();
+    const list = BMS4.COMPANY_PLANS.filter((cp) => !kw || cp.name.includes(kw));
+    const prevL = periodType === "week" ? "上周" : "上月";
+    const currL = periodType === "week" ? "本周" : "本月";
+    document.getElementById("tbody").innerHTML = list.length
+      ? list
+          .map((cp, i) => {
+            const d = draft[cp.id] || { planText: "", doneText: "", attachments: [] };
+            const prio = cp.priority || "P2";
+            let prevPlanCell, planCell, doneCell, attCell;
+            if (canEdit) {
+              const prevTxt = prevPlanText(cp.id);
+              prevPlanCell = prevTxt
+                ? `<div class="cell-ro">${escapeHtml(prevTxt)}</div>`
+                : `<div class="cell-ro empty-hint">${prevL}未填计划</div>`;
+              doneCell = `<textarea class="cell-ta" data-field="doneText" data-id="${cp.id}" placeholder="填写${prevL}完成情况…">${escapeHtml(
+                d.doneText
+              )}</textarea>`;
+              planCell = `<textarea class="cell-ta" data-field="planText" data-id="${cp.id}" placeholder="填写${currL}计划…">${escapeHtml(
+                d.planText
+              )}</textarea>`;
+              attCell = attListHtml(cp.id, d.attachments, true);
+            } else if (canViewAll) {
+              prevPlanCell = gmPrevPlan(cp.id);
+              doneCell = gmCell(cp.id, "done");
+              planCell = gmCell(cp.id, "plan");
+              attCell = gmAttachments(cp.id);
+            } else {
+              prevPlanCell = `<span class="empty-hint">—</span>`;
+              doneCell = `<span class="empty-hint">无编辑权限</span>`;
+              planCell = `<span class="empty-hint">无编辑权限</span>`;
+              attCell = `<span class="empty-hint">—</span>`;
+            }
+            return `<tr>
+              <td class="text-slate-500">${i + 1}</td>
+              <td>
+                <div class="flex items-start gap-2">
+                  <span class="${prioCls(prio)}">${prio}</span>
+                  <span class="name-link">${escapeHtml(cp.name)}</span>
+                </div>
+                <div class="text-[11px] text-slate-400 mt-1">${escapeHtml(cp.status)} · ${escapeHtml(cp.owner || "")}</div>
+              </td>
+              <td>${prevPlanCell}</td>
+              <td>${doneCell}</td>
+              <td>${planCell}</td>
+              <td>${attCell}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="6" class="text-center text-slate-400 py-10">无匹配的公司计划</td></tr>`;
+    bindAutosave();
+    bindAttActions();
+  }
+
+  function saveOne(cpId, silent) {
+    if (!canEdit) return false;
+    const d = draft[cpId] || { planText: "", doneText: "", attachments: [] };
+    BMS4.savePeriodReport({
+      userId: user.id,
+      periodType,
+      periodKey: periodKey(),
+      companyPlanId: cpId,
+      planText: d.planText,
+      doneText: d.doneText,
+      progressPct: 0,
+      attachments: d.attachments || [],
+    });
+    if (!silent) BMSUI.toast("已保存");
+    return true;
+  }
+
+  function switchPeriod(type) {
+    periodType = type;
+    loadDraft();
+    render();
+  }
+  function shiftPeriod(delta) {
+    if (periodType === "week") weekIdx = Math.max(0, Math.min(WEEKS.length - 1, weekIdx + delta));
+    else monthIdx = Math.max(0, Math.min(MONTHS.length - 1, monthIdx + delta));
+    loadDraft();
+    render();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    user = BMS4.getRoleUser();
+    canEdit = user.role === "部门长";
+    canViewAll = user.role === "总经理" || user.role === "员工" || user.role === "部门长";
+    // 部门长编辑本人；总经理/员工只读看全部。部门长在只读汇总场景下用本人编辑视图。
+    if (user.role === "部门长") canViewAll = false;
+    const params = new URLSearchParams(location.search);
+    if ((user.role === "总经理" || user.role === "员工") && params.get("view") === "cards") viewMode = "cards";
+    if (!periodLock) {
+      document.getElementById("btnWeek").onclick = () => switchPeriod("week");
+      document.getElementById("btnMonth").onclick = () => switchPeriod("month");
+    }
+    document.getElementById("btnPrev").onclick = () => shiftPeriod(-1);
+    document.getElementById("btnNext").onclick = () => shiftPeriod(1);
+    document.getElementById("btnViewTable").onclick = () => {
+      viewMode = "table";
+      render();
+    };
+    document.getElementById("btnViewCards").onclick = () => {
+      viewMode = "cards";
+      render();
+    };
+    document.getElementById("btnPeopleCollapse").onclick = () => {
+      peopleExpanded.clear();
+      if (viewMode === "cards") renderPeopleList();
+    };
+    document.getElementById("btnPeopleExpand").onclick = () => {
+      BMS4.periodReports
+        .filter((r) => r.periodType === periodType && r.periodKey === periodKey())
+        .forEach((r) => peopleExpanded.add(r.userId));
+      if (viewMode === "cards") renderPeopleList();
+    };
+    document.getElementById("btnReset").onclick = () => {
+      loadDraft();
+      render();
+      BMSUI.toast("已重置为已保存内容");
+    };
+    document.getElementById("kw").addEventListener("input", render);
+    loadDraft();
+    render();
+  });
+})();
+  </script>
+</body>
+</html>

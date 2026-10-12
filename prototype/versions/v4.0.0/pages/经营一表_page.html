@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>经营一表 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 7px 10px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 2; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .row-l1 { background: #f8fafc; font-weight: 600; }
+    .row-l2 { background: #fff; }
+    .row-l3 { background: #fcfcfd; color: #334155; }
+    .row-hot td { background: #fff8f7 !important; }
+    .caret-btn { color: #0f766e; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; padding: 0; cursor: pointer; }
+    .lvl { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; font-size: 10px; margin-right: 6px; border: 1px solid #e2e8f0; color: #64748b; background: #fff; flex-shrink: 0; }
+    .lvl-1 { border-color: #99f6e4; color: #0f766e; background: #f0fdfa; }
+    .lvl-2 { border-color: #bfdbfe; color: #1d4ed8; background: #eff6ff; }
+    .lvl-3 { border-color: #e2e8f0; color: #64748b; }
+    .tag { display: inline-flex; padding: 1px 8px; border-radius: 4px; font-size: 11px; border: 1px solid #e8eaed; background: #f1f3f4; color: #5f6368; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="unified" data-title="经营一表">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
+      <p class="text-xs text-slate-500 max-w-3xl">
+        <strong>按需合成视图</strong>（非日用主入口）：L1 公司计划 → L2 部门计划 → L3 任务 一张表展开。
+        日常抓落实请用「落实驾驶舱」；分域查看请用三张经营主表。
+      </p>
+      <div class="flex flex-wrap gap-2 text-sm">
+        <a href="经营总台账_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">公司计划表</a>
+        <a href="部门计划表_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
+        <a href="整体计划_任务监督_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">整体任务表</a>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2 items-center mb-4 text-sm">
+      <select id="fCp" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white"></select>
+      <select id="fDept" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white"></select>
+      <label class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-slate-200 bg-white cursor-pointer">
+        <input type="checkbox" id="onlyProblem" class="rounded" /> 仅问题/例外
+      </label>
+      <input type="search" id="kw" placeholder="搜索名称/责任人" class="border border-slate-200 rounded-xl px-3 py-1.5 w-48" />
+      <button type="button" id="btnDeptLevel" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white">展开到部门</button>
+      <button type="button" id="btnAllTasks" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white">展开全部任务</button>
+      <button type="button" id="btnCollapse" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white">全部收起</button>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="kpi"></div>
+
+    <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)] max-h-[70vh]">
+      <table class="grid-table min-w-[1180px]">
+        <thead>
+          <tr>
+            <th style="min-width:22rem">层级 / 名称</th>
+            <th>类型</th>
+            <th>部门</th>
+            <th>状态</th>
+            <th>进度/完成率</th>
+            <th>延期</th>
+            <th>截止</th>
+            <th>责任人</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="modalUrge" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalUrge')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <h3 class="text-lg font-semibold">发起催办</h3>
+        <input type="hidden" id="uTarget" />
+        <input type="hidden" id="uTaskId" />
+        <input type="hidden" id="uDept" />
+        <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
+          <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalUrge')" class="text-slate-500 px-3">取消</button>
+          <button type="button" id="btnUrgeSave" class="btn-cta text-white px-4 py-2 rounded-xl">确认催办</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  let collapsed = new Set();
+  let cpFilter = "";
+  let deptFilter = "";
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function isProblemPlan(p) {
+    if (p.status === "延期" || p.status === "关注") return true;
+    return BMS4.taskItems.some((t) => t.annualId === p.id && BMS4.isTaskOverdue(t));
+  }
+  function isExTask(t) {
+    return BMS4.isTaskOverdue(t) || BMS4.isTaskNearDue(t);
+  }
+  function deptHead(dept) {
+    return BMS4.USERS.find((u) => u.dept === dept && u.role === "部门长");
+  }
+  function tasksUnderPlan(planId) {
+    const ids = new Set([planId, ...BMS4.planDescendantIds(planId)]);
+    return BMS4.taskItems.filter((t) => ids.has(t.annualId));
+  }
+  function tasksDirect(planId) {
+    return BMS4.taskItems.filter((t) => t.annualId === planId);
+  }
+  function matchKw(text, userName) {
+    const kw = (document.getElementById("kw").value || "").trim();
+    if (!kw) return true;
+    return (text || "").includes(kw) || (userName || "").includes(kw);
+  }
+  function openUrge(opt) {
+    document.getElementById("uTarget").value = opt.targetUserId || "";
+    document.getElementById("uTaskId").value = opt.taskId || "";
+    document.getElementById("uDept").value = opt.dept || "";
+    document.getElementById("uTitle").value = opt.title || "催办落实";
+    document.getElementById("uExpect").value = "2026-08-21";
+    BMSUI.openModal("modalUrge");
+  }
+  function caret(key, hasKids) {
+    if (!hasKids) return `<span style="display:inline-block;width:18px"></span>`;
+    const open = !collapsed.has(key);
+    return `<button type="button" class="caret-btn" data-toggle="${escapeHtml(key)}"><i class="fa-solid fa-caret-${open ? "down" : "right"}"></i></button>`;
+  }
+
+  /** 先收集整棵子树行，再按筛选裁剪祖先 */
+  function collectPlanSubtree(p, onlyProblem) {
+    const out = [];
+    const kids = BMS4.planChildren(p.id).filter((c) => !deptFilter || c.dept === deptFilter);
+    const direct = tasksDirect(p.id);
+    const under = tasksUnderPlan(p.id);
+    const head = deptHead(p.dept);
+    const pLate = under.filter((t) => BMS4.isTaskOverdue(t)).length;
+    const pRate = BMS4.taskFinishRate(under);
+    const hot = isProblemPlan(p);
+    const plKey = "pl:" + p.id;
+
+    const taskRows = [];
+    direct.forEach((t) => {
+      if (onlyProblem && !isExTask(t)) return;
+      const u = BMS4.userById(t.ownerId);
+      if (!matchKw(t.name, u ? u.name : "")) return;
+      const flag = BMS4.isTaskOverdue(t) ? "延期" : BMS4.isTaskNearDue(t) ? "临期" : "";
+      taskRows.push({
+        key: "tk:" + t.id,
+        level: 3,
+        hot: !!flag,
+        name: t.name + (flag ? " [" + flag + "]" : ""),
+        type: "任务",
+        dept: t.dept,
+        status: t.status,
+        progress: (t.actualHours || 0) + "/" + (t.planHours || 0) + "h",
+        late: BMS4.isTaskOverdue(t) ? 1 : 0,
+        deadline: t.deadline || "—",
+        owner: u ? u.name : "—",
+        hasKids: false,
+        actions: {
+          links: [],
+          urge: u ? { targetUserId: u.id, title: "催办：" + t.name, dept: t.dept, taskId: t.id } : null,
+        },
+      });
+    });
+
+    const childBlocks = kids.map((c) => collectPlanSubtree(c, onlyProblem));
+    const childRows = childBlocks.flat();
+    const selfNameOk = matchKw(p.name, head ? head.name : "");
+    const keep =
+      (!onlyProblem || hot || taskRows.length > 0 || childRows.some((r) => r.hot || r.level === 3)) &&
+      (selfNameOk || taskRows.length > 0 || childRows.length > 0);
+
+    if (!keep) return out;
+
+    out.push({
+      key: plKey,
+      level: 2,
+      hot,
+      name: p.name,
+      type: "部门计划",
+      dept: p.dept,
+      status: p.status,
+      progress: under.length ? pRate + "%" : p.progress || "—",
+      late: pLate,
+      deadline: "—",
+      owner: head ? head.name : "—",
+      hasKids: kids.length > 0 || direct.length > 0,
+      actions: {
+        links: [
+          { href: "部门计划表_page.html?cp=" + (p.companyPlanId || "") + "&dept=" + encodeURIComponent(p.dept || ""), label: "部门表" },
+          { href: "整体计划_任务监督_page.html?plan=" + p.id + "&all=1", label: "任务表" },
+        ],
+        urge: head ? { targetUserId: head.id, title: "催办：" + p.name, dept: p.dept, taskId: "" } : null,
+      },
+    });
+
+    if (!collapsed.has(plKey)) {
+      childBlocks.forEach((block) => out.push(...block));
+      out.push(...taskRows);
+    }
+    return out;
+  }
+
+  function buildRows() {
+    const onlyProblem = document.getElementById("onlyProblem").checked;
+    const rows = [];
+    const matrix = BMS4.companyPlanDeptMatrix();
+    const cps = BMS4.COMPANY_PLANS.filter((c) => !cpFilter || c.id === cpFilter);
+
+    cps.forEach((cp) => {
+      const matrixRow = matrix.find((r) => r.companyPlan.id === cp.id);
+      let roots = BMS4.PLAN_ITEMS.filter((p) => p.companyPlanId === cp.id && !p.parentId);
+      if (deptFilter) roots = roots.filter((p) => p.dept === deptFilter);
+
+      const planBlocks = roots.map((r) => collectPlanSubtree(r, onlyProblem));
+      const planRows = planBlocks.flat();
+
+      let allTasks = [];
+      roots.forEach((r) => {
+        allTasks = allTasks.concat(tasksUnderPlan(r.id));
+      });
+      if (deptFilter) allTasks = allTasks.filter((t) => t.dept === deptFilter);
+      const late = allTasks.filter((t) => BMS4.isTaskOverdue(t)).length;
+      const rate = matrixRow ? matrixRow.avgRate : BMS4.taskFinishRate(allTasks);
+      const cpHot = late > 0;
+
+      const keepCp =
+        (!onlyProblem || cpHot || planRows.some((r) => r.hot || r.level === 3)) &&
+        (matchKw(cp.name, cp.owner) || planRows.length > 0);
+
+      if (!keepCp) return;
+
+      const cpKey = "cp:" + cp.id;
+      rows.push({
+        key: cpKey,
+        level: 1,
+        hot: cpHot,
+        name: cp.name,
+        type: "公司计划",
+        dept: "公司",
+        status: cp.status,
+        progress: rate + "%",
+        late,
+        deadline: "—",
+        owner: cp.owner || "—",
+        hasKids: roots.length > 0,
+        actions: {
+          links: [
+            { href: "经营总台账_page.html", label: "公司表" },
+            { href: "部门计划表_page.html?cp=" + cp.id, label: "部门表" },
+            { href: "整体计划_任务监督_page.html?cp=" + cp.id + "&all=1", label: "任务表" },
+          ],
+          urge: null,
+        },
+      });
+
+      if (!collapsed.has(cpKey)) {
+        planBlocks.forEach((block) => rows.push(...block));
+      }
+    });
+
+    return rows;
+  }
+
+  function render() {
+    const rows = buildRows();
+    document.getElementById("kpi").innerHTML = [
+      ["公司计划行", rows.filter((r) => r.level === 1).length],
+      ["部门计划行", rows.filter((r) => r.level === 2).length],
+      ["任务行", rows.filter((r) => r.level === 3).length],
+      ["问题/例外行", rows.filter((r) => r.hot).length],
+    ]
+      .map(
+        ([k, v]) =>
+          `<div class="bg-white rounded-2xl border p-4"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1">${v}</div></div>`
+      )
+      .join("");
+
+    document.getElementById("tbody").innerHTML = rows.length
+      ? rows
+          .map((r) => {
+            const pad = (r.level - 1) * 20;
+            const cls = r.level === 1 ? "row-l1" : r.level === 2 ? "row-l2" : "row-l3";
+            const links = (r.actions.links || [])
+              .map((l) => `<a class="text-teal-700 text-xs hover:underline" href="${l.href}">${l.label}</a>`)
+              .join(" ");
+            const urgeBtn = r.actions.urge
+              ? `<button type="button" class="text-teal-700 text-xs hover:underline" data-urge='${JSON.stringify(r.actions.urge).replace(
+                  /'/g,
+                  "&#39;"
+                )}'>催办</button>`
+              : "";
+            return `<tr class="${cls} ${r.hot ? "row-hot" : ""}">
+              <td>
+                <div class="flex items-center" style="padding-left:${pad}px">
+                  ${caret(r.key, r.hasKids)}
+                  <span class="lvl lvl-${r.level}">L${r.level}</span>
+                  <span class="truncate" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
+                </div>
+              </td>
+              <td><span class="tag">${r.type}</span></td>
+              <td class="whitespace-nowrap">${escapeHtml(r.dept)}</td>
+              <td>${BMSUI.statusBadge(r.status)}</td>
+              <td class="max-w-[10rem] truncate" title="${escapeHtml(String(r.progress))}">${escapeHtml(String(r.progress))}</td>
+              <td class="${r.late ? "text-rose-600 font-medium" : ""}">${r.late || "—"}</td>
+              <td class="whitespace-nowrap">${escapeHtml(String(r.deadline))}</td>
+              <td class="whitespace-nowrap">${escapeHtml(r.owner)}</td>
+              <td class="whitespace-nowrap space-x-2">${links} ${urgeBtn || (links ? "" : "—")}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="9" class="text-center text-slate-400 py-12">无匹配数据，请调整筛选</td></tr>`;
+
+    document.querySelectorAll("[data-toggle]").forEach((btn) => {
+      btn.onclick = () => {
+        const k = btn.getAttribute("data-toggle");
+        if (collapsed.has(k)) collapsed.delete(k);
+        else collapsed.add(k);
+        render();
+      };
+    });
+    document.querySelectorAll("[data-urge]").forEach((btn) => {
+      btn.onclick = () => {
+        try {
+          openUrge(JSON.parse(btn.getAttribute("data-urge")));
+        } catch (e) {
+          BMSUI.toast("催办参数错误", false);
+        }
+      };
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (BMS4.getRoleUser().role !== "总经理") {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见。</div>';
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    cpFilter = params.get("cp") || "";
+    deptFilter = params.get("dept") || "";
+
+    const fCp = document.getElementById("fCp");
+    fCp.innerHTML =
+      '<option value="">全部公司计划</option>' +
+      BMS4.COMPANY_PLANS.map((c) => `<option value="${c.id}">${c.name}</option>`).join("");
+    fCp.value = cpFilter;
+    fCp.onchange = () => {
+      cpFilter = fCp.value;
+      render();
+    };
+    const fDept = document.getElementById("fDept");
+    fDept.innerHTML =
+      '<option value="">全部部门</option>' + BMS4.DEPTS.map((d) => `<option value="${d}">${d}</option>`).join("");
+    fDept.value = deptFilter;
+    fDept.onchange = () => {
+      deptFilter = fDept.value;
+      render();
+    };
+
+    document.getElementById("onlyProblem").onchange = render;
+    document.getElementById("kw").addEventListener("input", render);
+    document.getElementById("btnDeptLevel").onclick = () => {
+      collapsed.clear();
+      BMS4.PLAN_ITEMS.forEach((p) => collapsed.add("pl:" + p.id));
+      render();
+    };
+    document.getElementById("btnAllTasks").onclick = () => {
+      collapsed.clear();
+      render();
+    };
+    document.getElementById("btnCollapse").onclick = () => {
+      collapsed.clear();
+      BMS4.COMPANY_PLANS.forEach((c) => collapsed.add("cp:" + c.id));
+      render();
+    };
+    document.getElementById("btnUrgeSave").onclick = () => {
+      const r = BMS4.createUrge({
+        targetUserId: document.getElementById("uTarget").value,
+        title: document.getElementById("uTitle").value.trim(),
+        expectReplyDate: document.getElementById("uExpect").value,
+        taskId: document.getElementById("uTaskId").value,
+        dept: document.getElementById("uDept").value,
+      });
+      if (!r.ok) return BMSUI.toast(r.reason, false);
+      BMSUI.closeModal("modalUrge");
+      BMSUI.toast("已催办");
+    };
+
+    BMS4.PLAN_ITEMS.forEach((p) => collapsed.add("pl:" + p.id));
+    render();
+  });
+})();
+  </script>
+</body>
+</html>

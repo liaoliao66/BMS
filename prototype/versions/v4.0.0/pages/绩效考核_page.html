@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>绩效考核 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .tab-on { color:#0f766e; border-bottom:2px solid #0f766e; font-weight:600; }
+    .tab-off { color:#64748b; border-bottom:2px solid transparent; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .prog-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+    .prog-track { flex: 1; height: 8px; border-radius: 999px; background: #e8eaed; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 999px; background: #34a853; }
+    .prog-fill.warn { background: #f9ab00; }
+    .prog-fill.bad { background: #ea4335; }
+    .link-btn { color: #1a73e8; cursor: pointer; font-size: 12px; }
+    .link-btn:hover { text-decoration: underline; }
+    .detail-row td { background: #fafbfc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="appraisal" data-title="绩效考核">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <p class="text-xs text-slate-500 mb-3">考核各部门及人员计划/任务完成情况。任务完成率=（已完成+已关闭）/总数。<strong>红区（有延期）置顶</strong>。催办须填期望回复日。
+      <a href="落实驾驶舱_page.html" class="text-teal-700 hover:underline ml-1">落实驾驶舱</a>
+      <a href="整体计划_任务监督_page.html" class="text-teal-700 hover:underline ml-2">整体任务表</a>
+      <a href="部门计划表_page.html" class="text-teal-700 hover:underline ml-2">部门计划表</a></p>
+
+    <div id="modalUrge" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalUrge')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <h3 class="text-lg font-semibold">发起催办</h3>
+        <input type="hidden" id="uTarget" />
+        <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
+          <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalUrge')" class="text-slate-500 px-3">取消</button>
+          <button type="button" id="btnUrgeSave" class="btn-cta text-white px-4 py-2 rounded-xl">确认催办</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 mb-4">
+      <div class="flex gap-1 text-sm">
+        <button type="button" data-dim="dept" class="px-3 py-2.5 tab-on">按部门</button>
+        <button type="button" data-dim="person" class="px-3 py-2.5 tab-off">按人员</button>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center text-sm mb-1">
+        <input type="date" id="dateFrom" value="2026-08-01" class="border border-slate-200 rounded-xl px-2 py-1.5" />
+        <span class="text-slate-400">~</span>
+        <input type="date" id="dateTo" value="2026-08-31" class="border border-slate-200 rounded-xl px-2 py-1.5" />
+        <input type="search" id="kw" placeholder="搜索部门或姓名" class="border border-slate-200 rounded-xl px-3 py-1.5 w-44" />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="kpi"></div>
+
+    <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1100px]">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  const DONE = "已完成";
+  const CLOSED = "已关闭";
+  let dim = "dept";
+  let expanded = new Set();
+
+  function inRange(t) {
+    const from = document.getElementById("dateFrom").value;
+    const to = document.getElementById("dateTo").value;
+    const d = t.deadline || t.createdAt || "";
+    if (from && d && d < from) return false;
+    if (to && d && d > to) return false;
+    return true;
+  }
+
+  function taskStats(list) {
+    const total = list.length;
+    let doing = 0, done = 0, closed = 0, late = 0, todo = 0;
+    let planH = 0, actH = 0;
+    list.forEach((t) => {
+      if (t.status === "进行中") doing++;
+      else if (t.status === DONE) done++;
+      else if (t.status === CLOSED) closed++;
+      else if (t.status === "延期") late++;
+      else if (t.status === "未开始") todo++;
+      planH += Number(t.planHours) || 0;
+      actH += Number(t.actualHours) || 0;
+    });
+    const finished = done + closed;
+    const rate = total ? Math.round((finished / total) * 1000) / 10 : 0;
+    return { total, doing, done, closed, late, todo, finished, rate, planH, actH };
+  }
+
+  function planStats(list) {
+    const total = list.length;
+    let doing = 0, done = 0, late = 0, watch = 0;
+    list.forEach((p) => {
+      if (p.status === "进行中") doing++;
+      else if (p.status === DONE) done++;
+      else if (p.status === "延期") late++;
+      else if (p.status === "关注") watch++;
+    });
+    const rate = total ? Math.round((done / total) * 1000) / 10 : 0;
+    return { total, doing, done, late, watch, rate };
+  }
+
+  function rateBar(rate) {
+    const cls = rate >= 70 ? "" : rate >= 40 ? "warn" : "bad";
+    return `<div class="prog-wrap">
+      <div class="prog-track"><div class="prog-fill ${cls}" style="width:${Math.min(100, rate)}%"></div></div>
+      <span class="text-slate-700 text-xs whitespace-nowrap">${rate.toFixed(1)}%</span>
+    </div>`;
+  }
+
+  function filteredTasks() {
+    return BMS4.taskItems.filter(inRange);
+  }
+
+  function deptRows() {
+    const kw = (document.getElementById("kw").value || "").trim();
+    const tasks = filteredTasks();
+    return BMS4.DEPTS.filter((d) => !kw || d.includes(kw)).map((dept) => {
+      const ts = tasks.filter((t) => t.dept === dept);
+      const plans = BMS4.PLAN_ITEMS.filter((p) => p.dept === dept);
+      const cpIds = new Set(plans.map((p) => p.companyPlanId).filter(Boolean));
+        const head = BMS4.USERS.find((u) => u.dept === dept && u.role === "部门长");
+        return {
+          key: "d:" + dept,
+          name: dept,
+          sub: head ? head.name : "—",
+          ownerId: head ? head.id : "",
+          plan: planStats(plans),
+          task: taskStats(ts),
+          cpCount: cpIds.size,
+          tasks: ts,
+        };
+      });
+  }
+
+  function personRows() {
+    const kw = (document.getElementById("kw").value || "").trim();
+    const tasks = filteredTasks();
+    return BMS4.USERS.filter((u) => u.role !== "总经理")
+      .filter((u) => !kw || u.name.includes(kw) || u.dept.includes(kw))
+      .map((u) => {
+        const ts = tasks.filter((t) => t.ownerId === u.id);
+        const plans = BMS4.PLAN_ITEMS.filter((p) => p.dept === u.dept);
+        return {
+          key: "u:" + u.id,
+          name: u.name,
+          sub: u.dept + " · " + u.role,
+          ownerId: u.id,
+          plan: planStats(u.role === "部门长" ? plans : plans.filter(() => false)),
+          planForPerson: u.role === "部门长",
+          task: taskStats(ts),
+          cpCount: u.role === "部门长" ? new Set(plans.map((p) => p.companyPlanId)).size : 0,
+          tasks: ts,
+        };
+      });
+  }
+
+  function renderKpi(rows) {
+    const allTasks = rows.reduce((n, r) => n + r.task.total, 0);
+    const allFin = rows.reduce((n, r) => n + r.task.finished, 0);
+    const allLate = rows.reduce((n, r) => n + r.task.late, 0);
+    const allPlans = dim === "dept" ? BMS4.PLAN_ITEMS.length : rows.filter((r) => r.planForPerson !== false).reduce((n, r) => n + r.plan.total, 0);
+    const taskRate = allTasks ? Math.round((allFin / allTasks) * 1000) / 10 : 0;
+    document.getElementById("kpi").innerHTML = [
+      ["考核对象", rows.length],
+      ["任务总数", allTasks],
+      ["任务完成率", taskRate.toFixed(1) + "%"],
+      ["延期任务", allLate],
+    ]
+      .map(
+        ([k, v]) =>
+          `<div class="bg-white rounded-2xl border p-4 shadow-[0_4px_12px_rgba(0,0,0,0.04)]"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1">${v}</div></div>`
+      )
+      .join("");
+  }
+
+  function detailHtml(row) {
+    if (!row.tasks.length) {
+      return `<tr class="detail-row"><td colspan="12" class="text-slate-400 text-center py-4">该对象在筛选条件下无任务</td></tr>`;
+    }
+    const head = `<tr class="detail-row"><td colspan="12" class="p-0">
+      <div class="px-4 py-2 text-xs text-slate-500 bg-slate-50 border-b border-[#e8eaed]">关联任务（只读）</div>
+      <table class="w-full text-xs"><thead class="bg-slate-50 text-slate-500"><tr>
+        <th class="px-3 py-2 text-left">任务</th><th class="px-3 py-2 text-left">关联计划</th>
+        <th class="px-3 py-2 text-left">状态</th><th class="px-3 py-2 text-left">截止</th>
+        <th class="px-3 py-2 text-right">预估</th><th class="px-3 py-2 text-right">已登记</th>
+      </tr></thead><tbody>`;
+    const body = row.tasks
+      .map((t) => {
+        const path = BMS4.planPathLabel(t.annualId) || "—";
+        return `<tr class="border-t border-[#e8eaed]">
+          <td class="px-3 py-2">${t.name}</td>
+          <td class="px-3 py-2 text-slate-500">${path}</td>
+          <td class="px-3 py-2">${BMSUI.statusBadge(t.status)}</td>
+          <td class="px-3 py-2">${t.deadline || "—"}</td>
+          <td class="px-3 py-2 text-right">${t.planHours ?? 0}</td>
+          <td class="px-3 py-2 text-right">${t.actualHours ?? 0}</td>
+        </tr>`;
+      })
+      .join("");
+    return head + body + "</tbody></table></td></tr>";
+  }
+
+  function render() {
+    document.querySelectorAll("[data-dim]").forEach((btn) => {
+      btn.className = "px-3 py-2.5 " + (btn.getAttribute("data-dim") === dim ? "tab-on" : "tab-off");
+    });
+
+    let rows = dim === "dept" ? deptRows() : personRows();
+    rows.sort((a, b) => {
+      if (b.task.late !== a.task.late) return b.task.late - a.task.late;
+      return a.task.rate - b.task.rate;
+    });
+    renderKpi(rows);
+
+    const nameCol = dim === "dept" ? "部门" : "人员";
+    document.getElementById("thead").innerHTML = `<tr>
+      <th>${nameCol}</th>
+      <th>关联公司计划</th>
+      <th>计划节点</th>
+      <th>计划已完成</th>
+      <th>计划延期</th>
+      <th>计划完成率</th>
+      <th>任务总数</th>
+      <th>进行中</th>
+      <th>已完成+已关闭</th>
+      <th>延期</th>
+      <th>任务完成率</th>
+      <th>工时(已登记/预估)</th>
+      <th>操作</th>
+    </tr>`;
+
+    document.getElementById("tbody").innerHTML = rows.length
+      ? rows
+          .map((r) => {
+            const open = expanded.has(r.key);
+            const planRate =
+              dim === "person" && r.planForPerson === false
+                ? `<span class="text-slate-400">—</span>`
+                : rateBar(r.plan.rate);
+            const planTotal = dim === "person" && r.planForPerson === false ? "—" : r.plan.total;
+            const planDone = dim === "person" && r.planForPerson === false ? "—" : r.plan.done;
+            const planLate = dim === "person" && r.planForPerson === false ? "—" : r.plan.late;
+            const cp = dim === "person" && r.planForPerson === false ? "—" : r.cpCount;
+            return `<tr>
+              <td>
+                <div class="font-medium text-slate-800">${r.name}</div>
+                <div class="text-[11px] text-slate-400">${r.sub}</div>
+              </td>
+              <td class="text-center">${cp}</td>
+              <td class="text-center">${planTotal}</td>
+              <td class="text-center">${planDone}</td>
+              <td class="text-center ${r.plan.late ? "text-rose-600" : ""}">${planLate}</td>
+              <td>${planRate}</td>
+              <td class="text-center">${r.task.total}</td>
+              <td class="text-center">${r.task.doing}</td>
+              <td class="text-center">${r.task.finished}</td>
+              <td class="text-center ${r.task.late ? "text-rose-600 font-medium" : ""}">${r.task.late}</td>
+              <td>${rateBar(r.task.rate)}</td>
+              <td class="text-right whitespace-nowrap">${r.task.actH} / ${r.task.planH}</td>
+              <td class="whitespace-nowrap">
+                <button type="button" class="link-btn" data-exp="${r.key}">${open ? "收起" : "明细"}</button>
+                ${
+                  r.ownerId && r.task.late
+                    ? `<button type="button" class="link-btn ml-2" data-urge-owner="${r.ownerId}" data-urge-title="催办：${r.name}任务延期">催办</button>`
+                    : ""
+                }
+              </td>
+            </tr>${open ? detailHtml(r) : ""}`;
+          })
+          .join("")
+      : `<tr><td colspan="13" class="text-center text-slate-400 py-10">无匹配对象</td></tr>`;
+
+    document.querySelectorAll("[data-exp]").forEach((btn) => {
+      btn.onclick = () => {
+        const k = btn.getAttribute("data-exp");
+        if (expanded.has(k)) expanded.delete(k);
+        else expanded.add(k);
+        render();
+      };
+    });
+    document.querySelectorAll("[data-urge-owner]").forEach((btn) => {
+      btn.onclick = () => {
+        document.getElementById("uTarget").value = btn.getAttribute("data-urge-owner");
+        document.getElementById("uTitle").value = btn.getAttribute("data-urge-title") || "催办落实";
+        document.getElementById("uExpect").value = "2026-08-21";
+        BMSUI.openModal("modalUrge");
+      };
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (BMS4.getRoleUser().role !== "总经理") {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见，请切换视角。</div>';
+      return;
+    }
+    document.querySelectorAll("[data-dim]").forEach((btn) => {
+      btn.onclick = () => {
+        dim = btn.getAttribute("data-dim");
+        expanded.clear();
+        render();
+      };
+    });
+    ["dateFrom", "dateTo", "kw"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", render);
+      document.getElementById(id).addEventListener("change", render);
+    });
+    document.getElementById("btnUrgeSave").onclick = () => {
+      const r = BMS4.createUrge({
+        targetUserId: document.getElementById("uTarget").value,
+        title: document.getElementById("uTitle").value.trim(),
+        expectReplyDate: document.getElementById("uExpect").value,
+        exceptionType: "任务延期",
+      });
+      if (!r.ok) return BMSUI.toast(r.reason, false);
+      BMSUI.closeModal("modalUrge");
+      BMSUI.toast("已催办");
+    };
+    render();
+  });
+})();
+  </script>
+</body>
+</html>

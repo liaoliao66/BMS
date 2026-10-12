@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>数据分析 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .excel-wrap { overflow:auto; }
+    .excel-table th { position:sticky; top:0; z-index:1; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="macro" data-title="数据分析">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap gap-3 justify-between mb-4 items-center">
+      <p class="text-xs text-slate-500">按需分析/复盘用（非每日主入口）。完成率口径与驾驶舱一致：（已完成+已关闭）/任务总数。日常抓落实请用
+        <a href="落实驾驶舱_page.html" class="text-teal-700 hover:underline">落实驾驶舱</a>。</p>
+      <div class="flex gap-2 items-center text-sm">
+        <span class="text-slate-500">视图</span>
+        <select id="viewMode" class="border rounded-xl px-3 py-2">
+          <option value="deptPlan" selected>部门 × 计划</option>
+          <option value="company">公司计划汇总</option>
+        </select>
+        <select id="fDept" class="border rounded-xl px-3 py-2"><option value="">全部部门</option></select>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] excel-wrap border border-slate-200">
+      <table class="excel-table w-full text-sm min-w-[1100px]"><thead class="bg-slate-100 text-slate-600"><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody></table>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (BMS4.getRoleUser().role !== '总经理') {
+    document.getElementById('page-main').innerHTML = '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见。</div>';
+    return;
+  }
+  const fd = document.getElementById('fDept');
+  BMS4.DEPTS.forEach(d => { const o=document.createElement('option'); o.value=d; o.textContent=d; fd.appendChild(o); });
+  document.getElementById('viewMode').onchange = render;
+  fd.onchange = render;
+  render();
+});
+function taskCols(planIds) {
+  const ts = BMS4.taskItems.filter(t => planIds.includes(t.annualId));
+  const c = BMS4.countByStatus(ts);
+  c.lateEx = ts.filter((t) => BMS4.isTaskOverdue(t)).length;
+  c.finishRate = BMS4.taskFinishRate(ts);
+  return { c, summary: ts.slice(0,2).map(t=>t.name).join('；') || '—' };
+}
+function render() {
+  const mode = document.getElementById('viewMode').value;
+  const deptFilter = document.getElementById('fDept').value;
+  let cols = [], rows = [];
+  if (mode === 'deptPlan') {
+    cols = ['公司计划','部门','计划路径','完成情况','计划状态','任务数','完成率','延期/逾期','关键任务摘要','责任人'];
+    rows = BMS4.PLAN_ITEMS.filter(m => !deptFilter || m.dept===deptFilter).map(m => {
+      const cp = BMS4.COMPANY_PLANS.find(c=>c.id===m.companyPlanId);
+      const {c, summary} = taskCols([m.id]);
+      const head = BMS4.USERS.find(u=>u.dept===m.dept && u.role==='部门长');
+      return [cp?cp.name:'', m.dept, BMS4.planPathLabel(m.id), m.progress, m.status, c.total, c.finishRate+'%', c.lateEx, summary, head?head.name:''];
+    });
+  } else {
+    cols = ['公司计划','完成情况','状态','关联计划数','任务总数','完成率','延期/逾期','耗时'];
+    rows = BMS4.companyPlanDeptMatrix().map(row => {
+      const plans = BMS4.PLAN_ITEMS.filter(a=>a.companyPlanId===row.companyPlan.id);
+      const ids = plans.map(a=>a.id);
+      const {c} = taskCols(ids);
+      return [row.companyPlan.name, row.companyPlan.progress, row.companyPlan.status, plans.length, c.total, row.avgRate+'%', row.lateTotal, c.hours];
+    });
+  }
+  document.getElementById('thead').innerHTML = cols.map(c=>`<th class="px-3 py-3 text-left whitespace-nowrap border-b border-slate-200">${c}</th>`).join('');
+  document.getElementById('tbody').innerHTML = rows.length ? rows.map(r => `<tr class="border-t row-hover">${r.map((cell,i)=>{
+    if (cols[i]==='计划状态'||cols[i]==='状态') return `<td class="px-3 py-2.5 whitespace-nowrap">${BMSUI.statusBadge(cell)}</td>`;
+    return `<td class="px-3 py-2.5 ${typeof cell==='string' && cell.length>40 ? 'max-w-xs text-slate-600' : 'whitespace-nowrap'}">${cell}</td>`;
+  }).join('')}</tr>`).join('') : `<tr><td colspan="${cols.length}" class="px-4 py-10 text-center text-slate-400">无数据</td></tr>`;
+}
+
+  </script>
+</body>
+</html>

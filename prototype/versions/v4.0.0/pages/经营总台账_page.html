@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>公司计划表 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .row-risk { background:#fff8f7; }
+    .cell-edit { cursor:pointer; border-radius:6px; padding:2px 6px; display:inline-block; }
+    .cell-edit:hover { background:#eef5f4; }
+    .inline-input { border:1px solid #1a73e8; border-radius:6px; padding:2px 8px; font-size:13px; width:4.5rem; }
+    .col-name { min-width: 22rem; max-width: 28rem; position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 4px 0 8px -4px rgba(15,23,42,0.12); }
+    thead .col-name { background: #f8fafc; z-index: 3; }
+    .row-hover:hover .col-name { background: #f8fafc; }
+    .row-risk .col-name { background: #fff8f7; }
+    .row-risk:hover .col-name { background: #fff1f0; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="companyPlan" data-title="公司计划表">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
+      <p class="text-xs text-slate-500 max-w-3xl">经营主表①：公司目标健康度一览。整体进度由总经理<strong>手填</strong>；承接部门点开弹窗查看；风险列前置。日常催办仍可回落实驾驶舱。</p>
+      <div class="flex flex-wrap gap-2">
+        <a href="部门计划表_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
+        <a href="整体计划_任务监督_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">整体任务表</a>
+        <a href="经营一表_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-500">经营一表（按需）</a>
+        <a href="落实驾驶舱_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">落实驾驶舱</a>
+        <button id="btnNew" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">下达公司计划</button>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4" id="kpi"></div>
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <div class="px-4 py-3 border-b text-sm font-medium">公司计划</div>
+      <div class="overflow-auto">
+        <table class="w-full text-sm min-w-[1100px]">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="px-4 py-3 text-left col-name">计划名称</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap">优先级</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap">开始时间</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap">结束时间</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap">状态</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap min-w-[12rem]">计划状态汇总</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap min-w-[12rem]">任务状态汇总</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap">整体进度</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap">承接部门</th>
+              <th class="px-4 py-3 text-left whitespace-nowrap">说明/进展</th>
+            </tr>
+          </thead>
+          <tbody id="cpBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="modal-cp" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal-cp')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-lg shadow-[0_12px_40px_rgba(0,0,0,0.12)] p-6 space-y-3 text-sm max-h-[90vh] overflow-y-auto">
+        <h3 class="text-lg font-semibold">下达公司计划</h3>
+        <div>
+          <label class="block text-slate-600 mb-1">计划名称 <span class="text-red-500">*</span></label>
+          <input id="cpName" class="w-full border rounded-xl px-3 py-2.5" placeholder="计划名称" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-600 mb-1">开始时间 <span class="text-red-500">*</span></label>
+            <input type="date" id="cpStart" class="w-full border rounded-xl px-3 py-2.5" value="2026-01-01" />
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">结束时间 <span class="text-red-500">*</span></label>
+            <input type="date" id="cpEnd" class="w-full border rounded-xl px-3 py-2.5" value="2026-12-31" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-600 mb-1">整体进度（%）</label>
+          <input type="number" id="cpPct" min="0" max="100" value="0" class="w-full border rounded-xl px-3 py-2.5" />
+        </div>
+        <div>
+          <label class="block text-slate-600 mb-1">说明/进展</label>
+          <textarea id="cpProg" class="w-full border rounded-xl px-3 py-2.5 h-24" placeholder="初始说明/完成情况"></textarea>
+        </div>
+        <p class="text-[11px] text-slate-400">发布后请督促各部门长在「计划管理」拆解；整体进度由您手动维护。</p>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modal-cp')" class="text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveCp()" class="btn-cta text-white px-4 py-2 rounded-xl">发布</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-dept" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal-dept')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] overflow-hidden max-h-[85vh] flex flex-col">
+        <div class="px-5 py-4 border-b flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-semibold" id="deptModalTitle">承接部门</h3>
+            <p class="text-xs text-slate-400 mt-0.5" id="deptModalSub"></p>
+          </div>
+          <button type="button" onclick="BMSUI.closeModal('modal-dept')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="p-5 overflow-auto flex-1">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-3 py-2 text-left whitespace-nowrap">部门</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">部门长</th>
+                <th class="px-3 py-2 text-right whitespace-nowrap">子计划</th>
+                <th class="px-3 py-2 text-right whitespace-nowrap">任务</th>
+                <th class="px-3 py-2 text-right whitespace-nowrap">任务完成率</th>
+                <th class="px-3 py-2 text-right whitespace-nowrap">延期任务</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">本周周报</th>
+              </tr>
+            </thead>
+            <tbody id="deptModalBody"></tbody>
+          </table>
+        </div>
+        <div class="px-5 py-3 border-t flex justify-end">
+          <a id="deptModalLink" href="部门计划表_page.html" class="text-sm text-teal-700 hover:underline mr-auto">打开部门计划表</a>
+          <button type="button" onclick="BMSUI.closeModal('modal-dept')" class="text-slate-500 px-3 text-sm">关闭</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  let editPctId = null;
+  let matrixCache = [];
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escapeAttr(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  }
+
+  function formatStatusParts(order, counts, cls, emptyText) {
+    const parts = order
+      .filter((k) => counts[k] > 0)
+      .map((k) => `<span class="${cls[k]} whitespace-nowrap">${k} ${counts[k]}</span>`)
+      .join('<span class="text-slate-300 mx-1">·</span>');
+    return parts || `<span class="text-slate-400">${emptyText}</span>`;
+  }
+
+  function planStatusSummary(cpId) {
+    const STATUS_ORDER = ["未开始", "进行中", "关注", "延期", "已完成"];
+    const STATUS_CLS = {
+      未开始: "text-slate-500",
+      进行中: "text-blue-600",
+      关注: "text-amber-600",
+      延期: "text-rose-600",
+      已完成: "text-emerald-600",
+    };
+    const plans = BMS4.PLAN_ITEMS.filter((p) => p.companyPlanId === cpId);
+    const counts = { 未开始: 0, 进行中: 0, 关注: 0, 延期: 0, 已完成: 0 };
+    let latePlans = 0;
+    plans.forEach((p) => {
+      const st = BMS4.resolvePlanStatus(p);
+      if (counts[st] !== undefined) counts[st]++;
+      else counts["进行中"]++;
+      if (st === "延期" || BMS4.isPlanOverdue(p)) latePlans++;
+    });
+    return {
+      total: plans.length,
+      html: formatStatusParts(STATUS_ORDER, counts, STATUS_CLS, "暂无子计划"),
+      latePlans,
+      counts,
+    };
+  }
+
+  function taskStatusSummary(cpId) {
+    const STATUS_ORDER = ["未开始", "进行中", "延期", "已完成", "已关闭"];
+    const STATUS_CLS = {
+      未开始: "text-slate-500",
+      进行中: "text-blue-600",
+      延期: "text-rose-600",
+      已完成: "text-emerald-600",
+      已关闭: "text-slate-400",
+    };
+    const planIds = new Set(BMS4.PLAN_ITEMS.filter((p) => p.companyPlanId === cpId).map((p) => p.id));
+    const tasks = BMS4.taskItems.filter((t) => planIds.has(t.annualId));
+    const counts = { 未开始: 0, 进行中: 0, 延期: 0, 已完成: 0, 已关闭: 0 };
+    let lateTasks = 0;
+    tasks.forEach((t) => {
+      let st = t.status || "进行中";
+      if (BMS4.isTaskOverdue(t)) st = "延期";
+      if (counts[st] !== undefined) counts[st]++;
+      else counts["进行中"]++;
+      if (st === "延期") lateTasks++;
+    });
+    return {
+      total: tasks.length,
+      html: formatStatusParts(STATUS_ORDER, counts, STATUS_CLS, "暂无任务"),
+      lateTasks,
+      counts,
+    };
+  }
+
+  function openDeptModal(cpId) {
+    const row = matrixCache.find((r) => r.companyPlan.id === cpId);
+    if (!row) return;
+    const cp = row.companyPlan;
+    const active = row.cells.filter((c) => c.planNodes + c.taskTotal > 0);
+    document.getElementById("deptModalTitle").textContent = "承接部门 · " + cp.name;
+    document.getElementById("deptModalSub").textContent =
+      "共 " + active.length + " 个部门有承接（子计划或任务）";
+    document.getElementById("deptModalLink").href = "部门计划表_page.html?cp=" + encodeURIComponent(cpId);
+    document.getElementById("deptModalBody").innerHTML = active.length
+      ? active
+          .map((c) => {
+            const head = BMS4.USERS.find((u) => u.id === c.ownerId);
+            return `<tr class="border-t">
+              <td class="px-3 py-2.5 font-medium">${escapeHtml(c.dept)}</td>
+              <td class="px-3 py-2.5">${head ? escapeHtml(head.name) : "—"}</td>
+              <td class="px-3 py-2.5 text-right tabular-nums">${c.planNodes}</td>
+              <td class="px-3 py-2.5 text-right tabular-nums">${c.taskTotal}</td>
+              <td class="px-3 py-2.5 text-right tabular-nums">${c.taskRate}%</td>
+              <td class="px-3 py-2.5 text-right tabular-nums ${c.late ? "text-rose-600 font-medium" : ""}">${c.late}</td>
+              <td class="px-3 py-2.5 ${c.weekFilled ? "text-emerald-600" : "text-amber-600"}">${c.weekFilled ? "已填" : "未填"}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="7" class="px-3 py-8 text-center text-slate-400">暂无部门承接</td></tr>`;
+    BMSUI.openModal("modal-dept");
+  }
+
+  function render() {
+    matrixCache = BMS4.companyPlanDeptMatrix();
+    let riskCp = 0;
+    let latePlanAll = 0;
+    let missAll = 0;
+
+    document.getElementById("cpBody").innerHTML = matrixCache
+      .map((row) => {
+        const cp = row.companyPlan;
+        const activeDepts = row.cells.filter((c) => c.planNodes + c.taskTotal > 0);
+        const missDepts = activeDepts.filter((c) => !c.weekFilled);
+        const sub = planStatusSummary(cp.id);
+        const taskSum = taskStatusSummary(cp.id);
+        const hot = sub.latePlans > 0 || taskSum.lateTasks > 0 || missDepts.length > 0;
+        if (hot) riskCp++;
+        latePlanAll += sub.latePlans;
+        missAll += missDepts.length;
+        const pct = BMS4.clampPct(cp.progressPct);
+        const pctCell =
+          editPctId === cp.id
+            ? `<input type="number" min="0" max="100" class="inline-input" data-pct-input="${cp.id}" value="${pct}" />`
+            : `<span class="cell-edit font-medium tabular-nums" data-edit-pct="${cp.id}" title="点击编辑">${pct}%</span>`;
+
+        return `<tr class="border-t row-hover ${hot ? "row-risk" : ""}">
+          <td class="px-4 py-3 font-medium col-name leading-snug">${escapeHtml(cp.name)}</td>
+          <td class="px-4 py-3 whitespace-nowrap">${escapeHtml(cp.priority || "—")}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-slate-600">${escapeHtml(cp.startDate || "—")}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-slate-600">${escapeHtml(cp.endDate || "—")}</td>
+          <td class="px-4 py-3">${BMSUI.statusBadge(cp.status)}</td>
+          <td class="px-4 py-3 text-xs leading-relaxed">
+            <div class="text-[10px] text-slate-400 mb-0.5">共 ${sub.total}</div>
+            ${sub.html}
+          </td>
+          <td class="px-4 py-3 text-xs leading-relaxed">
+            <div class="text-[10px] text-slate-400 mb-0.5">共 ${taskSum.total}</div>
+            ${taskSum.html}
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap">${pctCell}<div class="text-[10px] text-slate-400">手填</div></td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            <button type="button" class="text-teal-700 hover:underline" data-dept-modal="${cp.id}">${activeDepts.length} 个部门</button>
+          </td>
+          <td class="px-4 py-3 max-w-[12rem] text-slate-600 truncate" title="${escapeAttr(cp.progress || "")}">${escapeHtml(cp.progress || "—")}</td>
+        </tr>`;
+      })
+      .join("");
+
+    const lateAll = BMS4.taskItems.filter((t) => BMS4.isTaskOverdue(t)).length;
+    document.getElementById("kpi").innerHTML = [
+      ["公司计划", BMS4.COMPANY_PLANS.length, ""],
+      ["风险目标", riskCp, riskCp ? "text-rose-600" : ""],
+      ["延期子计划", latePlanAll, latePlanAll ? "text-rose-600" : ""],
+      ["延期任务", lateAll, lateAll ? "text-rose-600" : ""],
+      ["周报缺口部门次", missAll, missAll ? "text-amber-600" : ""],
+    ]
+      .map(
+        ([k, v, cls]) =>
+          `<div class="bg-white rounded-2xl border p-4 shadow-[0_4px_12px_rgba(0,0,0,0.04)]"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1 ${cls}">${v}</div></div>`
+      )
+      .join("");
+
+    document.querySelectorAll("[data-dept-modal]").forEach((btn) => {
+      btn.onclick = () => openDeptModal(btn.getAttribute("data-dept-modal"));
+    });
+    document.querySelectorAll("[data-edit-pct]").forEach((el) => {
+      el.onclick = () => {
+        editPctId = el.getAttribute("data-edit-pct");
+        render();
+        requestAnimationFrame(() => {
+          const input = document.querySelector("[data-pct-input]");
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        });
+      };
+    });
+    const input = document.querySelector("[data-pct-input]");
+    if (input) {
+      const finish = (save) => {
+        const id = input.getAttribute("data-pct-input");
+        if (save) {
+          BMS4.updateCompanyPlan(id, { progressPct: BMS4.clampPct(input.value) });
+          BMSUI.toast("整体进度已保存");
+        }
+        editPctId = null;
+        render();
+      };
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          finish(true);
+        }
+        if (e.key === "Escape") finish(false);
+      });
+      input.addEventListener("blur", () => setTimeout(() => finish(true), 100));
+    }
+  }
+
+  window.saveCp = function () {
+    const name = document.getElementById("cpName").value.trim();
+    if (!name) return BMSUI.toast("请填写计划名称", false);
+    const startDate = document.getElementById("cpStart").value;
+    const endDate = document.getElementById("cpEnd").value;
+    if (!startDate || !endDate) return BMSUI.toast("请填写开始与结束时间", false);
+    if (endDate < startDate) return BMSUI.toast("结束时间不能早于开始时间", false);
+    BMS4.COMPANY_PLANS.push({
+      id: "cp_" + Date.now(),
+      name,
+      status: "进行中",
+      priority: "P1",
+      progress: document.getElementById("cpProg").value.trim() || "新下达",
+      owner: "李家治",
+      startDate,
+      endDate,
+      progressPct: BMS4.clampPct(document.getElementById("cpPct").value),
+    });
+    BMSUI.closeModal("modal-cp");
+    BMSUI.toast("已下达");
+    render();
+  };
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (BMS4.getRoleUser().role !== "总经理") {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见，请切换视角。</div>';
+      return;
+    }
+    document.getElementById("btnNew").onclick = () => BMSUI.openModal("modal-cp");
+    render();
+  });
+})();
+  </script>
+</body>
+</html>

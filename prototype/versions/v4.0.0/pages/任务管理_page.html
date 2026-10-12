@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>任务管理 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .tab-on { color:#0f766e; border-bottom:2px solid #0f766e; font-weight:600; }
+    .tab-off { color:#64748b; border-bottom:2px solid transparent; }
+    .view-on { background:#0f766e; color:#fff; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .grid-table tbody tr.plan-row { background: #fafbfc; }
+    .col-head { display: inline-flex; align-items: center; gap: 4px; }
+    .col-head i { font-size: 10px; color: #9aa0a6; }
+    .tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; font-size: 12px; line-height: 20px; border: 1px solid transparent; white-space: nowrap; }
+    .tag-muted { background: #f1f3f4; color: #5f6368; border-color: #e8eaed; }
+    .tag-p0 { background: #fce8e6; color: #c5221f; border-color: #f5c6c4; }
+    .tag-p1 { background: #fef7e0; color: #e37400; border-color: #fde293; }
+    .tag-p2 { background: #f1f3f4; color: #5f6368; border-color: #e8eaed; }
+    .tag-st-doing { background: #e8f0fe; color: #1a73e8; border-color: #c6dafc; }
+    .tag-st-todo { background: #f1f3f4; color: #5f6368; border-color: #e8eaed; }
+    .tag-st-done { background: #e6f4ea; color: #137333; border-color: #ceead6; }
+    .tag-st-closed { background: #f1f3f4; color: #80868b; border-color: #e8eaed; }
+    .tag-st-late { background: #fce8e6; color: #c5221f; border-color: #f5c6c4; }
+    .name-link { color: #1a73e8; cursor: pointer; text-decoration: none; }
+    .name-link:hover { text-decoration: underline; }
+    .caret-btn { color: #0f766e; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; padding: 0; cursor: pointer; }
+    .cell-edit { cursor: pointer; min-height: 24px; display: inline-flex; align-items: center; gap: 4px; }
+    .cell-edit:hover { background: #eef5f4; border-radius: 4px; }
+    .inline-input { border: 1px solid #1a73e8; border-radius: 4px; padding: 2px 6px; font-size: 13px; background: #fff; max-width: 100%; min-width: 4.5rem; }
+    .inline-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.15); }
+    .pencil { color: #9aa0a6; font-size: 11px; opacity: 0; }
+    .cell-edit:hover .pencil, .name-wrap:hover .pencil { opacity: 1; }
+    .name-wrap { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+    .frac { color: #9aa0a6; font-size: 12px; margin-left: 6px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="mine" data-title="任务管理">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <p class="text-xs text-slate-500 mb-3">树结构一级为<strong>计划</strong>，其下为关联<strong>任务</strong>。任务行可在列表内直接改：名称、优先级、处理人、状态、截止日期、预估/已登记工时（整数）。状态流：未开始 → 进行中 → 已完成 → <strong>已关闭</strong>。</p>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 mb-4">
+      <div class="flex flex-wrap gap-1 text-sm" id="statusTabs"></div>
+      <div class="inline-flex rounded-xl overflow-hidden text-sm mb-1 shrink-0 border border-slate-200">
+        <button type="button" id="btnTree" class="view-on px-3 py-1.5">树结构</button>
+        <button type="button" id="btnFlat" class="bg-white text-slate-600 px-3 py-1.5">平铺列表</button>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>新建任务</button>
+        <button type="button" id="btnCollapse" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">一键收起</button>
+        <button type="button" id="btnReset" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">重置</button>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center text-sm">
+        <input type="date" id="dateFrom" value="2026-08-01" class="border border-slate-200 rounded-xl px-2 py-1.5" />
+        <span class="text-slate-400">~</span>
+        <input type="date" id="dateTo" value="2026-08-31" class="border border-slate-200 rounded-xl px-2 py-1.5" />
+        <input type="search" id="kw" placeholder="请输入计划或任务名称" class="border border-slate-200 rounded-xl px-3 py-1.5 w-52" />
+      </div>
+    </div>
+
+    <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1100px]">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <div class="px-6 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="modalTitle">新建任务</h3>
+          <button type="button" onclick="BMSUI.closeModal('modal')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3 text-sm">
+          <input type="hidden" id="editId" />
+          <div>
+            <label class="block text-slate-600 mb-1">任务名称 <span class="text-red-500">*</span></label>
+            <input id="fName" class="w-full border rounded-xl px-3 py-2.5" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">任务类型</label>
+              <select id="fType" class="w-full border rounded-xl px-3 py-2.5">
+                <option>生产作业</option><option>设备维保</option><option>安全环保</option><option>市场商务</option><option>其他</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">优先级</label>
+              <select id="fPrio" class="w-full border rounded-xl px-3 py-2.5">
+                <option>P0</option><option selected>P1</option><option>P2</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">关联计划 <span class="text-red-500">*</span></label>
+            <select id="fAnnual" class="w-full border rounded-xl px-3 py-2.5"></select>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">上级任务（可选，同计划下子任务）</label>
+            <select id="fParent" class="w-full border rounded-xl px-3 py-2.5"><option value="">无</option></select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">截止日期</label>
+              <input type="date" id="fDeadline" value="2026-08-31" class="w-full border rounded-xl px-3 py-2.5" />
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">预估工时（整数小时）</label>
+              <input type="number" id="fHours" min="0" step="1" value="8" class="w-full border rounded-xl px-3 py-2.5" />
+            </div>
+          </div>
+          <div id="editExtra" class="hidden space-y-3">
+            <div>
+              <label class="block text-slate-600 mb-1">完成状态</label>
+              <select id="fStatus" class="w-full border rounded-xl px-3 py-2.5">
+                <option>未开始</option><option>进行中</option><option>已完成</option><option>已关闭</option><option>延期</option>
+              </select>
+              <p class="text-[11px] text-slate-400 mt-1">「已关闭」须在「已完成」之后</p>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">已登记工时（整数小时）</label>
+              <input type="number" id="fActual" min="0" step="1" value="0" class="w-full border rounded-xl px-3 py-2.5" />
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modal')" class="text-slate-500 px-3 text-sm">取消</button>
+          <button type="button" onclick="saveTask()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  const CLOSED = "已关闭";
+  const DONE = "已完成";
+  let scopeTab = "mine";
+  let statusFilter = "open";
+  let viewMode = "tree";
+  let collapsed = new Set();
+  let user;
+  /** 当前正在编辑的单元格 { id, field } */
+  let editCell = null;
+
+  const SCOPE_TABS_HEAD = [
+    { id: "mine", label: "我负责的" },
+    { id: "dept", label: "本部门" },
+  ];
+  const STATUS_TABS = [
+    { id: "open", label: "未关闭" },
+    { id: "未开始", label: "未开始" },
+    { id: "进行中", label: "进行中" },
+    { id: DONE, label: "已完成" },
+    { id: CLOSED, label: "已关闭" },
+    { id: "全部", label: "全部" },
+  ];
+
+  function prioTag(p) {
+    const cls = p === "P0" ? "tag-p0" : p === "P1" ? "tag-p1" : "tag-p2";
+    return `<span class="tag ${cls}">${p || "P2"}</span>`;
+  }
+  function statusTag(st) {
+    const map = {
+      未开始: "tag-st-todo",
+      进行中: "tag-st-doing",
+      已完成: "tag-st-done",
+      已关闭: "tag-st-closed",
+      延期: "tag-st-late",
+      关注: "tag-st-late",
+    };
+    return `<span class="tag ${map[st] || "tag-muted"}">${st}</span>`;
+  }
+  function isEditing(id, field) {
+    return editCell && editCell.id === id && editCell.field === field;
+  }
+
+  function basePool() {
+    if (scopeTab === "dept" && user.role === "部门长") return BMS4.tasksForDept(user.dept);
+    return BMS4.tasksForUser(user.id);
+  }
+
+  function inDateRange(t) {
+    const from = document.getElementById("dateFrom").value;
+    const to = document.getElementById("dateTo").value;
+    const d = t.deadline || t.createdAt;
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  }
+
+  function matchKw(t, planName) {
+    const kw = (document.getElementById("kw").value || "").trim();
+    if (!kw) return true;
+    return (t.name || "").includes(kw) || (planName || "").includes(kw);
+  }
+
+  function matchStatusFixed(t) {
+    if (statusFilter === "全部") return true;
+    if (statusFilter === "open") return t.status !== CLOSED;
+    return t.status === statusFilter;
+  }
+
+  function filteredTasks() {
+    return basePool().filter((t) => {
+      const plan = BMS4.annualById(t.annualId);
+      return matchStatusFixed(t) && inDateRange(t) && matchKw(t, plan ? plan.name : "");
+    });
+  }
+
+  function taskChildren(parentId, pool) {
+    return pool.filter((t) => t.parentId === parentId);
+  }
+
+  function sumHours(list, field) {
+    return list.reduce((s, t) => s + (Number(t[field]) || 0), 0);
+  }
+
+  /** 树：一级=计划，其下=任务（可再挂子任务） */
+  function buildTreeRows(pool) {
+    const hitIds = new Set(pool.map((t) => t.id));
+    // 补齐同计划下为展示子任务所需的祖先任务
+    const allDeptOrMine = basePool();
+    const need = new Set(hitIds);
+    pool.forEach((t) => {
+      let p = t.parentId;
+      while (p) {
+        need.add(p);
+        const parent = BMS4.taskItems.find((x) => x.id === p);
+        p = parent ? parent.parentId : null;
+      }
+    });
+    const taskPool = allDeptOrMine.filter((t) => need.has(t.id) || hitIds.has(t.id));
+
+    const planIds = [...new Set(taskPool.map((t) => t.annualId))];
+    const plans = planIds
+      .map((id) => BMS4.annualById(id))
+      .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name, "zh"));
+
+    const rows = [];
+    plans.forEach((plan, pi) => {
+      const under = taskPool.filter((t) => t.annualId === plan.id);
+      const roots = under.filter((t) => !t.parentId || !under.some((x) => x.id === t.parentId));
+      const doneCnt = under.filter((t) => t.status === DONE || t.status === CLOSED).length;
+      const planKey = "plan:" + plan.id;
+      rows.push({
+        kind: "plan",
+        plan,
+        idx: String(pi + 1),
+        depth: 0,
+        childCount: roots.length,
+        doneKids: doneCnt,
+        totalKids: under.length,
+        planHours: sumHours(under, "planHours"),
+        actualHours: sumHours(under, "actualHours"),
+        collapseKey: planKey,
+      });
+      if (collapsed.has(planKey)) return;
+
+      function walkTask(node, prefix, depth) {
+        const kids = taskChildren(node.id, under);
+        const dk = kids.filter((k) => k.status === DONE || k.status === CLOSED).length;
+        rows.push({
+          kind: "task",
+          task: node,
+          plan,
+          idx: prefix,
+          depth,
+          childCount: kids.length,
+          doneKids: dk,
+          collapseKey: node.id,
+        });
+        if (collapsed.has(node.id)) return;
+        kids.forEach((k, i) => walkTask(k, prefix + "." + (i + 1), depth + 1));
+      }
+      roots.forEach((r, i) => walkTask(r, pi + 1 + "." + (i + 1), 1));
+    });
+    return rows;
+  }
+
+  function buildFlatRows(pool) {
+    return pool
+      .slice()
+      .sort((a, b) => {
+        const pa = BMS4.annualById(a.annualId);
+        const pb = BMS4.annualById(b.annualId);
+        const na = pa ? pa.name : "";
+        const nb = pb ? pb.name : "";
+        const c = na.localeCompare(nb, "zh");
+        return c !== 0 ? c : (a.name || "").localeCompare(b.name || "", "zh");
+      })
+      .map((t, i) => ({
+        kind: "task",
+        task: t,
+        plan: BMS4.annualById(t.annualId),
+        idx: String(i + 1),
+        depth: 0,
+        childCount: 0,
+        doneKids: 0,
+        collapseKey: t.id,
+      }));
+  }
+
+  function renderThead() {
+    const common = `
+      <th><span class="col-head">任务名称 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-filter"></i></span></th>
+      <th><span class="col-head">任务类型 <i class="fa-solid fa-filter"></i></span></th>
+      <th><span class="col-head">优先级 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-filter"></i></span></th>
+      <th><span class="col-head">处理人 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-filter"></i></span></th>
+      <th><span class="col-head">完成状态 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-filter"></i></span></th>
+      <th><span class="col-head">截止日期 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-sort"></i></span></th>
+      <th><span class="col-head">预估工时 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-sort"></i></span></th>
+      <th><span class="col-head">已登记工时 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-sort"></i></span></th>
+      <th><span class="col-head">创建时间 <i class="fa-solid fa-sort"></i></span></th>`;
+    document.getElementById("thead").innerHTML =
+      viewMode === "flat"
+        ? `<tr>
+            <th><span class="col-head">计划 <i class="fa-solid fa-filter"></i></span></th>
+            <th><span class="col-head">序号 <i class="fa-solid fa-sort"></i></span></th>
+            ${common}
+          </tr>`
+        : `<tr>
+            <th><span class="col-head">序号 <i class="fa-solid fa-sort"></i></span></th>
+            ${common}
+          </tr>`;
+  }
+
+  function renderTabs() {
+    const scopes = user.role === "部门长" ? SCOPE_TABS_HEAD : [{ id: "mine", label: "我负责的" }];
+    let html = scopes
+      .map((t) => `<button type="button" data-scope="${t.id}" class="px-3 py-2.5 ${scopeTab === t.id ? "tab-on" : "tab-off"}">${t.label}</button>`)
+      .join("");
+    html += STATUS_TABS.map(
+      (t) => `<button type="button" data-st="${t.id}" class="px-3 py-2.5 ${statusFilter === t.id ? "tab-on" : "tab-off"}">${t.label}</button>`
+    ).join("");
+    document.getElementById("statusTabs").innerHTML = html;
+    document.querySelectorAll("[data-scope]").forEach((btn) => {
+      btn.onclick = () => {
+        scopeTab = btn.getAttribute("data-scope");
+        render();
+      };
+    });
+    document.querySelectorAll("[data-st]").forEach((btn) => {
+      btn.onclick = () => {
+        statusFilter = btn.getAttribute("data-st");
+        render();
+      };
+    });
+  }
+
+  function render() {
+    renderTabs();
+    renderThead();
+    document.getElementById("btnTree").className = "px-3 py-1.5 " + (viewMode === "tree" ? "view-on" : "bg-white text-slate-600");
+    document.getElementById("btnFlat").className = "px-3 py-1.5 " + (viewMode === "flat" ? "view-on" : "bg-white text-slate-600");
+    document.getElementById("btnCollapse").classList.toggle("hidden", viewMode !== "tree");
+
+    const pool = filteredTasks();
+    const rows = viewMode === "tree" ? buildTreeRows(pool) : buildFlatRows(pool);
+    const colSpan = viewMode === "flat" ? 11 : 10;
+
+    document.getElementById("tbody").innerHTML = rows.length
+      ? rows.map((row) => (row.kind === "plan" ? renderPlanRow(row) : renderTaskRow(row))).join("")
+      : `<tr><td colspan="${colSpan}" class="text-center text-slate-400 py-10">暂无符合条件的计划/任务</td></tr>`;
+
+    document.querySelectorAll("[data-toggle]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-toggle");
+        if (collapsed.has(id)) collapsed.delete(id);
+        else collapsed.add(id);
+        render();
+      };
+    });
+    document.querySelectorAll("[data-start-edit]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        editCell = { id: el.getAttribute("data-id"), field: el.getAttribute("data-start-edit") };
+        render();
+        requestAnimationFrame(() => {
+          const focusEl = document.querySelector("[data-inline-focus]");
+          if (focusEl) focusEl.focus();
+        });
+      };
+    });
+    bindActiveEditor();
+  }
+
+  function caret(collapseKey, hasKids) {
+    if (!hasKids) return `<span style="width:16px;display:inline-block"></span>`;
+    const open = !collapsed.has(collapseKey);
+    return `<button type="button" class="caret-btn" data-toggle="${collapseKey}"><i class="fa-solid fa-caret-${open ? "down" : "right"}"></i></button>`;
+  }
+
+  function renderPlanRow(row) {
+    const p = row.plan;
+    return `<tr class="plan-row">
+      <td class="text-slate-500 whitespace-nowrap">${row.idx}</td>
+      <td>
+        <div class="flex items-center gap-1">
+          ${caret(row.collapseKey, row.childCount > 0)}
+          <span class="font-medium text-slate-800">${escapeHtml(BMS4.planPathLabel ? BMS4.planPathLabel(p.id) : p.name)}</span>
+          <span class="frac">${row.doneKids}/${row.totalKids}</span>
+        </div>
+      </td>
+      <td class="text-slate-400">—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>${statusTag(p.status)}</td>
+      <td>—</td>
+      <td class="text-right text-slate-600">${row.planHours}.0</td>
+      <td class="text-right text-slate-600">${row.actualHours}.0</td>
+      <td class="text-slate-500">—</td>
+    </tr>`;
+  }
+
+  function renderTaskRow(row) {
+    const t = row.task;
+    const ou = BMS4.userById(t.ownerId);
+    const indent = viewMode === "tree" ? row.depth * 18 : 0;
+    const planCell =
+      viewMode === "flat"
+        ? `<td class="text-slate-700 whitespace-nowrap max-w-[14rem]">
+            <span class="tag tag-muted" title="${escapeAttr(row.plan ? row.plan.name : "")}">${escapeHtml(row.plan ? row.plan.name : "—")}</span>
+          </td>`
+        : "";
+    return `<tr>
+      ${planCell}
+      <td class="text-slate-500 whitespace-nowrap">${row.idx}</td>
+      <td>
+        <div class="flex items-center gap-1" style="padding-left:${indent}px">
+          ${viewMode === "tree" ? caret(row.collapseKey, row.childCount > 0) : ""}
+          ${cellName(t)}
+          ${row.childCount ? `<span class="frac">${row.doneKids}/${row.childCount}</span>` : ""}
+        </div>
+      </td>
+      <td><span class="tag tag-muted">${escapeHtml(t.taskType || "其他")}</span></td>
+      <td>${cellSelect(t, "priority", prioTag(t.priority), ["P0", "P1", "P2"])}</td>
+      <td>${cellSelect(t, "ownerId", `<span class="tag tag-muted">${ou ? ou.name : "—"}</span>`, null)}</td>
+      <td>${cellSelect(t, "status", statusTag(t.status), ["未开始", "进行中", "已完成", "已关闭", "延期"])}</td>
+      <td>${cellDate(t)}</td>
+      <td class="text-right">${cellNumber(t, "planHours")}</td>
+      <td class="text-right">${cellNumber(t, "actualHours")}</td>
+      <td class="text-slate-500 whitespace-nowrap">${t.createdAt || "—"}</td>
+    </tr>`;
+  }
+
+  function cellName(t) {
+    if (isEditing(t.id, "name")) {
+      return `<input class="inline-input" style="min-width:12rem" data-inline="name" data-id="${t.id}" data-inline-focus value="${escapeAttr(t.name)}" />`;
+    }
+    return `<div class="name-wrap">
+      <span class="name-link cell-edit" data-start-edit="name" data-id="${t.id}">${escapeHtml(t.name)}</span>
+      <i class="fa-solid fa-pen pencil" data-start-edit="name" data-id="${t.id}"></i>
+    </div>`;
+  }
+
+  function cellSelect(t, field, displayHtml, options) {
+    if (isEditing(t.id, field)) {
+      let opts = options;
+      if (field === "ownerId") {
+        let candidates = BMS4.USERS.filter((u) => u.dept === t.dept && u.role !== "总经理");
+        if (user.role === "员工") candidates = candidates.filter((u) => u.id === user.id || u.id === t.ownerId);
+        opts = candidates.map((u) => ({ value: u.id, label: u.name }));
+      } else {
+        opts = options.map((o) => ({ value: o, label: o }));
+      }
+      const cur = field === "ownerId" ? t.ownerId : t[field];
+      return `<select class="inline-input" data-inline="${field}" data-id="${t.id}" data-inline-focus>
+        ${opts.map((o) => `<option value="${o.value}" ${o.value === cur ? "selected" : ""}>${o.label}</option>`).join("")}
+      </select>`;
+    }
+    return `<span class="cell-edit" data-start-edit="${field}" data-id="${t.id}">${displayHtml}<i class="fa-solid fa-pen pencil"></i></span>`;
+  }
+
+  function cellDate(t) {
+    if (isEditing(t.id, "deadline")) {
+      return `<input type="date" class="inline-input" data-inline="deadline" data-id="${t.id}" data-inline-focus value="${t.deadline || ""}" />`;
+    }
+    return `<span class="cell-edit text-slate-700" data-start-edit="deadline" data-id="${t.id}">${t.deadline || "—"}<i class="fa-solid fa-pen pencil"></i></span>`;
+  }
+
+  function cellNumber(t, field) {
+    const v = t[field] ?? 0;
+    if (isEditing(t.id, field)) {
+      return `<input type="number" min="0" step="1" class="inline-input text-right" style="width:4.5rem" data-inline="${field}" data-id="${t.id}" data-inline-focus value="${v}" />`;
+    }
+    return `<span class="cell-edit justify-end w-full" data-start-edit="${field}" data-id="${t.id}">${v}.0<i class="fa-solid fa-pen pencil"></i></span>`;
+  }
+
+  function escapeAttr(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/</g, "&lt;");
+  }
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+  function bindActiveEditor() {
+    const el = document.querySelector("[data-inline]");
+    if (!el) return;
+    let done = false;
+    const finish = (save) => {
+      if (done) return;
+      done = true;
+      if (save) applyInline(el);
+      editCell = null;
+      render();
+    };
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        finish(true);
+      }
+      if (e.key === "Escape") finish(false);
+    });
+    if (el.tagName === "SELECT") {
+      el.addEventListener("change", () => finish(true));
+      el.addEventListener("blur", () => setTimeout(() => finish(false), 150));
+    } else {
+      el.addEventListener("change", () => finish(true));
+      el.addEventListener("blur", () => setTimeout(() => finish(true), 120));
+    }
+  }
+
+  function applyInline(el) {
+    if (!el) return;
+    const id = el.getAttribute("data-id");
+    const field = el.getAttribute("data-inline");
+    const task = BMS4.taskItems.find((x) => x.id === id);
+    if (!task) return;
+    let patch = null;
+    if (field === "name") {
+      const name = el.value.trim();
+      if (!name) return BMSUI.toast("名称不能为空", false);
+      if (name !== task.name) patch = { name };
+    } else if (field === "priority") {
+      if (el.value !== task.priority) patch = { priority: el.value };
+    } else if (field === "ownerId") {
+      if (el.value !== task.ownerId) {
+        const ou = BMS4.userById(el.value);
+        patch = { ownerId: el.value, dept: ou ? ou.dept : task.dept };
+      }
+    } else if (field === "status") {
+      const st = el.value;
+      if (st === CLOSED && task.status !== DONE && task.status !== CLOSED) {
+        return BMSUI.toast("须先「已完成」才能「已关闭」", false);
+      }
+      if (st !== task.status) patch = { status: st };
+    } else if (field === "deadline") {
+      if (el.value !== (task.deadline || "")) patch = { deadline: el.value };
+    } else if (field === "planHours" || field === "actualHours") {
+      const n = parseInt(el.value, 10);
+      if (!Number.isInteger(n) || n < 0) return BMSUI.toast("工时须为整数小时", false);
+      if (n !== (task[field] ?? 0)) patch = { [field]: n };
+    }
+    if (patch) {
+      BMS4.updateTask(id, patch);
+      BMSUI.toast("已保存");
+    }
+  }
+
+  function fillAnnualAndParent(excludeId, annualId) {
+    const ann = document.getElementById("fAnnual");
+    ann.innerHTML = "";
+    BMS4.plansForDept(user.dept).forEach((a) => {
+      const o = document.createElement("option");
+      o.value = a.id;
+      o.textContent = BMS4.planPathLabel(a.id);
+      ann.appendChild(o);
+    });
+    if (annualId) ann.value = annualId;
+    const refreshParent = () => {
+      const psel = document.getElementById("fParent");
+      const aid = ann.value;
+      psel.innerHTML = '<option value="">无</option>';
+      BMS4.tasksForDept(user.dept)
+        .filter((t) => t.annualId === aid && t.id !== excludeId)
+        .forEach((t) => {
+          const o = document.createElement("option");
+          o.value = t.id;
+          o.textContent = t.name;
+          psel.appendChild(o);
+        });
+    };
+    ann.onchange = refreshParent;
+    refreshParent();
+  }
+
+  function openNew() {
+    document.getElementById("modalTitle").textContent = "新建任务";
+    document.getElementById("editId").value = "";
+    document.getElementById("editExtra").classList.add("hidden");
+    document.getElementById("fName").value = "";
+    document.getElementById("fHours").value = "8";
+    document.getElementById("fDeadline").value = "2026-08-31";
+    fillAnnualAndParent(null);
+    const typeMap = { 生产操作部: "生产作业", 设备技术部: "设备维保", 安全监督部: "安全环保", 市场开发部: "市场商务" };
+    document.getElementById("fType").value = typeMap[user.dept] || "其他";
+    BMSUI.openModal("modal");
+  }
+
+  function openEdit(id) {
+    const t = BMS4.taskItems.find((x) => x.id === id);
+    if (!t) return;
+    document.getElementById("modalTitle").textContent = "更新任务";
+    document.getElementById("editId").value = id;
+    document.getElementById("editExtra").classList.remove("hidden");
+    document.getElementById("fName").value = t.name;
+    document.getElementById("fType").value = t.taskType || "其他";
+    document.getElementById("fPrio").value = t.priority || "P1";
+    document.getElementById("fHours").value = t.planHours ?? 0;
+    document.getElementById("fActual").value = t.actualHours ?? 0;
+    document.getElementById("fDeadline").value = t.deadline || "2026-08-31";
+    document.getElementById("fStatus").value = t.status;
+    fillAnnualAndParent(id, t.annualId);
+    document.getElementById("fParent").value = t.parentId || "";
+    BMSUI.openModal("modal");
+  }
+
+  window.saveTask = function () {
+    const name = document.getElementById("fName").value.trim();
+    const planHours = parseInt(document.getElementById("fHours").value, 10);
+    if (!name) return BMSUI.toast("请填写任务名称", false);
+    if (!Number.isInteger(planHours) || planHours < 0) return BMSUI.toast("预估工时须为整数", false);
+    const editId = document.getElementById("editId").value;
+    const payload = {
+      name,
+      annualId: document.getElementById("fAnnual").value,
+      ownerId: user.id,
+      planHours,
+      parentId: document.getElementById("fParent").value || null,
+      taskType: document.getElementById("fType").value,
+      priority: document.getElementById("fPrio").value,
+      deadline: document.getElementById("fDeadline").value,
+      source: "自建",
+    };
+    if (!editId) {
+      BMS4.addAssignTask(payload);
+      BMSUI.closeModal("modal");
+      BMSUI.toast("已新建任务");
+      render();
+      return;
+    }
+    const actualHours = parseInt(document.getElementById("fActual").value, 10);
+    if (!Number.isInteger(actualHours) || actualHours < 0) return BMSUI.toast("已登记工时须为整数", false);
+    const st = document.getElementById("fStatus").value;
+    const old = BMS4.taskItems.find((x) => x.id === editId);
+    if (st === CLOSED && old.status !== DONE && old.status !== CLOSED) {
+      return BMSUI.toast("须先变为「已完成」，才能「已关闭」", false);
+    }
+    BMS4.updateTask(editId, {
+      name: payload.name,
+      annualId: payload.annualId,
+      planHours,
+      actualHours,
+      parentId: payload.parentId,
+      taskType: payload.taskType,
+      priority: payload.priority,
+      deadline: payload.deadline,
+      status: st,
+    });
+    BMSUI.closeModal("modal");
+    BMSUI.toast("已更新");
+    render();
+  };
+
+  function resetFilters() {
+    scopeTab = "mine";
+    statusFilter = "open";
+    viewMode = "tree";
+    collapsed.clear();
+    document.getElementById("dateFrom").value = "2026-08-01";
+    document.getElementById("dateTo").value = "2026-08-31";
+    document.getElementById("kw").value = "";
+    render();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    user = BMS4.getRoleUser();
+    if (user.role === "总经理") {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">总经理请使用「计划与任务监督 / 宏观一表」。本页面向员工与部门长。</div>';
+      return;
+    }
+    document.getElementById("btnTree").onclick = () => {
+      viewMode = "tree";
+      render();
+    };
+    document.getElementById("btnFlat").onclick = () => {
+      viewMode = "flat";
+      render();
+    };
+    document.getElementById("btnNew").onclick = openNew;
+    document.getElementById("btnCollapse").onclick = () => {
+      filteredTasks().forEach((t) => {
+        collapsed.add("plan:" + t.annualId);
+        if (t.parentId) collapsed.add(t.parentId);
+      });
+      BMS4.plansForDept(user.dept).forEach((a) => collapsed.add("plan:" + a.id));
+      render();
+    };
+    document.getElementById("btnReset").onclick = resetFilters;
+    ["dateFrom", "dateTo", "kw"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", render);
+      document.getElementById(id).addEventListener("change", render);
+    });
+    render();
+  });
+})();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1129 @@
+/* v4.0.0 种子数据 · 计划树（无限层级）· 无年/月/周计划实体 */
+(function (global) {
+  const USERS = [
+    { id: "u_gm", name: "李家治", role: "总经理", dept: "公司", title: "总经理" },
+    { id: "u_prod_h", name: "刘伟松", role: "部门长", dept: "生产操作部", title: "部长" },
+    { id: "u_prod_s", name: "余彪", role: "员工", dept: "生产操作部", title: "员工" },
+    { id: "u_eq_h", name: "解运富", role: "部门长", dept: "设备技术部", title: "部长" },
+    { id: "u_eq_s", name: "盛侨", role: "员工", dept: "设备技术部", title: "员工" },
+    { id: "u_safe_h", name: "洪佳伟", role: "部门长", dept: "安全监督部", title: "部长" },
+    { id: "u_safe_s", name: "陈子龙", role: "员工", dept: "安全监督部", title: "员工" },
+    { id: "u_mkt_h", name: "钱旦", role: "部门长", dept: "市场开发部", title: "部长" },
+    { id: "u_mkt_s", name: "张凯", role: "员工", dept: "市场开发部", title: "员工" },
+  ];
+
+  const DEPTS = ["生产操作部", "设备技术部", "安全监督部", "市场开发部"];
+
+
+  /** progressPct：总经理手填整体进度；startDate/endDate：公司目标起止 */
+  const COMPANY_PLANS = [
+    {
+      id: "cp1",
+      name: "2026年吞吐量冲击400–480万吨",
+      status: "进行中",
+      priority: "P0",
+      progress: "基本盘约300万吨，缺口100–180万吨；铁路延期至约2027春节",
+      owner: "李家治",
+      startDate: "2026-01-01",
+      endDate: "2026-12-31",
+      progressPct: 34,
+    },
+    {
+      id: "cp2",
+      name: "2026年运营体系建设与标准化",
+      status: "进行中",
+      priority: "P1",
+      progress: "各部门制度、作业指导书、安环台账推进中",
+      owner: "李家治",
+      startDate: "2026-01-01",
+      endDate: "2026-12-31",
+      progressPct: 48,
+    },
+  ];
+
+  function deptHeadId(dept) {
+    const u = USERS.find((x) => x.dept === dept && x.role === "部门长");
+    return u ? u.id : "";
+  }
+
+  /**
+   * 部门计划树字段：
+   * priority / ownerId(可跨部门) / helperIds[] / startDate / endDate(必填) /
+   * progressPct(手填0-100) / progress(进展说明) / status(延期=结束日已过且进度<100 自动)
+   */
+  let planItems = [
+    // 生产
+    { id: "a_p1", dept: "生产操作部", companyPlanId: "cp1", parentId: null, name: "散杂货吞吐目标分解（合计约400万吨）", status: "进行中", progress: "年累完成137万吨，完成约34%", priority: "P0", ownerId: "u_prod_h", helperIds: ["u_mkt_h", "u_eq_h"], startDate: "2026-01-01", endDate: "2026-12-31", progressPct: 34 },
+    { id: "a_p1_1", dept: "生产操作部", companyPlanId: "cp1", parentId: "a_p1", name: "装卸货物41万吨盯控", status: "延期", progress: "累计16.31万吨，完成约39.78%", priority: "P0", ownerId: "u_prod_h", helperIds: ["u_mkt_s"], startDate: "2026-01-01", endDate: "2026-08-10", progressPct: 40 },
+    { id: "a_p1_1_1", dept: "生产操作部", companyPlanId: "cp1", parentId: "a_p1_1", name: "保障民本/祥云/电富作业", status: "进行中", progress: "民本6000吨，祥云约3.37万吨，电富1625吨", priority: "P0", ownerId: "u_prod_s", helperIds: ["u_eq_s"], startDate: "2026-07-01", endDate: "2026-09-30", progressPct: 55 },
+    { id: "a_p2", dept: "生产操作部", companyPlanId: "cp2", parentId: null, name: "人员招聘与岗位培训", status: "进行中", progress: "已招调度/中控各2人，铁运相关岗位后续启动", priority: "P1", ownerId: "u_prod_h", helperIds: ["u_safe_h"], startDate: "2026-03-01", endDate: "2026-10-31", progressPct: 45 },
+    { id: "a_p3", dept: "生产操作部", companyPlanId: "cp2", parentId: null, name: "装卸作业标准化与表单建设", status: "进行中", progress: "船-车/吨包指导书与日志表单已完成一批", priority: "P1", ownerId: "u_prod_h", helperIds: ["u_prod_s", "u_eq_h"], startDate: "2026-02-01", endDate: "2026-11-30", progressPct: 60 },
+    // 设备
+    { id: "a_e1", dept: "设备技术部", companyPlanId: "cp2", parentId: null, name: "设备安装调试问题督改", status: "进行中", progress: "皮带/门机/装船机等问题持续整改", priority: "P0", ownerId: "u_eq_h", helperIds: ["u_prod_h"], startDate: "2026-01-15", endDate: "2026-12-31", progressPct: 48 },
+    { id: "a_e1_1", dept: "设备技术部", companyPlanId: "cp2", parentId: "a_e1", name: "装船机/零星改造推进", status: "进行中", progress: "装船机皮带划伤与水箱改造询价推进", priority: "P0", ownerId: "u_eq_h", helperIds: ["u_eq_s"], startDate: "2026-04-01", endDate: "2026-10-31", progressPct: 42 },
+    { id: "a_e1_1_1", dept: "设备技术部", companyPlanId: "cp2", parentId: "a_e1_1", name: "装船机皮带与改造清单会议", status: "进行中", progress: "待祥云回复皮带更换时间", priority: "P1", ownerId: "u_eq_s", helperIds: ["u_mkt_h"], startDate: "2026-07-01", endDate: "2026-09-15", progressPct: 35 },
+    { id: "a_e2", dept: "设备技术部", companyPlanId: "cp2", parentId: null, name: "维保标准化与备件台账", status: "进行中", progress: "点检润滑表已编，易损件台账推进中", priority: "P1", ownerId: "u_eq_h", helperIds: ["u_eq_s"], startDate: "2026-02-01", endDate: "2026-12-31", progressPct: 50 },
+    { id: "a_e3", dept: "设备技术部", companyPlanId: "cp2", parentId: null, name: "维保与零星改造招标采购", status: "进行中", progress: "维保合同流程推进；零星改造询价中", priority: "P1", ownerId: "u_eq_h", helperIds: ["u_safe_s"], startDate: "2026-03-01", endDate: "2026-11-30", progressPct: 38 },
+    // 安监
+    { id: "a_s1", dept: "安全监督部", companyPlanId: "cp2", parentId: null, name: "地方监管对接与备案", status: "进行中", progress: "应急预案备案、排污许可已办", priority: "P0", ownerId: "u_safe_h", helperIds: ["u_eq_h"], startDate: "2026-01-01", endDate: "2026-12-31", progressPct: 70 },
+    { id: "a_s2", dept: "安全监督部", companyPlanId: "cp2", parentId: null, name: "现场安全环保管理与周检", status: "进行中", progress: "周检隐患整改推进；整改率目标≥97%", priority: "P0", ownerId: "u_safe_h", helperIds: ["u_safe_s", "u_prod_h"], startDate: "2026-01-01", endDate: "2026-12-31", progressPct: 62 },
+    { id: "a_s2_1", dept: "安全监督部", companyPlanId: "cp2", parentId: "a_s2", name: "安全周检与省厅整改", status: "进行中", progress: "周检隐患已整改；省厅整改项推进中", priority: "P0", ownerId: "u_safe_h", helperIds: ["u_safe_s"], startDate: "2026-05-01", endDate: "2026-09-30", progressPct: 58 },
+    { id: "a_s2_1_1", dept: "安全监督部", companyPlanId: "cp2", parentId: "a_s2_1", name: "省厅整改与环保监测对接", status: "进行中", progress: "四色桶、防风措施、奖励制度等整改", priority: "P1", ownerId: "u_safe_s", helperIds: ["u_eq_s"], startDate: "2026-06-01", endDate: "2026-08-31", progressPct: 50 },
+    { id: "a_s3", dept: "安全监督部", companyPlanId: "cp2", parentId: null, name: "安全体系建设与台账", status: "进行中", progress: "制度25项待发文；台账持续完善", priority: "P1", ownerId: "u_safe_h", helperIds: ["u_safe_s"], startDate: "2026-02-01", endDate: "2026-12-31", progressPct: 40 },
+    // 市场
+    { id: "a_m1", dept: "市场开发部", companyPlanId: "cp1", parentId: null, name: "稳固核心客户基本盘（祥云/民本/延长）", status: "关注", progress: "核心客户运量评估存在下调风险", priority: "P0", ownerId: "u_mkt_h", helperIds: ["u_mkt_s", "u_prod_h"], startDate: "2026-01-01", endDate: "2026-12-31", progressPct: 28 },
+    { id: "a_m2", dept: "市场开发部", companyPlanId: "cp1", parentId: null, name: "宝武球团矿头号攻坚", status: "进行中", progress: "目标商务与首船，贡献约10万吨增量", priority: "P0", ownerId: "u_mkt_h", helperIds: ["u_mkt_s"], startDate: "2026-03-01", endDate: "2026-12-31", progressPct: 32 },
+    { id: "a_m2_1", dept: "市场开发部", companyPlanId: "cp1", parentId: "a_m2", name: "球团与煤炭客户跟进", status: "进行中", progress: "延长石油招采、平鄂煤方案内部商定", priority: "P1", ownerId: "u_mkt_s", helperIds: ["u_mkt_h"], startDate: "2026-06-01", endDate: "2026-10-31", progressPct: 36 },
+    { id: "a_m3", dept: "市场开发部", companyPlanId: "cp1", parentId: null, name: "粮食与腹地煤炭增量落地", status: "进行中", progress: "粮食/煤炭增量务实推进", priority: "P1", ownerId: "u_mkt_h", helperIds: ["u_mkt_s", "u_prod_s"], startDate: "2026-04-01", endDate: "2026-12-31", progressPct: 30 },
+    { id: "a_m4", dept: "市场开发部", companyPlanId: "cp1", parentId: null, name: "资金回款与运量兑现", status: "延期", progress: "回款不及预期；持续催票催款", priority: "P0", ownerId: "u_mkt_h", helperIds: ["u_mkt_s", "u_prod_h"], startDate: "2026-01-01", endDate: "2026-08-05", progressPct: 22 },
+    { id: "a_m4_1", dept: "市场开发部", companyPlanId: "cp1", parentId: "a_m4", name: "回款与运量跟进", status: "关注", progress: "催促祥云开票付款", priority: "P0", ownerId: "u_mkt_h", helperIds: ["u_mkt_s"], startDate: "2026-05-01", endDate: "2026-09-30", progressPct: 25 },
+    { id: "a_m4_1_1", dept: "市场开发部", companyPlanId: "cp1", parentId: "a_m4_1", name: "催票催款与运量协调", status: "进行中", progress: "催促已开票付款与未开票审批", priority: "P0", ownerId: "u_mkt_s", helperIds: ["u_mkt_h"], startDate: "2026-07-01", endDate: "2026-08-31", progressPct: 40 },
+  ];
+
+  let taskItems = [
+    { id: "t1", name: "编制本周昼夜作业计划并盯控完成率", annualId: "a_p1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", planHours: 8, actualHours: 6, source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", deadline: "2026-08-20", createdAt: "2026-08-17" },
+    { id: "t1b", name: "本周民本/祥云/电富到港作业盯控", annualId: "a_p1_1_1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", planHours: 16, actualHours: 10, source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", deadline: "2026-08-24", createdAt: "2026-08-10" },
+    { id: "t2", name: "理货交接与磅码单核对", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "进行中", planHours: 10, actualHours: 8, source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P1", deadline: "2026-08-22", createdAt: "2026-08-17" },
+    { id: "t2b", name: "劳务作业票开具方法培训", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "已完成", planHours: 4, actualHours: 4, source: "下达", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", deadline: "2026-08-18", createdAt: "2026-08-12" },
+    { id: "t2c", name: "培训材料归档关闭", annualId: "a_p3", week: "2026-W33", ownerId: "u_prod_s", status: "已关闭", planHours: 2, actualHours: 2, source: "自建", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", deadline: "2026-08-15", createdAt: "2026-08-10" },
+    { id: "t3", name: "跟踪装船机皮带更换时间窗口", annualId: "a_e1_1_1", week: "2026-W34", ownerId: "u_eq_h", status: "进行中", planHours: 6, actualHours: 4, source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P0", deadline: "2026-08-25", createdAt: "2026-08-10" },
+    { id: "t4", name: "收集零星改造报价文件", annualId: "a_e3", week: "2026-W34", ownerId: "u_eq_s", status: "未开始", planHours: 8, actualHours: 0, source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P1", deadline: "2026-08-28", createdAt: "2026-08-17" },
+    { id: "t4b", name: "隔离墩涂刷验收", annualId: "a_e2", week: "2026-W33", ownerId: "u_eq_s", status: "已完成", planHours: 6, actualHours: 6, source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P2", deadline: "2026-08-16", createdAt: "2026-08-02" },
+    { id: "t5", name: "完成省厅安全整改三项", annualId: "a_s2_1", week: "2026-W34", ownerId: "u_safe_h", status: "进行中", planHours: 12, actualHours: 5, source: "下达", dept: "安全监督部", parentId: null, taskType: "安全环保", priority: "P0", deadline: "2026-08-24", createdAt: "2026-08-17" },
+    { id: "t6", name: "补充安全台账与巡查记录", annualId: "a_s3", week: "2026-W34", ownerId: "u_safe_s", status: "进行中", planHours: 8, actualHours: 3, source: "自建", dept: "安全监督部", parentId: null, taskType: "安全环保", priority: "P1", deadline: "2026-08-26", createdAt: "2026-08-17" },
+    { id: "t6b", name: "五一节前安全检查闭环", annualId: "a_s2", week: "2026-W18", ownerId: "u_safe_s", status: "已关闭", planHours: 4, actualHours: 4, source: "下达", dept: "安全监督部", parentId: "t5", taskType: "安全环保", priority: "P2", deadline: "2026-05-02", createdAt: "2026-04-28" },
+    { id: "t7", name: "催促祥云已开票部分付款", annualId: "a_m4", week: "2026-W34", ownerId: "u_mkt_h", status: "延期", planHours: 6, actualHours: 8, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", deadline: "2026-08-20", createdAt: "2026-08-10" },
+    { id: "t7b", name: "催促祥云未开票部分加快审批", annualId: "a_m4_1_1", week: "2026-W34", ownerId: "u_mkt_h", status: "进行中", planHours: 4, actualHours: 2, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", deadline: "2026-08-24", createdAt: "2026-08-17" },
+    { id: "t8", name: "跟进平鄂煤下一步方案纪要", annualId: "a_m3", week: "2026-W34", ownerId: "u_mkt_s", status: "进行中", planHours: 6, actualHours: 4, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P1", deadline: "2026-08-25", createdAt: "2026-08-17" },
+    { id: "t8b", name: "延长石油首月招采开标跟进", annualId: "a_m1", week: "2026-W34", ownerId: "u_mkt_s", status: "未开始", planHours: 8, actualHours: 0, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", deadline: "2026-08-28", createdAt: "2026-08-18" },
+  ];
+
+  /** 任务周报/月报：按 用户 × 公司计划 × 周期 填写本人文本与进度 */
+  let periodReports = [
+    /** 上期计划种子：供 W34 / 08 回显「上周计划」「上月计划」 */
+    {
+      userId: "u_prod_h",
+      periodType: "week",
+      periodKey: "2026-W33",
+      companyPlanId: "cp1",
+      doneText: "W33 装卸盯控完成一批到港船。",
+      planText: "1、盯控民本/祥云到港作业\n2、编制下周昼夜作业计划",
+      progressPct: 30,
+    },
+    {
+      userId: "u_prod_h",
+      periodType: "week",
+      periodKey: "2026-W33",
+      companyPlanId: "cp2",
+      doneText: "标准化表单试点推进。",
+      planText: "1、船-车/吨包指导书落地一批\n2、新招调度岗培训安排",
+      progressPct: 42,
+    },
+    {
+      userId: "u_mkt_h",
+      periodType: "week",
+      periodKey: "2026-W33",
+      companyPlanId: "cp1",
+      doneText: "核心客户运量摸底。",
+      planText: "1、催促祥云开票付款\n2、煤炭客户方案内部商定",
+      progressPct: 24,
+    },
+    {
+      userId: "u_eq_h",
+      periodType: "month",
+      periodKey: "2026-07",
+      companyPlanId: "cp2",
+      doneText: "7月改造清单收集。",
+      planText: "1、完成改造清单收集\n2、推进皮带更换窗口沟通",
+      progressPct: 45,
+    },
+    {
+      userId: "u_prod_h",
+      periodType: "week",
+      periodKey: "2026-W34",
+      companyPlanId: "cp1",
+      doneText: "上周累计装卸约6.07万吨；民本/祥云船货已到港盯控。",
+      planText: "1、编制昼夜作业计划并盯控吞吐缺口\n2、保障民本/祥云/电富到港作业",
+      progressPct: 34,
+    },
+    {
+      userId: "u_prod_h",
+      periodType: "week",
+      periodKey: "2026-W34",
+      companyPlanId: "cp2",
+      doneText: "上周船-车/吨包指导书已应用一批。",
+      planText: "1、推进装卸标准化表单落地\n2、跟进新招调度/中控岗位培训",
+      progressPct: 48,
+    },
+    {
+      userId: "u_mkt_h",
+      periodType: "week",
+      periodKey: "2026-W34",
+      companyPlanId: "cp1",
+      doneText: "上周催票催款推进；煤炭客户方案内部商定。",
+      planText: "1、催促祥云开票付款\n2、跟进平鄂煤与延长石油招采",
+      progressPct: 28,
+      attachments: [
+        {
+          id: "att_demo_prd",
+          name: "市场回款跟进说明.prd.md",
+          kind: "prd",
+          mime: "text/markdown",
+          size: 256,
+          text:
+            "# 市场回款跟进说明（示例 PRD 附件）\n\n## 背景\n祥云已开票部分付款滞后，影响吞吐目标兑现。\n\n## 本周动作\n1. 催票催款\n2. 平鄂煤/延长石油跟进\n\n> 原型演示：PRD/Markdown 可在线预览正文。",
+        },
+        {
+          id: "att_demo_doc",
+          name: "催款纪要摘要.docx",
+          kind: "word",
+          mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          size: 128,
+          text: "【Word 原型预览】\n会议纪要：已与祥云确认付款节点；下周前反馈到账情况。\n（正式环境将对接文档预览服务）",
+        },
+      ],
+    },
+    {
+      userId: "u_eq_h",
+      periodType: "month",
+      periodKey: "2026-08",
+      companyPlanId: "cp2",
+      doneText: "上月改造清单已收；皮带更换待祥云回复。",
+      planText: "1、装船机皮带更换窗口确认\n2、零星改造询价与上会",
+      progressPct: 52,
+    },
+  ];
+
+  let meetingTodos = [
+    { id: "mt1", title: "跟进维保单位保险购买情况", ownerId: "u_safe_h", helper: "陈子龙", week: "2026-W34", status: "待办" },
+    { id: "mt2", title: "电磁吸盘采购方案收集报价", ownerId: "u_eq_s", helper: "解运富", week: "2026-W34", status: "进行中" },
+    { id: "mt3", title: "箱管系统开发进度确认", ownerId: "u_gm", helper: "钱旦", week: "2026-W34", status: "待办" },
+  ];
+
+  let todos = [];
+
+  /** 演示「今天」：用于临期/逾期判断 */
+  const DEMO_TODAY = "2026-08-18";
+  const NEAR_DUE_DAYS = 3;
+
+  /** 催办闭环 */
+  let urges = [
+    {
+      id: "ug1",
+      targetUserId: "u_mkt_h",
+      title: "催办：催促祥云已开票部分付款",
+      note: "回款直接影响吞吐目标，请给出明确回款节点。",
+      expectReplyDate: "2026-08-16",
+      taskId: "t7",
+      companyPlanId: "cp1",
+      dept: "市场开发部",
+      exceptionType: "任务延期",
+      status: "待回复",
+      createdAt: "2026-08-15",
+      createdBy: "u_gm",
+      replyReason: "",
+      replyRemedy: "",
+      replyPromiseDate: "",
+      repliedAt: "",
+    },
+    {
+      id: "ug2",
+      targetUserId: "u_eq_h",
+      title: "催办：跟踪装船机皮带更换时间窗口",
+      note: "请确认更换窗口与对生产影响。",
+      expectReplyDate: "2026-08-17",
+      taskId: "t3",
+      companyPlanId: "cp2",
+      dept: "设备技术部",
+      exceptionType: "任务临期",
+      status: "已回复",
+      createdAt: "2026-08-16",
+      createdBy: "u_gm",
+      replyReason: "厂家排期紧张，窗口需与祥云协调。",
+      replyRemedy: "本周内锁定更换日并同步生产部作业计划。",
+      replyPromiseDate: "2026-08-22",
+      repliedAt: "2026-08-18",
+    },
+  ];
+
+  function userById(id) {
+    return USERS.find((u) => u.id === id);
+  }
+
+  function parseDay(s) {
+    if (!s) return null;
+    const [y, m, d] = s.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function dayDiff(fromStr, toStr) {
+    const a = parseDay(fromStr);
+    const b = parseDay(toStr);
+    if (!a || !b) return null;
+    return Math.round((b - a) / 86400000);
+  }
+
+
+  function taskOpen(t) {
+    return t.status !== "已完成" && t.status !== "已关闭";
+  }
+
+  function isTaskOverdue(t) {
+    if (!taskOpen(t)) return false;
+    if (t.status === "延期") return true;
+    if (t.deadline && t.deadline < DEMO_TODAY) return true;
+    return false;
+  }
+
+  function isTaskNearDue(t) {
+    if (!taskOpen(t) || isTaskOverdue(t) || !t.deadline) return false;
+    const d = dayDiff(DEMO_TODAY, t.deadline);
+    return d !== null && d >= 0 && d <= NEAR_DUE_DAYS;
+  }
+
+  function clampPct(n) {
+    const v = Number(n);
+    if (Number.isNaN(v)) return 0;
+    return Math.min(100, Math.max(0, Math.round(v)));
+  }
+
+  /** 延期：结束日已过且进度&lt;100；进度≥100→已完成；其余保留手填状态 */
+  function resolvePlanStatus(p) {
+    const pct = clampPct(p.progressPct);
+    if (pct >= 100) return "已完成";
+    if (p.endDate && p.endDate < DEMO_TODAY) return "延期";
+    const st = p.status || "进行中";
+    if (st === "延期" || st === "已完成") return "进行中";
+    return st;
+  }
+
+  function normalizePlan(p) {
+    const helperIds = Array.isArray(p.helperIds)
+      ? p.helperIds.filter((id, i, arr) => id && arr.indexOf(id) === i && id !== p.ownerId)
+      : [];
+    const next = {
+      ...p,
+      priority: p.priority || "P1",
+      ownerId: p.ownerId || deptHeadId(p.dept),
+      helperIds,
+      startDate: p.startDate || "",
+      endDate: p.endDate || "",
+      progressPct: clampPct(p.progressPct),
+      progress: p.progress || "",
+    };
+    next.status = resolvePlanStatus(next);
+    return next;
+  }
+
+  function syncAllPlanStatuses() {
+    planItems = planItems.map((p) => normalizePlan(p));
+  }
+
+  function isPlanOverdue(p) {
+    return resolvePlanStatus(p) === "延期";
+  }
+
+  function isPlanNearDue(p) {
+    if (!p.endDate || resolvePlanStatus(p) === "已完成" || isPlanOverdue(p)) return false;
+    const d = dayDiff(DEMO_TODAY, p.endDate);
+    return d !== null && d >= 0 && d <= NEAR_DUE_DAYS;
+  }
+
+  function taskFinishRate(list) {
+    if (!list.length) return 0;
+    const fin = list.filter((t) => t.status === "已完成" || t.status === "已关闭").length;
+    return Math.round((fin / list.length) * 1000) / 10;
+  }
+
+  function planById(id) {
+    return planItems.find((p) => p.id === id);
+  }
+
+  function plansForDept(dept) {
+    return planItems.filter((p) => p.dept === dept);
+  }
+
+  function planChildren(parentId) {
+    return planItems.filter((p) => p.parentId === parentId);
+  }
+
+  function planDescendantIds(rootId) {
+    const ids = [rootId];
+    const walk = (pid) => {
+      planChildren(pid).forEach((c) => {
+        ids.push(c.id);
+        walk(c.id);
+      });
+    };
+    walk(rootId);
+    return ids;
+  }
+
+  function planPathLabel(id) {
+    const parts = [];
+    let cur = planById(id);
+    while (cur) {
+      parts.unshift(cur.name);
+      cur = cur.parentId ? planById(cur.parentId) : null;
+    }
+    return parts.join(" / ");
+  }
+
+  /** 已办归档（原型内存，供待办「近7日已办」） */
+  let todoArchive = [];
+
+  function pushTodoArchive(item) {
+    todoArchive = [
+      {
+        id: item.id,
+        type: item.type,
+        title: item.title,
+        userId: item.userId,
+        doneAt: DEMO_TODAY,
+        priority: item.priority || "",
+      },
+      ...todoArchive.filter((x) => x.id !== item.id),
+    ].slice(0, 80);
+  }
+
+  function taskShouldEnterTodo(t) {
+    if (!taskOpen(t)) return false;
+    if (t.status === "进行中" || t.status === "延期") return true;
+    if (isTaskOverdue(t) || isTaskNearDue(t)) return true;
+    return false;
+  }
+
+  function planNeedsOwnerTodo(p) {
+    const st = resolvePlanStatus(p);
+    if (st === "已完成") return false;
+    return isPlanOverdue(p) || isPlanNearDue(p);
+  }
+
+  function planNeedsHelperTodo(p) {
+    const st = resolvePlanStatus(p);
+    if (st === "已完成") return false;
+    if (st === "关注") return true;
+    return isPlanOverdue(p) || isPlanNearDue(p);
+  }
+
+  function rebuildTodos() {
+    const week = "2026-W34";
+    const month = "2026-08";
+    todos = [];
+    syncAllPlanStatuses();
+
+    const urgedTaskIds = new Set(
+      urges.filter((u) => u.status === "待回复" && u.taskId).map((u) => u.taskId)
+    );
+
+    USERS.filter((u) => u.role === "部门长").forEach((u) => {
+      const weekGap = COMPANY_PLANS.filter(
+        (cp) =>
+          !periodReports.some(
+            (r) =>
+              r.userId === u.id &&
+              r.periodType === "week" &&
+              r.periodKey === week &&
+              r.companyPlanId === cp.id &&
+              (r.planText || "").trim() &&
+              (r.doneText || "").trim()
+          )
+      ).length;
+      if (weekGap > 0) {
+        todos.push({
+          id: "td_w_" + u.id,
+          type: "任务周报",
+          title: "完成本周任务周报填写（缺口 " + weekGap + "/" + COMPANY_PLANS.length + "）",
+          userId: u.id,
+          week,
+          status: "待办",
+          priority: "P0",
+          dueDate: "2026-08-17",
+        });
+      }
+      const monthGap = COMPANY_PLANS.filter(
+        (cp) =>
+          !periodReports.some(
+            (r) =>
+              r.userId === u.id &&
+              r.periodType === "month" &&
+              r.periodKey === month &&
+              r.companyPlanId === cp.id &&
+              (r.planText || "").trim() &&
+              (r.doneText || "").trim()
+          )
+      ).length;
+      if (monthGap > 0) {
+        todos.push({
+          id: "td_m_" + u.id,
+          type: "任务月报",
+          title: "完成本月任务月报填写（缺口 " + monthGap + "/" + COMPANY_PLANS.length + "）",
+          userId: u.id,
+          month,
+          status: "待办",
+          priority: "P1",
+          dueDate: "2026-08-29",
+        });
+      }
+    });
+
+    taskItems.filter(taskShouldEnterTodo).forEach((t) => {
+      if (urgedTaskIds.has(t.id)) return;
+      const overdue = isTaskOverdue(t);
+      todos.push({
+        id: "td_t_" + t.id,
+        type: "任务",
+        title: t.name,
+        userId: t.ownerId,
+        taskId: t.id,
+        status: overdue ? "逾期" : "待办",
+        priority: t.priority || "P2",
+        dueDate: t.deadline || "",
+        refLabel: t.dept || "",
+      });
+    });
+
+    meetingTodos
+      .filter((m) => m.status !== "已完成")
+      .forEach((m) => {
+        todos.push({
+          id: "td_mt_" + m.id,
+          type: "周例会待办",
+          title: m.title,
+          userId: m.ownerId,
+          meetingId: m.id,
+          status: "待办",
+          priority: "P1",
+          dueDate: "",
+          week: m.week,
+          refLabel: m.helper ? "配合：" + m.helper : "",
+        });
+      });
+
+    urges
+      .filter((u) => u.status === "待回复")
+      .forEach((u) => {
+        const overdue = u.expectReplyDate && u.expectReplyDate < DEMO_TODAY;
+        todos.push({
+          id: "td_ug_" + u.id,
+          type: "催办回复",
+          title: u.title,
+          userId: u.targetUserId,
+          urgeId: u.id,
+          taskId: u.taskId || "",
+          status: overdue ? "逾期" : "待办",
+          priority: "P0",
+          dueDate: u.expectReplyDate || "",
+          expectReplyDate: u.expectReplyDate,
+          refLabel: u.dept || "",
+        });
+      });
+
+    urges
+      .filter((u) => u.status === "已回复")
+      .forEach((u) => {
+        const overduePromise = u.replyPromiseDate && u.replyPromiseDate < DEMO_TODAY;
+        todos.push({
+          id: "td_ug_re_" + u.id,
+          type: "催办复检",
+          title: (overduePromise ? "【承诺日已过】" : "【待复检】") + u.title,
+          userId: "u_gm",
+          urgeId: u.id,
+          status: overduePromise ? "逾期" : "待办",
+          priority: "P0",
+          dueDate: u.replyPromiseDate || u.expectReplyDate || "",
+          expectReplyDate: u.expectReplyDate,
+        });
+      });
+
+    planItems.forEach((p) => {
+      const st = resolvePlanStatus(p);
+      if (planNeedsOwnerTodo(p) && p.ownerId) {
+        todos.push({
+          id: "td_po_" + p.id,
+          type: "计划推进",
+          title: (st === "延期" ? "【延期】" : "【临期】") + p.name,
+          userId: p.ownerId,
+          planId: p.id,
+          status: st === "延期" ? "逾期" : "待办",
+          priority: p.priority || "P1",
+          dueDate: p.endDate || "",
+          refLabel: p.dept || "",
+        });
+      }
+      if (!planNeedsHelperTodo(p)) return;
+      (p.helperIds || []).forEach((hid) => {
+        if (!hid || hid === p.ownerId) return;
+        todos.push({
+          id: "td_ph_" + p.id + "_" + hid,
+          type: "计划配合",
+          title: "配合计划：" + p.name,
+          userId: hid,
+          planId: p.id,
+          status: st === "延期" ? "逾期" : "待办",
+          priority: p.priority || "P1",
+          dueDate: p.endDate || "",
+          refLabel: p.dept || "",
+        });
+      });
+    });
+  }
+
+  syncAllPlanStatuses();
+  rebuildTodos();
+
+  const KEY = "bms_v4_role";
+
+  const Store = {
+    USERS,
+    DEPTS,
+    COMPANY_PLANS,
+    updateCompanyPlan(id, patch) {
+      const i = COMPANY_PLANS.findIndex((c) => c.id === id);
+      if (i < 0) return { ok: false, reason: "公司计划不存在" };
+      const next = { ...COMPANY_PLANS[i], ...patch };
+      if (next.progressPct != null) next.progressPct = clampPct(next.progressPct);
+      COMPANY_PLANS[i] = next;
+      return { ok: true, item: next };
+    },
+    get PLAN_ITEMS() {
+      return planItems;
+    },
+    /** @deprecated 兼容旧引用，等同 PLAN_ITEMS */
+    get ANNUAL_ITEMS() {
+      return planItems;
+    },
+    get taskItems() {
+      return taskItems;
+    },
+    set taskItems(v) {
+      taskItems = v;
+    },
+    get periodReports() {
+      return periodReports;
+    },
+    /** 兼容旧周报视角：映射为 weekReports 形态 */
+    get weekReports() {
+      return periodReports
+        .filter((r) => r.periodType === "week")
+        .map((r) => ({
+          userId: r.userId,
+          week: r.periodKey,
+          companyPlanId: r.companyPlanId,
+          lastSummary: r.doneText,
+          nextOverview: r.planText,
+          progressPct: r.progressPct,
+        }));
+    },
+    getPeriodReport(userId, periodType, periodKey, companyPlanId) {
+      return periodReports.find(
+        (r) =>
+          r.userId === userId &&
+          r.periodType === periodType &&
+          r.periodKey === periodKey &&
+          r.companyPlanId === companyPlanId
+      );
+    },
+    savePeriodReport(report) {
+      periodReports = periodReports.filter(
+        (r) =>
+          !(
+            r.userId === report.userId &&
+            r.periodType === report.periodType &&
+            r.periodKey === report.periodKey &&
+            r.companyPlanId === report.companyPlanId
+          )
+      );
+      periodReports.push({
+        userId: report.userId,
+        periodType: report.periodType,
+        periodKey: report.periodKey,
+        companyPlanId: report.companyPlanId,
+        planText: report.planText || "",
+        doneText: report.doneText || "",
+        progressPct: Number(report.progressPct) || 0,
+        attachments: Array.isArray(report.attachments) ? report.attachments : [],
+      });
+      rebuildTodos();
+    },
+    get meetingTodos() {
+      return meetingTodos;
+    },
+    get todoArchive() {
+      return todoArchive;
+    },
+    recentTodoArchive(userId, days) {
+      const n = days != null ? days : 7;
+      const from = parseDay(DEMO_TODAY);
+      if (!from) return [];
+      from.setDate(from.getDate() - n);
+      const fromStr =
+        from.getFullYear() +
+        "-" +
+        String(from.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(from.getDate()).padStart(2, "0");
+      return todoArchive.filter((x) => x.userId === userId && x.doneAt >= fromStr);
+    },
+    completeMeetingTodo(id) {
+      const m = meetingTodos.find((x) => x.id === id);
+      if (!m) return { ok: false, reason: "待办不存在" };
+      if (m.status === "已完成") return { ok: true };
+      meetingTodos = meetingTodos.map((x) => (x.id === id ? { ...x, status: "已完成" } : x));
+      pushTodoArchive({
+        id: "td_mt_" + id,
+        type: "周例会待办",
+        title: m.title,
+        userId: m.ownerId,
+        priority: "P1",
+      });
+      rebuildTodos();
+      return { ok: true };
+    },
+    completeTaskFromTodo(taskId) {
+      const t = taskItems.find((x) => x.id === taskId);
+      if (!t) return { ok: false, reason: "任务不存在" };
+      if (t.status === "已完成" || t.status === "已关闭") return { ok: true };
+      taskItems = taskItems.map((x) => (x.id === taskId ? { ...x, status: "已完成" } : x));
+      pushTodoArchive({
+        id: "td_t_" + taskId,
+        type: "任务",
+        title: t.name,
+        userId: t.ownerId,
+        priority: t.priority || "P2",
+      });
+      rebuildTodos();
+      return { ok: true };
+    },
+    get todos() {
+      return todos;
+    },
+    userById,
+    planById,
+    annualById: planById,
+    plansForDept,
+    planChildren,
+    planDescendantIds,
+    planPathLabel,
+    rebuildTodos,
+    getRoleUser() {
+      const id = localStorage.getItem(KEY) || "u_gm";
+      return userById(id) || USERS[0];
+    },
+    setRoleUser(id) {
+      localStorage.setItem(KEY, id);
+    },
+    tasksForUser(userId) {
+      return taskItems.filter((t) => t.ownerId === userId);
+    },
+    tasksForDept(dept) {
+      return taskItems.filter((t) => t.dept === dept);
+    },
+    countByStatus(list) {
+      const c = { 未开始: 0, 进行中: 0, 已完成: 0, 已关闭: 0, 延期: 0, total: list.length, hours: 0 };
+      list.forEach((t) => {
+        if (c[t.status] !== undefined) c[t.status]++;
+        c.hours += Number(t.actualHours) || 0;
+      });
+      return c;
+    },
+    addPlan(payload) {
+      const id = "p_" + Date.now();
+      const parent = payload.parentId ? planById(payload.parentId) : null;
+      const dept = payload.dept || (parent ? parent.dept : "");
+      const item = normalizePlan({
+        id,
+        name: payload.name,
+        dept,
+        companyPlanId: payload.companyPlanId || (parent ? parent.companyPlanId : "") || "",
+        parentId: payload.parentId || null,
+        status: payload.status || "未开始",
+        progress: payload.progress || "",
+        priority: payload.priority || (parent && parent.priority) || "P1",
+        ownerId: payload.ownerId || (parent && parent.ownerId) || deptHeadId(dept),
+        helperIds: payload.helperIds || (parent ? [...(parent.helperIds || [])] : []),
+        startDate: payload.startDate || (parent && parent.startDate) || "",
+        endDate: payload.endDate || (parent && parent.endDate) || "",
+        progressPct: payload.progressPct != null ? payload.progressPct : 0,
+      });
+      planItems = [...planItems, item];
+      rebuildTodos();
+      return item;
+    },
+    updatePlan(id, patch) {
+      planItems = planItems.map((p) => (p.id === id ? normalizePlan({ ...p, ...patch }) : p));
+      rebuildTodos();
+    },
+    removePlan(id) {
+      const kids = planChildren(id);
+      if (kids.length) return { ok: false, reason: "请先删除或移走子计划" };
+      const tasks = taskItems.filter((t) => t.annualId === id);
+      if (tasks.length) return { ok: false, reason: "该计划下仍有关联任务，无法删除" };
+      planItems = planItems.filter((p) => p.id !== id);
+      rebuildTodos();
+      return { ok: true };
+    },
+    resolvePlanStatus,
+    isPlanOverdue,
+    isPlanNearDue,
+    clampPct,
+    addAssignTask(payload) {
+      const id = "t_" + Date.now();
+      const owner = userById(payload.ownerId);
+      const today = "2026-08-18";
+      const item = {
+        id,
+        name: payload.name,
+        annualId: payload.annualId,
+        week: payload.week || "2026-W34",
+        ownerId: payload.ownerId,
+        status: "未开始",
+        planHours: payload.planHours || 8,
+        actualHours: 0,
+        source: payload.source || "下达",
+        dept: owner.dept,
+        parentId: payload.parentId || null,
+        taskType: payload.taskType || "其他",
+        priority: payload.priority || "P1",
+        deadline: payload.deadline || "2026-08-31",
+        createdAt: today,
+      };
+      taskItems = [item, ...taskItems];
+      rebuildTodos();
+      return item;
+    },
+    updateTask(id, patch) {
+      const prev = taskItems.find((t) => t.id === id);
+      taskItems = taskItems.map((t) => (t.id === id ? { ...t, ...patch } : t));
+      const next = taskItems.find((t) => t.id === id);
+      if (
+        prev &&
+        next &&
+        taskOpen(prev) &&
+        (next.status === "已完成" || next.status === "已关闭")
+      ) {
+        pushTodoArchive({
+          id: "td_t_" + id,
+          type: "任务",
+          title: next.name,
+          userId: next.ownerId,
+          priority: next.priority || "P2",
+        });
+      }
+      rebuildTodos();
+    },
+    DEMO_TODAY,
+    NEAR_DUE_DAYS,
+    get urges() {
+      return urges;
+    },
+    isTaskOverdue,
+    isTaskNearDue,
+    taskFinishRate,
+    /** 生成例外清单（按严重度排序） */
+    getExceptions() {
+      const list = [];
+      taskItems.forEach((t) => {
+        if (isTaskOverdue(t)) {
+          const lag = t.deadline ? Math.max(0, dayDiff(t.deadline, DEMO_TODAY) || 0) : 0;
+          list.push({
+            id: "ex_od_" + t.id,
+            type: "任务延期",
+            severity: 100 + lag,
+            title: t.name,
+            dept: t.dept,
+            ownerId: t.ownerId,
+            taskId: t.id,
+            companyPlanId: (planById(t.annualId) || {}).companyPlanId || "",
+            lagDays: lag,
+            priority: t.priority || "P2",
+          });
+        } else if (isTaskNearDue(t)) {
+          const left = dayDiff(DEMO_TODAY, t.deadline) || 0;
+          list.push({
+            id: "ex_nd_" + t.id,
+            type: "任务临期",
+            severity: 50 + (NEAR_DUE_DAYS - left),
+            title: t.name,
+            dept: t.dept,
+            ownerId: t.ownerId,
+            taskId: t.id,
+            companyPlanId: (planById(t.annualId) || {}).companyPlanId || "",
+            lagDays: left,
+            priority: t.priority || "P2",
+          });
+        }
+      });
+      planItems.forEach((p) => {
+        const st = resolvePlanStatus(p);
+        if (st === "延期" || st === "关注") {
+          const under = taskItems.filter((t) => t.annualId === p.id || planDescendantIds(p.id).includes(t.annualId));
+          const od = under.filter(isTaskOverdue).length;
+          const ratio = under.length ? od / under.length : 0;
+          if (st === "延期" || st === "关注" || ratio >= 0.3) {
+            const head = USERS.find((u) => u.dept === p.dept && u.role === "部门长");
+            list.push({
+              id: "ex_pl_" + p.id,
+              type: st === "延期" ? "计划卡点" : "计划关注",
+              severity: st === "延期" ? 80 : 60,
+              title: p.name,
+              dept: p.dept,
+              ownerId: p.ownerId || (head ? head.id : ""),
+              taskId: "",
+              planId: p.id,
+              companyPlanId: p.companyPlanId || "",
+              lagDays: 0,
+              priority: "P1",
+            });
+          }
+        }
+      });
+      const week = "2026-W34";
+      USERS.filter((u) => u.role === "部门长").forEach((u) => {
+        const missing = COMPANY_PLANS.some(
+          (cp) =>
+            !periodReports.some(
+              (r) =>
+                r.userId === u.id &&
+                r.periodType === "week" &&
+                r.periodKey === week &&
+                r.companyPlanId === cp.id &&
+                (r.planText || "").trim() &&
+                (r.doneText || "").trim()
+            )
+        );
+        if (missing) {
+          list.push({
+            id: "ex_wr_" + u.id,
+            type: "任务周报缺失",
+            severity: 40,
+            title: u.dept + "本周任务周报未填齐",
+            dept: u.dept,
+            ownerId: u.id,
+            taskId: "",
+            companyPlanId: "",
+            lagDays: 0,
+            priority: "P1",
+          });
+        }
+        const month = "2026-08";
+        const monthMissing = COMPANY_PLANS.some(
+          (cp) =>
+            !periodReports.some(
+              (r) =>
+                r.userId === u.id &&
+                r.periodType === "month" &&
+                r.periodKey === month &&
+                r.companyPlanId === cp.id &&
+                (r.planText || "").trim() &&
+                (r.doneText || "").trim()
+            )
+        );
+        if (monthMissing) {
+          list.push({
+            id: "ex_mr_" + u.id,
+            type: "任务月报缺失",
+            severity: 35,
+            title: u.dept + "本月任务月报未填齐",
+            dept: u.dept,
+            ownerId: u.id,
+            taskId: "",
+            companyPlanId: "",
+            lagDays: 0,
+            priority: "P2",
+          });
+        }
+      });
+      urges
+        .filter((u) => u.status === "待回复" && u.expectReplyDate && u.expectReplyDate < DEMO_TODAY)
+        .forEach((u) => {
+          list.push({
+            id: "ex_ug_" + u.id,
+            type: "催办未回复",
+            severity: 90,
+            title: u.title,
+            dept: u.dept,
+            ownerId: u.targetUserId,
+            taskId: u.taskId || "",
+            urgeId: u.id,
+            companyPlanId: u.companyPlanId || "",
+            lagDays: dayDiff(u.expectReplyDate, DEMO_TODAY) || 0,
+            priority: "P0",
+          });
+        });
+      return list.sort((a, b) => b.severity - a.severity);
+    },
+    /** 公司计划进度：各部门任务完成率简单平均 */
+    companyPlanDeptMatrix() {
+      return COMPANY_PLANS.map((cp) => {
+        const cells = DEPTS.map((dept) => {
+          const plans = planItems.filter((p) => p.companyPlanId === cp.id && p.dept === dept);
+          const planIds = new Set();
+          plans.forEach((p) => planDescendantIds(p.id).forEach((id) => planIds.add(id)));
+          plans.forEach((p) => planIds.add(p.id));
+          const ts = taskItems.filter((t) => planIds.has(t.annualId));
+          const rate = taskFinishRate(ts);
+          const late = ts.filter(isTaskOverdue).length;
+          const head = USERS.find((u) => u.dept === dept && u.role === "部门长");
+          const weekFilled = head
+            ? periodReports.some(
+                (r) =>
+                  r.userId === head.id &&
+                  r.periodType === "week" &&
+                  r.periodKey === "2026-W34" &&
+                  r.companyPlanId === cp.id &&
+                  (r.planText || "").trim()
+              )
+            : false;
+          return {
+            dept,
+            planNodes: plans.length,
+            taskTotal: ts.length,
+            taskRate: rate,
+            late,
+            weekFilled,
+            ownerId: head ? head.id : "",
+          };
+        });
+        const withTasks = cells.filter((c) => c.taskTotal > 0);
+        const avgRate = withTasks.length
+          ? Math.round((withTasks.reduce((s, c) => s + c.taskRate, 0) / withTasks.length) * 10) / 10
+          : 0;
+        return {
+          companyPlan: cp,
+          cells,
+          avgRate,
+          lateTotal: cells.reduce((s, c) => s + c.late, 0),
+        };
+      });
+    },
+    createUrge(payload) {
+      if (!payload.expectReplyDate) return { ok: false, reason: "必须填写期望回复日" };
+      if (!payload.targetUserId) return { ok: false, reason: "缺少催办对象" };
+      const dup = urges.find(
+        (u) =>
+          u.status === "待回复" &&
+          u.targetUserId === payload.targetUserId &&
+          ((payload.taskId && u.taskId === payload.taskId) ||
+            (!payload.taskId && u.title === (payload.title || "请尽快处理落实事项")))
+      );
+      if (dup && !payload.force) {
+        return { ok: false, reason: "该对象已有待回复催办，可在催办跟踪中「再次催办」", dupId: dup.id };
+      }
+      const id = "ug_" + Date.now();
+      const target = userById(payload.targetUserId);
+      const item = {
+        id,
+        targetUserId: payload.targetUserId,
+        title: payload.title || "请尽快处理落实事项",
+        note: payload.note || "",
+        expectReplyDate: payload.expectReplyDate,
+        taskId: payload.taskId || "",
+        planId: payload.planId || "",
+        companyPlanId: payload.companyPlanId || "",
+        dept: payload.dept || (target ? target.dept : ""),
+        exceptionType: payload.exceptionType || "",
+        status: "待回复",
+        createdAt: DEMO_TODAY,
+        createdBy: "u_gm",
+        replyReason: "",
+        replyRemedy: "",
+        replyPromiseDate: "",
+        repliedAt: "",
+        parentUrgeId: payload.parentUrgeId || "",
+      };
+      urges = [item, ...urges];
+      rebuildTodos();
+      return { ok: true, item };
+    },
+    /** 再次催办：刷新期望回复日，保留原催办为历史或更新同一条 */
+    renewUrge(id, expectReplyDate, note) {
+      const u = urges.find((x) => x.id === id);
+      if (!u) return { ok: false, reason: "催办不存在" };
+      if (u.status !== "待回复") return { ok: false, reason: "仅待回复催办可再次催办" };
+      if (!expectReplyDate) return { ok: false, reason: "必须填写期望回复日" };
+      urges = urges.map((x) =>
+        x.id === id
+          ? {
+              ...x,
+              expectReplyDate,
+              note: note ? (x.note ? x.note + "；" : "") + note : x.note,
+              renewedAt: DEMO_TODAY,
+            }
+          : x
+      );
+      rebuildTodos();
+      return { ok: true };
+    },
+    /** 复检退回：重新进入待回复 */
+    rejectUrge(id, reason) {
+      const u = urges.find((x) => x.id === id);
+      if (!u) return { ok: false, reason: "催办不存在" };
+      if (u.status !== "已回复") return { ok: false, reason: "仅已回复催办可退回" };
+      const tip = (reason || "复检未通过，请补充措施").trim();
+      urges = urges.map((x) =>
+        x.id === id
+          ? {
+              ...x,
+              status: "待回复",
+              note: (x.note ? x.note + "；" : "") + tip,
+              replyReason: "",
+              replyRemedy: "",
+              replyPromiseDate: "",
+              repliedAt: "",
+            }
+          : x
+      );
+      rebuildTodos();
+      return { ok: true };
+    },
+    /** @deprecated 兼容旧调用：自动补期望回复日 */
+    urge(userId, title) {
+      const d = parseDay(DEMO_TODAY);
+      d.setDate(d.getDate() + NEAR_DUE_DAYS);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return this.createUrge({
+        targetUserId: userId,
+        title: title || "请尽快处理逾期/临期事项",
+        expectReplyDate: y + "-" + m + "-" + day,
+      });
+    },
+    replyUrge(id, payload) {
+      const u = urges.find((x) => x.id === id);
+      if (!u) return { ok: false, reason: "催办不存在" };
+      if (u.status !== "待回复") return { ok: false, reason: "该催办已回复" };
+      if (!(payload.replyReason || "").trim()) return { ok: false, reason: "请填写原因" };
+      if (!(payload.replyRemedy || "").trim()) return { ok: false, reason: "请填写补救措施" };
+      if (!payload.replyPromiseDate) return { ok: false, reason: "请填写新承诺日期" };
+      urges = urges.map((x) =>
+        x.id === id
+          ? {
+              ...x,
+              status: "已回复",
+              replyReason: payload.replyReason.trim(),
+              replyRemedy: payload.replyRemedy.trim(),
+              replyPromiseDate: payload.replyPromiseDate,
+              repliedAt: DEMO_TODAY,
+            }
+          : x
+      );
+      rebuildTodos();
+      return { ok: true };
+    },
+    closeUrge(id) {
+      urges = urges.map((x) => (x.id === id ? { ...x, status: "已闭环" } : x));
+      rebuildTodos();
+      return { ok: true };
+    },
+    getUrge(id) {
+      return urges.find((x) => x.id === id);
+    },
+    completeTodo(id) {
+      todos = todos.filter((t) => t.id !== id);
+    },
+  };
+
+  global.BMS4 = Store;
+})(window);

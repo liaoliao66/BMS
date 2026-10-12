@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>落实驾驶舱 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .kpi { background:#fff; border:1px solid #e8eaed; border-radius:1rem; padding:1rem; cursor:pointer; transition: border-color .15s, box-shadow .15s; }
+    .kpi:hover { border-color:#99f6e4; }
+    .kpi.active { border-color:#0f766e; box-shadow:0 0 0 2px rgba(15,118,110,.15); }
+    .prog-track { height:8px; border-radius:999px; background:#e8eaed; overflow:hidden; }
+    .prog-fill { height:100%; background:#34a853; border-radius:999px; }
+    .prog-fill.bad { background:#ea4335; }
+    .prog-fill.warn { background:#f9ab00; }
+    .cell-hot { background:#fce8e6; color:#c5221f; font-weight:600; }
+    .cell-warn { background:#fef7e0; }
+    .tag-ex { display:inline-flex; padding:1px 8px; border-radius:4px; font-size:11px; border:1px solid #e8eaed; background:#f1f3f4; color:#5f6368; }
+    .tag-ex.hot { background:#fce8e6; color:#c5221f; border-color:#f5c6c4; }
+    .tag-ex.warn { background:#fef7e0; color:#e37400; border-color:#fde293; }
+    .bucket-tab { border:1px solid #e2e8f0; background:#fff; color:#475569; font-size:12px; padding:4px 10px; border-radius:999px; }
+    .bucket-tab.active { background:#0f766e; color:#fff; border-color:#0f766e; }
+    .fold-head { cursor:pointer; user-select:none; }
+    .fold-head:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="cockpit" data-title="落实驾驶舱">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+      <p class="text-xs text-slate-500 max-w-2xl">日清首页：先看 KPI → 催例外 → 跟催办复检。数据截至 <span id="asOf" class="font-medium text-slate-700"></span>。例外含任务周报/月报缺失；矩阵与例会默认折叠（周用）。</p>
+      <div class="flex flex-wrap gap-2 text-sm">
+        <a href="经营总台账_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">公司计划表</a>
+        <a href="部门计划表_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">部门计划表</a>
+        <a href="整体计划_任务监督_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">整体任务表</a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5" id="kpi"></div>
+
+    <div class="grid lg:grid-cols-2 gap-4 mb-5">
+      <div class="bg-white border border-[#e8eaed] rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(60,64,67,0.06)]">
+        <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2">
+          <div>
+            <span class="text-sm font-medium">例外清单</span>
+            <span class="text-xs text-slate-400 ml-2" id="exCount"></span>
+          </div>
+          <div class="flex flex-wrap gap-2 items-center text-xs">
+            <select id="fExType" class="border border-slate-200 rounded-lg px-2 py-1 bg-white">
+              <option value="">全部类型</option>
+              <option value="任务延期">任务延期</option>
+              <option value="任务临期">任务临期</option>
+              <option value="计划卡点">计划卡点</option>
+              <option value="计划关注">计划关注</option>
+              <option value="任务周报缺失">任务周报缺失</option>
+              <option value="任务月报缺失">任务月报缺失</option>
+              <option value="催办未回复">催办未回复</option>
+            </select>
+            <label class="inline-flex items-center gap-1 text-slate-500 cursor-pointer">
+              <input type="checkbox" id="exShowAll" class="rounded" /> 查看全部
+            </label>
+            <button type="button" id="btnClearFilter" class="text-teal-700 hover:underline hidden">清除筛选</button>
+          </div>
+        </div>
+        <div class="overflow-auto max-h-[26rem]">
+          <table class="grid-table">
+            <thead><tr>
+              <th>类型</th><th>事项</th><th>部门/责任人</th><th>滞后天数</th><th>操作</th>
+            </tr></thead>
+            <tbody id="exBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="bg-white border border-[#e8eaed] rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(60,64,67,0.06)]">
+        <div class="px-4 py-3 border-b flex flex-wrap justify-between items-center gap-2">
+          <span class="text-sm font-medium">我的催办篮子</span>
+          <div class="flex flex-wrap gap-1.5" id="urgeBuckets"></div>
+        </div>
+        <div class="overflow-auto max-h-[26rem]">
+          <table class="grid-table">
+            <thead><tr>
+              <th>催办事项</th><th>对象</th><th>期望回复</th><th>状态</th><th>操作</th>
+            </tr></thead>
+            <tbody id="urgeBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 次屏：矩阵（默认折叠） -->
+    <div class="bg-white border border-[#e8eaed] rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(60,64,67,0.06)] mb-4">
+      <div class="fold-head px-4 py-3 border-b flex justify-between items-center" id="foldMatrixHead">
+        <div>
+          <span class="text-sm font-medium">公司计划 × 部门贡献矩阵</span>
+          <span class="text-[11px] text-amber-700 ml-2" id="matrixConflictTip"></span>
+          <p class="text-[11px] text-slate-400 mt-0.5">周用 · 单元格为<strong>任务完成率</strong>（≠公司计划表手填进度）。有延期且手填进度偏高时黄灯提示。</p>
+        </div>
+        <i class="fa-solid fa-chevron-down text-slate-400 text-xs" id="foldMatrixIcon"></i>
+      </div>
+      <div id="foldMatrixBody" class="hidden">
+        <div class="overflow-auto px-0">
+          <table class="grid-table min-w-[900px]" id="matrixTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 次屏：例会（默认折叠，仅未完成；逾期优先） -->
+    <div class="bg-white border border-[#e8eaed] rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(60,64,67,0.06)] mb-5">
+      <div class="fold-head px-4 py-3 border-b flex justify-between items-center" id="foldMeetHead">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-medium">周例会待办</span>
+          <span class="text-xs text-slate-400" id="meetCount"></span>
+          <a href="周例会待办_page.html" class="text-xs text-teal-700 hover:underline" onclick="event.stopPropagation()">全部例会</a>
+        </div>
+        <i class="fa-solid fa-chevron-down text-slate-400 text-xs" id="foldMeetIcon"></i>
+      </div>
+      <div id="foldMeetBody" class="hidden overflow-auto">
+        <table class="grid-table">
+          <thead><tr>
+            <th>待办</th><th>责任人</th><th>配合人</th><th>周次</th><th>状态</th><th>操作</th>
+          </tr></thead>
+          <tbody id="meetBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 催办弹窗 -->
+    <div id="modalUrge" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalUrge')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <h3 class="text-lg font-semibold" id="urgeModalTitle">发起催办</h3>
+        <input type="hidden" id="uTarget" />
+        <input type="hidden" id="uTaskId" />
+        <input type="hidden" id="uPlanId" />
+        <input type="hidden" id="uDept" />
+        <input type="hidden" id="uCp" />
+        <input type="hidden" id="uExType" />
+        <input type="hidden" id="uRenewId" />
+        <input type="hidden" id="uForce" value="" />
+        <div>
+          <label class="block text-slate-600 mb-1">催办标题</label>
+          <input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" />
+        </div>
+        <div>
+          <label class="block text-slate-600 mb-1">要求说明</label>
+          <textarea id="uNote" class="w-full border rounded-xl px-3 py-2.5 h-20" placeholder="可选：说明卡点与期望结果"></textarea>
+        </div>
+        <div>
+          <label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
+          <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" />
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="button" onclick="BMSUI.closeModal('modalUrge')" class="text-slate-500 px-3">取消</button>
+          <button type="button" id="btnUrgeSave" class="btn-cta text-white px-4 py-2 rounded-xl">确认催办</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 复检弹窗 -->
+    <div id="modalRecheck" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalRecheck')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <h3 class="text-lg font-semibold">催办复检</h3>
+        <input type="hidden" id="rUrgeId" />
+        <div id="rDetail" class="text-slate-600 space-y-2 text-sm bg-slate-50 rounded-xl p-3"></div>
+        <div>
+          <label class="block text-slate-600 mb-1">退回说明（退回时填写）</label>
+          <input id="rRejectNote" class="w-full border rounded-xl px-3 py-2.5" placeholder="复检未通过原因" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalRecheck')" class="text-slate-500 px-3">取消</button>
+          <button type="button" id="btnRejectUrge" class="px-4 py-2 rounded-xl border border-rose-200 text-rose-700 bg-rose-50">退回重办</button>
+          <button type="button" id="btnCloseUrge" class="btn-cta text-white px-4 py-2 rounded-xl">确认闭环</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  let kpiFilter = ""; // late | near | plan | report | urgePending | ""
+  let urgeBucket = "overdue"; // overdue | pending | recheck | closed
+  let matrixOpen = false;
+  let meetOpen = false;
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escapeAttr(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function exTag(type) {
+    const hot = ["任务延期", "催办未回复", "计划卡点"].includes(type);
+    const warn = ["任务临期", "计划关注", "任务周报缺失", "任务月报缺失"].includes(type);
+    return `<span class="tag-ex ${hot ? "hot" : warn ? "warn" : ""}">${type}</span>`;
+  }
+  function rateBar(rate) {
+    const cls = rate >= 70 ? "" : rate >= 40 ? "warn" : "bad";
+    return `<div class="flex items-center gap-2 min-w-[7rem]">
+      <div class="prog-track flex-1"><div class="prog-fill ${cls}" style="width:${Math.min(100, rate)}%"></div></div>
+      <span class="text-xs">${rate}%</span>
+    </div>`;
+  }
+
+  function drillHref(e) {
+    if (e.taskId) return "整体计划_任务监督_page.html?task=" + encodeURIComponent(e.taskId) + "&all=1";
+    if (e.planId) return "部门计划表_page.html?plan=" + encodeURIComponent(e.planId) + (e.companyPlanId ? "&cp=" + encodeURIComponent(e.companyPlanId) : "");
+    if (e.type === "任务周报缺失") return "任务周报_page.html";
+    if (e.type === "任务月报缺失") return "任务月报_page.html";
+    if (e.companyPlanId) return "经营总台账_page.html";
+    if (e.urgeId) return null;
+    return "整体计划_任务监督_page.html?all=1";
+  }
+
+  function matchKpi(e) {
+    if (!kpiFilter) return true;
+    if (kpiFilter === "late") return e.type === "任务延期";
+    if (kpiFilter === "near") return e.type === "任务临期";
+    if (kpiFilter === "plan") return e.type === "计划卡点" || e.type === "计划关注";
+    if (kpiFilter === "report") return e.type === "任务周报缺失" || e.type === "任务月报缺失";
+    if (kpiFilter === "urgePending") return e.type === "催办未回复";
+    return true;
+  }
+
+  function openUrge(opt) {
+    document.getElementById("urgeModalTitle").textContent = opt.renewId ? "再次催办" : "发起催办";
+    document.getElementById("uTarget").value = opt.targetUserId || "";
+    document.getElementById("uTaskId").value = opt.taskId || "";
+    document.getElementById("uPlanId").value = opt.planId || "";
+    document.getElementById("uDept").value = opt.dept || "";
+    document.getElementById("uCp").value = opt.companyPlanId || "";
+    document.getElementById("uExType").value = opt.exceptionType || "";
+    document.getElementById("uRenewId").value = opt.renewId || "";
+    document.getElementById("uForce").value = opt.force ? "1" : "";
+    document.getElementById("uTitle").value = opt.title || "请尽快处理落实事项";
+    document.getElementById("uNote").value = opt.note || "";
+    document.getElementById("uExpect").value = "2026-08-21";
+    BMSUI.openModal("modalUrge");
+  }
+
+  function urgePayloadJson(opt) {
+    return escapeAttr(JSON.stringify(opt));
+  }
+
+  function render() {
+    document.getElementById("asOf").textContent = BMS4.DEMO_TODAY;
+    const allEx = BMS4.getExceptions();
+    const late = BMS4.taskItems.filter((t) => BMS4.isTaskOverdue(t)).length;
+    const near = BMS4.taskItems.filter((t) => BMS4.isTaskNearDue(t)).length;
+    const planLate = BMS4.PLAN_ITEMS.filter((p) => {
+      const st = BMS4.resolvePlanStatus ? BMS4.resolvePlanStatus(p) : p.status;
+      return st === "延期" || st === "关注";
+    }).length;
+    const missReport = allEx.filter((e) => e.type === "任务周报缺失" || e.type === "任务月报缺失").length;
+    const pendingUrge = BMS4.urges.filter((u) => u.status === "待回复").length;
+    const overdueUrge = BMS4.urges.filter((u) => u.status === "待回复" && u.expectReplyDate < BMS4.DEMO_TODAY).length;
+    const recheckUrge = BMS4.urges.filter((u) => u.status === "已回复").length;
+
+    const kpis = [
+      ["延期任务", late, "text-rose-600", "late"],
+      ["临期任务(≤3天)", near, "text-amber-600", "near"],
+      ["计划卡点/关注", planLate, "text-slate-800", "plan"],
+      ["任务报未填齐", missReport, "text-slate-800", "report"],
+      ["催办待回复", pendingUrge, "text-rose-600", "urgePending"],
+    ];
+    document.getElementById("kpi").innerHTML = kpis
+      .map(
+        ([k, v, cls, key]) =>
+          `<div class="kpi ${kpiFilter === key ? "active" : ""}" data-kpi="${key}" title="点击筛选例外">
+            <div class="text-xs text-slate-500">${k}</div>
+            <div class="text-2xl font-semibold mt-1 ${cls}">${v}</div>
+            ${key === "urgePending" && overdueUrge ? `<div class="text-[10px] text-rose-500 mt-0.5">${overdueUrge} 条已超时</div>` : ""}
+          </div>`
+      )
+      .join("");
+    document.querySelectorAll("[data-kpi]").forEach((el) => {
+      el.onclick = () => {
+        const key = el.getAttribute("data-kpi");
+        kpiFilter = kpiFilter === key ? "" : key;
+        if (key === "urgePending" && kpiFilter) urgeBucket = overdueUrge ? "overdue" : "pending";
+        render();
+      };
+    });
+
+    const typeSel = document.getElementById("fExType").value;
+    const showAll = document.getElementById("exShowAll").checked;
+    let filtered = allEx.filter(matchKpi);
+    if (typeSel) filtered = filtered.filter((e) => e.type === typeSel);
+    const shown = showAll ? filtered : filtered.slice(0, 10);
+    document.getElementById("exCount").textContent =
+      "共 " + filtered.length + " 条" + (!showAll && filtered.length > 10 ? " · 显示 Top 10" : "");
+    document.getElementById("btnClearFilter").classList.toggle("hidden", !kpiFilter && !typeSel);
+
+    document.getElementById("exBody").innerHTML = shown.length
+      ? shown
+          .map((e) => {
+            const ou = BMS4.userById(e.ownerId);
+            const canUrge = !!e.ownerId;
+            const href = drillHref(e);
+            const titleHtml = href
+              ? `<a class="font-medium text-teal-800 hover:underline truncate block" href="${href}" title="${escapeAttr(e.title)}">${escapeHtml(e.title)}</a>`
+              : `<div class="font-medium text-slate-800 truncate" title="${escapeAttr(e.title)}">${escapeHtml(e.title)}</div>`;
+            const missOwner = !e.ownerId
+              ? `<div class="text-[10px] text-rose-500">缺主责</div>`
+              : "";
+            return `<tr>
+              <td>${exTag(e.type)}</td>
+              <td class="max-w-[14rem]">${titleHtml}
+                <div class="text-[11px] text-slate-400">${escapeHtml(e.priority || "")}</div>${missOwner}</td>
+              <td class="whitespace-nowrap">${escapeHtml(e.dept)}${ou ? " · " + escapeHtml(ou.name) : ""}</td>
+              <td class="text-center ${e.lagDays ? "text-rose-600" : "text-slate-500"}">${
+                e.type === "任务临期" ? "剩" + e.lagDays + "天" : e.lagDays || "—"
+              }</td>
+              <td>${
+                canUrge
+                  ? `<button type="button" class="text-teal-700 text-sm hover:underline" data-urge="${urgePayloadJson({
+                      targetUserId: e.ownerId,
+                      title: "催办：" + e.title,
+                      taskId: e.taskId || "",
+                      planId: e.planId || "",
+                      dept: e.dept,
+                      companyPlanId: e.companyPlanId || "",
+                      exceptionType: e.type,
+                    })}">催办</button>`
+                  : "—"
+              }</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="5" class="text-center text-slate-400 py-8">${
+          kpiFilter || typeSel ? "当前筛选下无例外" : "今日无例外，全部按期"
+        }</td></tr>`;
+
+    document.querySelectorAll("#exBody [data-urge]").forEach((btn) => {
+      btn.onclick = () => {
+        try {
+          openUrge(JSON.parse(btn.getAttribute("data-urge")));
+        } catch (err) {
+          BMSUI.toast("催办参数错误", false);
+        }
+      };
+    });
+
+    const buckets = [
+      ["overdue", "已超时", overdueUrge, true],
+      ["pending", "待回复", pendingUrge - overdueUrge, false],
+      ["recheck", "待复检", recheckUrge, false],
+      ["closed", "已闭环", BMS4.urges.filter((u) => u.status === "已闭环").length, false],
+    ];
+    if (!buckets.find((b) => b[0] === urgeBucket)) urgeBucket = "overdue";
+    document.getElementById("urgeBuckets").innerHTML = buckets
+      .map(
+        ([key, label, n, hot]) =>
+          `<button type="button" class="bucket-tab ${urgeBucket === key ? "active" : ""}" data-bucket="${key}">${label} ${n}${
+            hot && n ? "" : ""
+          }</button>`
+      )
+      .join("");
+    document.querySelectorAll("[data-bucket]").forEach((btn) => {
+      btn.onclick = () => {
+        urgeBucket = btn.getAttribute("data-bucket");
+        render();
+      };
+    });
+
+    let urgeList = BMS4.urges.slice();
+    if (urgeBucket === "overdue") {
+      urgeList = urgeList.filter((u) => u.status === "待回复" && u.expectReplyDate < BMS4.DEMO_TODAY);
+    } else if (urgeBucket === "pending") {
+      urgeList = urgeList.filter((u) => u.status === "待回复" && !(u.expectReplyDate < BMS4.DEMO_TODAY));
+    } else if (urgeBucket === "recheck") {
+      urgeList = urgeList.filter((u) => u.status === "已回复");
+    } else {
+      urgeList = urgeList.filter((u) => u.status === "已闭环");
+    }
+
+    document.getElementById("urgeBody").innerHTML = urgeList.length
+      ? urgeList
+          .map((u) => {
+            const ou = BMS4.userById(u.targetUserId);
+            const overdue = u.status === "待回复" && u.expectReplyDate < BMS4.DEMO_TODAY;
+            let act = "—";
+            if (u.status === "已回复") {
+              act = `<button type="button" class="text-teal-700 text-sm hover:underline" data-recheck="${u.id}">复检</button>`;
+            } else if (u.status === "待回复") {
+              act = overdue
+                ? `<button type="button" class="text-rose-600 text-sm hover:underline" data-renew="${u.id}">再次催办</button>`
+                : `<span class="text-xs text-slate-400">等待回复</span>`;
+            }
+            const link =
+              u.taskId
+                ? `整体计划_任务监督_page.html?task=${encodeURIComponent(u.taskId)}&all=1`
+                : u.companyPlanId
+                  ? "经营总台账_page.html"
+                  : "";
+            const titleCell = link
+              ? `<a class="truncate block text-teal-800 hover:underline" href="${link}" title="${escapeAttr(u.title)}">${escapeHtml(u.title)}</a>`
+              : `<div class="truncate" title="${escapeAttr(u.title)}">${escapeHtml(u.title)}</div>`;
+            return `<tr class="${overdue ? "bg-rose-50/40" : ""}">
+              <td class="max-w-[12rem]">${titleCell}
+                <div class="text-[11px] text-slate-400 truncate">${escapeHtml(u.note || "")}</div></td>
+              <td class="whitespace-nowrap">${ou ? escapeHtml(ou.name + " · " + ou.dept) : "—"}</td>
+              <td class="${overdue ? "text-rose-600 font-medium" : ""}">${u.expectReplyDate}${overdue ? " · 超时" : ""}</td>
+              <td>${BMSUI.statusBadge(u.status)}</td>
+              <td>${act}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="5" class="text-center text-slate-400 py-8">本桶暂无催办</td></tr>`;
+
+    document.querySelectorAll("[data-recheck]").forEach((btn) => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-recheck");
+        const u = BMS4.getUrge(id);
+        if (!u) return;
+        document.getElementById("rUrgeId").value = id;
+        document.getElementById("rRejectNote").value = "";
+        document.getElementById("rDetail").innerHTML = `
+          <div><span class="text-slate-400">事项：</span>${escapeHtml(u.title)}</div>
+          <div><span class="text-slate-400">原因：</span>${escapeHtml(u.replyReason)}</div>
+          <div><span class="text-slate-400">措施：</span>${escapeHtml(u.replyRemedy)}</div>
+          <div><span class="text-slate-400">承诺日：</span>${escapeHtml(u.replyPromiseDate)}</div>`;
+        BMSUI.openModal("modalRecheck");
+      };
+    });
+    document.querySelectorAll("[data-renew]").forEach((btn) => {
+      btn.onclick = () => {
+        const id = btn.getAttribute("data-renew");
+        const u = BMS4.getUrge(id);
+        if (!u) return;
+        openUrge({
+          renewId: id,
+          targetUserId: u.targetUserId,
+          title: u.title,
+          taskId: u.taskId,
+          planId: u.planId,
+          dept: u.dept,
+          companyPlanId: u.companyPlanId,
+          exceptionType: u.exceptionType || "催办未回复",
+          note: "再次催办：请于新期望日前回复",
+        });
+      };
+    });
+
+    // 矩阵
+    const matrix = BMS4.companyPlanDeptMatrix();
+    let conflictN = 0;
+    matrix.forEach((row) => {
+      const hand = BMS4.clampPct(row.companyPlan.progressPct);
+      if (row.lateTotal > 0 && hand >= 45) conflictN++;
+    });
+    document.getElementById("matrixConflictTip").textContent = conflictN
+      ? `⚠ ${conflictN} 个目标进度与延期冲突`
+      : "";
+    document.getElementById("foldMatrixBody").classList.toggle("hidden", !matrixOpen);
+    document.getElementById("foldMatrixIcon").className =
+      "fa-solid text-slate-400 text-xs " + (matrixOpen ? "fa-chevron-up" : "fa-chevron-down");
+
+    let html = `<thead><tr><th>公司计划</th><th>任务完成率<br/><span class="text-[10px] font-normal text-slate-400">非手填进度</span></th><th>手填进度</th>`;
+    BMS4.DEPTS.forEach((d) => {
+      html += `<th>${d}</th>`;
+    });
+    html += `<th>延期合计</th></tr></thead><tbody>`;
+    matrix.forEach((row) => {
+      const hand = BMS4.clampPct(row.companyPlan.progressPct);
+      const conflict = row.lateTotal > 0 && hand >= 45;
+      html += `<tr class="${conflict ? "cell-warn" : ""}">
+        <td class="font-medium max-w-[14rem]">
+          <a class="hover:underline text-teal-800" href="经营总台账_page.html">${escapeHtml(row.companyPlan.name)}</a>
+          <div class="text-[11px] text-slate-400">${escapeHtml(row.companyPlan.priority || "")} · ${escapeHtml(row.companyPlan.status)}</div>
+          ${conflict ? `<div class="text-[10px] text-amber-700 mt-0.5">手填 ${hand}% 偏高，下属仍有延期</div>` : ""}
+        </td>
+        <td>${rateBar(row.avgRate)}</td>
+        <td class="tabular-nums font-medium ${conflict ? "text-amber-700" : ""}">${hand}%</td>`;
+      row.cells.forEach((c) => {
+        if (!c.planNodes && !c.taskTotal) {
+          html += `<td class="text-slate-300 text-center">—</td>`;
+          return;
+        }
+        const hot = c.late > 0;
+        html += `<td class="${hot ? "cell-hot" : ""}">
+          <div>${c.taskRate}% · 延期${c.late}</div>
+          <div class="text-[11px] ${c.weekFilled ? "text-slate-500" : "text-amber-600"}">节点${c.planNodes} · 任务周报${c.weekFilled ? "已填" : "未填"}</div>
+          ${
+            c.ownerId && c.late
+              ? `<button type="button" class="text-teal-700 text-xs hover:underline mt-1" data-urge="${urgePayloadJson({
+                  targetUserId: c.ownerId,
+                  title: "催办：" + row.companyPlan.name + " · " + c.dept,
+                  dept: c.dept,
+                  companyPlanId: row.companyPlan.id,
+                  exceptionType: "任务延期",
+                })}">催办部门长</button>`
+              : ""
+          }
+        </td>`;
+      });
+      html += `<td class="text-center ${row.lateTotal ? "text-rose-600 font-medium" : ""}">${row.lateTotal}</td></tr>`;
+    });
+    html += `</tbody>`;
+    document.getElementById("matrixTable").innerHTML = html;
+    document.querySelectorAll("#matrixTable [data-urge]").forEach((btn) => {
+      btn.onclick = () => {
+        try {
+          openUrge(JSON.parse(btn.getAttribute("data-urge")));
+        } catch (e) {
+          BMSUI.toast("催办参数错误", false);
+        }
+      };
+    });
+
+    // 例会：未完成；有「进行中/待办」均展示，逾期感用状态
+    const meets = BMS4.meetingTodos.filter((m) => m.status !== "已完成");
+    document.getElementById("meetCount").textContent = "未完成 " + meets.length;
+    document.getElementById("foldMeetBody").classList.toggle("hidden", !meetOpen);
+    document.getElementById("foldMeetIcon").className =
+      "fa-solid text-slate-400 text-xs " + (meetOpen ? "fa-chevron-up" : "fa-chevron-down");
+    document.getElementById("meetBody").innerHTML = meets.length
+      ? meets
+          .map((m) => {
+            const ou = BMS4.userById(m.ownerId);
+            const can = !!m.ownerId;
+            return `<tr>
+              <td>${escapeHtml(m.title)}</td>
+              <td>${ou ? escapeHtml(ou.name) : "—"}</td>
+              <td>${escapeHtml(m.helper || "—")}</td>
+              <td>${m.week}</td>
+              <td>${BMSUI.statusBadge(m.status)}</td>
+              <td>${
+                can
+                  ? `<button type="button" class="text-teal-700 text-sm hover:underline" data-urge="${urgePayloadJson({
+                      targetUserId: m.ownerId,
+                      title: "催办（例会）：" + m.title,
+                      dept: ou ? ou.dept : "",
+                      exceptionType: "例会待办",
+                    })}">催办</button>`
+                  : "—"
+              }</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="6" class="text-center text-slate-400 py-6">暂无未完成例会待办</td></tr>`;
+    document.querySelectorAll("#meetBody [data-urge]").forEach((btn) => {
+      btn.onclick = () => {
+        try {
+          openUrge(JSON.parse(btn.getAttribute("data-urge")));
+        } catch (e) {
+          BMSUI.toast("催办参数错误", false);
+        }
+      };
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (BMS4.getRoleUser().role !== "总经理") {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见。部门长/员工请在「我的待办」回复催办。</div>';
+      return;
+    }
+
+    document.getElementById("foldMatrixHead").onclick = () => {
+      matrixOpen = !matrixOpen;
+      render();
+    };
+    document.getElementById("foldMeetHead").onclick = () => {
+      meetOpen = !meetOpen;
+      render();
+    };
+    document.getElementById("fExType").onchange = render;
+    document.getElementById("exShowAll").onchange = render;
+    document.getElementById("btnClearFilter").onclick = () => {
+      kpiFilter = "";
+      document.getElementById("fExType").value = "";
+      render();
+    };
+
+    document.getElementById("btnUrgeSave").onclick = () => {
+      const renewId = document.getElementById("uRenewId").value;
+      const expect = document.getElementById("uExpect").value;
+      const note = document.getElementById("uNote").value.trim();
+      if (renewId) {
+        const r = BMS4.renewUrge(renewId, expect, note || "再次催办");
+        if (!r.ok) return BMSUI.toast(r.reason, false);
+        BMSUI.closeModal("modalUrge");
+        BMSUI.toast("已更新期望回复日");
+        urgeBucket = "pending";
+        render();
+        return;
+      }
+      const r = BMS4.createUrge({
+        targetUserId: document.getElementById("uTarget").value,
+        title: document.getElementById("uTitle").value.trim(),
+        note,
+        expectReplyDate: expect,
+        taskId: document.getElementById("uTaskId").value,
+        planId: document.getElementById("uPlanId").value,
+        dept: document.getElementById("uDept").value,
+        companyPlanId: document.getElementById("uCp").value,
+        exceptionType: document.getElementById("uExType").value,
+        force: document.getElementById("uForce").value === "1",
+      });
+      if (!r.ok) return BMSUI.toast(r.reason, false);
+      BMSUI.closeModal("modalUrge");
+      BMSUI.toast("已催办，责任人待办已生成");
+      urgeBucket = "pending";
+      render();
+    };
+    document.getElementById("btnCloseUrge").onclick = () => {
+      BMS4.closeUrge(document.getElementById("rUrgeId").value);
+      BMSUI.closeModal("modalRecheck");
+      BMSUI.toast("已闭环");
+      urgeBucket = "closed";
+      render();
+    };
+    document.getElementById("btnRejectUrge").onclick = () => {
+      const r = BMS4.rejectUrge(
+        document.getElementById("rUrgeId").value,
+        document.getElementById("rRejectNote").value.trim() || "复检未通过，请补充措施"
+      );
+      if (!r.ok) return BMSUI.toast(r.reason, false);
+      BMSUI.closeModal("modalRecheck");
+      BMSUI.toast("已退回，责任人需重新回复");
+      urgeBucket = "pending";
+      render();
+    };
+    render();
+  });
+})();
+  </script>
+</body>
+</html>
