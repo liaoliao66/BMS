@@ -11,6 +11,8 @@
     .tab-on { color:#0f766e; border-bottom:2px solid #0f766e; font-weight:600; }
     .tab-off { color:#64748b; border-bottom:2px solid transparent; }
     .view-on { background:#0f766e; color:#fff; }
+    .mode-on { background:#0f766e; color:#fff; }
+    .mode-off { background:#fff; color:#64748b; }
     .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
     .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
     .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
@@ -45,7 +47,7 @@
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <p class="text-xs text-slate-500 mb-3">树结构一级为<strong>计划</strong>，其下为关联<strong>任务</strong>。任务行可在列表内直接改：名称、优先级、处理人、状态、截止日期、预估/已登记工时（整数）。状态流：未开始 → 进行中 → 已完成 → <strong>已关闭</strong>。</p>
+    <p class="text-xs text-slate-500 mb-3">树结构一级为<strong>计划</strong>，其下为关联<strong>任务</strong>。新建可选<strong>自建</strong>或<strong>下达给他人</strong>（部门长：本部门人员 / 关联计划部门长）。行内可改名称、优先级、处理人、状态、起止；耗费工时按每天 8 小时自动算。</p>
 
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 mb-4">
       <div class="flex flex-wrap gap-1 text-sm" id="statusTabs"></div>
@@ -85,6 +87,14 @@
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3 text-sm">
           <input type="hidden" id="editId" />
+          <div id="createModeWrap" class="hidden">
+            <label class="block text-slate-600 mb-1">创建方式</label>
+            <div class="inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm">
+              <button type="button" id="btnModeSelf" class="px-3 py-1.5 mode-on">自建（给我）</button>
+              <button type="button" id="btnModeAssign" class="px-3 py-1.5 mode-off">下达给他人</button>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1" id="createModeHint">自建：处理人为本人，来源「自建」</p>
+          </div>
           <div>
             <label class="block text-slate-600 mb-1">任务名称 <span class="text-red-500">*</span></label>
             <input id="fName" class="w-full border rounded-xl px-3 py-2.5" />
@@ -107,20 +117,25 @@
             <label class="block text-slate-600 mb-1">关联计划 <span class="text-red-500">*</span></label>
             <select id="fAnnual" class="w-full border rounded-xl px-3 py-2.5"></select>
           </div>
+          <div id="ownerWrap" class="hidden">
+            <label class="block text-slate-600 mb-1">处理人 <span class="text-red-500">*</span></label>
+            <select id="fOwner" class="w-full border rounded-xl px-3 py-2.5"></select>
+          </div>
           <div>
             <label class="block text-slate-600 mb-1">上级任务（可选，同计划下子任务）</label>
             <select id="fParent" class="w-full border rounded-xl px-3 py-2.5"><option value="">无</option></select>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-slate-600 mb-1">截止日期</label>
-              <input type="date" id="fDeadline" value="2026-08-31" class="w-full border rounded-xl px-3 py-2.5" />
+              <label class="block text-slate-600 mb-1">开始时间 <span class="text-red-500">*</span></label>
+              <input type="date" id="fStart" value="2026-08-18" class="w-full border rounded-xl px-3 py-2.5" />
             </div>
             <div>
-              <label class="block text-slate-600 mb-1">预估工时（整数小时）</label>
-              <input type="number" id="fHours" min="0" step="1" value="8" class="w-full border rounded-xl px-3 py-2.5" />
+              <label class="block text-slate-600 mb-1">结束时间 <span class="text-red-500">*</span></label>
+              <input type="date" id="fEnd" value="2026-08-31" class="w-full border rounded-xl px-3 py-2.5" />
             </div>
           </div>
+          <p class="text-[11px] text-slate-400" id="fHoursHint">耗费工时：—（按每天 8 小时自动计算）</p>
           <div id="editExtra" class="hidden space-y-3">
             <div>
               <label class="block text-slate-600 mb-1">完成状态</label>
@@ -128,10 +143,6 @@
                 <option>未开始</option><option>进行中</option><option>已完成</option><option>已关闭</option><option>延期</option>
               </select>
               <p class="text-[11px] text-slate-400 mt-1">「已关闭」须在「已完成」之后</p>
-            </div>
-            <div>
-              <label class="block text-slate-600 mb-1">已登记工时（整数小时）</label>
-              <input type="number" id="fActual" min="0" step="1" value="0" class="w-full border rounded-xl px-3 py-2.5" />
             </div>
           </div>
         </div>
@@ -156,6 +167,8 @@
   let user;
   /** 当前正在编辑的单元格 { id, field } */
   let editCell = null;
+  /** 新建：self | assign */
+  let createMode = "self";
 
   const SCOPE_TABS_HEAD = [
     { id: "mine", label: "我负责的" },
@@ -194,10 +207,28 @@
     return BMS4.tasksForUser(user.id);
   }
 
+  function hoursLabel(t) {
+    const h = BMS4.taskWorkHours ? BMS4.taskWorkHours(t) : 0;
+    return h ? h + "h" : "—";
+  }
+  function sumWorkHours(list) {
+    return list.reduce((s, t) => s + (BMS4.taskWorkHours ? BMS4.taskWorkHours(t) : 0), 0);
+  }
+  function refreshModalHoursHint() {
+    const el = document.getElementById("fHoursHint");
+    if (!el) return;
+    const s = document.getElementById("fStart").value;
+    const e = document.getElementById("fEnd").value;
+    const h = BMS4.workHoursByRange ? BMS4.workHoursByRange(s, e) : 0;
+    el.textContent = h
+      ? "耗费工时：" + h + " 小时（含首尾共 " + h / 8 + " 天 × 8）"
+      : "耗费工时：—（请填写有效起止日期，按每天 8 小时计算）";
+  }
+
   function inDateRange(t) {
     const from = document.getElementById("dateFrom").value;
     const to = document.getElementById("dateTo").value;
-    const d = t.deadline || t.createdAt;
+    const d = (BMS4.taskEndDate ? BMS4.taskEndDate(t) : t.endDate || t.deadline) || t.createdAt;
     if (from && d < from) return false;
     if (to && d > to) return false;
     return true;
@@ -226,9 +257,6 @@
     return pool.filter((t) => t.parentId === parentId);
   }
 
-  function sumHours(list, field) {
-    return list.reduce((s, t) => s + (Number(t[field]) || 0), 0);
-  }
 
   /** 树：一级=计划，其下=任务（可再挂子任务） */
   function buildTreeRows(pool) {
@@ -266,8 +294,7 @@
         childCount: roots.length,
         doneKids: doneCnt,
         totalKids: under.length,
-        planHours: sumHours(under, "planHours"),
-        actualHours: sumHours(under, "actualHours"),
+        workHours: sumWorkHours(under),
         collapseKey: planKey,
       });
       if (collapsed.has(planKey)) return;
@@ -323,9 +350,9 @@
       <th><span class="col-head">优先级 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-filter"></i></span></th>
       <th><span class="col-head">处理人 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-filter"></i></span></th>
       <th><span class="col-head">完成状态 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-filter"></i></span></th>
-      <th><span class="col-head">截止日期 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-sort"></i></span></th>
-      <th><span class="col-head">预估工时 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-sort"></i></span></th>
-      <th><span class="col-head">已登记工时 <i class="fa-solid fa-pen"></i> <i class="fa-solid fa-sort"></i></span></th>
+      <th><span class="col-head">开始时间 <i class="fa-solid fa-pen"></i></span></th>
+      <th><span class="col-head">结束时间 <i class="fa-solid fa-pen"></i></span></th>
+      <th><span class="col-head">耗费工时</span></th>
       <th><span class="col-head">创建时间 <i class="fa-solid fa-sort"></i></span></th>`;
     document.getElementById("thead").innerHTML =
       viewMode === "flat"
@@ -372,7 +399,7 @@
 
     const pool = filteredTasks();
     const rows = viewMode === "tree" ? buildTreeRows(pool) : buildFlatRows(pool);
-    const colSpan = viewMode === "flat" ? 11 : 10;
+    const colSpan = viewMode === "flat" ? 11 : 10; // 计划/序号 + 名称…创建时间
 
     document.getElementById("tbody").innerHTML = rows.length
       ? rows.map((row) => (row.kind === "plan" ? renderPlanRow(row) : renderTaskRow(row))).join("")
@@ -423,8 +450,8 @@
       <td>—</td>
       <td>${statusTag(p.status)}</td>
       <td>—</td>
-      <td class="text-right text-slate-600">${row.planHours}.0</td>
-      <td class="text-right text-slate-600">${row.actualHours}.0</td>
+      <td>—</td>
+      <td class="text-right text-slate-600 tabular-nums">${row.workHours || 0}h</td>
       <td class="text-slate-500">—</td>
     </tr>`;
   }
@@ -453,9 +480,9 @@
       <td>${cellSelect(t, "priority", prioTag(t.priority), ["P0", "P1", "P2"])}</td>
       <td>${cellSelect(t, "ownerId", `<span class="tag tag-muted">${ou ? ou.name : "—"}</span>`, null)}</td>
       <td>${cellSelect(t, "status", statusTag(t.status), ["未开始", "进行中", "已完成", "已关闭", "延期"])}</td>
-      <td>${cellDate(t)}</td>
-      <td class="text-right">${cellNumber(t, "planHours")}</td>
-      <td class="text-right">${cellNumber(t, "actualHours")}</td>
+      <td>${cellDateField(t, "startDate")}</td>
+      <td>${cellDateField(t, "endDate")}</td>
+      <td class="text-right text-slate-700 tabular-nums whitespace-nowrap" title="按起止日期×每天8小时自动计算">${hoursLabel(t)}</td>
       <td class="text-slate-500 whitespace-nowrap">${t.createdAt || "—"}</td>
     </tr>`;
   }
@@ -488,19 +515,12 @@
     return `<span class="cell-edit" data-start-edit="${field}" data-id="${t.id}">${displayHtml}<i class="fa-solid fa-pen pencil"></i></span>`;
   }
 
-  function cellDate(t) {
-    if (isEditing(t.id, "deadline")) {
-      return `<input type="date" class="inline-input" data-inline="deadline" data-id="${t.id}" data-inline-focus value="${t.deadline || ""}" />`;
-    }
-    return `<span class="cell-edit text-slate-700" data-start-edit="deadline" data-id="${t.id}">${t.deadline || "—"}<i class="fa-solid fa-pen pencil"></i></span>`;
-  }
-
-  function cellNumber(t, field) {
-    const v = t[field] ?? 0;
+  function cellDateField(t, field) {
+    const val = field === "startDate" ? BMS4.taskStartDate(t) : BMS4.taskEndDate(t);
     if (isEditing(t.id, field)) {
-      return `<input type="number" min="0" step="1" class="inline-input text-right" style="width:4.5rem" data-inline="${field}" data-id="${t.id}" data-inline-focus value="${v}" />`;
+      return `<input type="date" class="inline-input" data-inline="${field}" data-id="${t.id}" data-inline-focus value="${val || ""}" />`;
     }
-    return `<span class="cell-edit justify-end w-full" data-start-edit="${field}" data-id="${t.id}">${v}.0<i class="fa-solid fa-pen pencil"></i></span>`;
+    return `<span class="cell-edit text-slate-700 whitespace-nowrap" data-start-edit="${field}" data-id="${t.id}">${val || "—"}<i class="fa-solid fa-pen pencil"></i></span>`;
   }
 
   function escapeAttr(s) {
@@ -567,16 +587,64 @@
         return BMSUI.toast("须先「已完成」才能「已关闭」", false);
       }
       if (st !== task.status) patch = { status: st };
-    } else if (field === "deadline") {
-      if (el.value !== (task.deadline || "")) patch = { deadline: el.value };
-    } else if (field === "planHours" || field === "actualHours") {
-      const n = parseInt(el.value, 10);
-      if (!Number.isInteger(n) || n < 0) return BMSUI.toast("工时须为整数小时", false);
-      if (n !== (task[field] ?? 0)) patch = { [field]: n };
+    } else if (field === "startDate" || field === "endDate") {
+      const v = el.value;
+      if (!v) return BMSUI.toast("请填写日期", false);
+      const start = field === "startDate" ? v : BMS4.taskStartDate(task);
+      const end = field === "endDate" ? v : BMS4.taskEndDate(task);
+      if (start && end && end < start) return BMSUI.toast("结束时间不能早于开始时间", false);
+      if (v !== (task[field] || "")) patch = field === "endDate" ? { endDate: v, deadline: v } : { startDate: v };
     }
     if (patch) {
       BMS4.updateTask(id, patch);
       BMSUI.toast("已保存");
+    }
+  }
+
+  function setCreateMode(mode) {
+    createMode = mode === "assign" && user.role === "部门长" ? "assign" : "self";
+    const selfBtn = document.getElementById("btnModeSelf");
+    const assignBtn = document.getElementById("btnModeAssign");
+    if (selfBtn && assignBtn) {
+      selfBtn.className = "px-3 py-1.5 " + (createMode === "self" ? "mode-on" : "mode-off");
+      assignBtn.className = "px-3 py-1.5 " + (createMode === "assign" ? "mode-on" : "mode-off");
+    }
+    const hint = document.getElementById("createModeHint");
+    if (hint) {
+      hint.textContent =
+        createMode === "assign"
+          ? "下达：可选本部门人员或关联计划涉及部门的部门长；来源「下达」"
+          : "自建：处理人为本人，来源「自建」";
+    }
+    document.getElementById("ownerWrap").classList.toggle("hidden", createMode !== "assign");
+    document.getElementById("modalTitle").textContent = createMode === "assign" ? "下达任务" : "新建任务";
+    fillOwners();
+  }
+
+  function fillOwners() {
+    const sel = document.getElementById("fOwner");
+    if (!sel) return;
+    sel.innerHTML = "";
+    if (createMode !== "assign") return;
+    const aid = document.getElementById("fAnnual").value;
+    const plan = BMS4.planById(aid);
+    BMS4.USERS.filter((x) => x.dept === user.dept && x.role !== "总经理").forEach((x) => {
+      const o = document.createElement("option");
+      o.value = x.id;
+      o.textContent = "本部门 · " + x.name;
+      if (x.id === user.id) o.textContent += "（我）";
+      sel.appendChild(o);
+    });
+    if (plan && plan.companyPlanId) {
+      BMS4.PLAN_ITEMS.filter((x) => x.companyPlanId === plan.companyPlanId && x.dept !== user.dept).forEach((x) => {
+        const h = BMS4.USERS.find((uu) => uu.dept === x.dept && uu.role === "部门长");
+        if (h && ![...sel.options].some((op) => op.value === h.id)) {
+          const o = document.createElement("option");
+          o.value = h.id;
+          o.textContent = "关联部门长 · " + h.name + "（" + h.dept + "）";
+          sel.appendChild(o);
+        }
+      });
     }
   }
 
@@ -602,21 +670,25 @@
           o.textContent = t.name;
           psel.appendChild(o);
         });
+      fillOwners();
     };
     ann.onchange = refreshParent;
     refreshParent();
   }
 
-  function openNew() {
-    document.getElementById("modalTitle").textContent = "新建任务";
+  function openNew(preferAssign) {
     document.getElementById("editId").value = "";
     document.getElementById("editExtra").classList.add("hidden");
     document.getElementById("fName").value = "";
-    document.getElementById("fHours").value = "8";
-    document.getElementById("fDeadline").value = "2026-08-31";
+    document.getElementById("fStart").value = "2026-08-18";
+    document.getElementById("fEnd").value = "2026-08-31";
+    refreshModalHoursHint();
     fillAnnualAndParent(null);
     const typeMap = { 生产操作部: "生产作业", 设备技术部: "设备维保", 安全监督部: "安全环保", 市场开发部: "市场商务" };
     document.getElementById("fType").value = typeMap[user.dept] || "其他";
+    const canAssign = user.role === "部门长";
+    document.getElementById("createModeWrap").classList.toggle("hidden", !canAssign);
+    setCreateMode(preferAssign && canAssign ? "assign" : "self");
     BMSUI.openModal("modal");
   }
 
@@ -626,13 +698,15 @@
     document.getElementById("modalTitle").textContent = "更新任务";
     document.getElementById("editId").value = id;
     document.getElementById("editExtra").classList.remove("hidden");
+    document.getElementById("createModeWrap").classList.add("hidden");
+    document.getElementById("ownerWrap").classList.add("hidden");
     document.getElementById("fName").value = t.name;
     document.getElementById("fType").value = t.taskType || "其他";
     document.getElementById("fPrio").value = t.priority || "P1";
-    document.getElementById("fHours").value = t.planHours ?? 0;
-    document.getElementById("fActual").value = t.actualHours ?? 0;
-    document.getElementById("fDeadline").value = t.deadline || "2026-08-31";
+    document.getElementById("fStart").value = BMS4.taskStartDate(t) || "2026-08-18";
+    document.getElementById("fEnd").value = BMS4.taskEndDate(t) || "2026-08-31";
     document.getElementById("fStatus").value = t.status;
+    refreshModalHoursHint();
     fillAnnualAndParent(id, t.annualId);
     document.getElementById("fParent").value = t.parentId || "";
     BMSUI.openModal("modal");
@@ -640,30 +714,35 @@
 
   window.saveTask = function () {
     const name = document.getElementById("fName").value.trim();
-    const planHours = parseInt(document.getElementById("fHours").value, 10);
+    const startDate = document.getElementById("fStart").value;
+    const endDate = document.getElementById("fEnd").value;
     if (!name) return BMSUI.toast("请填写任务名称", false);
-    if (!Number.isInteger(planHours) || planHours < 0) return BMSUI.toast("预估工时须为整数", false);
+    if (!startDate || !endDate) return BMSUI.toast("请填写开始与结束时间", false);
+    if (endDate < startDate) return BMSUI.toast("结束时间不能早于开始时间", false);
     const editId = document.getElementById("editId").value;
+    const isAssign = !editId && createMode === "assign" && user.role === "部门长";
+    const ownerId = isAssign ? document.getElementById("fOwner").value : user.id;
+    if (isAssign && !ownerId) return BMSUI.toast("请选择处理人", false);
     const payload = {
       name,
       annualId: document.getElementById("fAnnual").value,
-      ownerId: user.id,
-      planHours,
+      ownerId,
       parentId: document.getElementById("fParent").value || null,
       taskType: document.getElementById("fType").value,
       priority: document.getElementById("fPrio").value,
-      deadline: document.getElementById("fDeadline").value,
-      source: "自建",
+      startDate,
+      endDate,
+      deadline: endDate,
+      source: isAssign ? "下达" : "自建",
     };
     if (!editId) {
       BMS4.addAssignTask(payload);
       BMSUI.closeModal("modal");
-      BMSUI.toast("已新建任务");
+      BMSUI.toast(isAssign ? "已下达，对方任务已生成" : "已新建任务");
+      if (isAssign && ownerId !== user.id) scopeTab = user.role === "部门长" ? "dept" : "mine";
       render();
       return;
     }
-    const actualHours = parseInt(document.getElementById("fActual").value, 10);
-    if (!Number.isInteger(actualHours) || actualHours < 0) return BMSUI.toast("已登记工时须为整数", false);
     const st = document.getElementById("fStatus").value;
     const old = BMS4.taskItems.find((x) => x.id === editId);
     if (st === CLOSED && old.status !== DONE && old.status !== CLOSED) {
@@ -672,12 +751,12 @@
     BMS4.updateTask(editId, {
       name: payload.name,
       annualId: payload.annualId,
-      planHours,
-      actualHours,
       parentId: payload.parentId,
       taskType: payload.taskType,
       priority: payload.priority,
-      deadline: payload.deadline,
+      startDate,
+      endDate,
+      deadline: endDate,
       status: st,
     });
     BMSUI.closeModal("modal");
@@ -711,7 +790,9 @@
       viewMode = "flat";
       render();
     };
-    document.getElementById("btnNew").onclick = openNew;
+    document.getElementById("btnNew").onclick = () => openNew(false);
+    document.getElementById("btnModeSelf").onclick = () => setCreateMode("self");
+    document.getElementById("btnModeAssign").onclick = () => setCreateMode("assign");
     document.getElementById("btnCollapse").onclick = () => {
       filteredTasks().forEach((t) => {
         collapsed.add("plan:" + t.annualId);
@@ -725,7 +806,15 @@
       document.getElementById(id).addEventListener("input", render);
       document.getElementById(id).addEventListener("change", render);
     });
+    ["fStart", "fEnd"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", refreshModalHoursHint);
+    });
+    const params = new URLSearchParams(location.search);
     render();
+    if (params.get("mode") === "assign" && user.role === "部门长") {
+      openNew(true);
+    }
   });
 })();
   </script>

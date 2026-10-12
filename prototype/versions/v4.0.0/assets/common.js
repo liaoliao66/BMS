@@ -37,9 +37,7 @@
       {
         group: "本部门",
         items: [
-          { id: "dept", name: "部门台账", href: "部门台账_page.html", icon: "fa-building" },
           { id: "plans", name: "计划管理", href: "计划管理_page.html", icon: "fa-sitemap" },
-          { id: "assign", name: "任务下达", href: "任务下达_page.html", icon: "fa-paper-plane" },
           { id: "mine", name: "任务管理", href: "任务管理_page.html", icon: "fa-list-check" },
         ],
       },

@@ -80,22 +80,23 @@
     { id: "a_m4_1_1", dept: "市场开发部", companyPlanId: "cp1", parentId: "a_m4_1", name: "催票催款与运量协调", status: "进行中", progress: "催促已开票付款与未开票审批", priority: "P0", ownerId: "u_mkt_s", helperIds: ["u_mkt_h"], startDate: "2026-07-01", endDate: "2026-08-31", progressPct: 40 },
   ];
 
+  /** 任务：startDate/endDate 必填口径；耗费工时=日历天数(含首尾)×8；deadline 与 endDate 同步供逾期判断 */
   let taskItems = [
-    { id: "t1", name: "编制本周昼夜作业计划并盯控完成率", annualId: "a_p1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", planHours: 8, actualHours: 6, source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", deadline: "2026-08-20", createdAt: "2026-08-17" },
-    { id: "t1b", name: "本周民本/祥云/电富到港作业盯控", annualId: "a_p1_1_1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", planHours: 16, actualHours: 10, source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", deadline: "2026-08-24", createdAt: "2026-08-10" },
-    { id: "t2", name: "理货交接与磅码单核对", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "进行中", planHours: 10, actualHours: 8, source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P1", deadline: "2026-08-22", createdAt: "2026-08-17" },
-    { id: "t2b", name: "劳务作业票开具方法培训", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "已完成", planHours: 4, actualHours: 4, source: "下达", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", deadline: "2026-08-18", createdAt: "2026-08-12" },
-    { id: "t2c", name: "培训材料归档关闭", annualId: "a_p3", week: "2026-W33", ownerId: "u_prod_s", status: "已关闭", planHours: 2, actualHours: 2, source: "自建", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", deadline: "2026-08-15", createdAt: "2026-08-10" },
-    { id: "t3", name: "跟踪装船机皮带更换时间窗口", annualId: "a_e1_1_1", week: "2026-W34", ownerId: "u_eq_h", status: "进行中", planHours: 6, actualHours: 4, source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P0", deadline: "2026-08-25", createdAt: "2026-08-10" },
-    { id: "t4", name: "收集零星改造报价文件", annualId: "a_e3", week: "2026-W34", ownerId: "u_eq_s", status: "未开始", planHours: 8, actualHours: 0, source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P1", deadline: "2026-08-28", createdAt: "2026-08-17" },
-    { id: "t4b", name: "隔离墩涂刷验收", annualId: "a_e2", week: "2026-W33", ownerId: "u_eq_s", status: "已完成", planHours: 6, actualHours: 6, source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P2", deadline: "2026-08-16", createdAt: "2026-08-02" },
-    { id: "t5", name: "完成省厅安全整改三项", annualId: "a_s2_1", week: "2026-W34", ownerId: "u_safe_h", status: "进行中", planHours: 12, actualHours: 5, source: "下达", dept: "安全监督部", parentId: null, taskType: "安全环保", priority: "P0", deadline: "2026-08-24", createdAt: "2026-08-17" },
-    { id: "t6", name: "补充安全台账与巡查记录", annualId: "a_s3", week: "2026-W34", ownerId: "u_safe_s", status: "进行中", planHours: 8, actualHours: 3, source: "自建", dept: "安全监督部", parentId: null, taskType: "安全环保", priority: "P1", deadline: "2026-08-26", createdAt: "2026-08-17" },
-    { id: "t6b", name: "五一节前安全检查闭环", annualId: "a_s2", week: "2026-W18", ownerId: "u_safe_s", status: "已关闭", planHours: 4, actualHours: 4, source: "下达", dept: "安全监督部", parentId: "t5", taskType: "安全环保", priority: "P2", deadline: "2026-05-02", createdAt: "2026-04-28" },
-    { id: "t7", name: "催促祥云已开票部分付款", annualId: "a_m4", week: "2026-W34", ownerId: "u_mkt_h", status: "延期", planHours: 6, actualHours: 8, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", deadline: "2026-08-20", createdAt: "2026-08-10" },
-    { id: "t7b", name: "催促祥云未开票部分加快审批", annualId: "a_m4_1_1", week: "2026-W34", ownerId: "u_mkt_h", status: "进行中", planHours: 4, actualHours: 2, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", deadline: "2026-08-24", createdAt: "2026-08-17" },
-    { id: "t8", name: "跟进平鄂煤下一步方案纪要", annualId: "a_m3", week: "2026-W34", ownerId: "u_mkt_s", status: "进行中", planHours: 6, actualHours: 4, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P1", deadline: "2026-08-25", createdAt: "2026-08-17" },
-    { id: "t8b", name: "延长石油首月招采开标跟进", annualId: "a_m1", week: "2026-W34", ownerId: "u_mkt_s", status: "未开始", planHours: 8, actualHours: 0, source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", deadline: "2026-08-28", createdAt: "2026-08-18" },
+    { id: "t1", name: "编制本周昼夜作业计划并盯控完成率", annualId: "a_p1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-20", deadline: "2026-08-20", createdAt: "2026-08-17" },
+    { id: "t1b", name: "本周民本/祥云/电富到港作业盯控", annualId: "a_p1_1_1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-10", endDate: "2026-08-24", deadline: "2026-08-24", createdAt: "2026-08-10" },
+    { id: "t2", name: "理货交接与磅码单核对", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P1", startDate: "2026-08-17", endDate: "2026-08-22", deadline: "2026-08-22", createdAt: "2026-08-17" },
+    { id: "t2b", name: "劳务作业票开具方法培训", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "已完成", source: "下达", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", startDate: "2026-08-12", endDate: "2026-08-18", deadline: "2026-08-18", createdAt: "2026-08-12" },
+    { id: "t2c", name: "培训材料归档关闭", annualId: "a_p3", week: "2026-W33", ownerId: "u_prod_s", status: "已关闭", source: "自建", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", startDate: "2026-08-10", endDate: "2026-08-15", deadline: "2026-08-15", createdAt: "2026-08-10" },
+    { id: "t3", name: "跟踪装船机皮带更换时间窗口", annualId: "a_e1_1_1", week: "2026-W34", ownerId: "u_eq_h", status: "进行中", source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P0", startDate: "2026-08-10", endDate: "2026-08-25", deadline: "2026-08-25", createdAt: "2026-08-10" },
+    { id: "t4", name: "收集零星改造报价文件", annualId: "a_e3", week: "2026-W34", ownerId: "u_eq_s", status: "未开始", source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P1", startDate: "2026-08-17", endDate: "2026-08-28", deadline: "2026-08-28", createdAt: "2026-08-17" },
+    { id: "t4b", name: "隔离墩涂刷验收", annualId: "a_e2", week: "2026-W33", ownerId: "u_eq_s", status: "已完成", source: "下达", dept: "设备技术部", parentId: null, taskType: "设备维保", priority: "P2", startDate: "2026-08-02", endDate: "2026-08-16", deadline: "2026-08-16", createdAt: "2026-08-02" },
+    { id: "t5", name: "完成省厅安全整改三项", annualId: "a_s2_1", week: "2026-W34", ownerId: "u_safe_h", status: "进行中", source: "下达", dept: "安全监督部", parentId: null, taskType: "安全环保", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-24", deadline: "2026-08-24", createdAt: "2026-08-17" },
+    { id: "t6", name: "补充安全台账与巡查记录", annualId: "a_s3", week: "2026-W34", ownerId: "u_safe_s", status: "进行中", source: "自建", dept: "安全监督部", parentId: null, taskType: "安全环保", priority: "P1", startDate: "2026-08-17", endDate: "2026-08-26", deadline: "2026-08-26", createdAt: "2026-08-17" },
+    { id: "t6b", name: "五一节前安全检查闭环", annualId: "a_s2", week: "2026-W18", ownerId: "u_safe_s", status: "已关闭", source: "下达", dept: "安全监督部", parentId: "t5", taskType: "安全环保", priority: "P2", startDate: "2026-04-28", endDate: "2026-05-02", deadline: "2026-05-02", createdAt: "2026-04-28" },
+    { id: "t7", name: "催促祥云已开票部分付款", annualId: "a_m4", week: "2026-W34", ownerId: "u_mkt_h", status: "延期", source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", startDate: "2026-08-10", endDate: "2026-08-20", deadline: "2026-08-20", createdAt: "2026-08-10" },
+    { id: "t7b", name: "催促祥云未开票部分加快审批", annualId: "a_m4_1_1", week: "2026-W34", ownerId: "u_mkt_h", status: "进行中", source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-24", deadline: "2026-08-24", createdAt: "2026-08-17" },
+    { id: "t8", name: "跟进平鄂煤下一步方案纪要", annualId: "a_m3", week: "2026-W34", ownerId: "u_mkt_s", status: "进行中", source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P1", startDate: "2026-08-17", endDate: "2026-08-25", deadline: "2026-08-25", createdAt: "2026-08-17" },
+    { id: "t8b", name: "延长石油首月招采开标跟进", annualId: "a_m1", week: "2026-W34", ownerId: "u_mkt_s", status: "未开始", source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", startDate: "2026-08-18", endDate: "2026-08-28", deadline: "2026-08-28", createdAt: "2026-08-18" },
   ];
 
   /** 任务周报/月报：按 用户 × 公司计划 × 周期 填写本人文本与进度 */
@@ -263,6 +264,42 @@
     return Math.round((b - a) / 86400000);
   }
 
+  const WORKDAY_HOURS = 8;
+
+  /** 起止含首尾日历天 × 8h；缺日期返回 0 */
+  function workHoursByRange(startDate, endDate) {
+    if (!startDate || !endDate) return 0;
+    const d = dayDiff(startDate, endDate);
+    if (d == null || d < 0) return 0;
+    return (d + 1) * WORKDAY_HOURS;
+  }
+
+  function taskEndDate(t) {
+    return (t && (t.endDate || t.deadline)) || "";
+  }
+
+  function taskStartDate(t) {
+    return (t && (t.startDate || t.createdAt)) || "";
+  }
+
+  /** 耗费工时：按开始~结束自动计算 */
+  function taskWorkHours(t) {
+    return workHoursByRange(taskStartDate(t), taskEndDate(t));
+  }
+
+  function normalizeTaskDates(t) {
+    const startDate = t.startDate || t.createdAt || "";
+    const endDate = t.endDate || t.deadline || "";
+    const hours = workHoursByRange(startDate, endDate);
+    return {
+      ...t,
+      startDate,
+      endDate,
+      deadline: endDate,
+      planHours: hours,
+      actualHours: hours,
+    };
+  }
 
   function taskOpen(t) {
     return t.status !== "已完成" && t.status !== "已关闭";
@@ -271,15 +308,19 @@
   function isTaskOverdue(t) {
     if (!taskOpen(t)) return false;
     if (t.status === "延期") return true;
-    if (t.deadline && t.deadline < DEMO_TODAY) return true;
+    const end = taskEndDate(t);
+    if (end && end < DEMO_TODAY) return true;
     return false;
   }
 
   function isTaskNearDue(t) {
-    if (!taskOpen(t) || isTaskOverdue(t) || !t.deadline) return false;
-    const d = dayDiff(DEMO_TODAY, t.deadline);
+    const end = taskEndDate(t);
+    if (!taskOpen(t) || isTaskOverdue(t) || !end) return false;
+    const d = dayDiff(DEMO_TODAY, end);
     return d !== null && d >= 0 && d <= NEAR_DUE_DAYS;
   }
+
+  taskItems = taskItems.map(normalizeTaskDates);
 
   function clampPct(n) {
     const v = Number(n);
@@ -771,30 +812,38 @@
       const id = "t_" + Date.now();
       const owner = userById(payload.ownerId);
       const today = "2026-08-18";
-      const item = {
+      const startDate = payload.startDate || today;
+      const endDate = payload.endDate || payload.deadline || "2026-08-31";
+      const item = normalizeTaskDates({
         id,
         name: payload.name,
         annualId: payload.annualId,
         week: payload.week || "2026-W34",
         ownerId: payload.ownerId,
         status: "未开始",
-        planHours: payload.planHours || 8,
-        actualHours: 0,
         source: payload.source || "下达",
         dept: owner.dept,
         parentId: payload.parentId || null,
         taskType: payload.taskType || "其他",
         priority: payload.priority || "P1",
-        deadline: payload.deadline || "2026-08-31",
+        startDate,
+        endDate,
+        deadline: endDate,
         createdAt: today,
-      };
+      });
       taskItems = [item, ...taskItems];
       rebuildTodos();
       return item;
     },
     updateTask(id, patch) {
       const prev = taskItems.find((t) => t.id === id);
-      taskItems = taskItems.map((t) => (t.id === id ? { ...t, ...patch } : t));
+      taskItems = taskItems.map((t) => {
+        if (t.id !== id) return t;
+        const merged = { ...t, ...patch };
+        if (patch.endDate != null && patch.deadline == null) merged.deadline = patch.endDate;
+        if (patch.deadline != null && patch.endDate == null) merged.endDate = patch.deadline;
+        return normalizeTaskDates(merged);
+      });
       const next = taskItems.find((t) => t.id === id);
       if (
         prev &&
@@ -819,6 +868,11 @@
     },
     isTaskOverdue,
     isTaskNearDue,
+    taskWorkHours,
+    workHoursByRange,
+    taskStartDate,
+    taskEndDate,
+    WORKDAY_HOURS,
     taskFinishRate,
     /** 生成例外清单（按严重度排序） */
     getExceptions() {

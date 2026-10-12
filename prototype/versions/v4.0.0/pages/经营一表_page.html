@@ -164,7 +164,7 @@
         type: "任务",
         dept: t.dept,
         status: t.status,
-        progress: (t.actualHours || 0) + "/" + (t.planHours || 0) + "h",
+        progress: (BMS4.taskWorkHours(t) || 0) + "h",
         late: BMS4.isTaskOverdue(t) ? 1 : 0,
         deadline: t.deadline || "—",
         owner: u ? u.name : "—",

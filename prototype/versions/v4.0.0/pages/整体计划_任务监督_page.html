@@ -42,7 +42,7 @@
         <th class="px-4 py-3 text-left">责任人</th><th class="px-4 py-3 text-left">计划路径</th>
         <th class="px-4 py-3 text-left">优先级</th>
         <th class="px-4 py-3 text-left">状态</th><th class="px-4 py-3 text-left">截止</th>
-        <th class="px-4 py-3 text-left">耗时</th><th class="px-4 py-3 text-left">操作</th>
+        <th class="px-4 py-3 text-left">起止</th><th class="px-4 py-3 text-left">耗费工时</th><th class="px-4 py-3 text-left">操作</th>
       </tr></thead><tbody id="tbody"></tbody></table>
     </div>
 
@@ -145,7 +145,8 @@ function render() {
       <td class="px-4 py-3">${t.priority || "—"}</td>
       <td class="px-4 py-3">${BMSUI.statusBadge(t.status)}</td>
       <td class="px-4 py-3">${t.deadline || "—"}</td>
-      <td class="px-4 py-3">${t.actualHours || 0}/${t.planHours || 0}</td>
+      <td class="px-4 py-3 text-xs whitespace-nowrap">${BMS4.taskStartDate(t) || "—"} ~ ${BMS4.taskEndDate(t) || "—"}</td>
+      <td class="px-4 py-3 tabular-nums">${BMS4.taskWorkHours(t) || 0}h</td>
       <td class="px-4 py-3"><button class="text-teal-700 text-sm hover:underline" onclick="openUrge('${t.ownerId}','${nameJs}','${t.id}')">催办</button></td></tr>`;
         })
         .join("")

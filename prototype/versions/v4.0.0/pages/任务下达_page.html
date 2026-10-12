@@ -2,90 +2,13 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>任务下达 · v4.0.0</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <style>
-    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
-    .row-hover:hover { background:#f8fafc; }
-    .excel-wrap { overflow:auto; }
-    .excel-table th { position:sticky; top:0; z-index:1; }
-  </style>
+  <meta http-equiv="refresh" content="0;url=任务管理_page.html?mode=assign" />
+  <title>任务下达已并入任务管理</title>
+  <script>location.replace("任务管理_page.html?mode=assign");</script>
 </head>
-<body class="bg-slate-50 text-slate-800" data-page="assign" data-title="任务下达">
-  <div id="app-root"></div>
-  <div id="page-main" class="hidden">
-
-    <div class="flex justify-between mb-4"><p class="text-xs text-slate-500">可派给本部门任意人员，或关联计划涉及部门的部门长；下达后自动生成对方工作任务项。</p>
-    <button id="btn" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">下达任务</button></div>
-    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-      <table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500"><tr>
-        <th class="px-4 py-3 text-left">任务项</th><th class="px-4 py-3 text-left">责任人</th>
-        <th class="px-4 py-3 text-left">部门</th><th class="px-4 py-3 text-left">状态</th><th class="px-4 py-3 text-left">来源</th>
-      </tr></thead><tbody id="tbody"></tbody></table>
-    </div>
-    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal')"></div>
-      <div class="relative bg-white rounded-2xl w-full max-w-lg p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
-        <h3 class="text-lg font-semibold">下达任务</h3>
-        <input id="tName" class="w-full border rounded-xl px-3 py-2.5" placeholder="任务名称" />
-        <label class="block text-slate-600 text-xs">关联计划</label>
-        <select id="tAnnual" class="w-full border rounded-xl px-3 py-2.5"></select>
-        <label class="block text-slate-600 text-xs">处理人</label>
-        <select id="tOwner" class="w-full border rounded-xl px-3 py-2.5"></select>
-        <input id="tHours" type="number" min="1" step="1" value="8" class="w-full border rounded-xl px-3 py-2.5" placeholder="计划耗时（整数小时）" />
-        <div class="flex justify-end gap-2"><button onclick="BMSUI.closeModal('modal')" class="px-3 text-slate-500">取消</button>
-        <button onclick="save()" class="btn-cta text-white px-4 py-2 rounded-xl">下达并生成任务项</button></div>
-      </div>
-    </div>
-
-  </div>
-  <script src="../assets/store.js"></script>
-  <script src="../assets/common.js"></script>
-  <script>
-
-function render(){
-  const u = BMS4.getRoleUser();
-  const list = BMS4.taskItems.filter(t => t.source==='下达' && (t.dept===u.dept || BMS4.PLAN_ITEMS.find(a=>a.id===t.annualId && a.dept===u.dept)));
-  document.getElementById('tbody').innerHTML = BMS4.taskItems.filter(t=>t.dept===u.dept || list.includes(t)).slice(0,20).map(t=>{
-    const ou=BMS4.userById(t.ownerId);
-    return `<tr class="border-t row-hover"><td class="px-4 py-3">${t.name}</td><td class="px-4 py-3">${ou.name}</td><td class="px-4 py-3">${t.dept}</td><td class="px-4 py-3">${BMSUI.statusBadge(t.status)}</td><td class="px-4 py-3">${t.source}</td></tr>`;
-  }).join('');
-}
-document.addEventListener('DOMContentLoaded', () => {
-  const u = BMS4.getRoleUser();
-  if (u.role !== '部门长') {
-    document.getElementById('page-main').innerHTML = '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅部门长可见。</div>';
-    return;
-  }
-  const ann = document.getElementById('tAnnual');
-  BMS4.plansForDept(u.dept).forEach(a=>{ const o=document.createElement('option'); o.value=a.id; o.textContent=BMS4.planPathLabel(a.id); ann.appendChild(o); });
-  function fillOwners(){
-    const a = BMS4.planById(ann.value);
-    const sel = document.getElementById('tOwner'); sel.innerHTML='';
-    BMS4.USERS.filter(x=>x.dept===u.dept).forEach(x=>{ const o=document.createElement('option'); o.value=x.id; o.textContent=`本部门 · ${x.name}`; sel.appendChild(o); });
-    if (!a) return;
-    BMS4.PLAN_ITEMS.filter(x=>x.companyPlanId===a.companyPlanId && x.dept!==u.dept).forEach(x=>{
-      const h = BMS4.USERS.find(uu=>uu.dept===x.dept && uu.role==='部门长');
-      if (h && ![...sel.options].some(op=>op.value===h.id)) {
-        const o=document.createElement('option'); o.value=h.id; o.textContent=`关联部门长 · ${h.name}（${h.dept}）`; sel.appendChild(o);
-      }
-    });
-  }
-  ann.onchange = fillOwners; fillOwners();
-  document.getElementById('btn').onclick = () => BMSUI.openModal('modal');
-  render();
-  window.save = function(){
-    const name = document.getElementById('tName').value.trim();
-    const hours = parseInt(document.getElementById('tHours').value, 10);
-    if (!name) return BMSUI.toast('请填写任务名称', false);
-    if (!Number.isInteger(hours) || hours < 0) return BMSUI.toast('耗时须为整数小时', false);
-    BMS4.addAssignTask({ name, annualId: ann.value, ownerId: document.getElementById('tOwner').value, planHours: hours });
-    BMSUI.closeModal('modal'); BMSUI.toast('已下达并生成任务项'); render();
-  };
-});
-
-  </script>
+<body class="bg-slate-50 text-slate-600 p-8 text-sm">
+  「任务下达」已并入
+  <a class="text-teal-700 underline" href="任务管理_page.html?mode=assign">任务管理</a>
+  （新建时选择「下达给他人」）。
 </body>
 </html>

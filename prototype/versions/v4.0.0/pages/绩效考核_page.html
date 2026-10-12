@@ -99,8 +99,9 @@
       else if (t.status === CLOSED) closed++;
       else if (t.status === "延期") late++;
       else if (t.status === "未开始") todo++;
-      planH += Number(t.planHours) || 0;
-      actH += Number(t.actualHours) || 0;
+      const wh = BMS4.taskWorkHours ? BMS4.taskWorkHours(t) : Number(t.planHours) || 0;
+      planH += wh;
+      actH += wh;
     });
     const finished = done + closed;
     const rate = total ? Math.round((finished / total) * 1000) / 10 : 0;
@@ -203,7 +204,7 @@
       <table class="w-full text-xs"><thead class="bg-slate-50 text-slate-500"><tr>
         <th class="px-3 py-2 text-left">任务</th><th class="px-3 py-2 text-left">关联计划</th>
         <th class="px-3 py-2 text-left">状态</th><th class="px-3 py-2 text-left">截止</th>
-        <th class="px-3 py-2 text-right">预估</th><th class="px-3 py-2 text-right">已登记</th>
+        <th class="px-3 py-2 text-right">耗费工时</th>
       </tr></thead><tbody>`;
     const body = row.tasks
       .map((t) => {
@@ -212,9 +213,8 @@
           <td class="px-3 py-2">${t.name}</td>
           <td class="px-3 py-2 text-slate-500">${path}</td>
           <td class="px-3 py-2">${BMSUI.statusBadge(t.status)}</td>
-          <td class="px-3 py-2">${t.deadline || "—"}</td>
-          <td class="px-3 py-2 text-right">${t.planHours ?? 0}</td>
-          <td class="px-3 py-2 text-right">${t.actualHours ?? 0}</td>
+          <td class="px-3 py-2">${BMS4.taskEndDate ? BMS4.taskEndDate(t) : t.deadline || "—"}</td>
+          <td class="px-3 py-2 text-right">${BMS4.taskWorkHours ? BMS4.taskWorkHours(t) : t.planHours ?? 0}</td>
         </tr>`;
       })
       .join("");
@@ -246,7 +246,7 @@
       <th>已完成+已关闭</th>
       <th>延期</th>
       <th>任务完成率</th>
-      <th>工时(已登记/预估)</th>
+      <th>耗费工时</th>
       <th>操作</th>
     </tr>`;
 
@@ -277,7 +277,7 @@
               <td class="text-center">${r.task.finished}</td>
               <td class="text-center ${r.task.late ? "text-rose-600 font-medium" : ""}">${r.task.late}</td>
               <td>${rateBar(r.task.rate)}</td>
-              <td class="text-right whitespace-nowrap">${r.task.actH} / ${r.task.planH}</td>
+              <td class="text-right whitespace-nowrap tabular-nums">${r.task.actH}h</td>
               <td class="whitespace-nowrap">
                 <button type="button" class="link-btn" data-exp="${r.key}">${open ? "收起" : "明细"}</button>
                 ${
