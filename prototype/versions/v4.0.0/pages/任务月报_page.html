@@ -624,7 +624,11 @@
           <td class="text-slate-400 whitespace-nowrap">${gi + 1}.${ri + 1}</td>
           <td>
             <div class="pl-6">
-              <span class="name-link">${escapeHtml(cp ? cp.name : "—")}</span>
+              ${
+                cp
+                  ? BMSUI.planNameLink(cp.name, { id: cp.id, kind: "company", className: "name-link text-teal-700 hover:underline" })
+                  : '<span class="name-link">—</span>'
+              }
             </div>
           </td>
           <td><div class="cell-ro">${
@@ -720,7 +724,7 @@
               <td>
                 <div class="flex items-start gap-2">
                   <span class="${prioCls(prio)}">${prio}</span>
-                  <span class="name-link">${escapeHtml(cp.name)}</span>
+                  ${BMSUI.planNameLink(cp.name, { id: cp.id, kind: "company", className: "name-link text-teal-700 hover:underline" })}
                 </div>
                 <div class="text-[11px] text-slate-400 mt-1">${escapeHtml(cp.status)} · ${escapeHtml(cp.owner || "")}</div>
               </td>

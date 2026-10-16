@@ -198,6 +198,8 @@
       deadline: "—",
       owner: head ? head.name : "—",
       hasKids: kids.length > 0 || direct.length > 0,
+      planId: p.id,
+      planKind: "dept",
       actions: {
         links: [
           { href: "部门计划表_page.html?cp=" + (p.companyPlanId || "") + "&dept=" + encodeURIComponent(p.dept || ""), label: "部门表" },
@@ -257,6 +259,8 @@
         deadline: "—",
         owner: cp.owner || "—",
         hasKids: roots.length > 0,
+        planId: cp.id,
+        planKind: "company",
         actions: {
           links: [
             { href: "经营总台账_page.html", label: "公司表" },
@@ -308,7 +312,11 @@
                 <div class="flex items-center" style="padding-left:${pad}px">
                   ${caret(r.key, r.hasKids)}
                   <span class="lvl lvl-${r.level}">L${r.level}</span>
-                  <span class="truncate" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span>
+                  <span class="truncate" title="${escapeHtml(r.name)}">${
+                    r.planId
+                      ? BMSUI.planNameLink(r.name, { id: r.planId, kind: r.planKind })
+                      : escapeHtml(r.name)
+                  }</span>
                 </div>
               </td>
               <td><span class="tag">${r.type}</span></td>

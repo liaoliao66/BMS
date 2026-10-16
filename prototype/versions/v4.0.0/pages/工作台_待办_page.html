@@ -129,6 +129,8 @@
     任务周报: "bg-teal-50 text-teal-800 border-teal-100",
     任务月报: "bg-cyan-50 text-cyan-800 border-cyan-100",
     任务: "bg-amber-50 text-amber-800 border-amber-100",
+    任务督办: "bg-violet-50 text-violet-800 border-violet-100",
+    督办配合: "bg-violet-50 text-violet-700 border-violet-100",
     周例会待办: "bg-violet-50 text-violet-800 border-violet-100",
     计划推进: "bg-indigo-50 text-indigo-800 border-indigo-100",
     计划配合: "bg-sky-50 text-sky-800 border-sky-100",
@@ -141,8 +143,8 @@
     { id: "report", name: "填报中心", icon: "fa-file-lines", hint: "任务周报/月报填写与缺口清理", types: ["任务周报", "任务月报"] },
     { id: "task", name: "任务执行", icon: "fa-list-check", hint: "本人未完成任务处理与勾完", types: ["任务"] },
     { id: "plan", name: "计划协同", icon: "fa-sitemap", hint: "我负责的推进 + 我配合的计划", types: ["计划推进", "计划配合"] },
-    { id: "meeting", name: "例会闭环", icon: "fa-people-group", hint: "周例会待办闭环", types: ["周例会待办"] },
-    { id: "urge", name: "督办往来", icon: "fa-bullhorn", hint: "催办回复与总经理复检", types: ["催办回复", "催办复检"] },
+    { id: "meeting", name: "任务督办", icon: "fa-clipboard-check", hint: "计划外督办事项与配合闭环", types: ["任务督办", "督办配合", "周例会待办"] },
+    { id: "urge", name: "催办往来", icon: "fa-bullhorn", hint: "催办回复与总经理复检", types: ["催办回复", "催办复检"] },
   ];
 
   const DEMO_TODAY = new Date(2026, 7, 18);
@@ -210,8 +212,11 @@
       const plan = BMS4.planById(t.planId);
       if (plan && plan.endDate) return parseKey(plan.endDate);
     }
-    if (t.type === "周例会待办") {
-      const mt = t.meetingId ? BMS4.meetingTodos.find((x) => x.id === t.meetingId) : null;
+    if (t.type === "任务督办" || t.type === "督办配合" || t.type === "周例会待办") {
+      if (t.dueDate) return parseKey(t.dueDate);
+      const sid = t.superviseId || t.meetingId;
+      const mt = sid ? (BMS4.superviseItems || BMS4.meetingTodos || []).find((x) => x.id === sid) : null;
+      if (mt && mt.endDate) return parseKey(mt.endDate);
       const week = t.week || (mt && mt.week);
       if (week) {
         const [y, w] = week.split("-W");
@@ -251,9 +256,9 @@
     if (t.type === "任务周报" || (t.type === "周月报" && t.week)) return "任务周报_page.html";
     if (t.type === "任务月报" || (t.type === "周月报" && t.month)) return "任务月报_page.html";
     if (t.type === "任务" && t.taskId) return "任务管理_page.html?task=" + encodeURIComponent(t.taskId);
-    if (t.type === "周例会待办") return "周例会待办_page.html";
+    if (t.type === "任务督办" || t.type === "督办配合" || t.type === "周例会待办") return "任务督办_page.html";
     if ((t.type === "计划配合" || t.type === "计划推进") && t.planId) {
-      return "计划管理_page.html?plan=" + encodeURIComponent(t.planId);
+      return null; // 弹窗详情，见 actionHtml
     }
     if (t.type === "催办复检") return "落实驾驶舱_page.html";
     return "#";
@@ -265,11 +270,17 @@
       parts.push(`<button type="button" class="text-teal-700 hover:underline text-sm" data-reply="${t.urgeId}">回复催办</button>`);
     } else if (t.type === "催办复检") {
       parts.push(`<a class="text-teal-700 hover:underline text-sm" href="落实驾驶舱_page.html">去复检</a>`);
+    } else if ((t.type === "计划配合" || t.type === "计划推进") && t.planId) {
+      parts.push(
+        `<button type="button" class="text-teal-700 hover:underline text-sm" data-plan-detail="${BMSUI.escapeAttr(
+          t.planId
+        )}" onclick="BMSUI.openPlanDetail(this.getAttribute('data-plan-detail'),'dept')">查看详情</button>`
+      );
     } else {
       parts.push(`<a class="text-teal-700 hover:underline text-sm" href="${hrefFor(t)}">去处理</a>`);
     }
-    if (t.type === "周例会待办" && t.meetingId) {
-      parts.push(`<button type="button" class="text-slate-500 hover:underline text-sm ml-2" data-done-mt="${t.meetingId}">完成</button>`);
+    if ((t.type === "任务督办" || t.type === "周例会待办") && (t.superviseId || t.meetingId)) {
+      parts.push(`<button type="button" class="text-slate-500 hover:underline text-sm ml-2" data-done-mt="${t.superviseId || t.meetingId}">完成</button>`);
     }
     if (t.type === "任务" && t.taskId) {
       parts.push(`<button type="button" class="text-slate-500 hover:underline text-sm ml-2" data-done-task="${t.taskId}">完成</button>`);
@@ -383,7 +394,11 @@
     if (mod.id === "plan") {
       const role = t.type === "计划推进" ? "负责人" : "配合人";
       const roleCls = t.type === "计划推进" ? "text-indigo-700" : "text-sky-700";
-      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap"><span class="${roleCls} text-xs font-medium">${role}</span></td><td class="px-4 py-3">${prioTag(t.priority)}</td><td class="px-4 py-3">${escapeHtml(t.title.replace(/^【延期】|^【临期】|^配合计划：/, ""))}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
+      const planTitle = t.title.replace(/^【延期】|^【临期】|^配合计划：/, "");
+      const planCell = t.planId
+        ? BMSUI.planNameLink(planTitle, { id: t.planId, kind: "dept" })
+        : escapeHtml(planTitle);
+      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap"><span class="${roleCls} text-xs font-medium">${role}</span></td><td class="px-4 py-3">${prioTag(t.priority)}</td><td class="px-4 py-3">${planCell}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
     }
     if (mod.id === "meeting") {
       return `<tr class="border-t row-hover"><td class="px-4 py-3">${escapeHtml(t.title)}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
@@ -474,7 +489,7 @@
             </li>`;
           })
           .join("")}</ul>`
-      : `<div class="py-4 text-slate-400">近 7 日暂无已办记录（任务/例会可点「完成」归档）</div>`;
+      : `<div class="py-4 text-slate-400">近 7 日暂无已办记录（任务/督办可点「完成」归档）</div>`;
     bindActions();
   }
 

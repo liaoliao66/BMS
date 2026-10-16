@@ -52,15 +52,15 @@
         <thead>
           <tr>
             <th>序号</th>
-            <th class="col-name">公司目标 / 计划名称</th>
+            <th class="col-name">年度 / 计划名称</th>
             <th>优先级</th>
             <th>负责人</th>
             <th>配合人员</th>
-            <th>开始时间</th>
-            <th>结束时间</th>
             <th>完成进度</th>
             <th>状态</th>
             <th>关联任务</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -207,19 +207,19 @@
                   <div class="flex items-center gap-1">
                     ${caret}
                     <div>
-                      <span class="tag" style="background:#e8f0fe;color:#1a73e8;border-color:#c6dafc">公司目标</span>
-                      <span class="font-semibold text-slate-800 ml-1 leading-snug">${escapeHtml(cp.name)}</span>
+                      <span class="tag" style="background:#e8f0fe;color:#1a73e8;border-color:#c6dafc">年度</span>
+                      <span class="ml-1">${BMSUI.planNameLink(cp.name, { id: cp.id, kind: "company", className: "plan-name-link text-teal-800 hover:underline font-semibold leading-snug" })}</span>
                     </div>
                   </div>
                 </td>
                 <td>${prioTag(cp.priority)}</td>
                 <td>${escapeHtml(cp.owner || "—")}</td>
                 <td class="text-slate-400">—</td>
-                <td class="text-slate-400">${escapeHtml(cp.startDate || "—")}</td>
-                <td class="text-slate-400">${escapeHtml(cp.endDate || "—")}</td>
                 <td class="text-slate-400">${BMS4.clampPct ? BMS4.clampPct(cp.progressPct) : 0}%</td>
                 <td>${statusTag(cp.status)}</td>
                 <td class="text-slate-400">—</td>
+                <td class="text-slate-400">${escapeHtml(cp.startDate || "—")}</td>
+                <td class="text-slate-400">${escapeHtml(cp.endDate || "—")}</td>
               </tr>`;
             }
             const { p, depth, path, hasKids, isCol } = row;
@@ -246,9 +246,11 @@
                 <div style="padding-left:${pad}px" class="flex items-center gap-1">
                   ${caret}
                   <div>
-                    <span class="font-medium leading-snug ${hot ? "text-rose-700" : "text-slate-800"}">${escapeHtml(p.name)}${
-              hot ? '<span class="ml-1 text-[10px] text-rose-500">问题</span>' : ""
-            }</span>
+                    <span class="leading-snug">${BMSUI.planNameLink(p.name, {
+                      id: p.id,
+                      kind: "dept",
+                      className: "plan-name-link hover:underline font-medium " + (hot ? "text-rose-700" : "text-teal-800"),
+                    })}${hot ? '<span class="ml-1 text-[10px] text-rose-500">问题</span>' : ""}</span>
                     <div class="text-[11px] text-slate-400">${escapeHtml(p.dept)}</div>
                   </div>
                 </div>
@@ -256,11 +258,11 @@
               <td>${prioTag(p.priority)}</td>
               <td class="whitespace-nowrap">${owner ? escapeHtml(owner.name) : "—"}</td>
               <td class="max-w-[7rem] truncate" title="${escapeHtml(helpers.join("、"))}">${helpers.length ? escapeHtml(helpers.slice(0, 2).join("、") + (helpers.length > 2 ? "…" : "")) : "—"}</td>
-              <td class="text-xs text-slate-600 whitespace-nowrap">${escapeHtml(p.startDate || "—")}</td>
-              <td class="text-xs text-slate-600 whitespace-nowrap">${escapeHtml(p.endDate || "—")}</td>
               <td><span class="font-medium">${pct}%</span></td>
               <td>${statusTag(st)}</td>
               <td>${done}/${tasks.length}</td>
+              <td class="text-xs text-slate-600 whitespace-nowrap">${escapeHtml(p.startDate || "—")}</td>
+              <td class="text-xs text-slate-600 whitespace-nowrap">${escapeHtml(p.endDate || "—")}</td>
             </tr>`;
           })
           .join("")
@@ -277,10 +279,17 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    if (BMS4.getRoleUser().role !== "总经理") {
+    if (!BMS4.canViewAllPlans(BMS4.getRoleUser())) {
       document.getElementById("page-main").innerHTML =
-        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页为总经理只读主表。部门长请使用「计划管理」维护本部门计划树。</div>';
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页为总经理 / 计划管理员只读主表。部门长请使用「计划管理」维护本部门计划树。</div>';
       return;
+    }
+    if (BMS4.isPlanAdmin(BMS4.getRoleUser())) {
+      const tip = document.querySelector("#page-main p.text-xs");
+      if (tip) {
+        tip.innerHTML =
+          "计划管理员只读联查部门计划树。维护与导入请回「计划总控」。";
+      }
     }
     const params = new URLSearchParams(location.search);
     cpFilter = params.get("cp") || "";

@@ -2,6 +2,7 @@
 (function (global) {
   const USERS = [
     { id: "u_gm", name: "李家治", role: "总经理", dept: "公司", title: "总经理" },
+    { id: "u_plan_admin", name: "张凯", role: "计划管理员", dept: "公司", title: "计划管理员" },
     { id: "u_prod_h", name: "刘伟松", role: "部门长", dept: "生产操作部", title: "部长" },
     { id: "u_prod_s", name: "余彪", role: "员工", dept: "生产操作部", title: "员工" },
     { id: "u_eq_h", name: "解运富", role: "部门长", dept: "设备技术部", title: "部长" },
@@ -82,7 +83,7 @@
 
   /** 任务：startDate/endDate 必填口径；耗费工时=日历天数(含首尾)×8；deadline 与 endDate 同步供逾期判断 */
   let taskItems = [
-    { id: "t1", name: "编制本周昼夜作业计划并盯控完成率", annualId: "a_p1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-20", deadline: "2026-08-20", createdAt: "2026-08-17" },
+    { id: "t1", name: "编制本周昼夜作业计划并盯控完成率", annualId: "a_p1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-20", deadline: "2026-08-20", createdAt: "2026-08-17", remark: "昼夜班交接后更新完成率；异常船期即时上报。", attachments: [{ name: "昼夜作业计划表_W34.xlsx" }] },
     { id: "t1b", name: "本周民本/祥云/电富到港作业盯控", annualId: "a_p1_1_1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-10", endDate: "2026-08-24", deadline: "2026-08-24", createdAt: "2026-08-10" },
     { id: "t2", name: "理货交接与磅码单核对", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P1", startDate: "2026-08-17", endDate: "2026-08-22", deadline: "2026-08-22", createdAt: "2026-08-17" },
     { id: "t2b", name: "劳务作业票开具方法培训", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "已完成", source: "下达", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", startDate: "2026-08-12", endDate: "2026-08-18", deadline: "2026-08-18", createdAt: "2026-08-12" },
@@ -97,6 +98,9 @@
     { id: "t7b", name: "催促祥云未开票部分加快审批", annualId: "a_m4_1_1", week: "2026-W34", ownerId: "u_mkt_h", status: "进行中", source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-24", deadline: "2026-08-24", createdAt: "2026-08-17" },
     { id: "t8", name: "跟进平鄂煤下一步方案纪要", annualId: "a_m3", week: "2026-W34", ownerId: "u_mkt_s", status: "进行中", source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P1", startDate: "2026-08-17", endDate: "2026-08-25", deadline: "2026-08-25", createdAt: "2026-08-17" },
     { id: "t8b", name: "延长石油首月招采开标跟进", annualId: "a_m1", week: "2026-W34", ownerId: "u_mkt_s", status: "未开始", source: "下达", dept: "市场开发部", parentId: null, taskType: "市场商务", priority: "P0", startDate: "2026-08-18", endDate: "2026-08-28", deadline: "2026-08-28", createdAt: "2026-08-18" },
+    /** 部门临时任务：无关联计划 */
+    { id: "t_tmp1", name: "协调临时加班人员排班", annualId: "", week: "2026-W34", ownerId: "u_prod_s", status: "进行中", source: "自建", dept: "生产操作部", parentId: null, taskType: "其他", priority: "P1", startDate: "2026-08-18", endDate: "2026-08-22", deadline: "2026-08-22", createdAt: "2026-08-18", taskKind: "临时", remark: "本周峰值作业，需劳务班组配合。", attachments: [{ name: "加班人员名单.docx" }] },
+    { id: "t_tmp2", name: "会议室设备临时检修预约", annualId: "", week: "2026-W34", ownerId: "u_eq_s", status: "未开始", source: "下达", dept: "设备技术部", parentId: null, taskType: "其他", priority: "P2", startDate: "2026-08-19", endDate: "2026-08-21", deadline: "2026-08-21", createdAt: "2026-08-18", taskKind: "临时", remark: "", attachments: [] },
   ];
 
   /** 任务周报/月报：按 用户 × 公司计划 × 周期 填写本人文本与进度 */
@@ -195,10 +199,365 @@
     },
   ];
 
-  let meetingTodos = [
-    { id: "mt1", title: "跟进维保单位保险购买情况", ownerId: "u_safe_h", helper: "陈子龙", week: "2026-W34", status: "待办" },
-    { id: "mt2", title: "电磁吸盘采购方案收集报价", ownerId: "u_eq_s", helper: "解运富", week: "2026-W34", status: "进行中" },
-    { id: "mt3", title: "箱管系统开发进度确认", ownerId: "u_gm", helper: "钱旦", week: "2026-W34", status: "待办" },
+  /**
+   * 关键节点变更记录（计划详情弹窗只读演示）
+   * refId：公司计划 id 或部门计划 id；field：变更项
+   */
+  let planChangeLogs = [
+    {
+      id: "pcl_cp1_1",
+      refId: "cp1",
+      refKind: "company",
+      at: "2026-08-12 10:20",
+      operator: "李家治",
+      field: "整体进度",
+      from: "28%",
+      to: "34%",
+      note: "按年累吞吐手填更新",
+    },
+    {
+      id: "pcl_cp1_2",
+      refId: "cp1",
+      refKind: "company",
+      at: "2026-07-01 09:00",
+      operator: "李家治",
+      field: "进展说明",
+      from: "基本盘约280万吨",
+      to: "基本盘约300万吨，缺口100–180万吨；铁路延期至约2027春节",
+      note: "半年度复盘修订目标表述",
+    },
+    {
+      id: "pcl_cp1_3",
+      refId: "cp1",
+      refKind: "company",
+      at: "2026-01-05 14:00",
+      operator: "李家治",
+      field: "新建计划",
+      from: "—",
+      to: "发布公司目标",
+      note: "下达2026吞吐冲击目标",
+    },
+    {
+      id: "pcl_cp2_1",
+      refId: "cp2",
+      refKind: "company",
+      at: "2026-08-05 11:00",
+      operator: "李家治",
+      field: "整体进度",
+      from: "42%",
+      to: "48%",
+      note: "运营体系建设阶段复盘",
+    },
+    {
+      id: "pcl_cp2_2",
+      refId: "cp2",
+      refKind: "company",
+      at: "2026-03-01 09:30",
+      operator: "李家治",
+      field: "状态",
+      from: "未开始",
+      to: "进行中",
+      note: "各部门制度建设全面启动",
+    },
+    {
+      id: "pcl_ap1_1",
+      refId: "a_p1",
+      refKind: "dept",
+      at: "2026-08-11 16:40",
+      operator: "刘伟松",
+      field: "进度",
+      from: "30%",
+      to: "34%",
+      note: "年累完成137万吨同步更新",
+    },
+    {
+      id: "pcl_ap1_2",
+      refId: "a_p1",
+      refKind: "dept",
+      at: "2026-06-15 10:00",
+      operator: "刘伟松",
+      field: "拆解子计划",
+      from: "—",
+      to: "装卸货物41万吨盯控",
+      note: "分解吞吐盯控节点",
+    },
+    {
+      id: "pcl_ap1_3",
+      refId: "a_p1",
+      refKind: "dept",
+      at: "2026-02-10 09:15",
+      operator: "李家治",
+      field: "责任人",
+      from: "待指定",
+      to: "刘伟松",
+      note: "明确生产部主责",
+    },
+    {
+      id: "pcl_ap11_1",
+      refId: "a_p1_1",
+      refKind: "dept",
+      at: "2026-08-11 08:30",
+      operator: "系统",
+      field: "状态",
+      from: "进行中",
+      to: "延期",
+      note: "结束日已过且进度未满，自动标延期",
+    },
+    {
+      id: "pcl_ap11_2",
+      refId: "a_p1_1",
+      refKind: "dept",
+      at: "2026-07-20 15:00",
+      operator: "刘伟松",
+      field: "结束日",
+      from: "2026-07-31",
+      to: "2026-08-10",
+      note: "船期波动顺延盯控截止",
+    },
+    {
+      id: "pcl_ap111_1",
+      refId: "a_p1_1_1",
+      refKind: "dept",
+      at: "2026-08-08 11:20",
+      operator: "余彪",
+      field: "进度",
+      from: "40%",
+      to: "55%",
+      note: "民本/祥云到港作业推进",
+    },
+    {
+      id: "pcl_am4_1",
+      refId: "a_m4",
+      refKind: "dept",
+      at: "2026-08-06 09:00",
+      operator: "系统",
+      field: "状态",
+      from: "关注",
+      to: "延期",
+      note: "结束日已过且进度未满，自动标延期",
+    },
+    {
+      id: "pcl_am4_2",
+      refId: "a_m4",
+      refKind: "dept",
+      at: "2026-07-01 14:30",
+      operator: "钱旦",
+      field: "状态",
+      from: "进行中",
+      to: "关注",
+      note: "回款不及预期，升级关注",
+    },
+    {
+      id: "pcl_am4_3",
+      refId: "a_m4",
+      refKind: "dept",
+      at: "2026-05-12 10:10",
+      operator: "钱旦",
+      field: "拆解子计划",
+      from: "—",
+      to: "回款与运量跟进",
+      note: "增设回款盯控子节点",
+    },
+    {
+      id: "pcl_ae1_1",
+      refId: "a_e1",
+      refKind: "dept",
+      at: "2026-08-01 09:45",
+      operator: "解运富",
+      field: "进度",
+      from: "40%",
+      to: "48%",
+      note: "皮带/门机整改一批闭环",
+    },
+    {
+      id: "pcl_ae1_2",
+      refId: "a_e1",
+      refKind: "dept",
+      at: "2026-04-02 16:00",
+      operator: "解运富",
+      field: "拆解子计划",
+      from: "—",
+      to: "装船机/零星改造推进",
+      note: "按改造清单拆解执行节点",
+    },
+    {
+      id: "pcl_as2_1",
+      refId: "a_s2",
+      refKind: "dept",
+      at: "2026-08-09 13:20",
+      operator: "洪佳伟",
+      field: "配合人",
+      from: "陈子龙",
+      to: "陈子龙、刘伟松",
+      note: "周检整改需生产部配合",
+    },
+    {
+      id: "pcl_am1_1",
+      refId: "a_m1",
+      refKind: "dept",
+      at: "2026-08-03 10:00",
+      operator: "钱旦",
+      field: "状态",
+      from: "进行中",
+      to: "关注",
+      note: "核心客户运量评估存在下调风险",
+    },
+  ];
+
+  /**
+   * 任务操作记录（任务详情只读）
+   * taskId：任务 id；field：变更项
+   */
+  let taskChangeLogs = [
+    {
+      id: "tcl_t1_1",
+      taskId: "t1",
+      at: "2026-08-17 09:10",
+      operator: "刘伟松",
+      field: "新建任务",
+      from: "—",
+      to: "编制本周昼夜作业计划并盯控完成率",
+      note: "下达关联计划任务",
+    },
+    {
+      id: "tcl_t1_2",
+      taskId: "t1",
+      at: "2026-08-18 08:40",
+      operator: "刘伟松",
+      field: "附件",
+      from: "—",
+      to: "昼夜作业计划表_W34.xlsx",
+      note: "补充作业表附件",
+    },
+    {
+      id: "tcl_t1_3",
+      taskId: "t1",
+      at: "2026-08-18 11:20",
+      operator: "刘伟松",
+      field: "备注",
+      from: "—",
+      to: "昼夜班交接后更新完成率；异常船期即时上报。",
+      note: "",
+    },
+    {
+      id: "tcl_tmp1_1",
+      taskId: "t_tmp1",
+      at: "2026-08-18 09:00",
+      operator: "余彪",
+      field: "新建任务",
+      from: "—",
+      to: "协调临时加班人员排班",
+      note: "自建临时任务",
+    },
+    {
+      id: "tcl_tmp1_2",
+      taskId: "t_tmp1",
+      at: "2026-08-18 10:15",
+      operator: "余彪",
+      field: "状态",
+      from: "未开始",
+      to: "进行中",
+      note: "",
+    },
+  ];
+
+  /** 任务督办：计划外事项（无关联计划）；种子含原例会待办并入 */
+  let superviseItems = [
+    {
+      id: "sv1",
+      title: "跟进维保单位保险购买情况",
+      ownerId: "u_safe_h",
+      helperIds: ["u_safe_s"],
+      week: "2026-W34",
+      status: "待办",
+      priority: "P1",
+      startDate: "2026-08-18",
+      endDate: "2026-08-25",
+      creatorId: "u_gm",
+      note: "原周例会待办并入",
+      createdAt: "2026-08-18",
+    },
+    {
+      id: "sv2",
+      title: "电磁吸盘采购方案收集报价",
+      ownerId: "u_eq_s",
+      helperIds: ["u_eq_h"],
+      week: "2026-W34",
+      status: "进行中",
+      priority: "P1",
+      startDate: "2026-08-15",
+      endDate: "2026-08-28",
+      creatorId: "u_gm",
+      note: "原周例会待办并入",
+      createdAt: "2026-08-15",
+    },
+    {
+      id: "sv3",
+      title: "箱管系统开发进度确认",
+      ownerId: "u_gm",
+      helperIds: ["u_mkt_h"],
+      week: "2026-W34",
+      status: "待办",
+      priority: "P0",
+      startDate: "2026-08-18",
+      endDate: "2026-08-22",
+      creatorId: "u_prod_h",
+      note: "原周例会待办并入",
+      createdAt: "2026-08-18",
+    },
+  ];
+
+  function helperNamesOf(item) {
+    return (item.helperIds || [])
+      .map((id) => {
+        const u = USERS.find((x) => x.id === id);
+        return u ? u.name : "";
+      })
+      .filter(Boolean)
+      .join("、");
+  }
+
+  function normalizeSupervise(item) {
+    const helperIds = Array.isArray(item.helperIds) ? item.helperIds.filter(Boolean) : [];
+    return {
+      ...item,
+      helperIds,
+      helper: helperNamesOf({ helperIds }),
+      priority: item.priority || "P1",
+      status: item.status || "待办",
+      week: item.week || "2026-W34",
+      startDate: item.startDate || "",
+      endDate: item.endDate || item.deadline || "",
+      creatorId: item.creatorId || "",
+      note: item.note || "",
+    };
+  }
+
+  superviseItems = superviseItems.map(normalizeSupervise);
+
+  /**
+   * 公司周例会纪要：一周一条；仅计划管理员维护
+   * week 如 2026-W34；attachments 仅文件名
+   */
+  let meetingMinutes = [
+    {
+      id: "mm_w34",
+      week: "2026-W34",
+      summary:
+        "1. 吞吐盯控：民本/祥云到港作业按节点推进，回款仍需市场部跟催。\n2. 设备：装船机皮带更换窗口本周确认。\n3. 督办：维保保险、电磁吸盘报价、箱管进度三项限期闭环。",
+      attachments: [{ name: "公司周例会纪要_2026W34.docx" }, { name: "例会议程.pdf" }],
+      updatedAt: "2026-08-18 17:30",
+      updatedBy: "u_plan_admin",
+    },
+    {
+      id: "mm_w33",
+      week: "2026-W33",
+      summary:
+        "1. 上周吞吐复盘完成，缺口仍在回款与船期。\n2. 安全整改三项持续盯控。\n3. 例会待办三项已转入督办闭环。",
+      attachments: [{ name: "公司周例会纪要_2026W33.docx" }],
+      updatedAt: "2026-08-11 16:20",
+      updatedBy: "u_plan_admin",
+    },
   ];
 
   let todos = [];
@@ -287,12 +646,49 @@
     return workHoursByRange(taskStartDate(t), taskEndDate(t));
   }
 
+  function isTempTask(t) {
+    if (!t) return false;
+    if (t.taskKind === "临时") return true;
+    return !t.annualId;
+  }
+
+  function normalizeAttachments(list) {
+    if (!Array.isArray(list)) return [];
+    return list
+      .map((a) => {
+        if (!a) return null;
+        if (typeof a === "string") return { name: a };
+        const name = String(a.name || "").trim();
+        return name ? { name } : null;
+      })
+      .filter(Boolean);
+  }
+
+  function normalizeMeetingMinute(m) {
+    return {
+      id: m.id || "mm_" + Date.now(),
+      week: m.week || "2026-W34",
+      summary: m.summary != null ? String(m.summary) : "",
+      attachments: normalizeAttachments(m.attachments),
+      updatedAt: m.updatedAt || DEMO_TODAY + " 12:00",
+      updatedBy: m.updatedBy || "",
+    };
+  }
+
+  meetingMinutes = meetingMinutes.map(normalizeMeetingMinute);
+
   function normalizeTaskDates(t) {
     const startDate = t.startDate || t.createdAt || "";
     const endDate = t.endDate || t.deadline || "";
     const hours = workHoursByRange(startDate, endDate);
+    const annualId = t.annualId || "";
+    const taskKind = t.taskKind === "临时" || !annualId ? "临时" : "计划";
     return {
       ...t,
+      annualId: taskKind === "临时" ? "" : annualId,
+      taskKind,
+      remark: t.remark != null ? String(t.remark) : "",
+      attachments: normalizeAttachments(t.attachments),
       startDate,
       endDate,
       deadline: endDate,
@@ -447,6 +843,8 @@
     return isPlanOverdue(p) || isPlanNearDue(p);
   }
 
+  let persistReady = false;
+
   function rebuildTodos() {
     const week = "2026-W34";
     const month = "2026-08";
@@ -524,20 +922,39 @@
       });
     });
 
-    meetingTodos
+    superviseItems
       .filter((m) => m.status !== "已完成")
       .forEach((m) => {
+        const overdue = m.endDate && m.endDate < DEMO_TODAY;
+        const due = m.endDate || "";
         todos.push({
-          id: "td_mt_" + m.id,
-          type: "周例会待办",
+          id: "td_sv_" + m.id,
+          type: "任务督办",
           title: m.title,
           userId: m.ownerId,
+          superviseId: m.id,
           meetingId: m.id,
-          status: "待办",
-          priority: "P1",
-          dueDate: "",
+          status: overdue ? "逾期" : m.status === "进行中" ? "待办" : "待办",
+          priority: m.priority || "P1",
+          dueDate: due,
           week: m.week,
-          refLabel: m.helper ? "配合：" + m.helper : "",
+          refLabel: m.helper ? "配合：" + m.helper : "计划外",
+        });
+        (m.helperIds || []).forEach((hid) => {
+          if (!hid || hid === m.ownerId) return;
+          todos.push({
+            id: "td_svh_" + m.id + "_" + hid,
+            type: "督办配合",
+            title: "配合督办：" + m.title,
+            userId: hid,
+            superviseId: m.id,
+            meetingId: m.id,
+            status: overdue ? "逾期" : "待办",
+            priority: m.priority || "P1",
+            dueDate: due,
+            week: m.week,
+            refLabel: "计划外",
+          });
         });
       });
 
@@ -608,10 +1025,184 @@
         });
       });
     });
+    persistDemoData();
   }
 
+  /** 演示数据持久化：切换角色/刷新后保留编辑结果 */
+  const DATA_KEY = "bms_v4_demo_data";
+  const DATA_VER = 6;
+
+  function deepClone(v) {
+    return JSON.parse(JSON.stringify(v));
+  }
+
+  function replaceArrayContents(target, source) {
+    target.length = 0;
+    (source || []).forEach((item) => target.push(deepClone(item)));
+  }
+
+  const SEED_SNAPSHOT = {
+    companyPlans: deepClone(COMPANY_PLANS),
+    planItems: deepClone(planItems),
+    taskItems: deepClone(taskItems),
+    periodReports: deepClone(periodReports),
+    planChangeLogs: deepClone(planChangeLogs),
+    taskChangeLogs: deepClone(taskChangeLogs),
+    superviseItems: deepClone(superviseItems),
+    meetingMinutes: deepClone(meetingMinutes),
+    urges: deepClone(urges),
+    todoArchive: deepClone(todoArchive),
+  };
+
+  function applySnapshot(snap) {
+    replaceArrayContents(COMPANY_PLANS, snap.companyPlans);
+    planItems = deepClone(snap.planItems || []);
+    taskItems = deepClone(snap.taskItems || []);
+    periodReports = deepClone(snap.periodReports || []);
+    planChangeLogs = deepClone(snap.planChangeLogs || []);
+    taskChangeLogs = deepClone(snap.taskChangeLogs || []);
+    superviseItems = deepClone(snap.superviseItems || []);
+    meetingMinutes = deepClone(snap.meetingMinutes || []);
+    urges = deepClone(snap.urges || []);
+    todoArchive = deepClone(snap.todoArchive || []);
+  }
+
+  function persistDemoData() {
+    if (!persistReady) return;
+    try {
+      localStorage.setItem(
+        DATA_KEY,
+        JSON.stringify({
+          v: DATA_VER,
+          companyPlans: COMPANY_PLANS,
+          planItems,
+          taskItems,
+          periodReports,
+          planChangeLogs,
+          taskChangeLogs,
+          superviseItems,
+          meetingMinutes,
+          urges,
+          todoArchive,
+        })
+      );
+    } catch (e) {
+      /* ignore quota / private mode */
+    }
+  }
+
+  function demoNowStamp() {
+    return DEMO_TODAY + " " + new Date().toTimeString().slice(0, 5);
+  }
+
+  function currentOperatorName() {
+    try {
+      const id = localStorage.getItem("bms_v4_role") || "u_gm";
+      const u = userById(id);
+      return u ? u.name : "系统";
+    } catch (e) {
+      return "系统";
+    }
+  }
+
+  function attachNamesLabel(list) {
+    const names = normalizeAttachments(list).map((a) => a.name);
+    return names.length ? names.join("、") : "—";
+  }
+
+  function appendTaskChangeLog(payload) {
+    const item = {
+      id: "tcl_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      taskId: payload.taskId,
+      at: payload.at || demoNowStamp(),
+      operator: payload.operator || currentOperatorName(),
+      field: payload.field || "变更",
+      from: payload.from != null && payload.from !== "" ? String(payload.from) : "—",
+      to: payload.to != null && payload.to !== "" ? String(payload.to) : "—",
+      note: payload.note || "",
+    };
+    taskChangeLogs = [item, ...taskChangeLogs];
+    persistDemoData();
+    return item;
+  }
+
+  function logTaskFieldDiffs(prev, next) {
+    if (!prev || !next) return;
+    const pairs = [
+      { field: "名称", from: prev.name, to: next.name },
+      { field: "优先级", from: prev.priority, to: next.priority },
+      {
+        field: "处理人",
+        from: (userById(prev.ownerId) || {}).name || prev.ownerId || "—",
+        to: (userById(next.ownerId) || {}).name || next.ownerId || "—",
+      },
+      { field: "状态", from: prev.status, to: next.status },
+      { field: "任务类型", from: prev.taskType, to: next.taskType },
+      { field: "开始日", from: taskStartDate(prev), to: taskStartDate(next) },
+      { field: "结束日", from: taskEndDate(prev), to: taskEndDate(next) },
+      { field: "备注", from: prev.remark || "", to: next.remark || "" },
+      { field: "附件", from: attachNamesLabel(prev.attachments), to: attachNamesLabel(next.attachments) },
+      {
+        field: "关联计划",
+        from: prev.annualId ? (planById(prev.annualId) || {}).name || prev.annualId : "—",
+        to: next.annualId ? (planById(next.annualId) || {}).name || next.annualId : "—",
+      },
+      {
+        field: "上级任务",
+        from: prev.parentId
+          ? (taskItems.find((x) => x.id === prev.parentId) || {}).name || prev.parentId
+          : "—",
+        to: next.parentId
+          ? (taskItems.find((x) => x.id === next.parentId) || {}).name || next.parentId
+          : "—",
+      },
+    ];
+    pairs.forEach((p) => {
+      const a = p.from == null || p.from === "" ? "—" : String(p.from);
+      const b = p.to == null || p.to === "" ? "—" : String(p.to);
+      if (a === b) return;
+      appendTaskChangeLog({ taskId: next.id, field: p.field, from: a, to: b });
+    });
+  }
+
+  function loadDemoData() {
+    try {
+      const raw = localStorage.getItem(DATA_KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      if (!d || d.v !== DATA_VER) return false;
+      if (!Array.isArray(d.companyPlans) || !Array.isArray(d.planItems) || !Array.isArray(d.taskItems)) {
+        return false;
+      }
+      applySnapshot(d);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function resetDemoData() {
+    applySnapshot(SEED_SNAPSHOT);
+    syncAllPlanStatuses();
+    persistReady = true;
+    rebuildTodos();
+    persistDemoData();
+    return { ok: true };
+  }
+
+  function hasPersistedDemoData() {
+    try {
+      return !!localStorage.getItem(DATA_KEY);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  loadDemoData();
   syncAllPlanStatuses();
   rebuildTodos();
+  persistReady = true;
+  persistDemoData();
 
   const KEY = "bms_v4_role";
 
@@ -625,8 +1216,23 @@
       const next = { ...COMPANY_PLANS[i], ...patch };
       if (next.progressPct != null) next.progressPct = clampPct(next.progressPct);
       COMPANY_PLANS[i] = next;
+      persistDemoData();
       return { ok: true, item: next };
     },
+    removeCompanyPlan(id) {
+      const i = COMPANY_PLANS.findIndex((c) => c.id === id);
+      if (i < 0) return { ok: false, reason: "公司计划不存在" };
+      const kids = planItems.filter((p) => p.companyPlanId === id);
+      if (kids.length) return { ok: false, reason: "请先删除其下部门计划（共 " + kids.length + " 条）" };
+      COMPANY_PLANS.splice(i, 1);
+      planChangeLogs = planChangeLogs.filter((x) => x.refId !== id);
+      rebuildTodos();
+      persistDemoData();
+      return { ok: true };
+    },
+    persistDemoData,
+    resetDemoData,
+    hasPersistedDemoData,
     get PLAN_ITEMS() {
       return planItems;
     },
@@ -639,6 +1245,7 @@
     },
     set taskItems(v) {
       taskItems = v;
+      persistDemoData();
     },
     get periodReports() {
       return periodReports;
@@ -687,9 +1294,14 @@
       });
       rebuildTodos();
     },
-    get meetingTodos() {
-      return meetingTodos;
+    get superviseItems() {
+      return superviseItems;
     },
+    /** @deprecated 兼容旧引用，等同 superviseItems */
+    get meetingTodos() {
+      return superviseItems;
+    },
+    helperNamesOf,
     get todoArchive() {
       return todoArchive;
     },
@@ -706,20 +1318,121 @@
         String(from.getDate()).padStart(2, "0");
       return todoArchive.filter((x) => x.userId === userId && x.doneAt >= fromStr);
     },
-    completeMeetingTodo(id) {
-      const m = meetingTodos.find((x) => x.id === id);
-      if (!m) return { ok: false, reason: "待办不存在" };
+    addSuperviseTask(payload) {
+      if (!payload || !String(payload.title || "").trim()) {
+        return { ok: false, reason: "请填写督办事项" };
+      }
+      if (!payload.ownerId) return { ok: false, reason: "请选择责任人" };
+      const owner = userById(payload.ownerId);
+      if (!owner) return { ok: false, reason: "责任人不存在" };
+      const startDate = payload.startDate || DEMO_TODAY;
+      const endDate = payload.endDate || payload.deadline || "";
+      if (endDate && startDate && endDate < startDate) {
+        return { ok: false, reason: "结束时间不能早于开始时间" };
+      }
+      const helperIds = Array.isArray(payload.helperIds)
+        ? payload.helperIds.filter((id) => id && id !== payload.ownerId)
+        : [];
+      const item = normalizeSupervise({
+        id: "sv_" + Date.now(),
+        title: String(payload.title).trim(),
+        ownerId: payload.ownerId,
+        helperIds,
+        week: payload.week || "2026-W34",
+        status: "待办",
+        priority: payload.priority || "P1",
+        startDate,
+        endDate,
+        creatorId: payload.creatorId || "",
+        note: payload.note || "",
+        createdAt: DEMO_TODAY,
+      });
+      superviseItems = [item, ...superviseItems];
+      rebuildTodos();
+      return { ok: true, item };
+    },
+    updateSuperviseTask(id, patch) {
+      const prev = superviseItems.find((x) => x.id === id);
+      if (!prev) return { ok: false, reason: "督办不存在" };
+      const nextPatch = { ...patch };
+      if (nextPatch.helperIds) {
+        nextPatch.helperIds = nextPatch.helperIds.filter((hid) => hid && hid !== (nextPatch.ownerId || prev.ownerId));
+      }
+      superviseItems = superviseItems.map((x) =>
+        x.id === id ? normalizeSupervise({ ...x, ...nextPatch }) : x
+      );
+      rebuildTodos();
+      return { ok: true, item: superviseItems.find((x) => x.id === id) };
+    },
+    completeSuperviseTodo(id) {
+      const m = superviseItems.find((x) => x.id === id);
+      if (!m) return { ok: false, reason: "督办不存在" };
       if (m.status === "已完成") return { ok: true };
-      meetingTodos = meetingTodos.map((x) => (x.id === id ? { ...x, status: "已完成" } : x));
+      superviseItems = superviseItems.map((x) => (x.id === id ? normalizeSupervise({ ...x, status: "已完成" }) : x));
       pushTodoArchive({
-        id: "td_mt_" + id,
-        type: "周例会待办",
+        id: "td_sv_" + id,
+        type: "任务督办",
         title: m.title,
         userId: m.ownerId,
-        priority: "P1",
+        priority: m.priority || "P1",
       });
       rebuildTodos();
       return { ok: true };
+    },
+    removeSuperviseTask(id) {
+      const m = superviseItems.find((x) => x.id === id);
+      if (!m) return { ok: false, reason: "督办不存在" };
+      superviseItems = superviseItems.filter((x) => x.id !== id);
+      rebuildTodos();
+      return { ok: true };
+    },
+    get meetingMinutes() {
+      return meetingMinutes;
+    },
+    getMeetingMinuteByWeek(week) {
+      return meetingMinutes.find((x) => x.week === week) || null;
+    },
+    /** 演示环境「当前自然周」 */
+    getCurrentWeek() {
+      return "2026-W34";
+    },
+    listMeetingWeeks() {
+      const set = new Set(meetingMinutes.map((x) => x.week));
+      set.add(this.getCurrentWeek());
+      ["2026-W33", "2026-W32"].forEach((w) => set.add(w));
+      return [...set].sort((a, b) => b.localeCompare(a));
+    },
+    listMeetingMinutes() {
+      return meetingMinutes
+        .slice()
+        .sort((a, b) => String(b.week).localeCompare(String(a.week)));
+    },
+    upsertMeetingMinute(payload) {
+      const week = payload.week || "2026-W34";
+      const actor = userById(payload.updatedBy) || this.getRoleUser();
+      if (!actor || actor.role !== "计划管理员") {
+        return { ok: false, reason: "仅计划管理员可维护公司周例会纪要" };
+      }
+      const existing = meetingMinutes.find((x) => x.week === week);
+      const item = normalizeMeetingMinute({
+        id: existing ? existing.id : "mm_" + Date.now(),
+        week,
+        summary: payload.summary || "",
+        attachments: payload.attachments,
+        updatedAt: demoNowStamp(),
+        updatedBy: actor.id,
+      });
+      if (existing) {
+        meetingMinutes = meetingMinutes.map((x) => (x.week === week ? item : x));
+      } else {
+        meetingMinutes = [item, ...meetingMinutes];
+      }
+      persistDemoData();
+      return { ok: true, item };
+    },
+    /** @deprecated 兼容旧调用 */
+    completeMeetingTodo(id) {
+      return this.completeSuperviseTodo(id);
     },
     completeTaskFromTodo(taskId) {
       const t = taskItems.find((x) => x.id === taskId);
@@ -746,6 +1459,29 @@
     planChildren,
     planDescendantIds,
     planPathLabel,
+    /** 关键节点变更记录：按计划 id 取，新→旧 */
+    getPlanChangeLogs(refId) {
+      return planChangeLogs
+        .filter((x) => x.refId === refId)
+        .slice()
+        .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    },
+    appendPlanChangeLog(payload) {
+      const item = {
+        id: "pcl_" + Date.now(),
+        refId: payload.refId,
+        refKind: payload.refKind || "dept",
+        at: payload.at || "2026-08-18 12:00",
+        operator: payload.operator || "系统",
+        field: payload.field || "变更",
+        from: payload.from != null ? String(payload.from) : "—",
+        to: payload.to != null ? String(payload.to) : "—",
+        note: payload.note || "",
+      };
+      planChangeLogs = [item, ...planChangeLogs];
+      persistDemoData();
+      return item;
+    },
     rebuildTodos,
     getRoleUser() {
       const id = localStorage.getItem(KEY) || "u_gm";
@@ -753,6 +1489,21 @@
     },
     setRoleUser(id) {
       localStorage.setItem(KEY, id);
+    },
+    /** 计划管理员：跨部门维护全部计划/任务 */
+    isPlanAdmin(user) {
+      const u = user || this.getRoleUser();
+      return !!(u && u.role === "计划管理员");
+    },
+    /** 可全量浏览计划树（总经理只读 / 计划管理员可编） */
+    canViewAllPlans(user) {
+      const u = user || this.getRoleUser();
+      return !!(u && (u.role === "总经理" || u.role === "计划管理员"));
+    },
+    /** 部门计划可编辑：部门长（本部门）或计划管理员（全量） */
+    canEditPlans(user) {
+      const u = user || this.getRoleUser();
+      return !!(u && (u.role === "部门长" || u.role === "计划管理员"));
     },
     tasksForUser(userId) {
       return taskItems.filter((t) => t.ownerId === userId);
@@ -808,32 +1559,55 @@
     isPlanOverdue,
     isPlanNearDue,
     clampPct,
+    isTempTask,
     addAssignTask(payload) {
       const id = "t_" + Date.now();
       const owner = userById(payload.ownerId);
+      if (!owner) return null;
       const today = "2026-08-18";
       const startDate = payload.startDate || today;
       const endDate = payload.endDate || payload.deadline || "2026-08-31";
+      const kind = payload.taskKind === "临时" || !payload.annualId ? "临时" : "计划";
       const item = normalizeTaskDates({
         id,
         name: payload.name,
-        annualId: payload.annualId,
+        annualId: kind === "临时" ? "" : payload.annualId,
+        taskKind: kind,
         week: payload.week || "2026-W34",
         ownerId: payload.ownerId,
         status: "未开始",
         source: payload.source || "下达",
-        dept: owner.dept,
-        parentId: payload.parentId || null,
-        taskType: payload.taskType || "其他",
+        dept: payload.dept || owner.dept,
+        parentId: kind === "临时" ? null : payload.parentId || null,
+        taskType: payload.taskType || (kind === "临时" ? "其他" : "其他"),
         priority: payload.priority || "P1",
+        remark: payload.remark || "",
+        attachments: normalizeAttachments(payload.attachments),
         startDate,
         endDate,
         deadline: endDate,
         createdAt: today,
       });
       taskItems = [item, ...taskItems];
+      appendTaskChangeLog({
+        taskId: id,
+        field: "新建任务",
+        from: "—",
+        to: item.name,
+        note: kind === "临时" ? (item.source === "下达" ? "下达临时任务" : "自建临时任务") : item.source === "下达" ? "下达关联计划任务" : "自建关联计划任务",
+      });
       rebuildTodos();
       return item;
+    },
+    removeTask(id) {
+      const t = taskItems.find((x) => x.id === id);
+      if (!t) return { ok: false, reason: "任务不存在" };
+      const kids = taskItems.filter((x) => x.parentId === id);
+      if (kids.length) return { ok: false, reason: "请先删除其下子任务（共 " + kids.length + " 条）" };
+      taskItems = taskItems.filter((x) => x.id !== id);
+      taskChangeLogs = taskChangeLogs.filter((x) => x.taskId !== id);
+      rebuildTodos();
+      return { ok: true };
     },
     updateTask(id, patch) {
       const prev = taskItems.find((t) => t.id === id);
@@ -845,6 +1619,7 @@
         return normalizeTaskDates(merged);
       });
       const next = taskItems.find((t) => t.id === id);
+      if (prev && next) logTaskFieldDiffs(prev, next);
       if (
         prev &&
         next &&
@@ -861,6 +1636,13 @@
       }
       rebuildTodos();
     },
+    getTaskChangeLogs(taskId) {
+      return taskChangeLogs
+        .filter((x) => x.taskId === taskId)
+        .slice()
+        .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    },
+    appendTaskChangeLog,
     DEMO_TODAY,
     NEAR_DUE_DAYS,
     get urges() {

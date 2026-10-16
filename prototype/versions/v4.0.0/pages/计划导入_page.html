@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>导入 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .tab-on { background:#0f766e; color:#fff; }
+    .tab-off { background:#fff; color:#64748b; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 6px 8px; vertical-align: top; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; }
+    .row-bad { background: #fff8f7; }
+    .row-ok { background: #f6fef9; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="plans" data-title="导入">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
+      <div>
+        <a id="backLink" href="计划管理_page.html" class="text-sm text-teal-700 hover:underline inline-flex items-center gap-1 mb-2"><i class="fa-solid fa-arrow-left text-xs"></i> 返回</a>
+        <p class="text-xs text-slate-500 max-w-3xl" id="pageTip">下载模板 → 粘贴/上传 CSV → 预览校验 → 确认写入。</p>
+      </div>
+    </div>
+
+    <div id="modeTabs" class="hidden inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm mb-4">
+      <button type="button" id="tabPlan" class="tab-on px-4 py-2">导入部门计划</button>
+      <button type="button" id="tabTask" class="tab-off px-4 py-2">导入任务</button>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 mb-4 space-y-3">
+      <div class="flex flex-wrap gap-2 items-center">
+        <button type="button" id="btnTpl" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700"><i class="fa-solid fa-download mr-1"></i>下载 CSV 模板</button>
+        <button type="button" id="btnSample" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">填入示例</button>
+        <label class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white cursor-pointer">
+          <i class="fa-solid fa-upload mr-1"></i>上传 CSV
+          <input type="file" id="fileInput" accept=".csv,text/csv" class="hidden" />
+        </label>
+      </div>
+      <div>
+        <label class="block text-xs text-slate-500 mb-1">粘贴 CSV 内容（首行为表头）</label>
+        <textarea id="raw" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-mono h-40" placeholder="粘贴或上传后在此编辑"></textarea>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="btnParse" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">解析并预览</button>
+        <button type="button" id="btnImport" class="text-sm px-4 py-2 rounded-xl border border-teal-200 bg-teal-50 text-teal-800 disabled:opacity-40" disabled>确认导入有效行</button>
+        <span class="text-xs text-slate-400 self-center" id="parseHint">尚未解析</span>
+      </div>
+      <p class="text-[11px] text-slate-400" id="colHint"></p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div class="px-4 py-3 border-b text-sm font-medium flex justify-between">
+        <span>预览</span>
+        <span class="text-xs text-slate-400 font-normal" id="previewCount">0 行</span>
+      </div>
+      <div class="overflow-auto max-h-[28rem]">
+        <table class="grid-table min-w-[960px]">
+          <thead id="thead"></thead>
+          <tbody id="tbody"><tr><td class="px-4 py-10 text-center text-slate-400" colspan="8">解析后显示预览</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  let mode = "plan"; // plan | task
+  let rows = [];
+
+  const PLAN_COLS = ["归属公司计划", "部门", "上级计划", "计划名称", "优先级", "负责人", "开始日期", "结束日期", "进度", "进展说明"];
+  const TASK_COLS = ["关联计划", "任务名称", "处理人", "优先级", "开始日期", "结束日期", "任务类型"];
+
+  const PLAN_SAMPLE =
+    "归属公司计划,部门,上级计划,计划名称,优先级,负责人,开始日期,结束日期,进度,进展说明\n" +
+    "2026年吞吐量冲击400–480万吨,市场开发部,,腹地客户拓新试点,P1,钱旦,2026-09-01,2026-12-31,0,导入演示\n" +
+    "2026年运营体系建设与标准化,设备技术部,设备安装调试问题督改,门机点检表试点,P2,盛侨,2026-09-01,2026-10-31,0,导入演示";
+
+  const TASK_SAMPLE =
+    "关联计划,任务名称,处理人,优先级,开始日期,结束日期,任务类型\n" +
+    "散杂货吞吐目标分解（合计约400万吨）,核对8月吞吐台账,刘伟松,P1,2026-08-18,2026-08-25,生产作业\n" +
+    "维保标准化与备件台账,更新易损件清单,盛侨,P2,2026-08-18,2026-08-28,设备维保";
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById("tabPlan").className = "px-4 py-2 " + (m === "plan" ? "tab-on" : "tab-off");
+    document.getElementById("tabTask").className = "px-4 py-2 " + (m === "task" ? "tab-on" : "tab-off");
+    document.getElementById("colHint").textContent =
+      m === "plan"
+        ? "表头：" + PLAN_COLS.join(" / ") + "。归属公司计划填名称；上级计划可空（一级）或填同部门上级计划名称；负责人填姓名。"
+        : "表头：" + TASK_COLS.join(" / ") + "。关联计划填计划名称（须已存在）；处理人填姓名。";
+    document.getElementById("raw").value = "";
+    rows = [];
+    renderPreview();
+    document.getElementById("btnImport").disabled = true;
+    document.getElementById("parseHint").textContent = "尚未解析";
+  }
+
+  function parseCsv(text) {
+    const lines = String(text || "")
+      .replace(/^\uFEFF/, "")
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean);
+    if (lines.length < 2) return { ok: false, reason: "至少需要表头 + 1 行数据" };
+    const headers = splitCsvLine(lines[0]);
+    const data = lines.slice(1).map((line, i) => {
+      const cells = splitCsvLine(line);
+      const obj = { _line: i + 2 };
+      headers.forEach((h, idx) => {
+        obj[h.trim()] = (cells[idx] != null ? cells[idx] : "").trim();
+      });
+      return obj;
+    });
+    return { ok: true, headers, data };
+  }
+
+  function splitCsvLine(line) {
+    const out = [];
+    let cur = "";
+    let q = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (q && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else q = !q;
+      } else if (ch === "," && !q) {
+        out.push(cur);
+        cur = "";
+      } else cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function findUserByName(name) {
+    if (!name) return null;
+    return BMS4.USERS.find((u) => u.name === name && u.role !== "总经理") || null;
+  }
+
+  function findCompanyByName(name) {
+    if (!name) return null;
+    return BMS4.COMPANY_PLANS.find((c) => c.name === name) || null;
+  }
+
+  function findPlanByName(name, dept) {
+    if (!name) return null;
+    let list = BMS4.PLAN_ITEMS.filter((p) => p.name === name);
+    if (dept) list = list.filter((p) => p.dept === dept);
+    return list[0] || null;
+  }
+
+  function validatePlanRow(r) {
+    const errors = [];
+    const cp = findCompanyByName(r["归属公司计划"]);
+    if (!cp) errors.push("归属公司计划不存在");
+    const dept = r["部门"];
+    if (!BMS4.DEPTS.includes(dept)) errors.push("部门无效");
+    if (!(r["计划名称"] || "").trim()) errors.push("缺计划名称");
+    const owner = findUserByName(r["负责人"]);
+    if (!owner) errors.push("负责人不存在");
+    else if (owner.dept !== dept && owner.role === "员工") errors.push("负责人员工须属该部门");
+    if (!r["开始日期"] || !r["结束日期"]) errors.push("缺起止日期");
+    else if (r["结束日期"] < r["开始日期"]) errors.push("结束早于开始");
+    let parentId = null;
+    if ((r["上级计划"] || "").trim()) {
+      const parent = findPlanByName(r["上级计划"], dept);
+      if (!parent) errors.push("上级计划不存在");
+      else parentId = parent.id;
+    }
+    const prio = r["优先级"] || "P1";
+    if (!["P0", "P1", "P2"].includes(prio)) errors.push("优先级须为 P0/P1/P2");
+    return {
+      ok: errors.length === 0,
+      errors,
+      payload: errors.length
+        ? null
+        : {
+            companyPlanId: cp.id,
+            dept,
+            parentId,
+            name: r["计划名称"].trim(),
+            priority: prio,
+            ownerId: owner.id,
+            startDate: r["开始日期"],
+            endDate: r["结束日期"],
+            progressPct: BMS4.clampPct(r["进度"] || 0),
+            progress: r["进展说明"] || "",
+            status: "未开始",
+          },
+      display: r,
+    };
+  }
+
+  function validateTaskRow(r) {
+    const errors = [];
+    const plan = findPlanByName(r["关联计划"]);
+    if (!plan) errors.push("关联计划不存在");
+    if (!(r["任务名称"] || "").trim()) errors.push("缺任务名称");
+    const owner = findUserByName(r["处理人"]);
+    if (!owner) errors.push("处理人不存在");
+    if (!r["开始日期"] || !r["结束日期"]) errors.push("缺起止日期");
+    else if (r["结束日期"] < r["开始日期"]) errors.push("结束早于开始");
+    const prio = r["优先级"] || "P1";
+    if (!["P0", "P1", "P2"].includes(prio)) errors.push("优先级须为 P0/P1/P2");
+    return {
+      ok: errors.length === 0,
+      errors,
+      payload: errors.length
+        ? null
+        : {
+            name: r["任务名称"].trim(),
+            annualId: plan.id,
+            ownerId: owner.id,
+            priority: prio,
+            startDate: r["开始日期"],
+            endDate: r["结束日期"],
+            taskType: r["任务类型"] || "其他",
+            source: "下达",
+          },
+      display: r,
+    };
+  }
+
+  function doParse() {
+    const parsed = parseCsv(document.getElementById("raw").value);
+    if (!parsed.ok) {
+      BMSUI.toast(parsed.reason, false);
+      rows = [];
+      renderPreview();
+      document.getElementById("btnImport").disabled = true;
+      return;
+    }
+    const need = mode === "plan" ? PLAN_COLS : TASK_COLS;
+    const missing = need.filter((c) => !parsed.headers.includes(c));
+    if (missing.length) {
+      BMSUI.toast("缺少列：" + missing.join("、"), false);
+      rows = [];
+      renderPreview();
+      document.getElementById("btnImport").disabled = true;
+      return;
+    }
+    rows = parsed.data.map((r) => (mode === "plan" ? validatePlanRow(r) : validateTaskRow(r)));
+    const okN = rows.filter((x) => x.ok).length;
+    const badN = rows.length - okN;
+    document.getElementById("parseHint").textContent = "有效 " + okN + " 行 · 异常 " + badN + " 行";
+    document.getElementById("btnImport").disabled = okN === 0;
+    renderPreview();
+    BMSUI.toast(okN ? "解析完成" : "没有可导入的有效行", okN > 0);
+  }
+
+  function renderPreview() {
+    const cols = mode === "plan" ? PLAN_COLS : TASK_COLS;
+    document.getElementById("thead").innerHTML =
+      "<tr>" +
+      ["行号", "结果", ...cols].map((c) => `<th class="text-left">${escapeHtml(c)}</th>`).join("") +
+      "</tr>";
+    document.getElementById("previewCount").textContent = rows.length + " 行";
+    if (!rows.length) {
+      document.getElementById("tbody").innerHTML =
+        `<tr><td class="px-4 py-10 text-center text-slate-400" colspan="${cols.length + 2}">解析后显示预览</td></tr>`;
+      return;
+    }
+    document.getElementById("tbody").innerHTML = rows
+      .map((r) => {
+        const d = r.display;
+        return `<tr class="${r.ok ? "row-ok" : "row-bad"}">
+          <td>${r.display._line || ""}</td>
+          <td class="whitespace-nowrap">${r.ok ? '<span class="text-emerald-700">通过</span>' : '<span class="text-rose-600">' + escapeHtml(r.errors.join("；")) + "</span>"}</td>
+          ${cols.map((c) => `<td>${escapeHtml(d[c] || "")}</td>`).join("")}
+        </tr>`;
+      })
+      .join("");
+  }
+
+  function doImport() {
+    const valid = rows.filter((r) => r.ok && r.payload);
+    if (!valid.length) return BMSUI.toast("没有可导入行", false);
+    if (!confirm("确认导入 " + valid.length + " 条有效数据？")) return;
+    let n = 0;
+    valid.forEach((r) => {
+      if (mode === "plan") {
+        BMS4.addPlan(r.payload);
+        n++;
+      } else {
+        BMS4.addAssignTask(r.payload);
+        n++;
+      }
+    });
+    if (BMS4.persistDemoData) BMS4.persistDemoData();
+    BMSUI.toast("已导入 " + n + " 条");
+    document.getElementById("btnImport").disabled = true;
+  }
+
+  function downloadTpl() {
+    const cols = mode === "plan" ? PLAN_COLS : TASK_COLS;
+    const sample = mode === "plan" ? PLAN_SAMPLE : TASK_SAMPLE;
+    const blob = new Blob(["\uFEFF" + sample], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = mode === "plan" ? "部门计划导入模板.csv" : "任务导入模板.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const u = BMS4.getRoleUser();
+    if (!BMS4.isPlanAdmin(u)) {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅计划管理员可用。请切换视角为「计划管理员 · 张凯」。</div>';
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    const qMode = params.get("mode") === "task" ? "task" : "plan";
+    document.getElementById("backLink").href = qMode === "task" ? "任务管理_page.html" : "计划管理_page.html";
+    document.getElementById("backLink").innerHTML =
+      '<i class="fa-solid fa-arrow-left text-xs"></i> 返回' + (qMode === "task" ? "任务总控" : "计划总控");
+    document.getElementById("pageTip").textContent =
+      qMode === "task"
+        ? "导入任务：下载模板 → 粘贴/上传 CSV → 预览校验 → 确认写入。关联计划须已存在。"
+        : "导入部门计划：下载模板 → 粘贴/上传 CSV → 预览校验 → 确认写入。归属公司计划须已由总经理下达。";
+    const hdr = document.querySelector("header .text-sm.font-medium");
+    if (hdr) hdr.textContent = qMode === "task" ? "导入任务" : "导入计划";
+    document.body.setAttribute("data-title", qMode === "task" ? "导入任务" : "导入计划");
+
+    document.getElementById("tabPlan").onclick = () => setMode("plan");
+    document.getElementById("tabTask").onclick = () => setMode("task");
+    document.getElementById("btnTpl").onclick = downloadTpl;
+    document.getElementById("btnSample").onclick = () => {
+      document.getElementById("raw").value = mode === "plan" ? PLAN_SAMPLE : TASK_SAMPLE;
+    };
+    document.getElementById("btnParse").onclick = doParse;
+    document.getElementById("btnImport").onclick = doImport;
+    document.getElementById("fileInput").onchange = (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        document.getElementById("raw").value = String(reader.result || "");
+        BMSUI.toast("已读取文件，请点击解析并预览");
+      };
+      reader.readAsText(f, "utf-8");
+      e.target.value = "";
+    };
+    setMode(qMode);
+  });
+})();
+  </script>
+</body>
+</html>

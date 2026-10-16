@@ -47,11 +47,12 @@
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <p class="text-xs text-slate-500 mb-3">计划树以<strong>公司目标为一级</strong>，其下为部门计划及拆解。必填起止；负责人可跨部门；配合人进待办；进度手填；结束日已过且进度未满自动「延期」。总经理日常浏览请用「部门计划表」。</p>
+    <p class="text-xs text-slate-500 mb-3">计划树以<strong>公司目标为一级</strong>，其下为部门计划及拆解。<strong>点击计划名称</strong>弹出详情；编辑请用右侧铅笔/更多菜单。必填起止；负责人可跨部门；配合人进待办；进度手填；结束日已过且进度未满自动「延期」。</p>
 
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <div class="flex flex-wrap gap-2">
         <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>新建部门计划</button>
+        <a id="btnImportPlan" href="计划导入_page.html?mode=plan" class="hidden text-sm px-3 py-2 rounded-xl border border-teal-200 bg-teal-50 text-teal-800"><i class="fa-solid fa-file-import mr-1"></i>导入计划</a>
         <button type="button" id="btnCollapse" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">一键收起</button>
         <button type="button" id="btnExpand" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">全部展开</button>
       </div>
@@ -69,15 +70,15 @@
         <thead>
           <tr>
             <th><span class="col-head">序号</span></th>
-            <th><span class="col-head">公司目标 / 计划名称</span></th>
+            <th><span class="col-head">年度 / 计划名称</span></th>
             <th><span class="col-head">优先级</span></th>
             <th><span class="col-head">负责人</span></th>
             <th><span class="col-head">配合人员</span></th>
-            <th><span class="col-head">开始时间</span></th>
-            <th><span class="col-head">结束时间</span></th>
             <th><span class="col-head">完成进度</span></th>
             <th><span class="col-head">状态</span></th>
             <th><span class="col-head">关联任务</span></th>
+            <th><span class="col-head">开始时间</span></th>
+            <th><span class="col-head">结束时间</span></th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -226,7 +227,7 @@
 
   function visiblePool() {
     let list = BMS4.PLAN_ITEMS.slice();
-    if (user.role !== "总经理") list = list.filter((p) => p.dept === user.dept);
+    if (!BMS4.canViewAllPlans(user)) list = list.filter((p) => p.dept === user.dept);
     if (deptFilter) list = list.filter((p) => p.dept === deptFilter);
     const onlyProblem = document.getElementById("onlyProblem") && document.getElementById("onlyProblem").checked;
     const kw = (document.getElementById("kw").value || "").trim();
@@ -308,10 +309,18 @@
             <button type="button" class="menu-item" data-add-under-cp="${cpId}"><i class="fa-solid fa-sitemap"></i>新建部门计划</button>
           </div>`
         : "";
+    const nameHtml =
+      cpId === "__none__"
+        ? `<span class="font-semibold text-slate-800">${escapeHtml(cp.name)}</span>`
+        : BMSUI.planNameLink(cp.name, {
+            id: cpId,
+            kind: "company",
+            className: "plan-name-link text-teal-800 hover:underline font-semibold",
+          });
     return `<div class="name-wrap" data-name-wrap-cp="${cpId}">
       <span class="inline-flex items-center gap-2">
-        <span class="tag" style="background:#e8f0fe;color:#1a73e8;border-color:#c6dafc">公司目标</span>
-        <span class="font-semibold text-slate-800">${escapeHtml(cp.name)}</span>
+        <span class="tag" style="background:#e8f0fe;color:#1a73e8;border-color:#c6dafc">年度</span>
+        ${nameHtml}
       </span>
       ${menu}
     </div>`;
@@ -319,9 +328,14 @@
 
   function cellName(p) {
     const meta = `<div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(p.dept)}</div>`;
+    const hot = isProblemPlan(p);
+    const nameLink = BMSUI.planNameLink(p.name, {
+      id: p.id,
+      kind: "dept",
+      className: "plan-name-link hover:underline font-medium " + (hot ? "text-rose-700" : "text-teal-800"),
+    });
     if (!canEdit) {
-      const hot = isProblemPlan(p);
-      return `<div><span class="font-medium ${hot ? "text-rose-700" : "text-slate-800"}">${escapeHtml(p.name)}${
+      return `<div><span>${nameLink}${
         hot ? '<span class="ml-1 text-[10px] text-rose-500">问题</span>' : ""
       }</span>${meta}</div>`;
     }
@@ -330,7 +344,7 @@
     }
     return `<div>
       <div class="name-wrap" data-name-wrap="${p.id}">
-        <span class="name-link cell-edit" data-start-edit="name" data-id="${p.id}">${escapeHtml(p.name)}</span>
+        ${nameLink}
         <span class="name-tools">
           <button type="button" class="icon-btn" title="编辑名称" data-start-edit="name" data-id="${p.id}"><i class="fa-solid fa-pen"></i></button>
           <button type="button" class="icon-btn" title="更多操作" data-menu="${p.id}"><i class="fa-solid fa-ellipsis"></i></button>
@@ -396,11 +410,11 @@
       <td>${cp.priority ? prioTag(cp.priority) : "—"}</td>
       <td class="whitespace-nowrap text-slate-600">${escapeHtml(cp.owner || "—")}</td>
       <td class="text-slate-400">—</td>
-      <td class="text-slate-400 text-xs">—</td>
-      <td class="text-slate-400 text-xs">—</td>
       <td class="text-slate-400">—</td>
       <td>${cp.status && cp.status !== "—" ? statusTag(cp.status) : "—"}</td>
       <td class="text-right text-slate-600">${row.taskCnt}</td>
+      <td class="text-slate-400 text-xs whitespace-nowrap">${escapeHtml(cp.startDate || "—")}</td>
+      <td class="text-slate-400 text-xs whitespace-nowrap">${escapeHtml(cp.endDate || "—")}</td>
     </tr>`;
   }
 
@@ -423,14 +437,14 @@
       <td>${prioTag(p.priority)}</td>
       <td class="whitespace-nowrap">${owner ? `${escapeHtml(owner.name)}<div class="text-[10px] text-slate-400">${escapeHtml(owner.dept)}</div>` : "—"}</td>
       <td class="max-w-[7rem]">${helpersLabel(p)}</td>
+      <td class="whitespace-nowrap">${cellPct(p)}</td>
+      <td>${cellStatus(p)}</td>
+      <td class="text-right text-slate-600">${row.taskCnt}</td>
       <td class="whitespace-nowrap text-slate-600 text-xs">${escapeHtml(p.startDate || "—")}</td>
       <td class="whitespace-nowrap text-slate-600 text-xs">
         ${escapeHtml(p.endDate || "—")}
         ${near ? '<div class="text-amber-600 mt-0.5">临期</div>' : ""}
       </td>
-      <td class="whitespace-nowrap">${cellPct(p)}</td>
-      <td>${cellStatus(p)}</td>
-      <td class="text-right text-slate-600">${row.taskCnt}</td>
     </tr>`;
   }
 
@@ -687,15 +701,28 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     user = BMS4.getRoleUser();
-    canEdit = user.role === "部门长";
+    canEdit = BMS4.canEditPlans(user);
     document.getElementById("btnNew").classList.toggle("hidden", !canEdit);
+    if (BMS4.isPlanAdmin(user)) {
+      document.body.setAttribute("data-title", "计划总控");
+      const hdr = document.querySelector("header .text-sm.font-medium");
+      if (hdr) hdr.textContent = "计划总控";
+      const tip = document.querySelector("#page-main > p.text-xs");
+      if (tip) {
+        tip.innerHTML =
+          "计划管理员视角：可维护<strong>全部部门</strong>计划树。公司计划下达仍由总经理完成；批量录入点「导入计划」。";
+      }
+      const btnImp = document.getElementById("btnImportPlan");
+      if (btnImp) btnImp.classList.remove("hidden");
+    }
 
     const fd = document.getElementById("fDept");
-    if (user.role === "总经理") {
+    if (BMS4.canViewAllPlans(user)) {
       document.getElementById("wrapProblem").classList.remove("hidden");
       document.getElementById("wrapProblem").classList.add("inline-flex");
       document.getElementById("onlyProblem").onchange = render;
       fd.innerHTML = '<option value="">全部部门</option>' + BMS4.DEPTS.map((d) => `<option value="${d}">${d}</option>`).join("");
+      fd.disabled = false;
       fd.onchange = () => {
         deptFilter = fd.value;
         render();

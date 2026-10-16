@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>计划详情 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="plans" data-title="计划详情">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+      <p class="text-slate-600 mb-2">计划详情已改为<strong>大弹窗</strong>展示，无需单独页面。</p>
+      <p class="text-sm text-slate-400 mb-6">若带有计划参数，将自动打开详情弹窗；也可返回列表点击计划名称查看。</p>
+      <div class="flex flex-wrap justify-center gap-2 text-sm">
+        <a href="经营总台账_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">公司计划表</a>
+        <a href="部门计划表_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
+        <a href="计划管理_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">计划管理</a>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id") || "";
+    const type = params.get("type") || "";
+    if (id) {
+      setTimeout(() => BMSUI.openPlanDetail(id, type || undefined), 80);
+    }
+  });
+  </script>
+</body>
+</html>

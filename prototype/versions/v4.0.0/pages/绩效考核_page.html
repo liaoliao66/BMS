@@ -211,7 +211,9 @@
         const path = BMS4.planPathLabel(t.annualId) || "—";
         return `<tr class="border-t border-[#e8eaed]">
           <td class="px-3 py-2">${t.name}</td>
-          <td class="px-3 py-2 text-slate-500">${path}</td>
+          <td class="px-3 py-2 text-slate-500">${
+            t.annualId ? BMSUI.planNameLink(path, { id: t.annualId, kind: "dept" }) : path
+          }</td>
           <td class="px-3 py-2">${BMSUI.statusBadge(t.status)}</td>
           <td class="px-3 py-2">${BMS4.taskEndDate ? BMS4.taskEndDate(t) : t.deadline || "—"}</td>
           <td class="px-3 py-2 text-right">${BMS4.taskWorkHours ? BMS4.taskWorkHours(t) : t.planHours ?? 0}</td>

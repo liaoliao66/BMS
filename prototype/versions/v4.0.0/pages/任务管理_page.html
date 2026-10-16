@@ -39,15 +39,46 @@
     .inline-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.15); }
     .pencil { color: #9aa0a6; font-size: 11px; opacity: 0; }
     .cell-edit:hover .pencil, .name-wrap:hover .pencil { opacity: 1; }
-    .name-wrap { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+    .name-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; position: relative; }
+    .name-tools { display: inline-flex; align-items: center; gap: 1px; opacity: 0; margin-left: 4px; flex-shrink: 0; }
+    .name-wrap:hover .name-tools { opacity: 1; }
+    .icon-btn { width: 20px; height: 20px; border: none; background: transparent; border-radius: 4px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 11px; }
+    .icon-btn:hover { background: #eef2f7; color: #0f766e; }
+    .icon-btn.danger:hover { background: #fef2f2; color: #c5221f; }
     .frac { color: #9aa0a6; font-size: 12px; margin-left: 6px; }
+    .attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; }
+    .attach-chip button { border: none; background: transparent; color: #94a3b8; cursor: pointer; padding: 0 2px; line-height: 1; }
+    .attach-chip button:hover { color: #c5221f; }
+    .new-menu { position: absolute; top: calc(100% + 4px); left: 0; min-width: 11.5rem; background: #fff; border: 1px solid #e8eaed; border-radius: 12px; box-shadow: 0 8px 24px rgba(15,23,42,0.12); padding: 4px; z-index: 30; }
+    .new-menu button { display: block; width: 100%; text-align: left; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: #334155; background: transparent; border: none; cursor: pointer; }
+    .new-menu button:hover { background: #f1f5f9; color: #0f766e; }
+    .new-menu .sub { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .form-section { border: 1px solid #e8eaed; border-radius: 12px; overflow: hidden; background: #fff; }
+    .form-section-hd { padding: 10px 14px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600; color: #1e293b; }
+    .form-section-bd { padding: 14px; }
+    .form-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; }
+    .form-label .req { color: #ef4444; margin-left: 2px; }
+    .form-ctrl { width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; padding: 9px 12px; font-size: 13px; color: #0f172a; background: #fff; transition: border-color .15s, box-shadow .15s; }
+    .form-ctrl:hover { border-color: #cbd5e1; }
+    .form-ctrl:focus { outline: none; border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,0.12); }
+    textarea.form-ctrl { resize: vertical; min-height: 72px; line-height: 1.5; }
+    .seg { display: inline-flex; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #fff; }
+    .seg button { padding: 8px 14px; font-size: 13px; border: none; cursor: pointer; background: transparent; color: #64748b; }
+    .seg button + button { border-left: 1px solid #e2e8f0; }
+    .seg .mode-on { background: #0f766e; color: #fff; }
+    .seg .mode-off { background: #fff; color: #64748b; }
+    .seg .mode-off:hover { background: #f8fafc; color: #0f766e; }
+    .attach-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 18px 12px; border: 1px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; cursor: pointer; transition: border-color .15s, background .15s; }
+    .attach-zone:hover { border-color: #0f766e; background: #f0fdfa; }
+    .btn-ghost { border: 1px solid #e2e8f0; background: #fff; color: #64748b; border-radius: 10px; padding: 8px 16px; font-size: 13px; }
+    .btn-ghost:hover { background: #f8fafc; color: #334155; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800" data-page="mine" data-title="任务管理">
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <p class="text-xs text-slate-500 mb-3">树结构一级为<strong>计划</strong>，其下为关联<strong>任务</strong>。新建可选<strong>自建</strong>或<strong>下达给他人</strong>（部门长：本部门人员 / 关联计划部门长）。行内可改名称、优先级、处理人、状态、起止；耗费工时按每天 8 小时自动算。</p>
+    <p class="text-xs text-slate-500 mb-3">点<strong>新建任务</strong>可选关联计划/临时；支持备注与附件（仅记文件名）。<strong>点任务名称</strong>看详情；悬浮可编辑/删除。行内可改优先级、处理人、状态、起止。</p>
 
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 mb-4">
       <div class="flex flex-wrap gap-1 text-sm" id="statusTabs"></div>
@@ -59,7 +90,16 @@
 
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <div class="flex flex-wrap gap-2">
-        <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>新建任务</button>
+        <div class="relative inline-block" id="newMenuWrap">
+          <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl inline-flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>新建任务<i class="fa-solid fa-chevron-down text-[10px] opacity-80"></i>
+          </button>
+          <div id="newMenu" class="new-menu hidden">
+            <button type="button" id="btnNewPlan">关联计划任务<span class="sub">须挂计划，可设上级任务</span></button>
+            <button type="button" id="btnNewTemp">临时任务<span class="sub">不挂计划，归入临时分组</span></button>
+          </div>
+        </div>
+        <a id="btnImportTask" href="计划导入_page.html?mode=task" class="hidden text-sm px-3 py-2 rounded-xl border border-teal-200 bg-teal-50 text-teal-800"><i class="fa-solid fa-file-import mr-1"></i>导入任务</a>
         <button type="button" id="btnCollapse" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">一键收起</button>
         <button type="button" id="btnReset" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">重置</button>
       </div>
@@ -78,77 +118,147 @@
       </table>
     </div>
 
-    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal')"></div>
-      <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
-        <div class="px-6 py-4 border-b flex justify-between items-center">
-          <h3 class="text-lg font-semibold" id="modalTitle">新建任务</h3>
-          <button type="button" onclick="BMSUI.closeModal('modal')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+    <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6">
+      <div class="absolute inset-0 bg-slate-900/45" onclick="BMSUI.closeModal('modal')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 shadow-2xl">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+          <div class="min-w-0">
+            <h3 class="text-lg font-semibold text-slate-900 leading-snug" id="modalTitle">新建任务</h3>
+            <p class="text-xs text-slate-500 mt-1" id="modalSub">填写任务信息后保存</p>
+          </div>
+          <button type="button" onclick="BMSUI.closeModal('modal')" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600 shrink-0" title="关闭">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3 text-sm">
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 bg-slate-50/50">
           <input type="hidden" id="editId" />
-          <div id="createModeWrap" class="hidden">
-            <label class="block text-slate-600 mb-1">创建方式</label>
-            <div class="inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm">
-              <button type="button" id="btnModeSelf" class="px-3 py-1.5 mode-on">自建（给我）</button>
-              <button type="button" id="btnModeAssign" class="px-3 py-1.5 mode-off">下达给他人</button>
-            </div>
-            <p class="text-[11px] text-slate-400 mt-1" id="createModeHint">自建：处理人为本人，来源「自建」</p>
-          </div>
-          <div>
-            <label class="block text-slate-600 mb-1">任务名称 <span class="text-red-500">*</span></label>
-            <input id="fName" class="w-full border rounded-xl px-3 py-2.5" />
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-slate-600 mb-1">任务类型</label>
-              <select id="fType" class="w-full border rounded-xl px-3 py-2.5">
-                <option>生产作业</option><option>设备维保</option><option>安全环保</option><option>市场商务</option><option>其他</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-slate-600 mb-1">优先级</label>
-              <select id="fPrio" class="w-full border rounded-xl px-3 py-2.5">
-                <option>P0</option><option selected>P1</option><option>P2</option>
-              </select>
+          <p id="taskKindBadge" class="hidden text-xs text-slate-500 flex items-center gap-2">
+            <span class="tag tag-muted" id="taskKindBadgeText">临时任务</span>
+            <span>类别由入口决定，编辑时不可更改</span>
+          </p>
+
+          <div class="form-section hidden" id="createModeWrap">
+            <div class="form-section-hd">创建方式</div>
+            <div class="form-section-bd">
+              <div class="seg" id="createModeSeg">
+                <button type="button" id="btnModeSelf" class="mode-on">自建（给我）</button>
+                <button type="button" id="btnModeAssign" class="mode-off">下达给他人</button>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-2" id="createModeHint">自建：处理人为本人，来源「自建」</p>
+              <div id="ownerWrap" class="hidden mt-3">
+                <label class="form-label">处理人 <span class="req">*</span></label>
+                <select id="fOwner" class="form-ctrl"></select>
+              </div>
             </div>
           </div>
-          <div>
-            <label class="block text-slate-600 mb-1">关联计划 <span class="text-red-500">*</span></label>
-            <select id="fAnnual" class="w-full border rounded-xl px-3 py-2.5"></select>
-          </div>
-          <div id="ownerWrap" class="hidden">
-            <label class="block text-slate-600 mb-1">处理人 <span class="text-red-500">*</span></label>
-            <select id="fOwner" class="w-full border rounded-xl px-3 py-2.5"></select>
-          </div>
-          <div>
-            <label class="block text-slate-600 mb-1">上级任务（可选，同计划下子任务）</label>
-            <select id="fParent" class="w-full border rounded-xl px-3 py-2.5"><option value="">无</option></select>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-slate-600 mb-1">开始时间 <span class="text-red-500">*</span></label>
-              <input type="date" id="fStart" value="2026-08-18" class="w-full border rounded-xl px-3 py-2.5" />
+
+          <div class="form-section">
+            <div class="form-section-hd">基本信息</div>
+            <div class="form-section-bd space-y-3">
+              <div>
+                <label class="form-label">任务名称 <span class="req">*</span></label>
+                <input id="fName" class="form-ctrl" placeholder="请输入任务名称" />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">任务类型</label>
+                  <select id="fType" class="form-ctrl">
+                    <option>生产作业</option><option>设备维保</option><option>安全环保</option><option>市场商务</option><option>其他</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label">优先级</label>
+                  <select id="fPrio" class="form-ctrl">
+                    <option>P0</option><option selected>P1</option><option>P2</option>
+                  </select>
+                </div>
+              </div>
+              <div id="editExtra" class="hidden">
+                <label class="form-label">完成状态</label>
+                <select id="fStatus" class="form-ctrl">
+                  <option>未开始</option><option>进行中</option><option>已完成</option><option>已关闭</option><option>延期</option>
+                </select>
+                <p class="text-[11px] text-slate-400 mt-1.5">「已关闭」须在「已完成」之后</p>
+              </div>
             </div>
-            <div>
-              <label class="block text-slate-600 mb-1">结束时间 <span class="text-red-500">*</span></label>
-              <input type="date" id="fEnd" value="2026-08-31" class="w-full border rounded-xl px-3 py-2.5" />
+          </div>
+
+          <div class="form-section" id="planFieldsWrap">
+            <div class="form-section-hd">计划与归属</div>
+            <div class="form-section-bd space-y-3">
+              <div>
+                <label class="form-label">关联计划 <span class="req" id="annualReq">*</span></label>
+                <select id="fAnnual" class="form-ctrl"></select>
+              </div>
+              <div>
+                <label class="form-label">上级任务 <span class="text-slate-400 font-normal">（可选）</span></label>
+                <select id="fParent" class="form-ctrl"><option value="">无</option></select>
+              </div>
             </div>
           </div>
-          <p class="text-[11px] text-slate-400" id="fHoursHint">耗费工时：—（按每天 8 小时自动计算）</p>
-          <div id="editExtra" class="hidden space-y-3">
-            <div>
-              <label class="block text-slate-600 mb-1">完成状态</label>
-              <select id="fStatus" class="w-full border rounded-xl px-3 py-2.5">
-                <option>未开始</option><option>进行中</option><option>已完成</option><option>已关闭</option><option>延期</option>
-              </select>
-              <p class="text-[11px] text-slate-400 mt-1">「已关闭」须在「已完成」之后</p>
+
+          <div class="form-section">
+            <div class="form-section-hd">时间与工时</div>
+            <div class="form-section-bd">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">开始时间 <span class="req">*</span></label>
+                  <input type="date" id="fStart" value="2026-08-18" class="form-ctrl" />
+                </div>
+                <div>
+                  <label class="form-label">结束时间 <span class="req">*</span></label>
+                  <input type="date" id="fEnd" value="2026-08-31" class="form-ctrl" />
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-2.5" id="fHoursHint">耗费工时：—（按每天 8 小时自动计算）</p>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-hd">备注与附件</div>
+            <div class="form-section-bd space-y-3">
+              <div>
+                <label class="form-label">备注</label>
+                <textarea id="fRemark" rows="3" class="form-ctrl" placeholder="补充说明、风险或协同要点（可选）"></textarea>
+              </div>
+              <div>
+                <label class="form-label">附件 <span class="text-slate-400 font-normal">（仅记录文件名）</span></label>
+                <label class="attach-zone" for="fAttach">
+                  <i class="fa-solid fa-cloud-arrow-up text-slate-400 text-lg"></i>
+                  <span class="text-sm text-slate-600">点击添加附件</span>
+                  <span class="text-[11px] text-slate-400">支持多选 · 原型不上传实体文件</span>
+                  <input type="file" id="fAttach" class="hidden" multiple />
+                </label>
+                <div id="fAttachList" class="flex flex-wrap gap-2 mt-2.5"></div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="px-6 py-4 border-t flex justify-end gap-2">
-          <button type="button" onclick="BMSUI.closeModal('modal')" class="text-slate-500 px-3 text-sm">取消</button>
-          <button type="button" onclick="saveTask()" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">保存</button>
+        <div class="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 shrink-0 bg-slate-50/80">
+          <button type="button" onclick="BMSUI.closeModal('modal')" class="btn-ghost">取消</button>
+          <button type="button" onclick="saveTask()" class="btn-cta text-white px-4 py-2 rounded-[10px] text-sm">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 任务详情（对齐公司计划详情大弹窗） -->
+    <div id="modalTaskDetail" class="fixed inset-0 z-[90] hidden items-center justify-center p-3 sm:p-6">
+      <div class="absolute inset-0 bg-slate-900/45" data-task-detail-close></div>
+      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+          <div class="min-w-0">
+            <div class="text-[11px] text-slate-400" id="tdBread"></div>
+            <h3 class="text-lg font-semibold text-slate-900 leading-snug mt-0.5" id="tdTitle">任务详情</h3>
+            <p class="text-xs text-slate-500 mt-1" id="tdSub"></p>
+          </div>
+          <button type="button" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600 shrink-0" data-task-detail-close title="关闭">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="px-5 py-2 border-b border-slate-50 flex flex-wrap gap-2 shrink-0" id="tdActions"></div>
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4" id="tdBody"></div>
+        <div class="px-5 py-3 border-t border-slate-100 flex justify-end shrink-0 bg-slate-50/80">
+          <button type="button" class="text-sm px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600" data-task-detail-close>关闭</button>
         </div>
       </div>
     </div>
@@ -169,11 +279,21 @@
   let editCell = null;
   /** 新建：self | assign */
   let createMode = "self";
+  /** 新建类别：计划 | 临时 */
+  let taskKind = "计划";
+  /** 弹窗附件草稿（仅文件名） */
+  let draftAttachments = [];
+  let detailTaskId = null;
 
   const SCOPE_TABS_HEAD = [
     { id: "mine", label: "我负责的" },
     { id: "dept", label: "本部门" },
   ];
+  const SCOPE_TABS_ADMIN = [
+    { id: "all", label: "全部任务" },
+    { id: "mine", label: "我负责的" },
+  ];
+  let deptFilterAdmin = "";
   const STATUS_TABS = [
     { id: "open", label: "未关闭" },
     { id: "未开始", label: "未开始" },
@@ -202,7 +322,17 @@
     return editCell && editCell.id === id && editCell.field === field;
   }
 
+  function canAssignTasks() {
+    return user.role === "部门长" || BMS4.isPlanAdmin(user);
+  }
+
   function basePool() {
+    if (BMS4.isPlanAdmin(user)) {
+      if (scopeTab === "mine") return BMS4.tasksForUser(user.id);
+      let list = BMS4.taskItems.slice();
+      if (deptFilterAdmin) list = list.filter((t) => t.dept === deptFilterAdmin);
+      return list;
+    }
     if (scopeTab === "dept" && user.role === "部门长") return BMS4.tasksForDept(user.dept);
     return BMS4.tasksForUser(user.id);
   }
@@ -248,8 +378,9 @@
 
   function filteredTasks() {
     return basePool().filter((t) => {
-      const plan = BMS4.annualById(t.annualId);
-      return matchStatusFixed(t) && inDateRange(t) && matchKw(t, plan ? plan.name : "");
+      const plan = isTemp(t) ? null : BMS4.annualById(t.annualId);
+      const planName = isTemp(t) ? "临时任务" : plan ? plan.name : "";
+      return matchStatusFixed(t) && inDateRange(t) && matchKw(t, planName);
     });
   }
 
@@ -258,10 +389,13 @@
   }
 
 
-  /** 树：一级=计划，其下=任务（可再挂子任务） */
+  function isTemp(t) {
+    return BMS4.isTempTask ? BMS4.isTempTask(t) : !t.annualId;
+  }
+
+  /** 树：一级=计划（或临时任务分组），其下=任务 */
   function buildTreeRows(pool) {
     const hitIds = new Set(pool.map((t) => t.id));
-    // 补齐同计划下为展示子任务所需的祖先任务
     const allDeptOrMine = basePool();
     const need = new Set(hitIds);
     pool.forEach((t) => {
@@ -273,23 +407,26 @@
       }
     });
     const taskPool = allDeptOrMine.filter((t) => need.has(t.id) || hitIds.has(t.id));
+    const planTasks = taskPool.filter((t) => !isTemp(t));
+    const tempTasks = taskPool.filter((t) => isTemp(t));
 
-    const planIds = [...new Set(taskPool.map((t) => t.annualId))];
+    const planIds = [...new Set(planTasks.map((t) => t.annualId).filter(Boolean))];
     const plans = planIds
       .map((id) => BMS4.annualById(id))
       .filter(Boolean)
       .sort((a, b) => a.name.localeCompare(b.name, "zh"));
 
     const rows = [];
-    plans.forEach((plan, pi) => {
-      const under = taskPool.filter((t) => t.annualId === plan.id);
+    let groupIdx = 0;
+
+    function appendTaskGroup(planOrGroup, under, idxLabel) {
       const roots = under.filter((t) => !t.parentId || !under.some((x) => x.id === t.parentId));
       const doneCnt = under.filter((t) => t.status === DONE || t.status === CLOSED).length;
-      const planKey = "plan:" + plan.id;
+      const planKey = planOrGroup.isTempGroup ? planOrGroup.id : "plan:" + planOrGroup.id;
       rows.push({
         kind: "plan",
-        plan,
-        idx: String(pi + 1),
+        plan: planOrGroup,
+        idx: idxLabel,
         depth: 0,
         childCount: roots.length,
         doneKids: doneCnt,
@@ -298,14 +435,13 @@
         collapseKey: planKey,
       });
       if (collapsed.has(planKey)) return;
-
       function walkTask(node, prefix, depth) {
         const kids = taskChildren(node.id, under);
         const dk = kids.filter((k) => k.status === DONE || k.status === CLOSED).length;
         rows.push({
           kind: "task",
           task: node,
-          plan,
+          plan: planOrGroup.isTempGroup ? null : planOrGroup,
           idx: prefix,
           depth,
           childCount: kids.length,
@@ -315,8 +451,26 @@
         if (collapsed.has(node.id)) return;
         kids.forEach((k, i) => walkTask(k, prefix + "." + (i + 1), depth + 1));
       }
-      roots.forEach((r, i) => walkTask(r, pi + 1 + "." + (i + 1), 1));
+      roots.forEach((r, i) => walkTask(r, idxLabel + "." + (i + 1), 1));
+    }
+
+    plans.forEach((plan) => {
+      groupIdx += 1;
+      appendTaskGroup(
+        plan,
+        planTasks.filter((t) => t.annualId === plan.id),
+        String(groupIdx)
+      );
     });
+
+    if (tempTasks.length) {
+      groupIdx += 1;
+      appendTaskGroup(
+        { id: "__temp__", name: "临时任务", status: "—", isTempGroup: true },
+        tempTasks,
+        String(groupIdx)
+      );
+    }
     return rows;
   }
 
@@ -324,17 +478,20 @@
     return pool
       .slice()
       .sort((a, b) => {
+        const ta = isTemp(a);
+        const tb = isTemp(b);
+        if (ta !== tb) return ta ? 1 : -1;
         const pa = BMS4.annualById(a.annualId);
         const pb = BMS4.annualById(b.annualId);
-        const na = pa ? pa.name : "";
-        const nb = pb ? pb.name : "";
+        const na = ta ? "临时任务" : pa ? pa.name : "";
+        const nb = tb ? "临时任务" : pb ? pb.name : "";
         const c = na.localeCompare(nb, "zh");
         return c !== 0 ? c : (a.name || "").localeCompare(b.name || "", "zh");
       })
       .map((t, i) => ({
         kind: "task",
         task: t,
-        plan: BMS4.annualById(t.annualId),
+        plan: isTemp(t) ? null : BMS4.annualById(t.annualId),
         idx: String(i + 1),
         depth: 0,
         childCount: 0,
@@ -368,7 +525,11 @@
   }
 
   function renderTabs() {
-    const scopes = user.role === "部门长" ? SCOPE_TABS_HEAD : [{ id: "mine", label: "我负责的" }];
+    const scopes = BMS4.isPlanAdmin(user)
+      ? SCOPE_TABS_ADMIN
+      : user.role === "部门长"
+        ? SCOPE_TABS_HEAD
+        : [{ id: "mine", label: "我负责的" }];
     let html = scopes
       .map((t) => `<button type="button" data-scope="${t.id}" class="px-3 py-2.5 ${scopeTab === t.id ? "tab-on" : "tab-off"}">${t.label}</button>`)
       .join("");
@@ -425,6 +586,24 @@
         });
       };
     });
+    document.querySelectorAll("[data-task-detail]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        openTaskDetail(el.getAttribute("data-task-detail"));
+      };
+    });
+    document.querySelectorAll("[data-task-edit]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        openEdit(el.getAttribute("data-task-edit"));
+      };
+    });
+    document.querySelectorAll("[data-task-del]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        deleteTask(el.getAttribute("data-task-del"));
+      };
+    });
     bindActiveEditor();
   }
 
@@ -436,19 +615,22 @@
 
   function renderPlanRow(row) {
     const p = row.plan;
+    const title = p.isTempGroup
+      ? `<span class="font-medium text-slate-800"><span class="tag tag-muted mr-1">临时</span>${escapeHtml(p.name)}</span>`
+      : BMSUI.planNameLink(BMS4.planPathLabel ? BMS4.planPathLabel(p.id) : p.name, { id: p.id, kind: "dept" });
     return `<tr class="plan-row">
       <td class="text-slate-500 whitespace-nowrap">${row.idx}</td>
       <td>
         <div class="flex items-center gap-1">
           ${caret(row.collapseKey, row.childCount > 0)}
-          <span class="font-medium text-slate-800">${escapeHtml(BMS4.planPathLabel ? BMS4.planPathLabel(p.id) : p.name)}</span>
+          ${title}
           <span class="frac">${row.doneKids}/${row.totalKids}</span>
         </div>
       </td>
       <td class="text-slate-400">—</td>
       <td>—</td>
       <td>—</td>
-      <td>${statusTag(p.status)}</td>
+      <td>${p.isTempGroup ? "—" : statusTag(p.status)}</td>
       <td>—</td>
       <td>—</td>
       <td class="text-right text-slate-600 tabular-nums">${row.workHours || 0}h</td>
@@ -463,7 +645,18 @@
     const planCell =
       viewMode === "flat"
         ? `<td class="text-slate-700 whitespace-nowrap max-w-[14rem]">
-            <span class="tag tag-muted" title="${escapeAttr(row.plan ? row.plan.name : "")}">${escapeHtml(row.plan ? row.plan.name : "—")}</span>
+            ${
+              isTemp(t)
+                ? '<span class="tag tag-muted">临时</span>'
+                : row.plan
+                  ? BMSUI.planNameLink(row.plan.name, {
+                      id: row.plan.id,
+                      kind: "dept",
+                      className: "tag tag-muted text-teal-700 hover:underline",
+                      title: row.plan.name,
+                    })
+                  : '<span class="tag tag-muted">—</span>'
+            }
           </td>`
         : "";
     return `<tr>
@@ -472,6 +665,7 @@
       <td>
         <div class="flex items-center gap-1" style="padding-left:${indent}px">
           ${viewMode === "tree" ? caret(row.collapseKey, row.childCount > 0) : ""}
+          ${isTemp(t) && viewMode === "tree" ? '<span class="tag tag-muted mr-1 shrink-0">临时</span>' : ""}
           ${cellName(t)}
           ${row.childCount ? `<span class="frac">${row.doneKids}/${row.childCount}</span>` : ""}
         </div>
@@ -488,13 +682,178 @@
   }
 
   function cellName(t) {
-    if (isEditing(t.id, "name")) {
-      return `<input class="inline-input" style="min-width:12rem" data-inline="name" data-id="${t.id}" data-inline-focus value="${escapeAttr(t.name)}" />`;
-    }
     return `<div class="name-wrap">
-      <span class="name-link cell-edit" data-start-edit="name" data-id="${t.id}">${escapeHtml(t.name)}</span>
-      <i class="fa-solid fa-pen pencil" data-start-edit="name" data-id="${t.id}"></i>
+      <span class="name-link" data-task-detail="${t.id}" title="查看详情">${escapeHtml(t.name)}</span>
+      <span class="name-tools">
+        <button type="button" class="icon-btn" title="编辑" data-task-edit="${t.id}"><i class="fa-solid fa-pen"></i></button>
+        <button type="button" class="icon-btn danger" title="删除" data-task-del="${t.id}"><i class="fa-regular fa-trash-can"></i></button>
+      </span>
     </div>`;
+  }
+
+  function renderAttachList() {
+    const box = document.getElementById("fAttachList");
+    if (!box) return;
+    if (!draftAttachments.length) {
+      box.innerHTML = "";
+      return;
+    }
+    box.innerHTML = draftAttachments
+      .map(
+        (a, i) =>
+          `<span class="attach-chip"><i class="fa-regular fa-file"></i>${escapeHtml(a.name)}<button type="button" data-rm-attach="${i}" title="移除"><i class="fa-solid fa-xmark"></i></button></span>`
+      )
+      .join("");
+    box.querySelectorAll("[data-rm-attach]").forEach((btn) => {
+      btn.onclick = () => {
+        draftAttachments.splice(Number(btn.getAttribute("data-rm-attach")), 1);
+        renderAttachList();
+      };
+    });
+  }
+
+  function metaItem(label, val) {
+    return `<div><div class="text-[11px] text-slate-400">${label}</div><div class="text-sm text-slate-800 mt-0.5">${val}</div></div>`;
+  }
+
+  function renderTaskOpLogs(taskId) {
+    const logs =
+      BMS4.getTaskChangeLogs && typeof BMS4.getTaskChangeLogs === "function"
+        ? BMS4.getTaskChangeLogs(taskId)
+        : [];
+    const body = logs.length
+      ? logs
+          .map((l, i) => {
+            const isLast = i === logs.length - 1;
+            return `<div class="flex gap-3">
+              <div class="flex flex-col items-center shrink-0 w-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-teal-600 mt-1.5 ring-2 ring-teal-100"></span>
+                ${isLast ? "" : '<span class="flex-1 w-px bg-slate-200 my-1"></span>'}
+              </div>
+              <div class="pb-4 min-w-0 flex-1">
+                <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                  <div class="text-sm text-slate-800">
+                    <span class="font-medium">${escapeHtml(l.field || "变更")}</span>
+                    <span class="text-slate-400 mx-1">·</span>
+                    <span class="text-slate-500">${escapeHtml(l.from || "—")}</span>
+                    <span class="text-slate-400 mx-1">→</span>
+                    <span class="text-slate-800 font-medium">${escapeHtml(l.to || "—")}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 whitespace-nowrap">${escapeHtml(l.at || "")} · ${escapeHtml(
+              l.operator || "—"
+            )}</div>
+                </div>
+                ${
+                  l.note
+                    ? `<div class="text-xs text-slate-500 mt-1 leading-relaxed">${escapeHtml(l.note)}</div>`
+                    : ""
+                }
+              </div>
+            </div>`;
+          })
+          .join("")
+      : `<div class="px-1 py-6 text-center text-sm text-slate-400">暂无操作记录</div>`;
+    return `<div class="rounded-xl border border-slate-200 overflow-hidden">
+      <div class="px-3 py-2 bg-slate-50 text-sm font-medium text-slate-800 flex justify-between items-center gap-2">
+        <span>操作记录</span>
+        <span class="text-xs text-slate-400 font-normal">共 ${logs.length} 条 · 只读</span>
+      </div>
+      <div class="px-4 pt-3 max-h-64 overflow-y-auto">${body}</div>
+    </div>`;
+  }
+
+  function closeTaskDetail() {
+    const root = document.getElementById("modalTaskDetail");
+    if (!root) return;
+    root.classList.add("hidden");
+    root.classList.remove("flex");
+    detailTaskId = null;
+  }
+
+  function openTaskDetail(id) {
+    const t = BMS4.taskItems.find((x) => x.id === id);
+    if (!t) return BMSUI.toast("未找到该任务", false);
+    detailTaskId = id;
+    const ou = BMS4.userById(t.ownerId);
+    const plan = !isTemp(t) && t.annualId ? BMS4.annualById(t.annualId) : null;
+    const parent = t.parentId ? BMS4.taskItems.find((x) => x.id === t.parentId) : null;
+    const kids = BMS4.taskItems.filter((x) => x.parentId === t.id);
+    const atts = Array.isArray(t.attachments) ? t.attachments : [];
+    document.getElementById("tdBread").textContent = isTemp(t) ? "临时任务" : "关联计划任务";
+    document.getElementById("tdTitle").textContent = t.name;
+    document.getElementById("tdSub").textContent =
+      (t.dept || "") + " · " + (ou ? ou.name : "—") + " · " + (t.status || "—");
+    document.getElementById("tdActions").innerHTML = `
+      <button type="button" class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-teal-700" id="tdBtnEdit"><i class="fa-solid fa-pen mr-1"></i>编辑</button>
+      <button type="button" class="text-sm px-3 py-1.5 rounded-xl border border-rose-100 bg-white text-rose-600" id="tdBtnDel"><i class="fa-regular fa-trash-can mr-1"></i>删除</button>`;
+    document.getElementById("tdBody").innerHTML = `
+      <div class="rounded-xl border border-slate-200 p-4">
+        <div class="text-sm font-medium text-slate-800 mb-3">基本信息</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          ${metaItem("类别", isTemp(t) ? '<span class="tag tag-muted">临时</span>' : '<span class="tag tag-muted">关联计划</span>')}
+          ${metaItem(
+            "关联计划",
+            plan
+              ? BMSUI.planNameLink(plan.name, { id: plan.id, kind: "dept" })
+              : "—"
+          )}
+          ${metaItem("上级任务", parent ? escapeHtml(parent.name) : "—")}
+          ${metaItem("任务类型", escapeHtml(t.taskType || "其他"))}
+          ${metaItem("优先级", prioTag(t.priority))}
+          ${metaItem("状态", statusTag(t.status))}
+          ${metaItem("处理人", ou ? escapeHtml(ou.name) : "—")}
+          ${metaItem("来源", escapeHtml(t.source || "—"))}
+          ${metaItem("开始日", escapeHtml(BMS4.taskStartDate(t) || "—"))}
+          ${metaItem("结束日", escapeHtml(BMS4.taskEndDate(t) || "—"))}
+          ${metaItem("耗费工时", hoursLabel(t))}
+          ${metaItem("创建时间", escapeHtml(t.createdAt || "—"))}
+          ${metaItem("子任务", kids.length + " 条")}
+          ${metaItem("部门", escapeHtml(t.dept || "—"))}
+        </div>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4">
+        <div class="text-sm font-medium text-slate-800 mb-2">备注</div>
+        <div class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtml(t.remark || "—")}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 overflow-hidden">
+        <div class="px-3 py-2 bg-slate-50 text-sm font-medium text-slate-800 flex justify-between">
+          <span>附件</span><span class="text-xs text-slate-400 font-normal">共 ${atts.length} 个 · 仅文件名</span>
+        </div>
+        <div class="px-4 py-3">
+          ${
+            atts.length
+              ? `<ul class="space-y-2 text-sm text-slate-700">${atts
+                  .map(
+                    (a) =>
+                      `<li class="flex items-center gap-2"><i class="fa-regular fa-file text-slate-400"></i><span>${escapeHtml(
+                        a.name || a
+                      )}</span></li>`
+                  )
+                  .join("")}</ul>`
+              : '<div class="text-sm text-slate-400 py-4 text-center">暂无附件</div>'
+          }
+        </div>
+      </div>
+      ${renderTaskOpLogs(id)}`;
+    document.getElementById("tdBtnEdit").onclick = () => {
+      closeTaskDetail();
+      openEdit(id);
+    };
+    document.getElementById("tdBtnDel").onclick = () => deleteTask(id);
+    const root = document.getElementById("modalTaskDetail");
+    root.classList.remove("hidden");
+    root.classList.add("flex");
+  }
+
+  function deleteTask(id) {
+    const t = BMS4.taskItems.find((x) => x.id === id);
+    if (!t) return;
+    if (!confirm("确认删除任务「" + t.name + "」？")) return;
+    const r = BMS4.removeTask(id);
+    if (!r || !r.ok) return BMSUI.toast((r && r.reason) || "删除失败", false);
+    if (detailTaskId === id) closeTaskDetail();
+    BMSUI.toast("已删除");
+    render();
   }
 
   function cellSelect(t, field, displayHtml, options) {
@@ -601,23 +960,55 @@
     }
   }
 
+  function applyTaskKindUI(kind) {
+    taskKind = kind === "临时" ? "临时" : "计划";
+    const wrap = document.getElementById("planFieldsWrap");
+    if (wrap) wrap.classList.toggle("hidden", taskKind === "临时");
+    if (createMode === "assign") fillOwners();
+  }
+
+  function modalCreateTitle() {
+    if (createMode === "assign") {
+      return taskKind === "临时" ? "下达临时任务" : "下达任务";
+    }
+    return taskKind === "临时" ? "新建临时任务" : "新建任务";
+  }
+
+  function modalCreateSub() {
+    if (document.getElementById("editId").value) {
+      return taskKind === "临时" ? "编辑临时任务信息" : "编辑关联计划任务信息";
+    }
+    if (createMode === "assign") {
+      return taskKind === "临时" ? "选择处理人并下达临时任务" : "选择处理人并下达关联计划任务";
+    }
+    return taskKind === "临时" ? "不挂计划，保存后归入「临时任务」分组" : "须选择关联计划，可挂上级任务";
+  }
+
   function setCreateMode(mode) {
-    createMode = mode === "assign" && user.role === "部门长" ? "assign" : "self";
+    createMode = mode === "assign" && canAssignTasks() ? "assign" : "self";
     const selfBtn = document.getElementById("btnModeSelf");
     const assignBtn = document.getElementById("btnModeAssign");
     if (selfBtn && assignBtn) {
-      selfBtn.className = "px-3 py-1.5 " + (createMode === "self" ? "mode-on" : "mode-off");
-      assignBtn.className = "px-3 py-1.5 " + (createMode === "assign" ? "mode-on" : "mode-off");
+      selfBtn.className = createMode === "self" ? "mode-on" : "mode-off";
+      assignBtn.className = createMode === "assign" ? "mode-on" : "mode-off";
     }
     const hint = document.getElementById("createModeHint");
     if (hint) {
       hint.textContent =
         createMode === "assign"
-          ? "下达：可选本部门人员或关联计划涉及部门的部门长；来源「下达」"
+          ? BMS4.isPlanAdmin(user)
+            ? "下达：可选全公司人员；来源「下达」"
+            : taskKind === "临时"
+              ? "下达：可选本部门人员；来源「下达」"
+              : "下达：可选本部门人员或关联计划涉及部门的部门长；来源「下达」"
           : "自建：处理人为本人，来源「自建」";
     }
     document.getElementById("ownerWrap").classList.toggle("hidden", createMode !== "assign");
-    document.getElementById("modalTitle").textContent = createMode === "assign" ? "下达任务" : "新建任务";
+    if (!document.getElementById("editId").value) {
+      document.getElementById("modalTitle").textContent = modalCreateTitle();
+      const sub = document.getElementById("modalSub");
+      if (sub) sub.textContent = modalCreateSub();
+    }
     fillOwners();
   }
 
@@ -626,8 +1017,18 @@
     if (!sel) return;
     sel.innerHTML = "";
     if (createMode !== "assign") return;
-    const aid = document.getElementById("fAnnual").value;
-    const plan = BMS4.planById(aid);
+    const aid = taskKind === "计划" ? document.getElementById("fAnnual").value : "";
+    const plan = aid ? BMS4.planById(aid) : null;
+    if (BMS4.isPlanAdmin(user)) {
+      BMS4.USERS.filter((x) => x.role !== "总经理").forEach((x) => {
+        const o = document.createElement("option");
+        o.value = x.id;
+        o.textContent = x.role + " · " + x.name + "（" + x.dept + "）";
+        if (x.id === user.id) o.textContent += "（我）";
+        sel.appendChild(o);
+      });
+      return;
+    }
     BMS4.USERS.filter((x) => x.dept === user.dept && x.role !== "总经理").forEach((x) => {
       const o = document.createElement("option");
       o.value = x.id;
@@ -635,7 +1036,7 @@
       if (x.id === user.id) o.textContent += "（我）";
       sel.appendChild(o);
     });
-    if (plan && plan.companyPlanId) {
+    if (taskKind === "计划" && plan && plan.companyPlanId) {
       BMS4.PLAN_ITEMS.filter((x) => x.companyPlanId === plan.companyPlanId && x.dept !== user.dept).forEach((x) => {
         const h = BMS4.USERS.find((uu) => uu.dept === x.dept && uu.role === "部门长");
         if (h && ![...sel.options].some((op) => op.value === h.id)) {
@@ -651,10 +1052,13 @@
   function fillAnnualAndParent(excludeId, annualId) {
     const ann = document.getElementById("fAnnual");
     ann.innerHTML = "";
-    BMS4.plansForDept(user.dept).forEach((a) => {
+    const plans = BMS4.isPlanAdmin(user)
+      ? BMS4.PLAN_ITEMS.slice().sort((a, b) => (a.dept || "").localeCompare(b.dept || "", "zh") || (a.name || "").localeCompare(b.name || "", "zh"))
+      : BMS4.plansForDept(user.dept);
+    plans.forEach((a) => {
       const o = document.createElement("option");
       o.value = a.id;
-      o.textContent = BMS4.planPathLabel(a.id);
+      o.textContent = (BMS4.isPlanAdmin(user) ? a.dept + " · " : "") + BMS4.planPathLabel(a.id);
       ann.appendChild(o);
     });
     if (annualId) ann.value = annualId;
@@ -662,7 +1066,8 @@
       const psel = document.getElementById("fParent");
       const aid = ann.value;
       psel.innerHTML = '<option value="">无</option>';
-      BMS4.tasksForDept(user.dept)
+      const parentPool = BMS4.isPlanAdmin(user) ? BMS4.taskItems : BMS4.tasksForDept(user.dept);
+      parentPool
         .filter((t) => t.annualId === aid && t.id !== excludeId)
         .forEach((t) => {
           const o = document.createElement("option");
@@ -676,28 +1081,43 @@
     refreshParent();
   }
 
-  function openNew(preferAssign) {
+  function openNew(preferAssign, kind) {
     document.getElementById("editId").value = "";
     document.getElementById("editExtra").classList.add("hidden");
+    document.getElementById("taskKindBadge").classList.add("hidden");
     document.getElementById("fName").value = "";
+    document.getElementById("fRemark").value = "";
+    draftAttachments = [];
+    renderAttachList();
+    const fin = document.getElementById("fAttach");
+    if (fin) fin.value = "";
     document.getElementById("fStart").value = "2026-08-18";
     document.getElementById("fEnd").value = "2026-08-31";
     refreshModalHoursHint();
     fillAnnualAndParent(null);
     const typeMap = { 生产操作部: "生产作业", 设备技术部: "设备维保", 安全监督部: "安全环保", 市场开发部: "市场商务" };
     document.getElementById("fType").value = typeMap[user.dept] || "其他";
-    const canAssign = user.role === "部门长";
+    const canAssign = canAssignTasks();
     document.getElementById("createModeWrap").classList.toggle("hidden", !canAssign);
+    applyTaskKindUI(kind === "临时" ? "临时" : "计划");
     setCreateMode(preferAssign && canAssign ? "assign" : "self");
+    document.getElementById("modalTitle").textContent = modalCreateTitle();
+    document.getElementById("modalSub").textContent = modalCreateSub();
     BMSUI.openModal("modal");
   }
 
   function openEdit(id) {
     const t = BMS4.taskItems.find((x) => x.id === id);
     if (!t) return;
-    document.getElementById("modalTitle").textContent = "更新任务";
+    const kind = isTemp(t) ? "临时" : "计划";
+    document.getElementById("modalTitle").textContent = kind === "临时" ? "更新临时任务" : "更新任务";
+    document.getElementById("modalSub").textContent = kind === "临时" ? "编辑临时任务信息" : "编辑关联计划任务信息";
     document.getElementById("editId").value = id;
     document.getElementById("editExtra").classList.remove("hidden");
+    const badge = document.getElementById("taskKindBadge");
+    const badgeText = document.getElementById("taskKindBadgeText");
+    badge.classList.remove("hidden");
+    badgeText.textContent = kind === "临时" ? "临时任务" : "关联计划任务";
     document.getElementById("createModeWrap").classList.add("hidden");
     document.getElementById("ownerWrap").classList.add("hidden");
     document.getElementById("fName").value = t.name;
@@ -706,9 +1126,15 @@
     document.getElementById("fStart").value = BMS4.taskStartDate(t) || "2026-08-18";
     document.getElementById("fEnd").value = BMS4.taskEndDate(t) || "2026-08-31";
     document.getElementById("fStatus").value = t.status;
+    document.getElementById("fRemark").value = t.remark || "";
+    draftAttachments = (t.attachments || []).map((a) => ({ name: a.name || a }));
+    renderAttachList();
+    const fin = document.getElementById("fAttach");
+    if (fin) fin.value = "";
     refreshModalHoursHint();
-    fillAnnualAndParent(id, t.annualId);
+    fillAnnualAndParent(id, t.annualId || "");
     document.getElementById("fParent").value = t.parentId || "";
+    applyTaskKindUI(kind);
     BMSUI.openModal("modal");
   }
 
@@ -720,16 +1146,23 @@
     if (!startDate || !endDate) return BMSUI.toast("请填写开始与结束时间", false);
     if (endDate < startDate) return BMSUI.toast("结束时间不能早于开始时间", false);
     const editId = document.getElementById("editId").value;
-    const isAssign = !editId && createMode === "assign" && user.role === "部门长";
+    const isAssign = !editId && createMode === "assign" && canAssignTasks();
     const ownerId = isAssign ? document.getElementById("fOwner").value : user.id;
     if (isAssign && !ownerId) return BMSUI.toast("请选择处理人", false);
+    const annualId = taskKind === "计划" ? document.getElementById("fAnnual").value : "";
+    if (taskKind === "计划" && !annualId) return BMSUI.toast("请选择关联计划", false);
+    const remark = document.getElementById("fRemark").value.trim();
+    const attachments = draftAttachments.map((a) => ({ name: a.name }));
     const payload = {
       name,
-      annualId: document.getElementById("fAnnual").value,
+      annualId,
+      taskKind,
       ownerId,
-      parentId: document.getElementById("fParent").value || null,
+      parentId: taskKind === "计划" ? document.getElementById("fParent").value || null : null,
       taskType: document.getElementById("fType").value,
       priority: document.getElementById("fPrio").value,
+      remark,
+      attachments,
       startDate,
       endDate,
       deadline: endDate,
@@ -738,27 +1171,48 @@
     if (!editId) {
       BMS4.addAssignTask(payload);
       BMSUI.closeModal("modal");
-      BMSUI.toast(isAssign ? "已下达，对方任务已生成" : "已新建任务");
-      if (isAssign && ownerId !== user.id) scopeTab = user.role === "部门长" ? "dept" : "mine";
+      BMSUI.toast(
+        isAssign
+          ? taskKind === "临时"
+            ? "已下达临时任务"
+            : "已下达，对方任务已生成"
+          : taskKind === "临时"
+            ? "已新建临时任务"
+            : "已新建任务"
+      );
+      if (isAssign && ownerId !== user.id) {
+        scopeTab = BMS4.isPlanAdmin(user) ? "all" : user.role === "部门长" ? "dept" : "mine";
+      }
       render();
       return;
     }
     const st = document.getElementById("fStatus").value;
     const old = BMS4.taskItems.find((x) => x.id === editId);
+    if (!old) return;
     if (st === CLOSED && old.status !== DONE && old.status !== CLOSED) {
       return BMSUI.toast("须先变为「已完成」，才能「已关闭」", false);
     }
-    BMS4.updateTask(editId, {
+    const lockedKind = isTemp(old) ? "临时" : "计划";
+    const patch = {
       name: payload.name,
-      annualId: payload.annualId,
-      parentId: payload.parentId,
       taskType: payload.taskType,
       priority: payload.priority,
+      remark: payload.remark,
+      attachments: payload.attachments,
       startDate,
       endDate,
       deadline: endDate,
       status: st,
-    });
+      taskKind: lockedKind,
+    };
+    if (lockedKind === "计划") {
+      patch.annualId = payload.annualId;
+      patch.parentId = payload.parentId;
+    } else {
+      patch.annualId = "";
+      patch.parentId = null;
+    }
+    BMS4.updateTask(editId, patch);
     BMSUI.closeModal("modal");
     BMSUI.toast("已更新");
     render();
@@ -779,8 +1233,34 @@
     user = BMS4.getRoleUser();
     if (user.role === "总经理") {
       document.getElementById("page-main").innerHTML =
-        '<div class="bg-white rounded-2xl border p-8 text-slate-500">总经理请使用「计划与任务监督 / 宏观一表」。本页面向员工与部门长。</div>';
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">总经理请使用「计划与任务监督 / 宏观一表」。本页面向员工、部门长与计划管理员。</div>';
       return;
+    }
+    if (BMS4.isPlanAdmin(user)) {
+      document.body.setAttribute("data-title", "任务总控");
+      const hdr = document.querySelector("header .text-sm.font-medium");
+      if (hdr) hdr.textContent = "任务总控";
+      scopeTab = "all";
+      const tip = document.querySelector("#page-main > p.text-xs");
+      if (tip) {
+        tip.innerHTML =
+          "计划管理员视角：可查看与维护<strong>全部部门任务</strong>。点名称看详情，悬浮编辑/删除；新建支持备注与附件。批量录入点「导入任务」。";
+      }
+      const btnImp = document.getElementById("btnImportTask");
+      if (btnImp) btnImp.classList.remove("hidden");
+      const wrap = document.querySelector("#page-main .flex.flex-wrap.items-center.justify-between.gap-3.mb-4 .flex.flex-wrap.gap-2.items-center");
+      if (wrap && !document.getElementById("fDeptTask")) {
+        const sel = document.createElement("select");
+        sel.id = "fDeptTask";
+        sel.className = "border border-slate-200 rounded-xl px-2 py-1.5 bg-white";
+        sel.innerHTML =
+          '<option value="">全部部门</option>' + BMS4.DEPTS.map((d) => `<option value="${d}">${d}</option>`).join("");
+        sel.onchange = () => {
+          deptFilterAdmin = sel.value;
+          render();
+        };
+        wrap.insertBefore(sel, wrap.firstChild);
+      }
     }
     document.getElementById("btnTree").onclick = () => {
       viewMode = "tree";
@@ -790,15 +1270,52 @@
       viewMode = "flat";
       render();
     };
-    document.getElementById("btnNew").onclick = () => openNew(false);
+    const newMenu = document.getElementById("newMenu");
+    const closeNewMenu = () => newMenu.classList.add("hidden");
+    document.getElementById("btnNew").onclick = (e) => {
+      e.stopPropagation();
+      newMenu.classList.toggle("hidden");
+    };
+    document.getElementById("btnNewPlan").onclick = () => {
+      closeNewMenu();
+      openNew(false, "计划");
+    };
+    document.getElementById("btnNewTemp").onclick = () => {
+      closeNewMenu();
+      openNew(false, "临时");
+    };
+    document.addEventListener("click", (e) => {
+      if (!document.getElementById("newMenuWrap").contains(e.target)) closeNewMenu();
+    });
+    document.getElementById("fAttach").addEventListener("change", (e) => {
+      const files = Array.from(e.target.files || []);
+      files.forEach((f) => {
+        if (!f || !f.name) return;
+        if (draftAttachments.some((a) => a.name === f.name)) return;
+        draftAttachments.push({ name: f.name });
+      });
+      e.target.value = "";
+      renderAttachList();
+    });
+    document.getElementById("modalTaskDetail").addEventListener("click", (e) => {
+      if (e.target.closest("[data-task-detail-close]")) closeTaskDetail();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        const root = document.getElementById("modalTaskDetail");
+        if (root && !root.classList.contains("hidden")) closeTaskDetail();
+      }
+    });
     document.getElementById("btnModeSelf").onclick = () => setCreateMode("self");
     document.getElementById("btnModeAssign").onclick = () => setCreateMode("assign");
     document.getElementById("btnCollapse").onclick = () => {
       filteredTasks().forEach((t) => {
-        collapsed.add("plan:" + t.annualId);
+        if (t.annualId) collapsed.add("plan:" + t.annualId);
         if (t.parentId) collapsed.add(t.parentId);
       });
-      BMS4.plansForDept(user.dept).forEach((a) => collapsed.add("plan:" + a.id));
+      const plans = BMS4.isPlanAdmin(user) ? BMS4.PLAN_ITEMS : BMS4.plansForDept(user.dept);
+      plans.forEach((a) => collapsed.add("plan:" + a.id));
+      collapsed.add("__temp__");
       render();
     };
     document.getElementById("btnReset").onclick = resetFilters;
@@ -812,8 +1329,8 @@
     });
     const params = new URLSearchParams(location.search);
     render();
-    if (params.get("mode") === "assign" && user.role === "部门长") {
-      openNew(true);
+    if (params.get("mode") === "assign" && canAssignTasks()) {
+      openNew(true, params.get("kind") === "temp" ? "临时" : "计划");
     }
   });
 })();

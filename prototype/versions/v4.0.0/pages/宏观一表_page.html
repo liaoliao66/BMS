@@ -67,7 +67,18 @@ function render() {
       const cp = BMS4.COMPANY_PLANS.find(c=>c.id===m.companyPlanId);
       const {c, summary} = taskCols([m.id]);
       const head = BMS4.USERS.find(u=>u.dept===m.dept && u.role==='部门长');
-      return [cp?cp.name:'', m.dept, BMS4.planPathLabel(m.id), m.progress, m.status, c.total, c.finishRate+'%', c.lateEx, summary, head?head.name:''];
+      return [
+        cp ? BMSUI.planNameLink(cp.name, { id: cp.id, kind: 'company' }) : '—',
+        m.dept,
+        BMSUI.planNameLink(BMS4.planPathLabel(m.id), { id: m.id, kind: 'dept' }),
+        m.progress,
+        m.status,
+        c.total,
+        c.finishRate+'%',
+        c.lateEx,
+        summary,
+        head?head.name:''
+      ];
     });
   } else {
     cols = ['公司计划','完成情况','状态','关联计划数','任务总数','完成率','延期/逾期','耗时'];
@@ -75,7 +86,16 @@ function render() {
       const plans = BMS4.PLAN_ITEMS.filter(a=>a.companyPlanId===row.companyPlan.id);
       const ids = plans.map(a=>a.id);
       const {c} = taskCols(ids);
-      return [row.companyPlan.name, row.companyPlan.progress, row.companyPlan.status, plans.length, c.total, row.avgRate+'%', row.lateTotal, c.hours];
+      return [
+        BMSUI.planNameLink(row.companyPlan.name, { id: row.companyPlan.id, kind: 'company' }),
+        row.companyPlan.progress,
+        row.companyPlan.status,
+        plans.length,
+        c.total,
+        row.avgRate+'%',
+        row.lateTotal,
+        c.hours
+      ];
     });
   }
   document.getElementById('thead').innerHTML = cols.map(c=>`<th class="px-3 py-3 text-left whitespace-nowrap border-b border-slate-200">${c}</th>`).join('');

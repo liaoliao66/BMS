@@ -13,11 +13,24 @@
     .cell-edit { cursor:pointer; border-radius:6px; padding:2px 6px; display:inline-block; }
     .cell-edit:hover { background:#eef5f4; }
     .inline-input { border:1px solid #1a73e8; border-radius:6px; padding:2px 8px; font-size:13px; width:4.5rem; }
-    .col-name { min-width: 22rem; max-width: 28rem; position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 4px 0 8px -4px rgba(15,23,42,0.12); }
+    .inline-input.name-input { width: auto; min-width: 14rem; max-width: 100%; }
+    .col-name { min-width: 22rem; max-width: 28rem; position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 4px 0 8px -4px rgba(15,23,42,0.12); overflow: visible; }
     thead .col-name { background: #f8fafc; z-index: 3; }
     .row-hover:hover .col-name { background: #f8fafc; }
     .row-risk .col-name { background: #fff8f7; }
     .row-risk:hover .col-name { background: #fff1f0; }
+    .cell-sum { cursor: pointer; border-radius: 8px; transition: background .15s; }
+    .cell-sum:hover { background: #f0fdfa; }
+    .sum-chip { cursor: pointer; border-radius: 4px; padding: 0 2px; }
+    .sum-chip:hover { text-decoration: underline; }
+    .filter-chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; }
+    .filter-chip.on { border-color: #99f6e4; background: #f0fdfa; color: #0f766e; font-weight: 500; }
+    .name-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; position: relative; }
+    .name-tools { display: inline-flex; align-items: center; gap: 1px; opacity: 0; margin-left: 4px; flex-shrink: 0; }
+    .name-wrap:hover .name-tools { opacity: 1; }
+    .icon-btn { width: 20px; height: 20px; border: none; background: transparent; border-radius: 4px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 11px; }
+    .icon-btn:hover { background: #eef2f7; color: #0f766e; }
+    .icon-btn.danger:hover { background: #fef2f2; color: #c5221f; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800" data-page="companyPlan" data-title="公司计划表">
@@ -25,7 +38,7 @@
   <div id="page-main" class="hidden">
 
     <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
-      <p class="text-xs text-slate-500 max-w-3xl">经营主表①：公司目标健康度一览。整体进度由总经理<strong>手填</strong>；承接部门点开弹窗查看；风险列前置。日常催办仍可回落实驾驶舱。</p>
+      <p class="text-xs text-slate-500 max-w-3xl">经营主表①：公司目标健康度一览。<strong>点击计划名称</strong>查看详情；<strong>悬浮</strong>出现编辑/删除图标。整体进度手填；计划/任务汇总可点开明细。日常催办回落实驾驶舱。</p>
       <div class="flex flex-wrap gap-2">
         <a href="部门计划表_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
         <a href="整体计划_任务监督_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">整体任务表</a>
@@ -125,13 +138,132 @@
       </div>
     </div>
 
+    <div id="modal-plan-sum" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal-plan-sum')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-4xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] overflow-hidden max-h-[85vh] flex flex-col">
+        <div class="px-5 py-4 border-b flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-semibold" id="planSumTitle">子计划明细</h3>
+            <p class="text-xs text-slate-400 mt-0.5" id="planSumSub"></p>
+          </div>
+          <button type="button" onclick="BMSUI.closeModal('modal-plan-sum')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-5 pt-3 flex flex-wrap gap-2" id="planSumFilters"></div>
+        <div class="p-5 overflow-auto flex-1">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-3 py-2 text-left">子计划</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">部门</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">状态</th>
+                <th class="px-3 py-2 text-right whitespace-nowrap">进度</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">责任人</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">起止时间</th>
+              </tr>
+            </thead>
+            <tbody id="planSumBody"></tbody>
+          </table>
+        </div>
+        <div class="px-5 py-3 border-t flex justify-end items-center">
+          <a id="planSumLink" href="部门计划表_page.html" class="text-sm text-teal-700 hover:underline mr-auto">打开部门计划表</a>
+          <button type="button" onclick="BMSUI.closeModal('modal-plan-sum')" class="text-slate-500 px-3 text-sm">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modal-task-sum" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal-task-sum')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-5xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] overflow-hidden max-h-[85vh] flex flex-col">
+        <div class="px-5 py-4 border-b flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-lg font-semibold" id="taskSumTitle">任务明细</h3>
+            <p class="text-xs text-slate-400 mt-0.5" id="taskSumSub"></p>
+          </div>
+          <button type="button" onclick="BMSUI.closeModal('modal-task-sum')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="px-5 pt-3 flex flex-wrap gap-2" id="taskSumFilters"></div>
+        <div class="p-5 overflow-auto flex-1">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-3 py-2 text-left">任务</th>
+                <th class="px-3 py-2 text-left">所属计划</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">部门</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">状态</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">责任人</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">截止日</th>
+                <th class="px-3 py-2 text-left whitespace-nowrap">操作</th>
+              </tr>
+            </thead>
+            <tbody id="taskSumBody"></tbody>
+          </table>
+        </div>
+        <div class="px-5 py-3 border-t flex justify-end items-center">
+          <a id="taskSumLink" href="整体计划_任务监督_page.html" class="text-sm text-teal-700 hover:underline mr-auto">打开整体任务表</a>
+          <button type="button" onclick="BMSUI.closeModal('modal-task-sum')" class="text-slate-500 px-3 text-sm">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalUrge" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalUrge')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <h3 class="text-lg font-semibold">发起催办</h3>
+        <input type="hidden" id="uTarget" />
+        <input type="hidden" id="uTaskId" />
+        <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
+          <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalUrge')" class="text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveUrge()" class="btn-cta text-white px-4 py-2 rounded-xl">确认催办</button>
+        </div>
+      </div>
+    </div>
+
   </div>
   <script src="../assets/store.js"></script>
   <script src="../assets/common.js"></script>
   <script>
 (function () {
   let editPctId = null;
+  let editNameId = null;
   let matrixCache = [];
+  let planSumState = { cpId: "", filter: "" };
+  let taskSumState = { cpId: "", filter: "" };
+
+  function cellCompanyName(cp) {
+    if (editNameId === cp.id) {
+      return `<input class="inline-input name-input" data-name-input="${cp.id}" value="${escapeAttr(cp.name)}" />`;
+    }
+    const tools = window.__cpReadOnly
+      ? ""
+      : `<span class="name-tools">
+        <button type="button" class="icon-btn" title="编辑名称" data-edit-name="${cp.id}"><i class="fa-solid fa-pen"></i></button>
+        <button type="button" class="icon-btn danger" title="删除" data-del-cp="${cp.id}"><i class="fa-regular fa-trash-can"></i></button>
+      </span>`;
+    return `<div class="name-wrap" data-name-wrap-cp="${cp.id}">
+      ${BMSUI.planNameLink(cp.name, { id: cp.id, kind: "company" })}
+      ${tools}
+    </div>`;
+  }
+
+  const PLAN_STATUS_ORDER = ["未开始", "进行中", "关注", "延期", "已完成"];
+  const PLAN_STATUS_CLS = {
+    未开始: "text-slate-500",
+    进行中: "text-blue-600",
+    关注: "text-amber-600",
+    延期: "text-rose-600",
+    已完成: "text-emerald-600",
+  };
+  const TASK_STATUS_ORDER = ["未开始", "进行中", "延期", "已完成", "已关闭"];
+  const TASK_STATUS_CLS = {
+    未开始: "text-slate-500",
+    进行中: "text-blue-600",
+    延期: "text-rose-600",
+    已完成: "text-emerald-600",
+    已关闭: "text-slate-400",
+  };
 
   function escapeHtml(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -140,24 +272,36 @@
     return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   }
 
-  function formatStatusParts(order, counts, cls, emptyText) {
+  function formatStatusParts(order, counts, cls, emptyText, kind, cpId) {
     const parts = order
       .filter((k) => counts[k] > 0)
-      .map((k) => `<span class="${cls[k]} whitespace-nowrap">${k} ${counts[k]}</span>`)
+      .map(
+        (k) =>
+          `<span class="sum-chip ${cls[k]} whitespace-nowrap" data-sum-kind="${kind}" data-sum-cp="${escapeAttr(
+            cpId
+          )}" data-sum-st="${escapeAttr(k)}" title="查看「${escapeAttr(k)}」明细">${k} ${counts[k]}</span>`
+      )
       .join('<span class="text-slate-300 mx-1">·</span>');
     return parts || `<span class="text-slate-400">${emptyText}</span>`;
   }
 
+  function resolveTaskDisplayStatus(t) {
+    let st = t.status || "进行中";
+    if (BMS4.isTaskOverdue(t)) st = "延期";
+    return st;
+  }
+
+  function plansOfCp(cpId) {
+    return BMS4.PLAN_ITEMS.filter((p) => p.companyPlanId === cpId);
+  }
+
+  function tasksOfCp(cpId) {
+    const planIds = new Set(plansOfCp(cpId).map((p) => p.id));
+    return BMS4.taskItems.filter((t) => planIds.has(t.annualId));
+  }
+
   function planStatusSummary(cpId) {
-    const STATUS_ORDER = ["未开始", "进行中", "关注", "延期", "已完成"];
-    const STATUS_CLS = {
-      未开始: "text-slate-500",
-      进行中: "text-blue-600",
-      关注: "text-amber-600",
-      延期: "text-rose-600",
-      已完成: "text-emerald-600",
-    };
-    const plans = BMS4.PLAN_ITEMS.filter((p) => p.companyPlanId === cpId);
+    const plans = plansOfCp(cpId);
     const counts = { 未开始: 0, 进行中: 0, 关注: 0, 延期: 0, 已完成: 0 };
     let latePlans = 0;
     plans.forEach((p) => {
@@ -168,39 +312,179 @@
     });
     return {
       total: plans.length,
-      html: formatStatusParts(STATUS_ORDER, counts, STATUS_CLS, "暂无子计划"),
+      html: formatStatusParts(PLAN_STATUS_ORDER, counts, PLAN_STATUS_CLS, "暂无子计划", "plan", cpId),
       latePlans,
       counts,
     };
   }
 
   function taskStatusSummary(cpId) {
-    const STATUS_ORDER = ["未开始", "进行中", "延期", "已完成", "已关闭"];
-    const STATUS_CLS = {
-      未开始: "text-slate-500",
-      进行中: "text-blue-600",
-      延期: "text-rose-600",
-      已完成: "text-emerald-600",
-      已关闭: "text-slate-400",
-    };
-    const planIds = new Set(BMS4.PLAN_ITEMS.filter((p) => p.companyPlanId === cpId).map((p) => p.id));
-    const tasks = BMS4.taskItems.filter((t) => planIds.has(t.annualId));
+    const tasks = tasksOfCp(cpId);
     const counts = { 未开始: 0, 进行中: 0, 延期: 0, 已完成: 0, 已关闭: 0 };
     let lateTasks = 0;
     tasks.forEach((t) => {
-      let st = t.status || "进行中";
-      if (BMS4.isTaskOverdue(t)) st = "延期";
+      const st = resolveTaskDisplayStatus(t);
       if (counts[st] !== undefined) counts[st]++;
       else counts["进行中"]++;
       if (st === "延期") lateTasks++;
     });
     return {
       total: tasks.length,
-      html: formatStatusParts(STATUS_ORDER, counts, STATUS_CLS, "暂无任务"),
+      html: formatStatusParts(TASK_STATUS_ORDER, counts, TASK_STATUS_CLS, "暂无任务", "task", cpId),
       lateTasks,
       counts,
     };
   }
+
+  function renderFilterChips(containerId, order, counts, active, onPick) {
+    const el = document.getElementById(containerId);
+    const chips = [
+      { key: "", label: "全部 " + Object.values(counts).reduce((s, n) => s + n, 0) },
+      ...order.filter((k) => counts[k] > 0).map((k) => ({ key: k, label: k + " " + counts[k] })),
+    ];
+    el.innerHTML = chips
+      .map(
+        (c) =>
+          `<button type="button" class="filter-chip ${c.key === active ? "on" : ""}" data-filter="${escapeAttr(
+            c.key
+          )}">${escapeHtml(c.label)}</button>`
+      )
+      .join("");
+    el.querySelectorAll("[data-filter]").forEach((btn) => {
+      btn.onclick = () => onPick(btn.getAttribute("data-filter") || "");
+    });
+  }
+
+  function openPlanSumModal(cpId, statusFilter) {
+    const cp = BMS4.COMPANY_PLANS.find((x) => x.id === cpId);
+    if (!cp) return;
+    planSumState = { cpId, filter: statusFilter || "" };
+    const all = plansOfCp(cpId);
+    const counts = { 未开始: 0, 进行中: 0, 关注: 0, 延期: 0, 已完成: 0 };
+    all.forEach((p) => {
+      const st = BMS4.resolvePlanStatus(p);
+      if (counts[st] !== undefined) counts[st]++;
+      else counts["进行中"]++;
+    });
+    const filtered = planSumState.filter
+      ? all.filter((p) => BMS4.resolvePlanStatus(p) === planSumState.filter)
+      : all;
+    document.getElementById("planSumTitle").textContent = "子计划明细 · " + cp.name;
+    document.getElementById("planSumSub").textContent = planSumState.filter
+      ? `筛选「${planSumState.filter}」· 共 ${filtered.length} 条`
+      : `共 ${filtered.length} 条子计划`;
+    document.getElementById("planSumLink").href = "部门计划表_page.html?cp=" + encodeURIComponent(cpId);
+    renderFilterChips("planSumFilters", PLAN_STATUS_ORDER, counts, planSumState.filter, (st) =>
+      openPlanSumModal(cpId, st)
+    );
+    document.getElementById("planSumBody").innerHTML = filtered.length
+      ? filtered
+          .map((p) => {
+            const owner = BMS4.userById(p.ownerId);
+            const st = BMS4.resolvePlanStatus(p);
+            return `<tr class="border-t">
+              <td class="px-3 py-2.5 font-medium leading-snug">${BMSUI.planNameLink(p.name, { id: p.id, kind: "dept" })}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${escapeHtml(p.dept || "—")}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${BMSUI.statusBadge(st)}</td>
+              <td class="px-3 py-2.5 text-right tabular-nums">${BMS4.clampPct(p.progressPct)}%</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${owner ? escapeHtml(owner.name) : "—"}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap text-xs text-slate-600">${escapeHtml(
+                p.startDate || "—"
+              )} ~ ${escapeHtml(p.endDate || "—")}</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="6" class="px-3 py-10 text-center text-slate-400">${
+          all.length ? "当前筛选下暂无子计划" : "暂无子计划"
+        }</td></tr>`;
+    BMSUI.openModal("modal-plan-sum");
+  }
+
+  function openTaskSumModal(cpId, statusFilter) {
+    const cp = BMS4.COMPANY_PLANS.find((x) => x.id === cpId);
+    if (!cp) return;
+    taskSumState = { cpId, filter: statusFilter || "" };
+    const all = tasksOfCp(cpId);
+    const counts = { 未开始: 0, 进行中: 0, 延期: 0, 已完成: 0, 已关闭: 0 };
+    all.forEach((t) => {
+      const st = resolveTaskDisplayStatus(t);
+      if (counts[st] !== undefined) counts[st]++;
+      else counts["进行中"]++;
+    });
+    const filtered = taskSumState.filter
+      ? all.filter((t) => resolveTaskDisplayStatus(t) === taskSumState.filter)
+      : all.slice();
+    filtered.sort((a, b) => {
+      const sa = resolveTaskDisplayStatus(a) === "延期" ? 2 : BMS4.isTaskNearDue(a) ? 1 : 0;
+      const sb = resolveTaskDisplayStatus(b) === "延期" ? 2 : BMS4.isTaskNearDue(b) ? 1 : 0;
+      return sb - sa;
+    });
+    document.getElementById("taskSumTitle").textContent = "任务明细 · " + cp.name;
+    document.getElementById("taskSumSub").textContent = taskSumState.filter
+      ? `筛选「${taskSumState.filter}」· 共 ${filtered.length} 条`
+      : `共 ${filtered.length} 条任务`;
+    document.getElementById("taskSumLink").href =
+      "整体计划_任务监督_page.html?cp=" + encodeURIComponent(cpId);
+    renderFilterChips("taskSumFilters", TASK_STATUS_ORDER, counts, taskSumState.filter, (st) =>
+      openTaskSumModal(cpId, st)
+    );
+    document.getElementById("taskSumBody").innerHTML = filtered.length
+      ? filtered
+          .map((t) => {
+            const owner = BMS4.userById(t.ownerId);
+            const st = resolveTaskDisplayStatus(t);
+            const path = BMS4.planPathLabel(t.annualId) || "—";
+            const nameJs = (t.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+            const canUrge = st !== "已完成" && st !== "已关闭";
+            return `<tr class="border-t">
+              <td class="px-3 py-2.5 font-medium leading-snug">${escapeHtml(t.name)}${
+              st === "延期" ? ' <span class="text-[11px] text-rose-600">[延期]</span>' : ""
+            }</td>
+              <td class="px-3 py-2.5 text-slate-600 max-w-[12rem] truncate" title="${escapeAttr(path)}">${
+              t.annualId
+                ? BMSUI.planNameLink(path, { id: t.annualId, kind: "dept", className: "plan-name-link text-teal-700 hover:underline" })
+                : escapeHtml(path)
+            }</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${escapeHtml(t.dept || "—")}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${BMSUI.statusBadge(st)}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${owner ? escapeHtml(owner.name) : "—"}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${escapeHtml(t.deadline || t.endDate || "—")}</td>
+              <td class="px-3 py-2.5 whitespace-nowrap">${
+                canUrge
+                  ? `<button type="button" class="text-teal-700 hover:underline" onclick="openUrge('${escapeAttr(
+                      t.ownerId
+                    )}','${nameJs}','${escapeAttr(t.id)}')">催办</button>`
+                  : `<span class="text-slate-300">—</span>`
+              }</td>
+            </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="7" class="px-3 py-10 text-center text-slate-400">${
+          all.length ? "当前筛选下暂无任务" : "暂无任务"
+        }</td></tr>`;
+    BMSUI.openModal("modal-task-sum");
+  }
+
+  window.openUrge = function (uid, name, taskId) {
+    document.getElementById("uTarget").value = uid;
+    document.getElementById("uTaskId").value = taskId || "";
+    document.getElementById("uTitle").value = "催办：" + name;
+    document.getElementById("uExpect").value = "2026-08-21";
+    BMSUI.openModal("modalUrge");
+  };
+
+  window.saveUrge = function () {
+    const r = BMS4.createUrge({
+      targetUserId: document.getElementById("uTarget").value,
+      title: document.getElementById("uTitle").value.trim(),
+      expectReplyDate: document.getElementById("uExpect").value,
+      taskId: document.getElementById("uTaskId").value || undefined,
+      companyPlanId: taskSumState.cpId || undefined,
+    });
+    if (!r.ok) return BMSUI.toast(r.reason, false);
+    BMSUI.closeModal("modalUrge");
+    BMSUI.toast("已催办");
+  };
 
   function openDeptModal(cpId) {
     const row = matrixCache.find((r) => r.companyPlan.id === cpId);
@@ -230,6 +514,28 @@
     BMSUI.openModal("modal-dept");
   }
 
+  function bindSumClicks() {
+    document.querySelectorAll("[data-sum-open]").forEach((el) => {
+      el.onclick = (e) => {
+        if (e.target.closest("[data-sum-st]")) return;
+        const kind = el.getAttribute("data-sum-open");
+        const cpId = el.getAttribute("data-sum-cp");
+        if (kind === "plan") openPlanSumModal(cpId, "");
+        else openTaskSumModal(cpId, "");
+      };
+    });
+    document.querySelectorAll("[data-sum-st]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        const kind = el.getAttribute("data-sum-kind");
+        const cpId = el.getAttribute("data-sum-cp");
+        const st = el.getAttribute("data-sum-st") || "";
+        if (kind === "plan") openPlanSumModal(cpId, st);
+        else openTaskSumModal(cpId, st);
+      };
+    });
+  }
+
   function render() {
     matrixCache = BMS4.companyPlanDeptMatrix();
     let riskCp = 0;
@@ -248,23 +554,24 @@
         latePlanAll += sub.latePlans;
         missAll += missDepts.length;
         const pct = BMS4.clampPct(cp.progressPct);
-        const pctCell =
-          editPctId === cp.id
+        const pctCell = window.__cpReadOnly
+          ? `<span class="font-medium tabular-nums">${pct}%</span>`
+          : editPctId === cp.id
             ? `<input type="number" min="0" max="100" class="inline-input" data-pct-input="${cp.id}" value="${pct}" />`
             : `<span class="cell-edit font-medium tabular-nums" data-edit-pct="${cp.id}" title="点击编辑">${pct}%</span>`;
 
         return `<tr class="border-t row-hover ${hot ? "row-risk" : ""}">
-          <td class="px-4 py-3 font-medium col-name leading-snug">${escapeHtml(cp.name)}</td>
+          <td class="px-4 py-3 font-medium col-name leading-snug">${cellCompanyName(cp)}</td>
           <td class="px-4 py-3 whitespace-nowrap">${escapeHtml(cp.priority || "—")}</td>
           <td class="px-4 py-3 whitespace-nowrap text-slate-600">${escapeHtml(cp.startDate || "—")}</td>
           <td class="px-4 py-3 whitespace-nowrap text-slate-600">${escapeHtml(cp.endDate || "—")}</td>
           <td class="px-4 py-3">${BMSUI.statusBadge(cp.status)}</td>
-          <td class="px-4 py-3 text-xs leading-relaxed">
-            <div class="text-[10px] text-slate-400 mb-0.5">共 ${sub.total}</div>
+          <td class="px-4 py-3 text-xs leading-relaxed cell-sum" data-sum-open="plan" data-sum-cp="${cp.id}" title="点击查看子计划明细">
+            <div class="text-[10px] text-slate-400 mb-0.5">共 ${sub.total} · 点击查看</div>
             ${sub.html}
           </td>
-          <td class="px-4 py-3 text-xs leading-relaxed">
-            <div class="text-[10px] text-slate-400 mb-0.5">共 ${taskSum.total}</div>
+          <td class="px-4 py-3 text-xs leading-relaxed cell-sum" data-sum-open="task" data-sum-cp="${cp.id}" title="点击查看任务明细">
+            <div class="text-[10px] text-slate-400 mb-0.5">共 ${taskSum.total} · 点击查看</div>
             ${taskSum.html}
           </td>
           <td class="px-4 py-3 whitespace-nowrap">${pctCell}<div class="text-[10px] text-slate-400">手填</div></td>
@@ -293,8 +600,10 @@
     document.querySelectorAll("[data-dept-modal]").forEach((btn) => {
       btn.onclick = () => openDeptModal(btn.getAttribute("data-dept-modal"));
     });
+    bindSumClicks();
     document.querySelectorAll("[data-edit-pct]").forEach((el) => {
       el.onclick = () => {
+        editNameId = null;
         editPctId = el.getAttribute("data-edit-pct");
         render();
         requestAnimationFrame(() => {
@@ -304,6 +613,34 @@
             input.select();
           }
         });
+      };
+    });
+    document.querySelectorAll("[data-edit-name]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        editPctId = null;
+        editNameId = el.getAttribute("data-edit-name");
+        render();
+        requestAnimationFrame(() => {
+          const input = document.querySelector("[data-name-input]");
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        });
+      };
+    });
+    document.querySelectorAll("[data-del-cp]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-del-cp");
+        const cp = BMS4.COMPANY_PLANS.find((c) => c.id === id);
+        if (!cp) return;
+        if (!confirm("确认删除公司计划「" + cp.name + "」？其下若仍有部门计划将无法删除。")) return;
+        const r = BMS4.removeCompanyPlan(id);
+        if (!r.ok) return BMSUI.toast(r.reason, false);
+        BMSUI.toast("已删除");
+        render();
       };
     });
     const input = document.querySelector("[data-pct-input]");
@@ -326,6 +663,46 @@
       });
       input.addEventListener("blur", () => setTimeout(() => finish(true), 100));
     }
+    const nameInput = document.querySelector("[data-name-input]");
+    if (nameInput) {
+      const finishName = (save) => {
+        const id = nameInput.getAttribute("data-name-input");
+        if (save) {
+          const name = nameInput.value.trim();
+          if (!name) {
+            BMSUI.toast("计划名称不能为空", false);
+            nameInput.focus();
+            return;
+          }
+          const prev = BMS4.COMPANY_PLANS.find((c) => c.id === id);
+          if (prev && prev.name !== name) {
+            BMS4.updateCompanyPlan(id, { name });
+            if (BMS4.appendPlanChangeLog) {
+              BMS4.appendPlanChangeLog({
+                refId: id,
+                refKind: "company",
+                field: "计划名称",
+                from: prev.name,
+                to: name,
+                operator: (BMS4.getRoleUser() || {}).name || "李家治",
+                note: "公司计划表行内修改",
+              });
+            }
+            BMSUI.toast("名称已保存");
+          }
+        }
+        editNameId = null;
+        render();
+      };
+      nameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          finishName(true);
+        }
+        if (e.key === "Escape") finishName(false);
+      });
+      nameInput.addEventListener("blur", () => setTimeout(() => finishName(true), 120));
+    }
   }
 
   window.saveCp = function () {
@@ -346,18 +723,33 @@
       endDate,
       progressPct: BMS4.clampPct(document.getElementById("cpPct").value),
     });
+    if (BMS4.persistDemoData) BMS4.persistDemoData();
     BMSUI.closeModal("modal-cp");
     BMSUI.toast("已下达");
     render();
   };
 
   document.addEventListener("DOMContentLoaded", () => {
-    if (BMS4.getRoleUser().role !== "总经理") {
+    const roleUser = BMS4.getRoleUser();
+    if (!BMS4.canViewAllPlans(roleUser)) {
       document.getElementById("page-main").innerHTML =
-        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见，请切换视角。</div>';
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理 / 计划管理员可见，请切换视角。</div>';
       return;
     }
-    document.getElementById("btnNew").onclick = () => BMSUI.openModal("modal-cp");
+    const isAdminRo = BMS4.isPlanAdmin(roleUser);
+    if (isAdminRo) {
+      document.getElementById("btnNew").classList.add("hidden");
+      const tip = document.querySelector("#page-main p.text-xs");
+      if (tip) {
+        tip.innerHTML =
+          "计划管理员只读联查公司计划。下达与名称编辑仍由总经理操作；计划拆解与导入请回「计划总控」。";
+      }
+    }
+    document.getElementById("btnNew").onclick = () => {
+      if (BMS4.isPlanAdmin(BMS4.getRoleUser())) return BMSUI.toast("公司计划下达请切换总经理视角", false);
+      BMSUI.openModal("modal-cp");
+    };
+    window.__cpReadOnly = isAdminRo;
     render();
   });
 })();
