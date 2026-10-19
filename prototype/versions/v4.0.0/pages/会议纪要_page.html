@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>会议纪要 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .grid-table tbody tr.row-click { cursor: pointer; }
+    .col-head { display: inline-flex; align-items: center; gap: 4px; }
+    .tag { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 4px; font-size: 12px; line-height: 20px; border: 1px solid #e8eaed; background: #f1f3f4; color: #5f6368; white-space: nowrap; }
+    .tag-week { background:#ecfdf5;color:#0f766e;border-color:#a7f3d0; }
+    .tag-month { background:#eef2ff;color:#4338ca;border-color:#c7d2fe; }
+    .tag-gm { background:#fff7ed;color:#c2410c;border-color:#fed7aa; }
+    .name-link { color: #1a73e8; }
+    .name-link:hover { text-decoration: underline; }
+    .attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; }
+    .attach-chip button { border: none; background: transparent; color: #94a3b8; cursor: pointer; padding: 0 2px; }
+    .attach-chip button:hover { color: #c5221f; }
+    .attach-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 12px; border: 1px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; cursor: pointer; }
+    .attach-zone:hover { border-color: #0f766e; background: #f0fdfa; }
+    .form-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; }
+    .form-ctrl { width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; padding: 9px 12px; font-size: 13px; color: #0f172a; background: #fff; }
+    .form-ctrl:focus { outline: none; border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,0.12); }
+    .helper-box { max-height: 180px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; background: #fff; }
+    .helper-box label { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; font-size: 13px; cursor: pointer; }
+    .helper-box label:hover { background: #f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="meetingMinutes" data-title="会议纪要">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <p class="text-xs text-slate-500 mb-3" id="pageHint">
+      会议纪要（周例会 / 月例会 / 总经理办公会）。全员可查看；点击行直接打开编辑。仅<strong>计划管理员</strong>可保存。关联人员多选，附件单独上传。
+    </p>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex flex-wrap gap-2 items-center">
+        <button type="button" id="btnNewMinute" class="hidden btn-cta text-white text-sm px-3 py-2 rounded-xl">
+          <i class="fa-solid fa-plus mr-1"></i>新建纪要
+        </button>
+        <select id="fType" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white text-sm">
+          <option value="">全部类型</option>
+          <option>周例会</option>
+          <option>月例会</option>
+          <option>总经理办公会</option>
+        </select>
+        <a href="任务督办_page.html" class="text-sm text-teal-700 hover:underline self-center px-2">任务督办</a>
+      </div>
+      <input type="search" id="mmKw" placeholder="搜索类型/周期/概要/人员" class="border border-slate-200 rounded-xl px-3 py-1.5 w-56 text-sm" />
+    </div>
+    <div id="mmWeekBanner" class="mb-3 text-xs rounded-xl border border-amber-100 bg-amber-50 text-amber-800 px-3 py-2 hidden"></div>
+    <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1080px]">
+        <thead>
+          <tr>
+            <th><span class="col-head">会议类型</span></th>
+            <th><span class="col-head">周期 / 日期</span></th>
+            <th><span class="col-head">文本概要</span></th>
+            <th><span class="col-head">关联人员</span></th>
+            <th><span class="col-head">附件</span></th>
+            <th><span class="col-head">更新人</span></th>
+            <th><span class="col-head">更新时间</span></th>
+          </tr>
+        </thead>
+        <tbody id="mmTbody"></tbody>
+      </table>
+    </div>
+
+    <div id="modalMinute" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6">
+      <div class="absolute inset-0 bg-slate-900/45" onclick="BMSUI.closeModal('modalMinute')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 shadow-2xl">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-900" id="mmModalTitle">会议纪要</h3>
+            <p class="text-xs text-slate-500 mt-1" id="mmModalSub">文本概要 · 关联人员 · 附件</p>
+          </div>
+          <button type="button" onclick="BMSUI.closeModal('modalMinute')" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 bg-slate-50/50">
+          <input type="hidden" id="mmFId" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="form-label">会议类型</label>
+              <select id="mmFType" class="form-ctrl">
+                <option>周例会</option>
+                <option>月例会</option>
+                <option>总经理办公会</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" id="mmPeriodLabel">周期 / 日期</label>
+              <input id="mmFPeriod" class="form-ctrl" placeholder="如 2026-W34" />
+            </div>
+          </div>
+          <div>
+            <label class="form-label">文本概要</label>
+            <textarea id="mmFSummary" rows="6" class="form-ctrl" placeholder="会议结论、风险与下周关注点…"></textarea>
+          </div>
+          <div>
+            <label class="form-label">关联人员（多选）</label>
+            <div id="mmPeople" class="helper-box"></div>
+          </div>
+          <div>
+            <label class="form-label">附件 <span class="text-slate-400 font-normal">（单独上传，仅记录文件名）</span></label>
+            <label class="attach-zone" for="mmFAttach" id="mmAttachZone">
+              <i class="fa-solid fa-cloud-arrow-up text-slate-400"></i>
+              <span class="text-sm text-slate-600">点击上传附件</span>
+              <input type="file" id="mmFAttach" class="hidden" multiple />
+            </label>
+            <div id="mmAttachList" class="flex flex-wrap gap-2 mt-2.5"></div>
+          </div>
+        </div>
+        <div class="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 shrink-0 bg-slate-50/80">
+          <button type="button" onclick="BMSUI.closeModal('modalMinute')" class="text-sm px-4 py-2 rounded-[10px] border border-slate-200 bg-white text-slate-600" id="btnCloseMinute">关闭</button>
+          <button type="button" id="btnSaveMinute" class="btn-cta text-white px-4 py-2 rounded-[10px] text-sm">保存</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  let user;
+  let canEditMinute = false;
+  let draftMmAttachments = [];
+  let mmViewOnly = false;
+  let editingId = "";
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function escapeAttr(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  }
+  function getNaturalWeek() {
+    return BMS4.getCurrentWeek ? BMS4.getCurrentWeek() : "2026-W34";
+  }
+  function summaryPreview(text, n) {
+    const s = String(text || "").replace(/\s+/g, " ").trim();
+    if (!s) return "—";
+    return s.length > n ? s.slice(0, n) + "…" : s;
+  }
+  function typeTag(t) {
+    const cls = t === "月例会" ? "tag-month" : t === "总经理办公会" ? "tag-gm" : "tag-week";
+    return `<span class="tag ${cls}">${escapeHtml(t || "周例会")}</span>`;
+  }
+  function peopleNames(ids) {
+    return (ids || [])
+      .map((id) => {
+        const u = BMS4.userById(id);
+        return u ? u.name : "";
+      })
+      .filter(Boolean);
+  }
+
+  function syncPeriodPlaceholder() {
+    const t = document.getElementById("mmFType").value;
+    const input = document.getElementById("mmFPeriod");
+    const label = document.getElementById("mmPeriodLabel");
+    if (t === "月例会") {
+      label.textContent = "月份";
+      input.placeholder = "如 2026-08";
+      input.type = "month";
+    } else if (t === "总经理办公会") {
+      label.textContent = "会议日期";
+      input.type = "date";
+      input.placeholder = "";
+    } else {
+      label.textContent = "周次";
+      input.type = "text";
+      input.placeholder = "如 2026-W34";
+    }
+  }
+
+  function fillPeople(selectedIds) {
+    const set = new Set(selectedIds || []);
+    const box = document.getElementById("mmPeople");
+    box.innerHTML = BMS4.USERS.map(
+      (x) =>
+        `<label><input type="checkbox" class="mm-people-cb rounded border-slate-300" value="${x.id}" ${
+          set.has(x.id) ? "checked" : ""
+        } ${mmViewOnly ? "disabled" : ""} /><span>${escapeHtml(x.name)}<span class="text-slate-400 text-xs ml-1">${escapeHtml(
+          x.dept
+        )}</span></span></label>`
+    ).join("");
+  }
+  function selectedPeople() {
+    return [...document.querySelectorAll("#mmPeople .mm-people-cb:checked")].map((el) => el.value);
+  }
+
+  function renderMmAttachList() {
+    const box = document.getElementById("mmAttachList");
+    if (!box) return;
+    if (!draftMmAttachments.length) {
+      box.innerHTML = mmViewOnly ? '<span class="text-[11px] text-slate-400">暂无附件</span>' : "";
+      return;
+    }
+    box.innerHTML = draftMmAttachments
+      .map(
+        (a, i) =>
+          `<span class="attach-chip"><i class="fa-regular fa-file"></i>${escapeHtml(a.name)}${
+            mmViewOnly
+              ? ""
+              : `<button type="button" data-rm-mm="${i}" title="移除"><i class="fa-solid fa-xmark"></i></button>`
+          }</span>`
+      )
+      .join("");
+    if (!mmViewOnly) {
+      box.querySelectorAll("[data-rm-mm]").forEach((btn) => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          draftMmAttachments.splice(Number(btn.getAttribute("data-rm-mm")), 1);
+          renderMmAttachList();
+        };
+      });
+    }
+  }
+
+  function renderMinutesList() {
+    const typeF = document.getElementById("fType").value;
+    const kw = (document.getElementById("mmKw").value || "").trim().toLowerCase();
+    const list = (BMS4.listMeetingMinutes ? BMS4.listMeetingMinutes() : []).filter((m) => {
+      if (typeF && m.meetingType !== typeF) return false;
+      if (!kw) return true;
+      const people = peopleNames(m.relatedUserIds).join(" ");
+      return [m.meetingType, m.periodKey, m.week, m.summary, people].join(" ").toLowerCase().includes(kw);
+    });
+    const week = getNaturalWeek();
+    const hasCurrent = !!(BMS4.getMeetingMinuteByWeek && BMS4.getMeetingMinuteByWeek(week));
+    const banner = document.getElementById("mmWeekBanner");
+    if (!hasCurrent) {
+      banner.classList.remove("hidden");
+      banner.innerHTML = `当前自然周 <strong>${week}</strong> 的周例会纪要尚未补录。${
+        canEditMinute
+          ? ` <button type="button" class="underline font-medium" id="bannerUpload">立即新建</button>`
+          : "请联系计划管理员补录。"
+      }`;
+      const bu = document.getElementById("bannerUpload");
+      if (bu)
+        bu.onclick = () =>
+          openMinuteModal({ meetingType: "周例会", periodKey: week }, false);
+    } else {
+      banner.classList.add("hidden");
+      banner.innerHTML = "";
+    }
+
+    const tbody = document.getElementById("mmTbody");
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-slate-400 py-10">暂无会议纪要${
+        canEditMinute ? "，可点「新建纪要」" : ""
+      }</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = list
+      .map((m) => {
+        const editor = BMS4.userById(m.updatedBy);
+        const atts = m.attachments || [];
+        const people = peopleNames(m.relatedUserIds);
+        const isCur = m.meetingType === "周例会" && m.periodKey === week;
+        return `<tr class="row-click" data-mm-open="${escapeAttr(m.id)}">
+          <td class="whitespace-nowrap">${typeTag(m.meetingType)}</td>
+          <td class="whitespace-nowrap font-medium text-slate-800">${escapeHtml(m.periodKey || "—")}${
+            isCur ? '<span class="tag ml-1 tag-week">本周</span>' : ""
+          }</td>
+          <td class="max-w-[22rem]"><span class="name-link">${escapeHtml(summaryPreview(m.summary, 48))}</span></td>
+          <td class="max-w-[12rem] text-slate-600">${escapeHtml(people.length ? people.join("、") : "—")}</td>
+          <td class="whitespace-nowrap text-slate-600">${atts.length} 个</td>
+          <td class="whitespace-nowrap">${editor ? escapeHtml(editor.name) : "—"}</td>
+          <td class="whitespace-nowrap text-slate-500">${escapeHtml(m.updatedAt || "—")}</td>
+        </tr>`;
+      })
+      .join("");
+
+    tbody.querySelectorAll("[data-mm-open]").forEach((el) => {
+      el.onclick = () => openMinuteModalById(el.getAttribute("data-mm-open"));
+    });
+  }
+
+  function setModalEditable(editable) {
+    mmViewOnly = !editable;
+    document.getElementById("mmFType").disabled = !editable;
+    document.getElementById("mmFPeriod").readOnly = !editable;
+    document.getElementById("mmFPeriod").classList.toggle("bg-slate-50", !editable);
+    document.getElementById("mmFSummary").readOnly = !editable;
+    document.getElementById("mmFSummary").classList.toggle("bg-slate-50", !editable);
+    document.getElementById("mmAttachZone").classList.toggle("hidden", !editable);
+    document.getElementById("btnSaveMinute").classList.toggle("hidden", !editable);
+    document.getElementById("btnCloseMinute").textContent = editable ? "取消" : "关闭";
+  }
+
+  function openMinuteModal(seed, forceEdit) {
+    const editable = !!forceEdit && canEditMinute;
+    setModalEditable(editable);
+    editingId = seed && seed.id ? seed.id : "";
+    document.getElementById("mmFId").value = editingId;
+    document.getElementById("mmFType").value = (seed && seed.meetingType) || "周例会";
+    syncPeriodPlaceholder();
+    let period = (seed && seed.periodKey) || "";
+    const t = document.getElementById("mmFType").value;
+    if (t === "月例会" && period && /^\d{4}-\d{2}$/.test(period)) {
+      /* ok */
+    } else if (t === "总经理办公会" && period) {
+      /* date */
+    } else if (!period) {
+      period = t === "月例会" ? "2026-08" : t === "总经理办公会" ? "2026-08-18" : getNaturalWeek();
+    }
+    document.getElementById("mmFPeriod").value = period;
+    document.getElementById("mmModalTitle").textContent = editable
+      ? editingId
+        ? "编辑会议纪要"
+        : "新建会议纪要"
+      : "会议纪要";
+    document.getElementById("mmModalSub").textContent =
+      (seed && seed.meetingType ? seed.meetingType + " · " : "") +
+      period +
+      (editable ? " · 可编辑" : " · 只读");
+    document.getElementById("mmFSummary").value = (seed && seed.summary) || "";
+    draftMmAttachments = ((seed && seed.attachments) || []).map((a) => ({ name: a.name || a }));
+    fillPeople((seed && seed.relatedUserIds) || []);
+    renderMmAttachList();
+    const fin = document.getElementById("mmFAttach");
+    if (fin) fin.value = "";
+    BMSUI.openModal("modalMinute");
+  }
+
+  function openMinuteModalById(id) {
+    const mm = BMS4.getMeetingMinuteById ? BMS4.getMeetingMinuteById(id) : null;
+    if (!mm) return BMSUI.toast("纪要不存在", false);
+    // 点击即进入编辑（计划管理员可改可存；他人同界面只读）
+    openMinuteModal(mm, canEditMinute);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    user = BMS4.getRoleUser();
+    canEditMinute = !!(BMS4.isPlanAdmin && BMS4.isPlanAdmin(user));
+    if (canEditMinute) {
+      document.getElementById("btnNewMinute").classList.remove("hidden");
+      document.getElementById("btnNewMinute").onclick = () =>
+        openMinuteModal({ meetingType: "周例会", periodKey: getNaturalWeek() }, true);
+    } else {
+      document.getElementById("pageHint").innerHTML =
+        "会议纪要（周例会 / 月例会 / 总经理办公会）。点击行查看详情；补录/保存仅计划管理员可操作。";
+    }
+
+    document.getElementById("mmFType").addEventListener("change", () => {
+      if (mmViewOnly) return;
+      syncPeriodPlaceholder();
+      const t = document.getElementById("mmFType").value;
+      if (t === "周例会") document.getElementById("mmFPeriod").value = getNaturalWeek();
+      else if (t === "月例会") document.getElementById("mmFPeriod").value = "2026-08";
+      else document.getElementById("mmFPeriod").value = "2026-08-18";
+    });
+
+    document.getElementById("mmFAttach").addEventListener("change", (e) => {
+      if (mmViewOnly) return;
+      Array.from(e.target.files || []).forEach((f) => {
+        if (!f || !f.name) return;
+        if (draftMmAttachments.some((a) => a.name === f.name)) return;
+        draftMmAttachments.push({ name: f.name });
+      });
+      e.target.value = "";
+      renderMmAttachList();
+    });
+    document.getElementById("btnSaveMinute").onclick = () => {
+      if (mmViewOnly || !canEditMinute) return;
+      const meetingType = document.getElementById("mmFType").value;
+      const periodKey = document.getElementById("mmFPeriod").value.trim();
+      if (!periodKey) return BMSUI.toast("请填写周期/日期", false);
+      const r = BMS4.upsertMeetingMinute({
+        id: document.getElementById("mmFId").value || undefined,
+        meetingType,
+        periodKey,
+        week: meetingType === "周例会" ? periodKey : "",
+        summary: document.getElementById("mmFSummary").value.trim(),
+        relatedUserIds: selectedPeople(),
+        attachments: draftMmAttachments.map((a) => ({ name: a.name })),
+        updatedBy: user.id,
+      });
+      if (!r.ok) return BMSUI.toast(r.reason || "保存失败", false);
+      BMSUI.closeModal("modalMinute");
+      BMSUI.toast("纪要已保存");
+      renderMinutesList();
+    };
+    document.getElementById("mmKw").oninput = renderMinutesList;
+    document.getElementById("fType").onchange = renderMinutesList;
+    renderMinutesList();
+  });
+})();
+  </script>
+</body>
+</html>

@@ -8,8 +8,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
     .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
-    .main-tab-on { color:#0f766e; border-bottom:2px solid #0f766e; font-weight:600; }
-    .main-tab-off { color:#64748b; border-bottom:2px solid transparent; }
     .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
     .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
     .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
@@ -43,35 +41,20 @@
     .helper-box label:hover { background: #f8fafc; }
     .pencil { color: #9aa0a6; font-size: 11px; opacity: 0; }
     .cell-edit:hover .pencil, .name-wrap:hover .pencil { opacity: 1; }
-    .mm-card { border: 1px solid #e8eaed; border-radius: 12px; background: #fff; overflow: hidden; }
-    .mm-hd { padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-    .mm-bd { padding: 14px 16px; }
-    .attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; }
-    .attach-chip button { border: none; background: transparent; color: #94a3b8; cursor: pointer; padding: 0 2px; }
-    .attach-chip button:hover { color: #c5221f; }
-    .attach-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 16px 12px; border: 1px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; cursor: pointer; }
-    .attach-zone:hover { border-color: #0f766e; background: #f0fdfa; }
-    .form-label { display: block; font-size: 12px; color: #64748b; margin-bottom: 6px; }
-    .form-ctrl { width: 100%; border: 1px solid #e2e8f0; border-radius: 10px; padding: 9px 12px; font-size: 13px; color: #0f172a; background: #fff; }
-    .form-ctrl:focus { outline: none; border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,0.12); }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800" data-page="supervise" data-title="任务督办">
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <p class="text-xs text-slate-500 mb-3" id="pageHint"><strong>会上</strong>可直接下达督办（挂当前自然周，不强制先有纪要）；<strong>会后</strong>由计划管理员张凯补录公司周例会纪要（文本概要+附件）。计划内任务请走「任务管理」。</p>
-
-    <div class="flex flex-wrap gap-1 text-sm border-b border-slate-200 mb-4" id="mainTabs">
-      <button type="button" class="main-tab-on px-4 py-2 -mb-px" data-main-tab="supervise">会后督办</button>
-      <button type="button" class="main-tab-off px-4 py-2 -mb-px" data-main-tab="minutes">周例会纪要</button>
-    </div>
+    <p class="text-xs text-slate-500 mb-3" id="pageHint"><strong>会上</strong>可直接下达督办（挂当前自然周，计划外事项）。会议纪要请走独立菜单「会议纪要」。计划内任务请走「任务管理」。</p>
 
     <div id="panelSupervise">
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div class="flex flex-wrap gap-2 items-center">
           <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>下达督办</button>
           <span class="text-[11px] text-slate-400" id="currentWeekHint">当前自然周：2026-W34</span>
+          <a href="会议纪要_page.html" class="text-sm text-teal-700 hover:underline self-center px-2">会议纪要</a>
           <a id="linkCockpit" href="落实驾驶舱_page.html" class="text-sm text-teal-700 hover:underline hidden self-center px-2">落实驾驶舱</a>
         </div>
         <div class="flex flex-wrap gap-2 items-center text-sm">
@@ -103,35 +86,6 @@
       </div>
     </div>
 
-    <div id="panelMinutes" class="hidden">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div class="flex flex-wrap gap-2 items-center">
-          <button type="button" id="btnNewMinute" class="hidden btn-cta text-white text-sm px-3 py-2 rounded-xl">
-            <i class="fa-solid fa-plus mr-1"></i>补录本周纪要
-          </button>
-          <span class="text-[11px] text-slate-400">一周一条 · 会后补录 · 与督办解耦</span>
-        </div>
-        <input type="search" id="mmKw" placeholder="搜索周次/概要" class="border border-slate-200 rounded-xl px-3 py-1.5 w-52 text-sm" />
-      </div>
-      <div id="mmWeekBanner" class="mb-3 text-xs rounded-xl border border-amber-100 bg-amber-50 text-amber-800 px-3 py-2 hidden"></div>
-      <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
-        <table class="grid-table min-w-[960px]">
-          <thead>
-            <tr>
-              <th><span class="col-head">周次</span></th>
-              <th><span class="col-head">文本概要</span></th>
-              <th><span class="col-head">附件</span></th>
-              <th><span class="col-head">关联督办</span></th>
-              <th><span class="col-head">更新人</span></th>
-              <th><span class="col-head">更新时间</span></th>
-              <th><span class="col-head">操作</span></th>
-            </tr>
-          </thead>
-          <tbody id="mmTbody"></tbody>
-        </table>
-      </div>
-    </div>
-
     <div id="modalForm" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalForm')"></div>
       <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
@@ -141,7 +95,7 @@
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3 text-sm">
           <p class="text-[11px] text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2" id="fWeekTip">
-            所属周：当前自然周（会上可先下达，纪要会后补录）
+            所属周：当前自然周（会上可先下达；纪要见独立菜单）
           </p>
           <div>
             <label class="block text-slate-600 mb-1">事项名称 <span class="text-red-500">*</span></label>
@@ -200,42 +154,6 @@
       </div>
     </div>
 
-    <div id="modalMinute" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6">
-      <div class="absolute inset-0 bg-slate-900/45" onclick="BMSUI.closeModal('modalMinute')"></div>
-      <div class="relative bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 shadow-2xl">
-        <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
-          <div>
-            <h3 class="text-lg font-semibold text-slate-900" id="mmModalTitle">编辑周例会纪要</h3>
-            <p class="text-xs text-slate-500 mt-1" id="mmModalSub">公司周例会 · 文本概要 + 附件</p>
-          </div>
-          <button type="button" onclick="BMSUI.closeModal('modalMinute')" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 bg-slate-50/50">
-          <div>
-            <label class="form-label">所属周</label>
-            <input id="mmFWeek" class="form-ctrl bg-slate-50" readonly />
-          </div>
-          <div>
-            <label class="form-label">文本概要</label>
-            <textarea id="mmFSummary" rows="6" class="form-ctrl" placeholder="会议结论、风险与下周关注点…"></textarea>
-          </div>
-          <div>
-            <label class="form-label">附件 <span class="text-slate-400 font-normal">（仅记录文件名）</span></label>
-            <label class="attach-zone" for="mmFAttach">
-              <i class="fa-solid fa-cloud-arrow-up text-slate-400"></i>
-              <span class="text-sm text-slate-600">点击添加附件</span>
-              <input type="file" id="mmFAttach" class="hidden" multiple />
-            </label>
-            <div id="mmAttachList" class="flex flex-wrap gap-2 mt-2.5"></div>
-          </div>
-        </div>
-        <div class="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 shrink-0 bg-slate-50/80">
-          <button type="button" onclick="BMSUI.closeModal('modalMinute')" class="text-sm px-4 py-2 rounded-[10px] border border-slate-200 bg-white text-slate-600">取消</button>
-          <button type="button" id="btnSaveMinute" class="btn-cta text-white px-4 py-2 rounded-[10px] text-sm">保存纪要</button>
-        </div>
-      </div>
-    </div>
-
   </div>
   <script src="../assets/store.js"></script>
   <script src="../assets/common.js"></script>
@@ -243,12 +161,8 @@
 (function () {
   let user;
   let canEdit = false;
-  let canEditMinute = false;
   let editCell = null;
-  let mainTab = "supervise";
   let currentWeek = "2026-W34";
-  let draftMmAttachments = [];
-  let mmViewOnly = false;
 
   function escapeHtml(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -261,152 +175,6 @@
     return BMS4.getCurrentWeek ? BMS4.getCurrentWeek() : "2026-W34";
   }
 
-  function setMainTab(tab) {
-    mainTab = tab === "minutes" ? "minutes" : "supervise";
-    document.querySelectorAll("[data-main-tab]").forEach((btn) => {
-      const on = btn.getAttribute("data-main-tab") === mainTab;
-      btn.className = (on ? "main-tab-on" : "main-tab-off") + " px-4 py-2 -mb-px";
-    });
-    document.getElementById("panelSupervise").classList.toggle("hidden", mainTab !== "supervise");
-    document.getElementById("panelMinutes").classList.toggle("hidden", mainTab !== "minutes");
-    if (mainTab === "minutes") renderMinutesList();
-    else render();
-  }
-
-  function renderMmAttachList() {
-    const box = document.getElementById("mmAttachList");
-    if (!box) return;
-    if (!draftMmAttachments.length) {
-      box.innerHTML = mmViewOnly ? '<span class="text-[11px] text-slate-400">暂无附件</span>' : "";
-      return;
-    }
-    box.innerHTML = draftMmAttachments
-      .map(
-        (a, i) =>
-          `<span class="attach-chip"><i class="fa-regular fa-file"></i>${escapeHtml(a.name)}${
-            mmViewOnly
-              ? ""
-              : `<button type="button" data-rm-mm="${i}" title="移除"><i class="fa-solid fa-xmark"></i></button>`
-          }</span>`
-      )
-      .join("");
-    if (!mmViewOnly) {
-      box.querySelectorAll("[data-rm-mm]").forEach((btn) => {
-        btn.onclick = () => {
-          draftMmAttachments.splice(Number(btn.getAttribute("data-rm-mm")), 1);
-          renderMmAttachList();
-        };
-      });
-    }
-  }
-
-  function summaryPreview(text, n) {
-    const s = String(text || "").replace(/\s+/g, " ").trim();
-    if (!s) return "—";
-    return s.length > n ? s.slice(0, n) + "…" : s;
-  }
-
-  function renderMinutesList() {
-    const kw = (document.getElementById("mmKw").value || "").trim().toLowerCase();
-    const list = (BMS4.listMeetingMinutes ? BMS4.listMeetingMinutes() : []).filter((m) => {
-      if (!kw) return true;
-      return [m.week, m.summary].join(" ").toLowerCase().includes(kw);
-    });
-    const week = getNaturalWeek();
-    const hasCurrent = !!(BMS4.getMeetingMinuteByWeek && BMS4.getMeetingMinuteByWeek(week));
-    const banner = document.getElementById("mmWeekBanner");
-    if (!hasCurrent) {
-      banner.classList.remove("hidden");
-      banner.innerHTML = `当前自然周 <strong>${week}</strong> 纪要尚未补录（会上可先下达督办，会后由张凯补录）。${
-        canEditMinute
-          ? ` <button type="button" class="underline font-medium" id="bannerUpload">立即补录</button>`
-          : ""
-      }`;
-      const bu = document.getElementById("bannerUpload");
-      if (bu) bu.onclick = () => openMinuteModal(week, false);
-    } else {
-      banner.classList.add("hidden");
-      banner.innerHTML = "";
-    }
-    const btnNew = document.getElementById("btnNewMinute");
-    if (canEditMinute) {
-      btnNew.classList.remove("hidden");
-      btnNew.textContent = hasCurrent ? "编辑本周纪要" : "补录本周纪要";
-      btnNew.onclick = () => openMinuteModal(week, false);
-    } else {
-      btnNew.classList.add("hidden");
-    }
-
-    const tbody = document.getElementById("mmTbody");
-    if (!list.length) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center text-slate-400 py-10">暂无会议纪要${
-        canEditMinute ? "，会后可点「补录本周纪要」" : ""
-      }</td></tr>`;
-      return;
-    }
-    tbody.innerHTML = list
-      .map((m) => {
-        const editor = BMS4.userById(m.updatedBy);
-        const atts = m.attachments || [];
-        const related = BMS4.superviseItems.filter((x) => x.week === m.week).length;
-        const isCur = m.week === week;
-        return `<tr>
-          <td class="whitespace-nowrap font-medium text-slate-800">${escapeHtml(m.week)}${
-            isCur ? '<span class="tag ml-1" style="background:#ecfdf5;color:#0f766e;border-color:#a7f3d0">本周</span>' : ""
-          }</td>
-          <td class="max-w-[22rem]"><button type="button" class="name-link text-left" data-mm-view="${escapeAttr(
-            m.week
-          )}">${escapeHtml(summaryPreview(m.summary, 48))}</button></td>
-          <td class="whitespace-nowrap text-slate-600">${atts.length} 个</td>
-          <td class="whitespace-nowrap text-slate-600">${related} 条</td>
-          <td class="whitespace-nowrap">${editor ? escapeHtml(editor.name) : "—"}</td>
-          <td class="whitespace-nowrap text-slate-500">${escapeHtml(m.updatedAt || "—")}</td>
-          <td class="whitespace-nowrap">
-            <button type="button" class="text-teal-700 text-sm hover:underline mr-2" data-mm-view="${escapeAttr(m.week)}">查看</button>
-            ${
-              canEditMinute
-                ? `<button type="button" class="text-teal-700 text-sm hover:underline" data-mm-edit="${escapeAttr(m.week)}">编辑</button>`
-                : ""
-            }
-          </td>
-        </tr>`;
-      })
-      .join("");
-
-    tbody.querySelectorAll("[data-mm-view]").forEach((el) => {
-      el.onclick = () => openMinuteModal(el.getAttribute("data-mm-view"), true);
-    });
-    tbody.querySelectorAll("[data-mm-edit]").forEach((el) => {
-      el.onclick = () => openMinuteModal(el.getAttribute("data-mm-edit"), false);
-    });
-  }
-
-  function openMinuteModal(week, viewOnly) {
-    const w = week || getNaturalWeek();
-    const mm = BMS4.getMeetingMinuteByWeek ? BMS4.getMeetingMinuteByWeek(w) : null;
-    mmViewOnly = !!viewOnly || !canEditMinute;
-    if (!mm && mmViewOnly) return BMSUI.toast("该周暂无纪要", false);
-    if (!mm && !canEditMinute) return BMSUI.toast("仅计划管理员可补录纪要", false);
-
-    document.getElementById("mmFWeek").value = w;
-    document.getElementById("mmModalTitle").textContent = mmViewOnly
-      ? "查看周例会纪要"
-      : mm
-        ? "编辑周例会纪要"
-        : "补录周例会纪要";
-    document.getElementById("mmModalSub").textContent =
-      "公司周例会 · " + w + (mmViewOnly ? " · 只读" : " · 会后补录");
-    document.getElementById("mmFSummary").value = mm ? mm.summary || "" : "";
-    document.getElementById("mmFSummary").readOnly = mmViewOnly;
-    document.getElementById("mmFSummary").classList.toggle("bg-slate-50", mmViewOnly);
-    draftMmAttachments = ((mm && mm.attachments) || []).map((a) => ({ name: a.name || a }));
-    renderMmAttachList();
-    const fin = document.getElementById("mmFAttach");
-    if (fin) fin.value = "";
-    document.querySelector('label.attach-zone[for="mmFAttach"]').classList.toggle("hidden", mmViewOnly);
-    document.getElementById("btnSaveMinute").classList.toggle("hidden", mmViewOnly);
-    BMSUI.openModal("modalMinute");
-  }
   function isEditing(id, field) {
     return editCell && editCell.id === id && editCell.field === field;
   }
@@ -735,7 +503,7 @@
   function openNew() {
     currentWeek = getNaturalWeek();
     document.getElementById("fWeekTip").textContent =
-      "所属周：当前自然周 " + currentWeek + "（会上可先下达，纪要会后在「周例会纪要」补录）";
+      "所属周：当前自然周 " + currentWeek + "（会上可先下达；纪要请在「会议纪要」补录）";
     document.getElementById("fTitle").value = "";
     document.getElementById("fPrio").value = "P1";
     document.getElementById("fStart").value = "2026-08-18";
@@ -753,43 +521,13 @@
     user = BMS4.getRoleUser();
     currentWeek = getNaturalWeek();
     canEdit = user.role === "总经理" || user.role === "部门长" || user.role === "计划管理员";
-    canEditMinute = !!(BMS4.isPlanAdmin && BMS4.isPlanAdmin(user));
     document.getElementById("currentWeekHint").textContent = "当前自然周：" + currentWeek;
     if (user.role === "总经理") document.getElementById("linkCockpit").classList.remove("hidden");
     if (!canEdit) {
       document.getElementById("btnNew").classList.add("hidden");
       document.getElementById("pageHint").textContent =
-        "会上可下达督办、会后补录纪要。您可查看纪要列表；督办仅显示指派给您的事项。";
+        "督办仅显示指派给您的事项。会议纪要请打开独立菜单「会议纪要」查看。";
     }
-
-    document.querySelectorAll("[data-main-tab]").forEach((btn) => {
-      btn.onclick = () => setMainTab(btn.getAttribute("data-main-tab"));
-    });
-
-    document.getElementById("mmFAttach").addEventListener("change", (e) => {
-      if (mmViewOnly) return;
-      Array.from(e.target.files || []).forEach((f) => {
-        if (!f || !f.name) return;
-        if (draftMmAttachments.some((a) => a.name === f.name)) return;
-        draftMmAttachments.push({ name: f.name });
-      });
-      e.target.value = "";
-      renderMmAttachList();
-    });
-    document.getElementById("btnSaveMinute").onclick = () => {
-      if (mmViewOnly || !canEditMinute) return;
-      const r = BMS4.upsertMeetingMinute({
-        week: document.getElementById("mmFWeek").value,
-        summary: document.getElementById("mmFSummary").value.trim(),
-        attachments: draftMmAttachments.map((a) => ({ name: a.name })),
-        updatedBy: user.id,
-      });
-      if (!r.ok) return BMSUI.toast(r.reason || "保存失败", false);
-      BMSUI.closeModal("modalMinute");
-      BMSUI.toast("纪要已保存");
-      renderMinutesList();
-    };
-    document.getElementById("mmKw").oninput = renderMinutesList;
 
     document.getElementById("btnNew").onclick = openNew;
     document.getElementById("fStatusFilter").onchange = render;
@@ -810,7 +548,7 @@
       });
       if (!r.ok) return BMSUI.toast(r.reason, false);
       BMSUI.closeModal("modalForm");
-      BMSUI.toast("已下达（挂当前自然周），纪要可会后补录");
+      BMSUI.toast("已下达（挂当前自然周）");
       render();
     };
 
@@ -826,8 +564,7 @@
       BMSUI.toast("已催办");
     };
 
-    const tabParam = new URLSearchParams(location.search).get("tab");
-    setMainTab(tabParam === "minutes" ? "minutes" : "supervise");
+    render();
   });
 })();
   </script>

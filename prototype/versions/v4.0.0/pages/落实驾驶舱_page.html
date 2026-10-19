@@ -12,9 +12,42 @@
     .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 8px 10px; vertical-align: middle; }
     .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; }
     .grid-table tbody tr:hover { background: #fafbfc; }
-    .kpi { background:#fff; border:1px solid #e8eaed; border-radius:1rem; padding:1rem; cursor:pointer; transition: border-color .15s, box-shadow .15s; }
-    .kpi:hover { border-color:#99f6e4; }
-    .kpi.active { border-color:#0f766e; box-shadow:0 0 0 2px rgba(15,118,110,.15); }
+    .kpi-panel { background:#fff; border:1px solid #e8eaed; border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(60,64,67,0.06); }
+    .kpi-hd { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 16px; background:#f8fafc; border-bottom:1px solid #f1f5f9; }
+    .kpi-hd .ttl { font-size:13px; font-weight:600; color:#0f172a; display:inline-flex; align-items:center; gap:8px; }
+    .kpi-hd .dot { width:8px; height:8px; border-radius:999px; flex-shrink:0; }
+    .kpi-hd .dot.plan { background:#0f766e; }
+    .kpi-hd .dot.task { background:#0284c7; }
+    .kpi-hd .meta { font-size:11px; color:#94a3b8; }
+    .kpi-cols { display:grid; grid-template-columns:1fr 1fr; }
+    .kpi-cols.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+    .kpi-cell { padding:14px 16px; cursor:pointer; border-right:1px solid #f1f5f9; transition:background .15s; min-height:96px; }
+    .kpi-cell:last-child { border-right:none; }
+    .kpi-cell:hover { background:#fafbfc; }
+    .kpi-cell.active { background:#f0fdfa; box-shadow:inset 0 -2px 0 #0f766e; }
+    .kpi-cell.active.danger { background:#fff8f7; box-shadow:inset 0 -2px 0 #dc2626; }
+    .kpi-cell.active.warn { background:#fffbeb; box-shadow:inset 0 -2px 0 #d97706; }
+    .kpi-label { font-size:12px; color:#64748b; line-height:1.2; }
+    .kpi-num { font-size:28px; font-weight:600; letter-spacing:-0.02em; line-height:1.15; margin-top:6px; color:#0f172a; font-variant-numeric:tabular-nums; }
+    .kpi-num.is-zero { color:#94a3b8; font-weight:500; }
+    .kpi-num.is-hot { color:#dc2626; }
+    .kpi-num.is-warn { color:#d97706; }
+    .kpi-foot { margin-top:10px; display:flex; flex-wrap:wrap; align-items:center; gap:6px; min-height:22px; }
+    .kpi-hint { font-size:11px; color:#94a3b8; }
+    .kpi-hint.hot { color:#dc2626; }
+    .kpi-hint.warn { color:#b45309; }
+    .prio-seg { display:inline-flex; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; background:#fff; }
+    .prio-seg button { border:none; background:transparent; font-size:11px; line-height:1; padding:5px 8px; color:#64748b; cursor:pointer; border-right:1px solid #e2e8f0; font-variant-numeric:tabular-nums; }
+    .prio-seg button:last-child { border-right:none; }
+    .prio-seg button:hover { background:#f8fafc; color:#0f766e; }
+    .prio-seg button.active { background:#0f766e; color:#fff; }
+    .prio-seg button.hot:not(.active) { color:#dc2626; }
+    .prio-seg button.hot.active { background:#dc2626; color:#fff; }
+    @media (max-width: 640px) {
+      .kpi-cols, .kpi-cols.cols-3 { grid-template-columns:1fr; }
+      .kpi-cell { border-right:none; border-bottom:1px solid #f1f5f9; }
+      .kpi-cell:last-child { border-bottom:none; }
+    }
     .prog-track { height:8px; border-radius:999px; background:#e8eaed; overflow:hidden; }
     .prog-fill { height:100%; background:#34a853; border-radius:999px; }
     .prog-fill.bad { background:#ea4335; }
@@ -44,7 +77,7 @@
   <div id="page-main" class="hidden">
 
     <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-      <p class="text-xs text-slate-500 max-w-2xl">日清作战台：KPI → <strong>重点任务</strong> + <strong>催办</strong> → 例会/部门完成度；例外与矩阵默认折叠。截至 <span id="asOf" class="font-medium text-slate-700"></span>。</p>
+      <p class="text-xs text-slate-500 max-w-2xl">日清作战台：先<strong>计划</strong>后<strong>任务</strong>（延期按 P0/P1/P2 + 催办）→ 重点任务/催办篮子 → 例会/部门完成度。截至 <span id="asOf" class="font-medium text-slate-700"></span>。</p>
       <div class="flex flex-wrap gap-2 text-sm">
         <a href="经营总台账_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">公司计划表</a>
         <a href="部门计划表_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">部门计划表</a>
@@ -53,7 +86,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5" id="kpi"></div>
+    <div class="grid lg:grid-cols-2 gap-4 mb-5" id="kpi"></div>
 
     <div class="grid lg:grid-cols-2 gap-4 mb-5">
       <div class="bg-white border border-[#e8eaed] rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(60,64,67,0.06)]">
@@ -97,7 +130,7 @@
             <span class="text-xs text-slate-400 ml-2" id="weekMeetLabel"></span>
           </div>
           <div class="flex gap-3 text-xs">
-            <a href="任务督办_page.html?tab=minutes" class="text-teal-700 hover:underline">纪要</a>
+            <a href="会议纪要_page.html" class="text-teal-700 hover:underline">纪要</a>
             <a href="任务督办_page.html" class="text-teal-700 hover:underline">督办</a>
           </div>
         </div>
@@ -129,7 +162,7 @@
         <div>
           <span class="text-sm font-medium">例外清单</span>
           <span class="text-xs text-slate-400 ml-2" id="exCount"></span>
-          <span class="text-[11px] text-slate-400 ml-2">报缺/计划卡点等明细 · 默认折叠</span>
+          <span class="text-[11px] text-slate-400 ml-2">点上方汇总筛选 · 默认折叠</span>
         </div>
         <i class="fa-solid fa-chevron-down text-slate-400 text-xs" id="foldExIcon"></i>
       </div>
@@ -234,7 +267,8 @@
   <script src="../assets/common.js"></script>
   <script>
 (function () {
-  let kpiFilter = ""; // late | near | plan | report | urgePending | ""
+  /** kpiFilter: plan_late | plan_late_P0|P1|P2 | plan_urge | task_late | task_late_P0|P1|P2 | task_near | task_urge | "" */
+  let kpiFilter = "";
   let urgeBucket = "overdue"; // overdue | pending | recheck | closed
   let matrixOpen = false;
   let exOpen = false;
@@ -268,14 +302,74 @@
     return "整体计划_任务监督_page.html?all=1";
   }
 
+  function urgeScope(u) {
+    if (u.planId && !u.taskId) return "plan";
+    if (u.taskId) return "task";
+    if (String(u.exceptionType || "").indexOf("计划") === 0) return "plan";
+    return "task";
+  }
+
   function matchKpi(e) {
     if (!kpiFilter) return true;
-    if (kpiFilter === "late") return e.type === "任务延期";
-    if (kpiFilter === "near") return e.type === "任务临期";
-    if (kpiFilter === "plan") return e.type === "计划卡点" || e.type === "计划关注";
-    if (kpiFilter === "report") return e.type === "任务周报缺失" || e.type === "任务月报缺失";
-    if (kpiFilter === "urgePending") return e.type === "催办未回复";
+    if (kpiFilter === "plan_late") return e.type === "计划卡点" || e.type === "计划关注";
+    if (kpiFilter.indexOf("plan_late_") === 0) {
+      const p = kpiFilter.slice("plan_late_".length);
+      return (e.type === "计划卡点" || e.type === "计划关注") && (e.priority || "P2") === p;
+    }
+    if (kpiFilter === "plan_urge") return e.type === "催办未回复" && e.urgeScope === "plan";
+    if (kpiFilter === "task_late") return e.type === "任务延期";
+    if (kpiFilter.indexOf("task_late_") === 0) {
+      const p = kpiFilter.slice("task_late_".length);
+      return e.type === "任务延期" && (e.priority || "P2") === p;
+    }
+    if (kpiFilter === "task_near") return e.type === "任务临期";
+    if (kpiFilter === "task_urge") return e.type === "催办未回复" && e.urgeScope !== "plan";
     return true;
+  }
+
+  function countByPrio(list, prioOf) {
+    const c = { P0: 0, P1: 0, P2: 0, total: list.length };
+    list.forEach((item) => {
+      const p = prioOf(item) || "P2";
+      if (c[p] != null) c[p]++;
+      else c.P2++;
+    });
+    return c;
+  }
+
+  function prioSegHtml(prefix, counts, activeFilter) {
+    const btns = ["P0", "P1", "P2"]
+      .map((p) => {
+        const key = prefix + "_" + p;
+        const n = counts[p] || 0;
+        const on = activeFilter === key;
+        const hot = p === "P0" && n > 0;
+        return `<button type="button" class="${hot ? "hot" : ""} ${on ? "active" : ""}" data-kpi="${key}" title="按 ${p} 筛选">${p} ${n}</button>`;
+      })
+      .join("");
+    return `<div class="prio-seg">${btns}</div>`;
+  }
+
+  function cellClass(active, tone) {
+    let cls = "kpi-cell";
+    if (active) cls += " active" + (tone === "danger" ? " danger" : tone === "warn" ? " warn" : "");
+    return cls;
+  }
+
+  function numClass(n, tone) {
+    if (!n) return "kpi-num is-zero";
+    if (tone === "danger") return "kpi-num is-hot";
+    if (tone === "warn") return "kpi-num is-warn";
+    return "kpi-num";
+  }
+
+  function setKpiFilter(key) {
+    kpiFilter = kpiFilter === key ? "" : key;
+    if (kpiFilter) exOpen = true;
+    if (kpiFilter === "plan_urge" || kpiFilter === "task_urge") {
+      urgeBucket = "overdue";
+    }
+    render();
   }
 
   function openUrge(opt) {
@@ -326,42 +420,85 @@
   function render() {
     document.getElementById("asOf").textContent = BMS4.DEMO_TODAY;
     const allEx = BMS4.getExceptions();
-    const late = BMS4.taskItems.filter((t) => BMS4.isTaskOverdue(t)).length;
-    const near = BMS4.taskItems.filter((t) => BMS4.isTaskNearDue(t)).length;
-    const planLate = BMS4.PLAN_ITEMS.filter((p) => {
+    const planDelayList = BMS4.PLAN_ITEMS.filter((p) => {
       const st = BMS4.resolvePlanStatus ? BMS4.resolvePlanStatus(p) : p.status;
-      return st === "延期" || st === "关注";
+      return st === "延期";
+    });
+    const planWatch = BMS4.PLAN_ITEMS.filter((p) => {
+      const st = BMS4.resolvePlanStatus ? BMS4.resolvePlanStatus(p) : p.status;
+      return st === "关注";
     }).length;
-    const missReport = allEx.filter((e) => e.type === "任务周报缺失" || e.type === "任务月报缺失").length;
+    const planDelayC = countByPrio(planDelayList, (p) => p.priority || "P2");
+    const taskLateList = BMS4.taskItems.filter((t) => BMS4.isTaskOverdue(t));
+    const taskLateC = countByPrio(taskLateList, (t) => t.priority || "P2");
+    const near = BMS4.taskItems.filter((t) => BMS4.isTaskNearDue(t)).length;
+    const nearP0 = BMS4.taskItems.filter((t) => BMS4.isTaskNearDue(t) && (t.priority || "P2") === "P0").length;
+
+    const planUrges = BMS4.urges.filter((u) => u.status === "待回复" && urgeScope(u) === "plan");
+    const taskUrges = BMS4.urges.filter((u) => u.status === "待回复" && urgeScope(u) === "task");
+    const planUrgeOverdue = planUrges.filter((u) => u.expectReplyDate < BMS4.DEMO_TODAY).length;
+    const taskUrgeOverdue = taskUrges.filter((u) => u.expectReplyDate < BMS4.DEMO_TODAY).length;
     const pendingUrge = BMS4.urges.filter((u) => u.status === "待回复").length;
     const overdueUrge = BMS4.urges.filter((u) => u.status === "待回复" && u.expectReplyDate < BMS4.DEMO_TODAY).length;
     const recheckUrge = BMS4.urges.filter((u) => u.status === "已回复").length;
     const weekKey = BMS4.getCurrentWeek ? BMS4.getCurrentWeek() : "2026-W34";
 
-    const kpis = [
-      ["延期任务", late, "text-rose-600", "late"],
-      ["临期任务(≤3天)", near, "text-amber-600", "near"],
-      ["计划卡点/关注", planLate, "text-slate-800", "plan"],
-      ["任务报未填齐", missReport, "text-slate-800", "report"],
-      ["催办待回复", pendingUrge, "text-rose-600", "urgePending"],
-    ];
-    document.getElementById("kpi").innerHTML = kpis
-      .map(
-        ([k, v, cls, key]) =>
-          `<div class="kpi ${kpiFilter === key ? "active" : ""}" data-kpi="${key}" title="点击筛选例外">
-            <div class="text-xs text-slate-500">${k}</div>
-            <div class="text-2xl font-semibold mt-1 ${cls}">${v}</div>
-            ${key === "urgePending" && overdueUrge ? `<div class="text-[10px] text-rose-500 mt-0.5">${overdueUrge} 条已超时</div>` : ""}
-          </div>`
-      )
-      .join("");
-    document.querySelectorAll("[data-kpi]").forEach((el) => {
-      el.onclick = () => {
-        const key = el.getAttribute("data-kpi");
-        kpiFilter = kpiFilter === key ? "" : key;
-        if (kpiFilter) exOpen = true;
-        if (key === "urgePending" && kpiFilter) urgeBucket = overdueUrge ? "overdue" : "pending";
-        render();
+    const planLateOn = kpiFilter === "plan_late" || kpiFilter.indexOf("plan_late_") === 0;
+    const taskLateOn = kpiFilter === "task_late" || kpiFilter.indexOf("task_late_") === 0;
+
+    document.getElementById("kpi").innerHTML = `
+      <section class="kpi-panel">
+        <div class="kpi-hd">
+          <div class="ttl"><span class="dot plan"></span>计划</div>
+          <div class="meta">先看偏航 · 关注 ${planWatch}</div>
+        </div>
+        <div class="kpi-cols">
+          <div class="${cellClass(planLateOn, planDelayC.total ? "danger" : "")}" data-kpi="plan_late" title="筛选计划延期/关注">
+            <div class="kpi-label">延期</div>
+            <div class="${numClass(planDelayC.total, "danger")}">${planDelayC.total}</div>
+            <div class="kpi-foot">${prioSegHtml("plan_late", planDelayC, kpiFilter)}</div>
+          </div>
+          <div class="${cellClass(kpiFilter === "plan_urge", planUrges.length ? "danger" : "")}" data-kpi="plan_urge" title="筛选计划类催办">
+            <div class="kpi-label">催办待回复</div>
+            <div class="${numClass(planUrges.length, "danger")}">${planUrges.length}</div>
+            <div class="kpi-foot"><span class="kpi-hint ${planUrgeOverdue ? "hot" : ""}">${
+              planUrgeOverdue ? "已超时 " + planUrgeOverdue : "暂无超时"
+            }</span></div>
+          </div>
+        </div>
+      </section>
+      <section class="kpi-panel">
+        <div class="kpi-hd">
+          <div class="ttl"><span class="dot task"></span>任务</div>
+          <div class="meta">再看执行</div>
+        </div>
+        <div class="kpi-cols cols-3">
+          <div class="${cellClass(taskLateOn, taskLateC.total ? "danger" : "")}" data-kpi="task_late" title="筛选任务延期">
+            <div class="kpi-label">延期</div>
+            <div class="${numClass(taskLateC.total, "danger")}">${taskLateC.total}</div>
+            <div class="kpi-foot">${prioSegHtml("task_late", taskLateC, kpiFilter)}</div>
+          </div>
+          <div class="${cellClass(kpiFilter === "task_near", near ? "warn" : "")}" data-kpi="task_near" title="筛选临期任务">
+            <div class="kpi-label">临期 · 3天内</div>
+            <div class="${numClass(near, "warn")}">${near}</div>
+            <div class="kpi-foot"><span class="kpi-hint ${nearP0 ? "warn" : ""}">${
+              nearP0 ? "P0 " + nearP0 + " 项" : "无 P0 临期"
+            }</span></div>
+          </div>
+          <div class="${cellClass(kpiFilter === "task_urge", taskUrges.length ? "danger" : "")}" data-kpi="task_urge" title="筛选任务类催办">
+            <div class="kpi-label">催办待回复</div>
+            <div class="${numClass(taskUrges.length, "danger")}">${taskUrges.length}</div>
+            <div class="kpi-foot"><span class="kpi-hint ${taskUrgeOverdue ? "hot" : ""}">${
+              taskUrgeOverdue ? "已超时 " + taskUrgeOverdue : "暂无超时"
+            }</span></div>
+          </div>
+        </div>
+      </section>`;
+
+    document.querySelectorAll("#kpi [data-kpi]").forEach((el) => {
+      el.onclick = (ev) => {
+        ev.stopPropagation();
+        setKpiFilter(el.getAttribute("data-kpi"));
       };
     });
 
@@ -420,7 +557,7 @@
          <div class="text-[11px] text-slate-400 mt-1 truncate" title="${escapeAttr(mm.summary || "")}">${escapeHtml(
           (mm.summary || "").replace(/\s+/g, " ").slice(0, 64)
         )}${(mm.summary || "").length > 64 ? "…" : ""}</div>`
-      : `<div class="text-xs text-amber-700">本周纪要尚未补录 · <a class="underline" href="任务督办_page.html?tab=minutes">去补录</a></div>`;
+      : `<div class="text-xs text-amber-700">本周纪要尚未补录 · <a class="underline" href="会议纪要_page.html">去补录</a></div>`;
     document.getElementById("weekMeetBody").innerHTML = weekMeets.length
       ? weekMeets
           .map((m) => {
@@ -564,6 +701,8 @@
     });
 
     let urgeList = BMS4.urges.slice();
+    if (kpiFilter === "plan_urge") urgeList = urgeList.filter((u) => urgeScope(u) === "plan");
+    if (kpiFilter === "task_urge") urgeList = urgeList.filter((u) => urgeScope(u) === "task");
     if (urgeBucket === "overdue") {
       urgeList = urgeList.filter((u) => u.status === "待回复" && u.expectReplyDate < BMS4.DEMO_TODAY);
     } else if (urgeBucket === "pending") {

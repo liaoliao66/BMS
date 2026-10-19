@@ -536,26 +536,58 @@
   superviseItems = superviseItems.map(normalizeSupervise);
 
   /**
-   * 公司周例会纪要：一周一条；仅计划管理员维护
-   * week 如 2026-W34；attachments 仅文件名
+   * 会议纪要：类型=周例会/月例会/总经理办公会；仅计划管理员维护
+   * periodKey：周例会如 2026-W34；月例会如 2026-08；总办会如 2026-08-15
+   * relatedUserIds：关联人员；attachments：资料附件（文件名）
    */
+  const MEETING_TYPES = ["周例会", "月例会", "总经理办公会"];
   let meetingMinutes = [
     {
       id: "mm_w34",
+      meetingType: "周例会",
+      periodKey: "2026-W34",
       week: "2026-W34",
       summary:
         "1. 吞吐盯控：民本/祥云到港作业按节点推进，回款仍需市场部跟催。\n2. 设备：装船机皮带更换窗口本周确认。\n3. 督办：维保保险、电磁吸盘报价、箱管进度三项限期闭环。",
+      relatedUserIds: ["u_gm", "u_plan_admin", "u_prod_h", "u_eq_h", "u_safe_h", "u_mkt_h"],
       attachments: [{ name: "公司周例会纪要_2026W34.docx" }, { name: "例会议程.pdf" }],
       updatedAt: "2026-08-18 17:30",
       updatedBy: "u_plan_admin",
     },
     {
       id: "mm_w33",
+      meetingType: "周例会",
+      periodKey: "2026-W33",
       week: "2026-W33",
       summary:
         "1. 上周吞吐复盘完成，缺口仍在回款与船期。\n2. 安全整改三项持续盯控。\n3. 例会待办三项已转入督办闭环。",
+      relatedUserIds: ["u_gm", "u_plan_admin", "u_prod_h", "u_mkt_h"],
       attachments: [{ name: "公司周例会纪要_2026W33.docx" }],
       updatedAt: "2026-08-11 16:20",
+      updatedBy: "u_plan_admin",
+    },
+    {
+      id: "mm_m08",
+      meetingType: "月例会",
+      periodKey: "2026-08",
+      week: "",
+      summary:
+        "1. 8 月吞吐缺口复盘，重点盯控回款与船期。\n2. 各部门月度重点与跨部门配合项对齐。\n3. 安全整改与设备窗口纳入下月跟踪。",
+      relatedUserIds: ["u_gm", "u_plan_admin", "u_prod_h", "u_eq_h", "u_safe_h", "u_mkt_h"],
+      attachments: [{ name: "月例会纪要_202608.docx" }, { name: "月度经营简报.xlsx" }],
+      updatedAt: "2026-08-05 16:00",
+      updatedBy: "u_plan_admin",
+    },
+    {
+      id: "mm_gm1",
+      meetingType: "总经理办公会",
+      periodKey: "2026-08-15",
+      week: "",
+      summary:
+        "1. 确认吞吐冲击目标阶段举措。\n2. 批准设备零星改造询价上会。\n3. 市场回款节点由市场部本周反馈。",
+      relatedUserIds: ["u_gm", "u_plan_admin", "u_prod_h", "u_eq_h"],
+      attachments: [{ name: "总办会纪要_20260815.pdf" }],
+      updatedAt: "2026-08-15 18:10",
       updatedBy: "u_plan_admin",
     },
   ];
@@ -575,6 +607,7 @@
       note: "回款直接影响吞吐目标，请给出明确回款节点。",
       expectReplyDate: "2026-08-16",
       taskId: "t7",
+      planId: "",
       companyPlanId: "cp1",
       dept: "市场开发部",
       exceptionType: "任务延期",
@@ -593,6 +626,7 @@
       note: "请确认更换窗口与对生产影响。",
       expectReplyDate: "2026-08-17",
       taskId: "t3",
+      planId: "",
       companyPlanId: "cp2",
       dept: "设备技术部",
       exceptionType: "任务临期",
@@ -603,6 +637,25 @@
       replyRemedy: "本周内锁定更换日并同步生产部作业计划。",
       replyPromiseDate: "2026-08-22",
       repliedAt: "2026-08-18",
+    },
+    {
+      id: "ug3",
+      targetUserId: "u_mkt_h",
+      title: "催办：资金回款与运量兑现计划卡点",
+      note: "计划已延期，请反馈纠偏措施与可兑现节点。",
+      expectReplyDate: "2026-08-16",
+      taskId: "",
+      planId: "a_m4",
+      companyPlanId: "cp1",
+      dept: "市场开发部",
+      exceptionType: "计划卡点",
+      status: "待回复",
+      createdAt: "2026-08-15",
+      createdBy: "u_gm",
+      replyReason: "",
+      replyRemedy: "",
+      replyPromiseDate: "",
+      repliedAt: "",
     },
   ];
 
@@ -665,10 +718,18 @@
   }
 
   function normalizeMeetingMinute(m) {
+    const meetingType = MEETING_TYPES.includes(m.meetingType) ? m.meetingType : "周例会";
+    const periodKey = String(m.periodKey || m.week || "").trim() || (meetingType === "周例会" ? "2026-W34" : "");
+    const relatedUserIds = Array.isArray(m.relatedUserIds)
+      ? m.relatedUserIds.filter((id, i, arr) => id && arr.indexOf(id) === i)
+      : [];
     return {
       id: m.id || "mm_" + Date.now(),
-      week: m.week || "2026-W34",
+      meetingType,
+      periodKey,
+      week: meetingType === "周例会" ? periodKey : m.week || "",
       summary: m.summary != null ? String(m.summary) : "",
+      relatedUserIds,
       attachments: normalizeAttachments(m.attachments),
       updatedAt: m.updatedAt || DEMO_TODAY + " 12:00",
       updatedBy: m.updatedBy || "",
@@ -1030,7 +1091,7 @@
 
   /** 演示数据持久化：切换角色/刷新后保留编辑结果 */
   const DATA_KEY = "bms_v4_demo_data";
-  const DATA_VER = 6;
+  const DATA_VER = 8;
 
   function deepClone(v) {
     return JSON.parse(JSON.stringify(v));
@@ -1062,7 +1123,7 @@
     planChangeLogs = deepClone(snap.planChangeLogs || []);
     taskChangeLogs = deepClone(snap.taskChangeLogs || []);
     superviseItems = deepClone(snap.superviseItems || []);
-    meetingMinutes = deepClone(snap.meetingMinutes || []);
+    meetingMinutes = deepClone(snap.meetingMinutes || []).map(normalizeMeetingMinute);
     urges = deepClone(snap.urges || []);
     todoArchive = deepClone(snap.todoArchive || []);
   }
@@ -1386,44 +1447,67 @@
       rebuildTodos();
       return { ok: true };
     },
+    MEETING_TYPES,
     get meetingMinutes() {
       return meetingMinutes;
     },
     getMeetingMinuteByWeek(week) {
-      return meetingMinutes.find((x) => x.week === week) || null;
+      return (
+        meetingMinutes.find((x) => x.meetingType === "周例会" && (x.periodKey === week || x.week === week)) ||
+        null
+      );
+    },
+    getMeetingMinuteById(id) {
+      return meetingMinutes.find((x) => x.id === id) || null;
     },
     /** 演示环境「当前自然周」 */
     getCurrentWeek() {
       return "2026-W34";
     },
     listMeetingWeeks() {
-      const set = new Set(meetingMinutes.map((x) => x.week));
+      const set = new Set(
+        meetingMinutes.filter((x) => x.meetingType === "周例会").map((x) => x.periodKey || x.week)
+      );
       set.add(this.getCurrentWeek());
       ["2026-W33", "2026-W32"].forEach((w) => set.add(w));
       return [...set].sort((a, b) => b.localeCompare(a));
     },
     listMeetingMinutes() {
-      return meetingMinutes
-        .slice()
-        .sort((a, b) => String(b.week).localeCompare(String(a.week)));
+      const typeOrder = { 周例会: 0, 月例会: 1, 总经理办公会: 2 };
+      return meetingMinutes.slice().sort((a, b) => {
+        const pk = String(b.periodKey || "").localeCompare(String(a.periodKey || ""));
+        if (pk) return pk;
+        return (typeOrder[a.meetingType] || 9) - (typeOrder[b.meetingType] || 9);
+      });
     },
     upsertMeetingMinute(payload) {
-      const week = payload.week || "2026-W34";
       const actor = userById(payload.updatedBy) || this.getRoleUser();
       if (!actor || actor.role !== "计划管理员") {
-        return { ok: false, reason: "仅计划管理员可维护公司周例会纪要" };
+        return { ok: false, reason: "仅计划管理员可维护会议纪要" };
       }
-      const existing = meetingMinutes.find((x) => x.week === week);
+      const meetingType = MEETING_TYPES.includes(payload.meetingType) ? payload.meetingType : "周例会";
+      const periodKey =
+        payload.periodKey ||
+        payload.week ||
+        (meetingType === "月例会" ? "2026-08" : meetingType === "总经理办公会" ? DEMO_TODAY : "2026-W34");
+      const existing = payload.id
+        ? meetingMinutes.find((x) => x.id === payload.id)
+        : meetingType === "周例会"
+          ? meetingMinutes.find((x) => x.meetingType === "周例会" && x.periodKey === periodKey)
+          : null;
       const item = normalizeMeetingMinute({
-        id: existing ? existing.id : "mm_" + Date.now(),
-        week,
+        id: existing ? existing.id : payload.id || "mm_" + Date.now(),
+        meetingType,
+        periodKey,
+        week: meetingType === "周例会" ? periodKey : "",
         summary: payload.summary || "",
+        relatedUserIds: payload.relatedUserIds,
         attachments: payload.attachments,
         updatedAt: demoNowStamp(),
         updatedBy: actor.id,
       });
       if (existing) {
-        meetingMinutes = meetingMinutes.map((x) => (x.week === week ? item : x));
+        meetingMinutes = meetingMinutes.map((x) => (x.id === existing.id ? item : x));
       } else {
         meetingMinutes = [item, ...meetingMinutes];
       }
@@ -1709,7 +1793,7 @@
               planId: p.id,
               companyPlanId: p.companyPlanId || "",
               lagDays: 0,
-              priority: "P1",
+              priority: p.priority || "P1",
             });
           }
         }
@@ -1773,6 +1857,12 @@
       urges
         .filter((u) => u.status === "待回复" && u.expectReplyDate && u.expectReplyDate < DEMO_TODAY)
         .forEach((u) => {
+          const urgeScope =
+            u.planId && !u.taskId
+              ? "plan"
+              : String(u.exceptionType || "").indexOf("计划") === 0
+                ? "plan"
+                : "task";
           list.push({
             id: "ex_ug_" + u.id,
             type: "催办未回复",
@@ -1781,7 +1871,9 @@
             dept: u.dept,
             ownerId: u.targetUserId,
             taskId: u.taskId || "",
+            planId: u.planId || "",
             urgeId: u.id,
+            urgeScope,
             companyPlanId: u.companyPlanId || "",
             lagDays: dayDiff(u.expectReplyDate, DEMO_TODAY) || 0,
             priority: "P0",

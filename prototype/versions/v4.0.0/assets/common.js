@@ -21,6 +21,7 @@
           { id: "taskMonthReport", name: "任务月报", href: "任务月报_page.html", icon: "fa-calendar" },
           { id: "appraisal", name: "绩效考核", href: "绩效考核_page.html", icon: "fa-ranking-star" },
           { id: "supervise", name: "任务督办", href: "任务督办_page.html", icon: "fa-clipboard-check" },
+          { id: "meetingMinutes", name: "会议纪要", href: "会议纪要_page.html", icon: "fa-file-lines" },
         ],
       },
       {
@@ -52,6 +53,7 @@
         group: "协同",
         items: [
           { id: "supervise", name: "任务督办", href: "任务督办_page.html", icon: "fa-clipboard-check" },
+          { id: "meetingMinutes", name: "会议纪要", href: "会议纪要_page.html", icon: "fa-file-lines" },
           { id: "todo", name: "我的待办", href: "工作台_待办_page.html", icon: "fa-inbox" },
         ],
       },
@@ -73,6 +75,10 @@
           { id: "supervise", name: "任务督办", href: "任务督办_page.html", icon: "fa-clipboard-check" },
         ],
       },
+      {
+        group: "查看",
+        items: [{ id: "meetingMinutes", name: "会议纪要", href: "会议纪要_page.html", icon: "fa-file-lines" }],
+      },
     ],
     员工: [
       { group: "工作台", items: [{ id: "todo", name: "我的待办", href: "工作台_待办_page.html", icon: "fa-inbox" }] },
@@ -88,6 +94,7 @@
         items: [
           { id: "taskWeekReport", name: "任务周报", href: "任务周报_page.html", icon: "fa-calendar-week" },
           { id: "taskMonthReport", name: "任务月报", href: "任务月报_page.html", icon: "fa-calendar" },
+          { id: "meetingMinutes", name: "会议纪要", href: "会议纪要_page.html", icon: "fa-file-lines" },
         ],
       },
     ],
