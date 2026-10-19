@@ -48,7 +48,8 @@
 
 ## 文档与原型
 
-- PRD：`docs/versions/v4.0.0/prd.md`
+- PRD 源文：`docs/versions/v4.0.0/prd.md`
+- PRD 阅读页：`docs/versions/v4.0.0/prd.html`（在线/本地打开此页；勿直接打开 md）
 - 原型：`prototype/versions/v4.0.0/index.html`（PC）
 
 ## 修订
