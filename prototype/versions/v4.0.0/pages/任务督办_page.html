@@ -47,15 +47,11 @@
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <p class="text-xs text-slate-500 mb-3" id="pageHint"><strong>会上</strong>可直接下达督办（挂当前自然周，计划外事项）。会议纪要请走独立菜单「会议纪要」。计划内任务请走「任务管理」。</p>
-
     <div id="panelSupervise">
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div class="flex flex-wrap gap-2 items-center">
           <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>下达督办</button>
           <span class="text-[11px] text-slate-400" id="currentWeekHint">当前自然周：2026-W34</span>
-          <a href="会议纪要_page.html" class="text-sm text-teal-700 hover:underline self-center px-2">会议纪要</a>
-          <a id="linkCockpit" href="落实驾驶舱_page.html" class="text-sm text-teal-700 hover:underline hidden self-center px-2">落实驾驶舱</a>
         </div>
         <div class="flex flex-wrap gap-2 items-center text-sm">
           <select id="fStatusFilter" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white">
@@ -94,9 +90,7 @@
           <button type="button" onclick="BMSUI.closeModal('modalForm')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-4 space-y-3 text-sm">
-          <p class="text-[11px] text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2" id="fWeekTip">
-            所属周：当前自然周（会上可先下达；纪要见独立菜单）
-          </p>
+          <p class="text-[11px] text-slate-500 bg-slate-50 border border-slate-100 rounded-xl px-3 py-2 hidden" id="fWeekTip"></p>
           <div>
             <label class="block text-slate-600 mb-1">事项名称 <span class="text-red-500">*</span></label>
             <input id="fTitle" class="w-full border rounded-xl px-3 py-2.5" placeholder="不关联任何计划" />
@@ -145,6 +139,8 @@
         <h3 class="text-lg font-semibold">发起催办</h3>
         <input type="hidden" id="uTarget" />
         <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">要求说明 <span class="text-red-500">*</span></label>
+          <textarea id="uNote" class="w-full border rounded-xl px-3 py-2.5 h-20" placeholder="接收人可见：督办催办要求"></textarea></div>
         <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
           <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
         <div class="flex justify-end gap-2">
@@ -472,6 +468,7 @@
         if (!m) return;
         document.getElementById("uTarget").value = m.ownerId;
         document.getElementById("uTitle").value = "催办（督办）：" + m.title;
+        document.getElementById("uNote").value = "请按督办事项反馈进展、卡点与承诺完成日。";
         document.getElementById("uExpect").value = "2026-08-21";
         BMSUI.openModal("modalUrge");
       };
@@ -502,8 +499,6 @@
 
   function openNew() {
     currentWeek = getNaturalWeek();
-    document.getElementById("fWeekTip").textContent =
-      "所属周：当前自然周 " + currentWeek + "（会上可先下达；纪要请在「会议纪要」补录）";
     document.getElementById("fTitle").value = "";
     document.getElementById("fPrio").value = "P1";
     document.getElementById("fStart").value = "2026-08-18";
@@ -522,11 +517,8 @@
     currentWeek = getNaturalWeek();
     canEdit = user.role === "总经理" || user.role === "部门长" || user.role === "计划管理员";
     document.getElementById("currentWeekHint").textContent = "当前自然周：" + currentWeek;
-    if (user.role === "总经理") document.getElementById("linkCockpit").classList.remove("hidden");
     if (!canEdit) {
       document.getElementById("btnNew").classList.add("hidden");
-      document.getElementById("pageHint").textContent =
-        "督办仅显示指派给您的事项。会议纪要请打开独立菜单「会议纪要」查看。";
     }
 
     document.getElementById("btnNew").onclick = openNew;
@@ -556,12 +548,13 @@
       const r = BMS4.createUrge({
         targetUserId: document.getElementById("uTarget").value,
         title: document.getElementById("uTitle").value.trim(),
+        note: document.getElementById("uNote").value.trim(),
         expectReplyDate: document.getElementById("uExpect").value,
         exceptionType: "任务督办",
       });
       if (!r.ok) return BMSUI.toast(r.reason, false);
       BMSUI.closeModal("modalUrge");
-      BMSUI.toast("已催办");
+      BMSUI.toast("已催办，对象可在待办查看要求说明");
     };
 
     render();

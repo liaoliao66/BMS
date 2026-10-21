@@ -28,17 +28,14 @@
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <p class="text-xs text-slate-500 mb-3">考核各部门及人员计划/任务完成情况。任务完成率=（已完成+已关闭）/总数。<strong>红区（有延期）置顶</strong>。催办须填期望回复日。
-      <a href="落实驾驶舱_page.html" class="text-teal-700 hover:underline ml-1">落实驾驶舱</a>
-      <a href="整体计划_任务监督_page.html" class="text-teal-700 hover:underline ml-2">整体任务表</a>
-      <a href="部门计划表_page.html" class="text-teal-700 hover:underline ml-2">部门计划表</a></p>
-
     <div id="modalUrge" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalUrge')"></div>
       <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
         <h3 class="text-lg font-semibold">发起催办</h3>
         <input type="hidden" id="uTarget" />
         <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">要求说明 <span class="text-red-500">*</span></label>
+          <textarea id="uNote" class="w-full border rounded-xl px-3 py-2.5 h-20" placeholder="接收人可见：说明考核红区要求"></textarea></div>
         <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
           <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
         <div class="flex justify-end gap-2">
@@ -305,6 +302,7 @@
       btn.onclick = () => {
         document.getElementById("uTarget").value = btn.getAttribute("data-urge-owner");
         document.getElementById("uTitle").value = btn.getAttribute("data-urge-title") || "催办落实";
+        document.getElementById("uNote").value = "考核红区事项，请说明原因、纠偏措施与承诺完成日。";
         document.getElementById("uExpect").value = "2026-08-21";
         BMSUI.openModal("modalUrge");
       };
@@ -312,9 +310,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    if (BMS4.getRoleUser().role !== "总经理") {
+    if (!BMS4.isAdmin(BMS4.getRoleUser())) {
       document.getElementById("page-main").innerHTML =
-        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见，请切换视角。</div>';
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅管理员可见，请切换视角。</div>';
       return;
     }
     document.querySelectorAll("[data-dim]").forEach((btn) => {
@@ -332,12 +330,13 @@
       const r = BMS4.createUrge({
         targetUserId: document.getElementById("uTarget").value,
         title: document.getElementById("uTitle").value.trim(),
+        note: document.getElementById("uNote").value.trim(),
         expectReplyDate: document.getElementById("uExpect").value,
         exceptionType: "任务延期",
       });
       if (!r.ok) return BMSUI.toast(r.reason, false);
       BMSUI.closeModal("modalUrge");
-      BMSUI.toast("已催办");
+      BMSUI.toast("已催办，对象可在待办查看要求说明");
     };
     render();
   });

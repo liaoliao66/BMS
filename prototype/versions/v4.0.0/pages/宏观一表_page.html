@@ -17,9 +17,7 @@
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <div class="flex flex-wrap gap-3 justify-between mb-4 items-center">
-      <p class="text-xs text-slate-500">按需分析/复盘用（非每日主入口）。完成率口径与驾驶舱一致：（已完成+已关闭）/任务总数。日常抓落实请用
-        <a href="落实驾驶舱_page.html" class="text-teal-700 hover:underline">落实驾驶舱</a>。</p>
+    <div class="flex flex-wrap gap-3 justify-end mb-4 items-center">
       <div class="flex gap-2 items-center text-sm">
         <span class="text-slate-500">视图</span>
         <select id="viewMode" class="border rounded-xl px-3 py-2">
@@ -40,8 +38,8 @@
   <script>
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (BMS4.getRoleUser().role !== '总经理') {
-    document.getElementById('page-main').innerHTML = '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见。</div>';
+  if (!BMS4.isAdmin(BMS4.getRoleUser())) {
+    document.getElementById('page-main').innerHTML = '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅管理员可见。</div>';
     return;
   }
   const fd = document.getElementById('fDept');

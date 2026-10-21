@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>基础配置 · v4.0.0</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .cfg-card { background:#fff; border:1px solid #e8eaed; border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(60,64,67,0.06); }
+    .cfg-hd { padding:12px 16px; background:#f8fafc; border-bottom:1px solid #f1f5f9; display:flex; align-items:center; gap:10px; }
+    .cfg-hd .ico { width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; background:#f0fdfa; color:#0f766e; font-size:14px; flex-shrink:0; }
+    .cfg-hd .ttl { font-size:14px; font-weight:600; color:#0f172a; }
+    .cfg-hd .sub { font-size:12px; color:#94a3b8; margin-top:2px; }
+    .cfg-bd { padding:16px; }
+    .form-label { display:block; font-size:12px; color:#64748b; margin-bottom:6px; }
+    .form-ctrl { width:100%; border:1px solid #e2e8f0; border-radius:10px; padding:9px 12px; font-size:13px; color:#0f172a; background:#fff; }
+    .form-ctrl:focus { outline:none; border-color:#0f766e; box-shadow:0 0 0 3px rgba(15,118,110,0.12); }
+    .hint { font-size:12px; color:#94a3b8; margin-top:8px; line-height:1.5; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="basicConfig" data-title="基础配置">
+  <div id="app-root"></div>
+  <div id="page-main" class="hidden">
+
+    <div class="max-w-3xl mx-auto space-y-4">
+      <div class="cfg-card">
+        <div class="cfg-hd">
+          <span class="ico"><i class="fa-solid fa-calendar-week"></i></span>
+          <div>
+            <div class="ttl">周报填写提醒</div>
+            <div class="sub">固定每周某一天、某一时刻提醒填报</div>
+          </div>
+        </div>
+        <div class="cfg-bd">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="form-label">提醒日（周几）</label>
+              <select id="weekDay" class="form-ctrl">
+                <option value="1">周一</option>
+                <option value="2">周二</option>
+                <option value="3">周三</option>
+                <option value="4">周四</option>
+                <option value="5" selected>周五</option>
+                <option value="6">周六</option>
+                <option value="0">周日</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">提醒时间</label>
+              <input type="time" id="weekTime" class="form-ctrl" value="17:00" />
+            </div>
+          </div>
+          <p class="hint" id="weekHint">示例：每周五 17:00 提醒填写本周任务周报</p>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-hd">
+          <span class="ico"><i class="fa-solid fa-calendar"></i></span>
+          <div>
+            <div class="ttl">月报填写提醒</div>
+            <div class="sub">按自然月末最后几天提醒填报</div>
+          </div>
+        </div>
+        <div class="cfg-bd">
+          <div class="max-w-xs">
+            <label class="form-label">月末最后几天开始提醒</label>
+            <div class="flex items-center gap-2">
+              <input type="number" id="monthLastDays" class="form-ctrl" min="1" max="15" value="3" />
+              <span class="text-sm text-slate-500 whitespace-nowrap">天</span>
+            </div>
+          </div>
+          <p class="hint" id="monthHint">示例：每月最后 3 天提醒填写任务月报</p>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-hd">
+          <span class="ico"><i class="fa-solid fa-bell"></i></span>
+          <div>
+            <div class="ttl">临期 / 延期提醒</div>
+            <div class="sub">临期天数写入本配置；驾驶舱/待办即时按此判断临期</div>
+          </div>
+        </div>
+        <div class="cfg-bd">
+          <div class="max-w-xs">
+            <label class="form-label">临近截止提前天数</label>
+            <div class="flex items-center gap-2">
+              <input type="number" id="nearDueDays" class="form-ctrl" min="1" max="30" value="3" />
+              <span class="text-sm text-slate-500 whitespace-nowrap">天</span>
+            </div>
+          </div>
+          <p class="hint" id="nearHint">示例：截止日前 3 天起提示临期，超期后按延期规则处理</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <button type="button" id="btnReset" class="text-sm px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">恢复默认</button>
+        <button type="button" id="btnSave" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">保存配置</button>
+      </div>
+    </div>
+
+  </div>
+  <script src="../assets/store.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+(function () {
+  const DEFAULTS = BMS4.BASIC_CONFIG_DEFAULTS || {
+    weekDay: "5",
+    weekTime: "17:00",
+    monthLastDays: 3,
+    nearDueDays: 3,
+  };
+  const WEEK_LABEL = { 0: "周日", 1: "周一", 2: "周二", 3: "周三", 4: "周四", 5: "周五", 6: "周六" };
+
+  function fillForm(cfg) {
+    document.getElementById("weekDay").value = String(cfg.weekDay);
+    document.getElementById("weekTime").value = cfg.weekTime || "17:00";
+    document.getElementById("monthLastDays").value = cfg.monthLastDays;
+    document.getElementById("nearDueDays").value = cfg.nearDueDays;
+    refreshHints();
+  }
+
+  function readForm() {
+    return {
+      weekDay: document.getElementById("weekDay").value,
+      weekTime: document.getElementById("weekTime").value || "17:00",
+      monthLastDays: Math.max(1, Math.min(15, Number(document.getElementById("monthLastDays").value) || 3)),
+      nearDueDays: Math.max(1, Math.min(30, Number(document.getElementById("nearDueDays").value) || 3)),
+    };
+  }
+
+  function refreshHints() {
+    const cfg = readForm();
+    document.getElementById("weekHint").textContent =
+      "示例：每" + (WEEK_LABEL[cfg.weekDay] || "周五") + " " + cfg.weekTime + " 提醒填写本周任务周报";
+    document.getElementById("monthHint").textContent =
+      "示例：每月最后 " + cfg.monthLastDays + " 天提醒填写任务月报";
+    document.getElementById("nearHint").textContent =
+      "已接入：截止日前 " +
+      cfg.nearDueDays +
+      " 天计入临期（驾驶舱重点任务/汇总卡、待办等）；企微提醒引擎见 P1";
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!BMS4.isAdmin(BMS4.getRoleUser())) {
+      document.getElementById("page-main").innerHTML =
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅管理员（总经理 / 计划管理员）可见。</div>';
+      return;
+    }
+    fillForm(BMS4.getBasicConfig());
+    ["weekDay", "weekTime", "monthLastDays", "nearDueDays"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", refreshHints);
+      document.getElementById(id).addEventListener("change", refreshHints);
+    });
+    document.getElementById("btnReset").onclick = () => {
+      fillForm(DEFAULTS);
+      BMSUI.toast("已恢复默认值（未保存）");
+    };
+    document.getElementById("btnSave").onclick = () => {
+      const r = BMS4.saveBasicConfig(readForm());
+      fillForm(r.config);
+      BMSUI.toast("已保存：临期天数=" + r.config.nearDueDays + "（即时生效）");
+    };
+  });
+})();
+  </script>
+</body>
+</html>

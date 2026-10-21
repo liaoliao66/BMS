@@ -69,6 +69,7 @@
     .seg .mode-off { background: #fff; color: #64748b; }
     .seg .mode-off:hover { background: #f8fafc; color: #0f766e; }
     .attach-zone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 18px 12px; border: 1px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; cursor: pointer; transition: border-color .15s, background .15s; }
+    .attach-zone-compact { padding: 12px 10px; gap: 4px; flex-direction: row; justify-content: flex-start; }
     .attach-zone:hover { border-color: #0f766e; background: #f0fdfa; }
     .btn-ghost { border: 1px solid #e2e8f0; background: #fff; color: #64748b; border-radius: 10px; padding: 8px 16px; font-size: 13px; }
     .btn-ghost:hover { background: #f8fafc; color: #334155; }
@@ -77,8 +78,6 @@
 <body class="bg-slate-50 text-slate-800" data-page="mine" data-title="任务管理">
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
-
-    <p class="text-xs text-slate-500 mb-3">点<strong>新建任务</strong>可选关联计划/临时；支持备注与附件（仅记文件名）。<strong>点任务名称</strong>看详情；悬浮可编辑/删除。行内可改优先级、处理人、状态、起止。</p>
 
     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 mb-4">
       <div class="flex flex-wrap gap-1 text-sm" id="statusTabs"></div>
@@ -120,116 +119,125 @@
 
     <div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6">
       <div class="absolute inset-0 bg-slate-900/45" onclick="BMSUI.closeModal('modal')"></div>
-      <div class="relative bg-white rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-hidden flex flex-col border border-slate-200 shadow-2xl">
-        <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
+      <div class="relative bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-slate-200 shadow-2xl">
+        <div class="px-5 py-3.5 border-b border-slate-100 flex items-start justify-between gap-3 shrink-0">
           <div class="min-w-0">
             <h3 class="text-lg font-semibold text-slate-900 leading-snug" id="modalTitle">新建任务</h3>
-            <p class="text-xs text-slate-500 mt-1" id="modalSub">填写任务信息后保存</p>
+            <p class="text-xs text-slate-500 mt-1 hidden" id="modalSub"></p>
           </div>
           <button type="button" onclick="BMSUI.closeModal('modal')" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-600 shrink-0" title="关闭">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 bg-slate-50/50">
+        <div class="flex-1 overflow-y-auto px-5 py-4 bg-slate-50/50">
           <input type="hidden" id="editId" />
-          <p id="taskKindBadge" class="hidden text-xs text-slate-500 flex items-center gap-2">
+          <p id="taskKindBadge" class="hidden text-xs text-slate-500 items-center gap-2 mb-3">
             <span class="tag tag-muted" id="taskKindBadgeText">临时任务</span>
-            <span>类别由入口决定，编辑时不可更改</span>
           </p>
 
-          <div class="form-section hidden" id="createModeWrap">
+          <div class="form-section hidden mb-3" id="createModeWrap">
             <div class="form-section-hd">创建方式</div>
-            <div class="form-section-bd">
+            <div class="form-section-bd flex flex-wrap items-end gap-3">
               <div class="seg" id="createModeSeg">
                 <button type="button" id="btnModeSelf" class="mode-on">自建（给我）</button>
                 <button type="button" id="btnModeAssign" class="mode-off">下达给他人</button>
               </div>
-              <p class="text-[11px] text-slate-400 mt-2" id="createModeHint">自建：处理人为本人，来源「自建」</p>
-              <div id="ownerWrap" class="hidden mt-3">
+              <p class="text-[11px] text-slate-400 hidden" id="createModeHint"></p>
+              <div id="ownerWrap" class="hidden flex-1 min-w-[12rem]">
                 <label class="form-label">处理人 <span class="req">*</span></label>
                 <select id="fOwner" class="form-ctrl"></select>
               </div>
             </div>
           </div>
 
-          <div class="form-section">
-            <div class="form-section-hd">基本信息</div>
-            <div class="form-section-bd space-y-3">
-              <div>
-                <label class="form-label">任务名称 <span class="req">*</span></label>
-                <input id="fName" class="form-ctrl" placeholder="请输入任务名称" />
-              </div>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="form-label">任务类型</label>
-                  <select id="fType" class="form-ctrl">
-                    <option>生产作业</option><option>设备维保</option><option>安全环保</option><option>市场商务</option><option>其他</option>
-                  </select>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+            <div class="space-y-3">
+              <div class="form-section">
+                <div class="form-section-hd">基本信息</div>
+                <div class="form-section-bd space-y-3">
+                  <div>
+                    <label class="form-label">任务名称 <span class="req">*</span></label>
+                    <input id="fName" class="form-ctrl" placeholder="请输入任务名称" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label">任务类型</label>
+                      <select id="fType" class="form-ctrl">
+                        <option>生产作业</option><option>设备维保</option><option>安全环保</option><option>市场商务</option><option>其他</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="form-label">优先级</label>
+                      <select id="fPrio" class="form-ctrl">
+                        <option>P0</option><option selected>P1</option><option>P2</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div id="editExtra" class="hidden space-y-3">
+                    <div>
+                      <label class="form-label">完成状态</label>
+                      <select id="fStatus" class="form-ctrl">
+                        <option>未开始</option><option>进行中</option><option>已完成</option><option>已关闭</option><option>延期</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="form-label">完成情况说明</label>
+                      <textarea id="fCompletionNote" rows="3" class="form-ctrl" placeholder="说明当前进展、已完成内容或未完成原因"></textarea>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label class="form-label">优先级</label>
-                  <select id="fPrio" class="form-ctrl">
-                    <option>P0</option><option selected>P1</option><option>P2</option>
-                  </select>
-                </div>
               </div>
-              <div id="editExtra" class="hidden">
-                <label class="form-label">完成状态</label>
-                <select id="fStatus" class="form-ctrl">
-                  <option>未开始</option><option>进行中</option><option>已完成</option><option>已关闭</option><option>延期</option>
-                </select>
-                <p class="text-[11px] text-slate-400 mt-1.5">「已关闭」须在「已完成」之后</p>
+
+              <div class="form-section" id="planFieldsWrap">
+                <div class="form-section-hd">计划与归属</div>
+                <div class="form-section-bd space-y-3">
+                  <div>
+                    <label class="form-label">关联计划 <span class="req" id="annualReq">*</span></label>
+                    <select id="fAnnual" class="form-ctrl"></select>
+                  </div>
+                  <div>
+                    <label class="form-label">上级任务</label>
+                    <select id="fParent" class="form-ctrl"><option value="">无</option></select>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="form-section" id="planFieldsWrap">
-            <div class="form-section-hd">计划与归属</div>
-            <div class="form-section-bd space-y-3">
-              <div>
-                <label class="form-label">关联计划 <span class="req" id="annualReq">*</span></label>
-                <select id="fAnnual" class="form-ctrl"></select>
-              </div>
-              <div>
-                <label class="form-label">上级任务 <span class="text-slate-400 font-normal">（可选）</span></label>
-                <select id="fParent" class="form-ctrl"><option value="">无</option></select>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <div class="form-section-hd">时间与工时</div>
-            <div class="form-section-bd">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="form-label">开始时间 <span class="req">*</span></label>
-                  <input type="date" id="fStart" value="2026-08-18" class="form-ctrl" />
-                </div>
-                <div>
-                  <label class="form-label">结束时间 <span class="req">*</span></label>
-                  <input type="date" id="fEnd" value="2026-08-31" class="form-ctrl" />
+            <div class="space-y-3">
+              <div class="form-section">
+                <div class="form-section-hd">时间与工时</div>
+                <div class="form-section-bd">
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="form-label">开始时间 <span class="req">*</span></label>
+                      <input type="date" id="fStart" value="2026-08-18" class="form-ctrl" />
+                    </div>
+                    <div>
+                      <label class="form-label">结束时间 <span class="req">*</span></label>
+                      <input type="date" id="fEnd" value="2026-08-31" class="form-ctrl" />
+                    </div>
+                  </div>
+                  <p class="text-[11px] text-slate-400 mt-2.5" id="fHoursHint">耗费工时：—</p>
                 </div>
               </div>
-              <p class="text-[11px] text-slate-400 mt-2.5" id="fHoursHint">耗费工时：—（按每天 8 小时自动计算）</p>
-            </div>
-          </div>
 
-          <div class="form-section">
-            <div class="form-section-hd">备注与附件</div>
-            <div class="form-section-bd space-y-3">
-              <div>
-                <label class="form-label">备注</label>
-                <textarea id="fRemark" rows="3" class="form-ctrl" placeholder="补充说明、风险或协同要点（可选）"></textarea>
-              </div>
-              <div>
-                <label class="form-label">附件 <span class="text-slate-400 font-normal">（仅记录文件名）</span></label>
-                <label class="attach-zone" for="fAttach">
-                  <i class="fa-solid fa-cloud-arrow-up text-slate-400 text-lg"></i>
-                  <span class="text-sm text-slate-600">点击添加附件</span>
-                  <span class="text-[11px] text-slate-400">支持多选 · 原型不上传实体文件</span>
-                  <input type="file" id="fAttach" class="hidden" multiple />
-                </label>
-                <div id="fAttachList" class="flex flex-wrap gap-2 mt-2.5"></div>
+              <div class="form-section">
+                <div class="form-section-hd">备注与附件</div>
+                <div class="form-section-bd space-y-3">
+                  <div>
+                    <label class="form-label">备注</label>
+                    <textarea id="fRemark" rows="2" class="form-ctrl" placeholder="可选"></textarea>
+                  </div>
+                  <div>
+                    <label class="form-label">附件</label>
+                    <label class="attach-zone attach-zone-compact" for="fAttach">
+                      <i class="fa-solid fa-cloud-arrow-up text-slate-400"></i>
+                      <span class="text-sm text-slate-600">点击添加附件</span>
+                      <input type="file" id="fAttach" class="hidden" multiple />
+                    </label>
+                    <div id="fAttachList" class="flex flex-wrap gap-2 mt-2"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -350,9 +358,7 @@
     const s = document.getElementById("fStart").value;
     const e = document.getElementById("fEnd").value;
     const h = BMS4.workHoursByRange ? BMS4.workHoursByRange(s, e) : 0;
-    el.textContent = h
-      ? "耗费工时：" + h + " 小时（含首尾共 " + h / 8 + " 天 × 8）"
-      : "耗费工时：—（请填写有效起止日期，按每天 8 小时计算）";
+    el.textContent = h ? "耗费工时：" + h + " 小时" : "耗费工时：—";
   }
 
   function inDateRange(t) {
@@ -812,6 +818,10 @@
         </div>
       </div>
       <div class="rounded-xl border border-slate-200 p-4">
+        <div class="text-sm font-medium text-slate-800 mb-2">完成情况说明</div>
+        <div class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtml(t.completionNote || "—")}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4">
         <div class="text-sm font-medium text-slate-800 mb-2">备注</div>
         <div class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtml(t.remark || "—")}</div>
       </div>
@@ -955,7 +965,8 @@
       if (v !== (task[field] || "")) patch = field === "endDate" ? { endDate: v, deadline: v } : { startDate: v };
     }
     if (patch) {
-      BMS4.updateTask(id, patch);
+      const r = BMS4.updateTask(id, patch);
+      if (r && r.ok === false) return BMSUI.toast(r.reason, false);
       BMSUI.toast("已保存");
     }
   }
@@ -992,22 +1003,9 @@
       selfBtn.className = createMode === "self" ? "mode-on" : "mode-off";
       assignBtn.className = createMode === "assign" ? "mode-on" : "mode-off";
     }
-    const hint = document.getElementById("createModeHint");
-    if (hint) {
-      hint.textContent =
-        createMode === "assign"
-          ? BMS4.isPlanAdmin(user)
-            ? "下达：可选全公司人员；来源「下达」"
-            : taskKind === "临时"
-              ? "下达：可选本部门人员；来源「下达」"
-              : "下达：可选本部门人员或关联计划涉及部门的部门长；来源「下达」"
-          : "自建：处理人为本人，来源「自建」";
-    }
     document.getElementById("ownerWrap").classList.toggle("hidden", createMode !== "assign");
     if (!document.getElementById("editId").value) {
       document.getElementById("modalTitle").textContent = modalCreateTitle();
-      const sub = document.getElementById("modalSub");
-      if (sub) sub.textContent = modalCreateSub();
     }
     fillOwners();
   }
@@ -1087,6 +1085,8 @@
     document.getElementById("taskKindBadge").classList.add("hidden");
     document.getElementById("fName").value = "";
     document.getElementById("fRemark").value = "";
+    const fDoneNew = document.getElementById("fCompletionNote");
+    if (fDoneNew) fDoneNew.value = "";
     draftAttachments = [];
     renderAttachList();
     const fin = document.getElementById("fAttach");
@@ -1127,6 +1127,8 @@
     document.getElementById("fEnd").value = BMS4.taskEndDate(t) || "2026-08-31";
     document.getElementById("fStatus").value = t.status;
     document.getElementById("fRemark").value = t.remark || "";
+    const fDone = document.getElementById("fCompletionNote");
+    if (fDone) fDone.value = t.completionNote || "";
     draftAttachments = (t.attachments || []).map((a) => ({ name: a.name || a }));
     renderAttachList();
     const fin = document.getElementById("fAttach");
@@ -1198,6 +1200,9 @@
       taskType: payload.taskType,
       priority: payload.priority,
       remark: payload.remark,
+      completionNote: (document.getElementById("fCompletionNote") || {}).value
+        ? document.getElementById("fCompletionNote").value.trim()
+        : "",
       attachments: payload.attachments,
       startDate,
       endDate,
@@ -1212,7 +1217,8 @@
       patch.annualId = "";
       patch.parentId = null;
     }
-    BMS4.updateTask(editId, patch);
+    const ur = BMS4.updateTask(editId, patch);
+    if (ur && ur.ok === false) return BMSUI.toast(ur.reason, false);
     BMSUI.closeModal("modal");
     BMSUI.toast("已更新");
     render();
@@ -1241,11 +1247,6 @@
       const hdr = document.querySelector("header .text-sm.font-medium");
       if (hdr) hdr.textContent = "任务总控";
       scopeTab = "all";
-      const tip = document.querySelector("#page-main > p.text-xs");
-      if (tip) {
-        tip.innerHTML =
-          "计划管理员视角：可查看与维护<strong>全部部门任务</strong>。点名称看详情，悬浮编辑/删除；新建支持备注与附件。批量录入点「导入任务」。";
-      }
       const btnImp = document.getElementById("btnImportTask");
       if (btnImp) btnImp.classList.remove("hidden");
       const wrap = document.querySelector("#page-main .flex.flex-wrap.items-center.justify-between.gap-3.mb-4 .flex.flex-wrap.gap-2.items-center");

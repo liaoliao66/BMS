@@ -1,4 +1,4 @@
-/* v4.0.0 PC 壳 · 四角色菜单（含计划管理员） */
+/* v4.0.0 PC 壳 · 四角色菜单（计划管理员=全菜单管理员） */
 (function () {
   const NAV = {
     总经理: [
@@ -25,24 +25,32 @@
         ],
       },
       {
-        group: "更多（按需）",
-        items: [
-          { id: "unified", name: "经营一表（合成）", href: "经营一表_page.html", icon: "fa-table-columns" },
-          { id: "plans", name: "计划管理", href: "计划管理_page.html", icon: "fa-sitemap" },
-          { id: "macro", name: "数据分析", href: "宏观一表_page.html", icon: "fa-table" },
-        ],
+        group: "系统",
+        items: [{ id: "basicConfig", name: "基础配置", href: "基础配置_page.html", icon: "fa-sliders" }],
       },
+      // 经营一表 / 数据分析：本期不做，全角色菜单不展示
     ],
+    /** 计划管理员 = 系统管理员：整合经营台 + 总控 + 基础配置 */
     计划管理员: [
       {
         group: "工作台",
         items: [
-          { id: "plans", name: "计划总控", href: "计划管理_page.html", icon: "fa-sitemap" },
-          { id: "mine", name: "任务总控", href: "任务管理_page.html", icon: "fa-list-check" },
+          { id: "cockpit", name: "落实驾驶舱", href: "落实驾驶舱_page.html", icon: "fa-gauge-high" },
+          { id: "todo", name: "我的待办", href: "工作台_待办_page.html", icon: "fa-inbox" },
         ],
       },
       {
-        group: "联查（只读）",
+        group: "总控",
+        items: [
+          { id: "plans", name: "计划总控", href: "计划管理_page.html", icon: "fa-sitemap" },
+          { id: "mine", name: "任务总控", href: "任务管理_page.html", icon: "fa-list-check" },
+          { id: "importPlan", name: "计划导入", href: "计划导入_page.html?mode=plan", icon: "fa-file-import" },
+          { id: "importTask", name: "任务导入", href: "计划导入_page.html?mode=task", icon: "fa-file-arrow-up" },
+          { id: "basicConfig", name: "基础配置", href: "基础配置_page.html", icon: "fa-sliders" },
+        ],
+      },
+      {
+        group: "经营主表",
         items: [
           { id: "companyPlan", name: "公司计划表", href: "经营总台账_page.html", icon: "fa-building-columns" },
           { id: "deptPlans", name: "部门计划表", href: "部门计划表_page.html", icon: "fa-diagram-project" },
@@ -50,13 +58,16 @@
         ],
       },
       {
-        group: "协同",
+        group: "经营闭环",
         items: [
+          { id: "taskWeekReport", name: "任务周报", href: "任务周报_page.html", icon: "fa-calendar-week" },
+          { id: "taskMonthReport", name: "任务月报", href: "任务月报_page.html", icon: "fa-calendar" },
+          { id: "appraisal", name: "绩效考核", href: "绩效考核_page.html", icon: "fa-ranking-star" },
           { id: "supervise", name: "任务督办", href: "任务督办_page.html", icon: "fa-clipboard-check" },
           { id: "meetingMinutes", name: "会议纪要", href: "会议纪要_page.html", icon: "fa-file-lines" },
-          { id: "todo", name: "我的待办", href: "工作台_待办_page.html", icon: "fa-inbox" },
         ],
       },
+      // 经营一表 / 数据分析：本期不做，菜单不展示（页面文件可保留）
     ],
     部门长: [
       { group: "工作台", items: [{ id: "todo", name: "我的待办", href: "工作台_待办_page.html", icon: "fa-inbox" }] },
@@ -350,9 +361,7 @@
     document.getElementById("bms4-pd-title").textContent = cp.name;
     document.getElementById("bms4-pd-sub").textContent =
       "手填整体进度 " + pct + "% · 关联任务完成 " + done + "/" + tasks.length;
-    document.getElementById("bms4-pd-actions").innerHTML = `
-      <a href="部门计划表_page.html?cp=${encodeURIComponent(cp.id)}" class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
-      <a href="整体计划_任务监督_page.html?cp=${encodeURIComponent(cp.id)}&all=1" class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-teal-700">整体任务表</a>`;
+    document.getElementById("bms4-pd-actions").innerHTML = "";
     document.getElementById("bms4-pd-body").innerHTML = `
       <div class="rounded-xl border border-slate-200 p-4">
         <div class="text-sm font-medium text-slate-800 mb-3">基本信息</div>
@@ -416,12 +425,7 @@
     document.getElementById("bms4-pd-title").textContent = p.name;
     document.getElementById("bms4-pd-sub").textContent =
       (p.dept || "") + " · 路径 " + path + " · 任务完成 " + done + "/" + tasks.length;
-    document.getElementById("bms4-pd-actions").innerHTML = `
-      <a href="部门计划表_page.html?cp=${encodeURIComponent(p.companyPlanId || "")}&dept=${encodeURIComponent(
-      p.dept || ""
-    )}" class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
-      <a href="整体计划_任务监督_page.html?plan=${encodeURIComponent(p.id)}&all=1" class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-teal-700">关联任务表</a>
-      <a href="计划管理_page.html" class="text-sm px-3 py-1.5 rounded-xl border border-slate-200 bg-white">计划管理（编辑）</a>`;
+    document.getElementById("bms4-pd-actions").innerHTML = "";
     document.getElementById("bms4-pd-body").innerHTML = `
       <div class="rounded-xl border border-slate-200 p-4">
         <div class="text-sm font-medium text-slate-800 mb-3">基本信息</div>
@@ -625,6 +629,10 @@
         </div>
       </div>
       <div class="rounded-xl border border-slate-200 p-4">
+        <div class="text-sm font-medium text-slate-800 mb-2">完成情况说明</div>
+        <div class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtmlLite(t.completionNote || "—")}</div>
+      </div>
+      <div class="rounded-xl border border-slate-200 p-4">
         <div class="text-sm font-medium text-slate-800 mb-2">备注</div>
         <div class="text-sm text-slate-800 whitespace-pre-wrap leading-relaxed">${escapeHtmlLite(t.remark || "—")}</div>
       </div>
@@ -729,6 +737,13 @@
     m.classList.remove("flex");
   }
 
+  /** 优先打开本版本目录内自包含 prd.html（与 docs 同步）；pages 下用 ../prd.html */
+  function prdDocHref() {
+    const p = String(location.pathname || location.href || "").replace(/\\/g, "/");
+    if (/\/pages\//i.test(p)) return "../prd.html";
+    return "prd.html";
+  }
+
   function mount() {
     const user = BMS4.getRoleUser();
     const nav = NAV[user.role] || NAV["员工"];
@@ -760,7 +775,15 @@
             <div class="text-xs text-slate-400 mt-1">v4.0.0 · PC 原型</div>
           </div>
           <nav class="flex-1 overflow-y-auto pb-4">${navHtml}</nav>
-          <a href="../index.html" class="mx-3 mb-4 text-xs text-slate-400 hover:text-white px-2 py-2">返回版本入口</a>
+          <div class="mt-auto border-t border-slate-800 px-3 py-3 space-y-1">
+            <a href="${prdDocHref()}" target="_blank" rel="noopener"
+              class="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-teal-300 hover:bg-slate-800 hover:text-teal-200">
+              <i class="fa-solid fa-book-open w-4 text-center opacity-80"></i><span>本版 PRD</span>
+            </a>
+            <a href="../index.html" class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-800 hover:text-white">
+              <i class="fa-solid fa-arrow-left w-4 text-center opacity-80"></i><span>返回版本入口</span>
+            </a>
+          </div>
         </aside>
         <div class="flex-1 min-w-0 flex flex-col">
           <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-6 gap-4">

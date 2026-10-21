@@ -57,8 +57,6 @@
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <p class="text-xs text-slate-500 mb-3" id="pageDesc">按<strong>公司整体计划</strong>填写：回显上期计划 + 上期完成 + 本期计划 + <strong>附件</strong>（图片 / Word / PRD）。部门长可编（失焦自动保存）；总经理 / 员工只读查看。</p>
-
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <div class="flex flex-wrap items-center gap-2">
         <button type="button" id="btnReset" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">
@@ -68,7 +66,6 @@
           <button type="button" id="btnWeek" class="mode-on px-3 py-1.5">周报</button>
           <button type="button" id="btnMonth" class="mode-off px-3 py-1.5">月报</button>
         </div>
-        <a id="linkSibling" href="任务月报_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">任务月报</a>
         <div id="viewSwitch" class="inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm hidden">
           <button type="button" id="btnViewTable" class="mode-on px-3 py-1.5">按计划表</button>
           <button type="button" id="btnViewCards" class="mode-off px-3 py-1.5">按人列表</button>
@@ -77,7 +74,6 @@
           <button type="button" id="btnPeopleCollapse" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">一键收起</button>
           <button type="button" id="btnPeopleExpand" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600">全部展开</button>
         </div>
-        <span id="autoSaveHint" class="save-hint hidden">编辑后移出焦点即自动保存</span>
       </div>
       <div class="period-bar">
         <button type="button" class="period-btn" id="btnPrev"><i class="fa-solid fa-chevron-left text-xs"></i></button>
@@ -98,7 +94,7 @@
             <th style="min-width:180px"><span class="col-head" id="colPrevPlan">上周计划</span></th>
             <th style="min-width:180px"><span class="col-head" id="colDone">上周完成情况 <i class="fa-solid fa-pen"></i></span></th>
             <th style="min-width:180px"><span class="col-head" id="colPlan">本周计划 <i class="fa-solid fa-pen"></i></span></th>
-            <th style="min-width:220px"><span class="col-head">附件 <span class="text-[10px] text-slate-400 font-normal">图片/Word/PRD</span></span></th>
+            <th style="min-width:220px"><span class="col-head">附件</span></th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -260,16 +256,8 @@
   }
 
   function flashSaved() {
-    const el = document.getElementById("autoSaveHint");
-    if (!el || !canEdit) return;
-    el.classList.remove("hidden");
-    el.classList.add("ok");
-    el.textContent = "已自动保存";
-    clearTimeout(flashSaved._t);
-    flashSaved._t = setTimeout(() => {
-      el.classList.remove("ok");
-      el.textContent = "编辑后移出焦点即自动保存";
-    }, 1600);
+    if (!canEdit) return;
+    if (BMSUI.toast) BMSUI.toast("已自动保存");
   }
 
   function openPreview(att) {
@@ -332,7 +320,7 @@
       ? `<label class="att-upload"><i class="fa-solid fa-cloud-arrow-up"></i>上传附件
           <input type="file" multiple accept="${ACCEPT}" data-upload="${cpId}" />
         </label>
-        <div class="text-[10px] text-slate-400 mt-1">支持图片、Word（.doc/.docx）、PRD（.prd/.md/.pdf）</div>`
+`
       : "";
     return `<div class="att-list" data-att-box="${cpId}">${rows}${upload}</div>`;
   }
@@ -474,25 +462,12 @@
       document.getElementById("btnWeek").className = "px-3 py-1.5 " + (periodType === "week" ? "mode-on" : "mode-off");
       document.getElementById("btnMonth").className = "px-3 py-1.5 " + (periodType === "month" ? "mode-on" : "mode-off");
     }
-    const sib = document.getElementById("linkSibling");
-    if (sib) {
-      sib.classList.toggle("hidden", !locked);
-      if (periodType === "week") {
-        sib.href = "任务月报_page.html";
-        sib.textContent = "任务月报";
-      } else {
-        sib.href = "任务周报_page.html";
-        sib.textContent = "任务周报";
-      }
-    }
     document.getElementById("periodLabel").textContent = periodLabelText();
-    document.getElementById("colPrevPlan").innerHTML =
-      (periodType === "week" ? "上周计划" : "上月计划") + ' <span class="text-[10px] text-slate-400 font-normal">回显</span>';
+    document.getElementById("colPrevPlan").innerHTML = periodType === "week" ? "上周计划" : "上月计划";
     document.getElementById("colDone").innerHTML =
       (periodType === "week" ? "上周完成情况" : "上月完成情况") + (canEdit ? ' <i class="fa-solid fa-pen"></i>' : "");
     document.getElementById("colPlan").innerHTML =
       (periodType === "week" ? "本周计划" : "本月计划") + (canEdit ? ' <i class="fa-solid fa-pen"></i>' : "");
-    document.getElementById("autoSaveHint").classList.toggle("hidden", !canEdit);
     document.getElementById("btnReset").classList.toggle("hidden", !canEdit);
     const vs = document.getElementById("viewSwitch");
     if (canViewAll) {
@@ -772,7 +747,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     user = BMS4.getRoleUser();
     canEdit = user.role === "部门长";
-    canViewAll = user.role === "总经理" || user.role === "员工" || user.role === "部门长";
+    canViewAll = user.role === "总经理" || user.role === "计划管理员" || user.role === "员工" || user.role === "部门长";
     // 部门长编辑本人；总经理/员工只读看全部。部门长在只读汇总场景下用本人编辑视图。
     if (user.role === "部门长") canViewAll = false;
     const params = new URLSearchParams(location.search);

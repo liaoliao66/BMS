@@ -28,18 +28,6 @@
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
-      <p class="text-xs text-slate-500 max-w-3xl">
-        <strong>按需合成视图</strong>（非日用主入口）：L1 公司计划 → L2 部门计划 → L3 任务 一张表展开。
-        日常抓落实请用「落实驾驶舱」；分域查看请用三张经营主表。
-      </p>
-      <div class="flex flex-wrap gap-2 text-sm">
-        <a href="经营总台账_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">公司计划表</a>
-        <a href="部门计划表_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
-        <a href="整体计划_任务监督_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">整体任务表</a>
-      </div>
-    </div>
-
     <div class="flex flex-wrap gap-2 items-center mb-4 text-sm">
       <select id="fCp" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white"></select>
       <select id="fDept" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white"></select>
@@ -81,6 +69,8 @@
         <input type="hidden" id="uTaskId" />
         <input type="hidden" id="uDept" />
         <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">要求说明 <span class="text-red-500">*</span></label>
+          <textarea id="uNote" class="w-full border rounded-xl px-3 py-2.5 h-20" placeholder="接收人可见"></textarea></div>
         <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
           <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
         <div class="flex justify-end gap-2">
@@ -129,6 +119,7 @@
     document.getElementById("uTaskId").value = opt.taskId || "";
     document.getElementById("uDept").value = opt.dept || "";
     document.getElementById("uTitle").value = opt.title || "催办落实";
+    document.getElementById("uNote").value = opt.note || "请反馈原因、纠偏措施与承诺完成日。";
     document.getElementById("uExpect").value = "2026-08-21";
     BMSUI.openModal("modalUrge");
   }
@@ -201,10 +192,7 @@
       planId: p.id,
       planKind: "dept",
       actions: {
-        links: [
-          { href: "部门计划表_page.html?cp=" + (p.companyPlanId || "") + "&dept=" + encodeURIComponent(p.dept || ""), label: "部门表" },
-          { href: "整体计划_任务监督_page.html?plan=" + p.id + "&all=1", label: "任务表" },
-        ],
+        links: [],
         urge: head ? { targetUserId: head.id, title: "催办：" + p.name, dept: p.dept, taskId: "" } : null,
       },
     });
@@ -262,11 +250,7 @@
         planId: cp.id,
         planKind: "company",
         actions: {
-          links: [
-            { href: "经营总台账_page.html", label: "公司表" },
-            { href: "部门计划表_page.html?cp=" + cp.id, label: "部门表" },
-            { href: "整体计划_任务监督_page.html?cp=" + cp.id + "&all=1", label: "任务表" },
-          ],
+          links: [],
           urge: null,
         },
       });
@@ -352,9 +336,9 @@
   }
 
   document.addEventListener("DOMContentLoaded", () => {
-    if (BMS4.getRoleUser().role !== "总经理") {
+    if (!BMS4.isAdmin(BMS4.getRoleUser())) {
       document.getElementById("page-main").innerHTML =
-        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理可见。</div>';
+        '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅管理员可见。</div>';
       return;
     }
     const params = new URLSearchParams(location.search);
@@ -399,13 +383,14 @@
       const r = BMS4.createUrge({
         targetUserId: document.getElementById("uTarget").value,
         title: document.getElementById("uTitle").value.trim(),
+        note: document.getElementById("uNote").value.trim(),
         expectReplyDate: document.getElementById("uExpect").value,
         taskId: document.getElementById("uTaskId").value,
         dept: document.getElementById("uDept").value,
       });
       if (!r.ok) return BMSUI.toast(r.reason, false);
       BMSUI.closeModal("modalUrge");
-      BMSUI.toast("已催办");
+      BMSUI.toast("已催办，对象可在待办查看要求说明");
     };
 
     BMS4.PLAN_ITEMS.forEach((p) => collapsed.add("pl:" + p.id));

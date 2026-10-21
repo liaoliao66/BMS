@@ -24,7 +24,7 @@
     <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
       <div>
         <a id="backLink" href="计划管理_page.html" class="text-sm text-teal-700 hover:underline inline-flex items-center gap-1 mb-2"><i class="fa-solid fa-arrow-left text-xs"></i> 返回</a>
-        <p class="text-xs text-slate-500 max-w-3xl" id="pageTip">下载模板 → 粘贴/上传 CSV → 预览校验 → 确认写入。</p>
+        <p class="text-xs text-slate-500 max-w-3xl hidden" id="pageTip"></p>
       </div>
     </div>
 
@@ -100,10 +100,7 @@
     mode = m;
     document.getElementById("tabPlan").className = "px-4 py-2 " + (m === "plan" ? "tab-on" : "tab-off");
     document.getElementById("tabTask").className = "px-4 py-2 " + (m === "task" ? "tab-on" : "tab-off");
-    document.getElementById("colHint").textContent =
-      m === "plan"
-        ? "表头：" + PLAN_COLS.join(" / ") + "。归属公司计划填名称；上级计划可空（一级）或填同部门上级计划名称；负责人填姓名。"
-        : "表头：" + TASK_COLS.join(" / ") + "。关联计划填计划名称（须已存在）；处理人填姓名。";
+    document.getElementById("colHint").textContent = "";
     document.getElementById("raw").value = "";
     rows = [];
     renderPreview();
@@ -332,10 +329,6 @@
     document.getElementById("backLink").href = qMode === "task" ? "任务管理_page.html" : "计划管理_page.html";
     document.getElementById("backLink").innerHTML =
       '<i class="fa-solid fa-arrow-left text-xs"></i> 返回' + (qMode === "task" ? "任务总控" : "计划总控");
-    document.getElementById("pageTip").textContent =
-      qMode === "task"
-        ? "导入任务：下载模板 → 粘贴/上传 CSV → 预览校验 → 确认写入。关联计划须已存在。"
-        : "导入部门计划：下载模板 → 粘贴/上传 CSV → 预览校验 → 确认写入。归属公司计划须已由总经理下达。";
     const hdr = document.querySelector("header .text-sm.font-medium");
     if (hdr) hdr.textContent = qMode === "task" ? "导入任务" : "导入计划";
     document.body.setAttribute("data-title", qMode === "task" ? "导入任务" : "导入计划");

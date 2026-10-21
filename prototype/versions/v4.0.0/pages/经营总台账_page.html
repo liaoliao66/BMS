@@ -8,67 +8,134 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
     .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
-    .row-hover:hover { background:#f8fafc; }
-    .row-risk { background:#fff8f7; }
-    .cell-edit { cursor:pointer; border-radius:6px; padding:2px 6px; display:inline-block; }
-    .cell-edit:hover { background:#eef5f4; }
-    .inline-input { border:1px solid #1a73e8; border-radius:6px; padding:2px 8px; font-size:13px; width:4.5rem; }
-    .inline-input.name-input { width: auto; min-width: 14rem; max-width: 100%; }
-    .col-name { min-width: 22rem; max-width: 28rem; position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 4px 0 8px -4px rgba(15,23,42,0.12); overflow: visible; }
-    thead .col-name { background: #f8fafc; z-index: 3; }
-    .row-hover:hover .col-name { background: #f8fafc; }
-    .row-risk .col-name { background: #fff8f7; }
-    .row-risk:hover .col-name { background: #fff1f0; }
-    .cell-sum { cursor: pointer; border-radius: 8px; transition: background .15s; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .grid-table th, .grid-table td { border: 1px solid #e8eaed; padding: 10px 12px; vertical-align: middle; }
+    .grid-table thead th { background: #f5f6f8; color: #5f6368; font-weight: 500; white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .grid-table tbody tr:hover { background: #fafbfc; }
+    .row-risk td { background: #fffbfa; }
+    .row-risk:hover td { background: #fff7f6; }
+    .col-name { min-width: 18rem; max-width: 26rem; position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 4px 0 8px -4px rgba(15,23,42,0.1); }
+    thead .col-name { background: #f5f6f8; z-index: 3; }
+    .row-risk .col-name { background: #fffbfa; }
+    .row-risk:hover .col-name { background: #fff7f6; }
+    tbody tr:hover .col-name { background: #fafbfc; }
+    .cell-edit { cursor: pointer; border-radius: 6px; padding: 2px 6px; display: inline-flex; align-items: center; gap: 4px; min-height: 24px; }
+    .cell-edit:hover { background: #eef5f4; }
+    .pencil { font-size: 10px; color: #94a3b8; opacity: 0; }
+    .cell-edit:hover .pencil { opacity: 1; }
+    .inline-input { border: 1px solid #94c2ff; border-radius: 6px; padding: 4px 8px; font-size: 13px; background: #fff; min-width: 5.5rem; box-shadow: 0 0 0 3px rgba(26,115,232,0.08); }
+    .inline-input:focus { outline: none; border-color: #1a73e8; }
+    .inline-input.name-input { min-width: 14rem; max-width: 100%; width: auto; }
+    .pct-wrap { min-width: 5.5rem; }
+    .pct-bar { height: 4px; border-radius: 999px; background: #e8eaed; overflow: hidden; margin-top: 6px; }
+    .pct-fill { height: 100%; border-radius: 999px; background: #0f766e; }
+    .pct-fill.is-low { background: #d97706; }
+    .pct-fill.is-done { background: #059669; }
+    .cell-sum { cursor: pointer; border-radius: 8px; padding: 4px 6px; margin: -4px -6px; transition: background .15s; }
     .cell-sum:hover { background: #f0fdfa; }
-    .sum-chip { cursor: pointer; border-radius: 4px; padding: 0 2px; }
-    .sum-chip:hover { text-decoration: underline; }
+    .sum-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .sum-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; line-height: 18px; border: 1px solid transparent; cursor: pointer; white-space: nowrap; }
+    .sum-chip:hover { filter: brightness(0.97); }
+    .sum-chip.st-未开始 { background:#f1f3f4; color:#5f6368; border-color:#e8eaed; }
+    .sum-chip.st-进行中 { background:#e8f0fe; color:#1a73e8; border-color:#c6dafc; }
+    .sum-chip.st-关注 { background:#fef7e0; color:#e37400; border-color:#fde293; }
+    .sum-chip.st-延期 { background:#fce8e6; color:#c5221f; border-color:#f5c6c4; }
+    .sum-chip.st-已完成 { background:#e6f4ea; color:#137333; border-color:#ceead6; }
+    .sum-chip.st-已关闭 { background:#f1f3f4; color:#80868b; border-color:#e8eaed; }
+    .sum-chip b { font-weight: 600; font-variant-numeric: tabular-nums; }
+    .dept-link { display:inline-flex; align-items:center; gap:6px; color:#0f766e; font-weight:500; }
+    .dept-link:hover { text-decoration: underline; }
+    .col-prog { min-width: 22rem; max-width: 32rem; width: 26rem; }
+    .prog-edit { cursor:pointer; border-radius:8px; padding:6px 8px; width:100%; max-width:100%; color:#475569; line-height:1.45; display:inline-flex; align-items:flex-start; gap:6px; box-sizing:border-box; }
+    .prog-edit:hover { background:#eef5f4; }
+    .prog-edit.empty { color:#94a3b8; }
+    .prog-edit .prog-text { flex:1; min-width:0; white-space:normal; word-break:break-word; }
+    .prog-area { width:100%; min-width:18rem; border:1px solid #94c2ff; border-radius:8px; padding:8px 10px; font-size:13px; line-height:1.45; resize:vertical; min-height:72px; box-shadow:0 0 0 3px rgba(26,115,232,0.08); box-sizing:border-box; }
+    .prog-area:focus { outline:none; border-color:#1a73e8; }
     .filter-chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; }
     .filter-chip.on { border-color: #99f6e4; background: #f0fdfa; color: #0f766e; font-weight: 500; }
     .name-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; position: relative; }
     .name-tools { display: inline-flex; align-items: center; gap: 1px; opacity: 0; margin-left: 4px; flex-shrink: 0; }
     .name-wrap:hover .name-tools { opacity: 1; }
-    .icon-btn { width: 20px; height: 20px; border: none; background: transparent; border-radius: 4px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 11px; }
+    .icon-btn { width: 22px; height: 22px; border: none; background: transparent; border-radius: 6px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 11px; }
     .icon-btn:hover { background: #eef2f7; color: #0f766e; }
     .icon-btn.danger:hover { background: #fef2f2; color: #c5221f; }
+    .sum-panel { background:#fff; border:1px solid #e8eaed; border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(60,64,67,0.06); }
+    .sum-cols { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); }
+    .sum-cell { position:relative; padding:18px 12px; text-align:center; border-right:1px solid #f1f5f9; min-height:92px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; }
+    .sum-cell:last-child { border-right:none; }
+    .sum-cell .lab { font-size:12px; color:#64748b; letter-spacing:0.01em; white-space:nowrap; }
+    .sum-cell .num { font-size:26px; font-weight:600; letter-spacing:-0.03em; line-height:1; color:#0f172a; font-variant-numeric:tabular-nums; }
+    .sum-cell .num.is-zero { color:#cbd5e1; font-weight:500; }
+    .sum-cell.is-total { background:#f8fafc; }
+    .sum-cell.is-total .lab { color:#0f766e; font-weight:500; }
+    .sum-cell.is-total .num { color:#0f172a; }
+    .sum-cell.tone-idle { background:linear-gradient(180deg, #fff 0%, #fafbfc 100%); }
+    .sum-cell.tone-doing { background:linear-gradient(180deg, #fff 0%, #f5f9ff 100%); }
+    .sum-cell.tone-doing .num:not(.is-zero) { color:#1a73e8; }
+    .sum-cell.tone-watch { background:linear-gradient(180deg, #fff 0%, #fffbf0 100%); }
+    .sum-cell.tone-watch .num:not(.is-zero) { color:#e37400; }
+    .sum-cell.tone-late { background:linear-gradient(180deg, #fff 0%, #fff7f6 100%); }
+    .sum-cell.tone-late .num:not(.is-zero) { color:#c5221f; }
+    .sum-cell.tone-done { background:linear-gradient(180deg, #fff 0%, #f4fbf6 100%); }
+    .sum-cell.tone-done .num:not(.is-zero) { color:#137333; }
+    .sum-cell.has-val::after { content:""; position:absolute; left:20%; right:20%; bottom:0; height:2px; border-radius:2px 2px 0 0; background:currentColor; opacity:0.35; }
+    .sum-cell.tone-doing.has-val { color:#1a73e8; }
+    .sum-cell.tone-watch.has-val { color:#e37400; }
+    .sum-cell.tone-late.has-val { color:#c5221f; }
+    .sum-cell.tone-done.has-val { color:#137333; }
+    .sum-cell.is-total.has-val::after { background:#0f766e; opacity:0.45; color:#0f766e; }
+    @media (max-width: 720px) {
+      .sum-cols { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+      .sum-cell { border-right:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9; min-height:84px; }
+      .sum-cell:nth-child(3n) { border-right:none; }
+      .sum-cell:nth-last-child(-n+3) { border-bottom:none; }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800" data-page="companyPlan" data-title="公司计划表">
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
-      <p class="text-xs text-slate-500 max-w-3xl">经营主表①：公司目标健康度一览。<strong>点击计划名称</strong>查看详情；<strong>悬浮</strong>出现编辑/删除图标。整体进度手填；计划/任务汇总可点开明细。日常催办回落实驾驶舱。</p>
-      <div class="flex flex-wrap gap-2">
-        <a href="部门计划表_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
-        <a href="整体计划_任务监督_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">整体任务表</a>
-        <a href="经营一表_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-500">经营一表（按需）</a>
-        <a href="落实驾驶舱_page.html" class="text-sm px-3 py-2 rounded-xl border border-slate-200 bg-white">落实驾驶舱</a>
-        <button id="btnNew" class="btn-cta text-white text-sm px-4 py-2 rounded-xl">下达公司计划</button>
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div class="flex flex-wrap gap-2 items-center text-sm">
+        <input type="search" id="kw" placeholder="搜索计划名称 / 进展说明" class="border border-slate-200 rounded-xl px-3 py-1.5 w-56 bg-white" />
+        <select id="fPrio" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white">
+          <option value="">全部优先级</option>
+          <option value="P0">P0</option>
+          <option value="P1">P1</option>
+          <option value="P2">P2</option>
+        </select>
+        <select id="fStatus" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white">
+          <option value="">全部状态</option>
+          <option value="未开始">未开始</option>
+          <option value="进行中">进行中</option>
+          <option value="关注">关注</option>
+          <option value="延期">延期</option>
+          <option value="已完成">已完成</option>
+        </select>
       </div>
+      <button id="btnNew" class="btn-cta text-white text-sm px-4 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>下达公司计划</button>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4" id="kpi"></div>
-    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
-      <div class="px-4 py-3 border-b text-sm font-medium">公司计划</div>
-      <div class="overflow-auto">
-        <table class="w-full text-sm min-w-[1100px]">
-          <thead class="bg-slate-50 text-slate-500">
-            <tr>
-              <th class="px-4 py-3 text-left col-name">计划名称</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap">优先级</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap">开始时间</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap">结束时间</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap">状态</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap min-w-[12rem]">计划状态汇总</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap min-w-[12rem]">任务状态汇总</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap">整体进度</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap">承接部门</th>
-              <th class="px-4 py-3 text-left whitespace-nowrap">说明/进展</th>
-            </tr>
-          </thead>
-          <tbody id="cpBody"></tbody>
-        </table>
-      </div>
+    <div class="mb-4" id="kpi"></div>
+    <div class="bg-white overflow-auto border border-[#e8eaed] rounded-lg shadow-[0_1px_2px_rgba(60,64,67,0.08)]">
+      <table class="grid-table min-w-[1480px]">
+        <thead>
+          <tr>
+            <th class="col-name">计划名称</th>
+            <th>优先级</th>
+            <th>状态</th>
+            <th>整体进度</th>
+            <th>承接部门</th>
+            <th style="min-width:11rem">计划状态汇总</th>
+            <th style="min-width:11rem">任务状态汇总</th>
+            <th class="col-prog">进展说明</th>
+            <th>开始时间</th>
+            <th>结束时间</th>
+          </tr>
+        </thead>
+        <tbody id="cpBody"></tbody>
+      </table>
     </div>
 
     <div id="modal-cp" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
@@ -94,10 +161,9 @@
           <input type="number" id="cpPct" min="0" max="100" value="0" class="w-full border rounded-xl px-3 py-2.5" />
         </div>
         <div>
-          <label class="block text-slate-600 mb-1">说明/进展</label>
+          <label class="block text-slate-600 mb-1">进展说明</label>
           <textarea id="cpProg" class="w-full border rounded-xl px-3 py-2.5 h-24" placeholder="初始说明/完成情况"></textarea>
         </div>
-        <p class="text-[11px] text-slate-400">发布后请督促各部门长在「计划管理」拆解；整体进度由您手动维护。</p>
         <div class="flex justify-end gap-2">
           <button type="button" onclick="BMSUI.closeModal('modal-cp')" class="text-slate-500 px-3">取消</button>
           <button type="button" onclick="saveCp()" class="btn-cta text-white px-4 py-2 rounded-xl">发布</button>
@@ -132,7 +198,7 @@
           </table>
         </div>
         <div class="px-5 py-3 border-t flex justify-end">
-          <a id="deptModalLink" href="部门计划表_page.html" class="text-sm text-teal-700 hover:underline mr-auto">打开部门计划表</a>
+          <span id="deptModalLink" class="hidden"></span>
           <button type="button" onclick="BMSUI.closeModal('modal-dept')" class="text-slate-500 px-3 text-sm">关闭</button>
         </div>
       </div>
@@ -165,7 +231,7 @@
           </table>
         </div>
         <div class="px-5 py-3 border-t flex justify-end items-center">
-          <a id="planSumLink" href="部门计划表_page.html" class="text-sm text-teal-700 hover:underline mr-auto">打开部门计划表</a>
+          <span id="planSumLink" class="hidden"></span>
           <button type="button" onclick="BMSUI.closeModal('modal-plan-sum')" class="text-slate-500 px-3 text-sm">关闭</button>
         </div>
       </div>
@@ -199,7 +265,7 @@
           </table>
         </div>
         <div class="px-5 py-3 border-t flex justify-end items-center">
-          <a id="taskSumLink" href="整体计划_任务监督_page.html" class="text-sm text-teal-700 hover:underline mr-auto">打开整体任务表</a>
+          <span id="taskSumLink" class="hidden"></span>
           <button type="button" onclick="BMSUI.closeModal('modal-task-sum')" class="text-slate-500 px-3 text-sm">关闭</button>
         </div>
       </div>
@@ -212,6 +278,8 @@
         <input type="hidden" id="uTarget" />
         <input type="hidden" id="uTaskId" />
         <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">要求说明 <span class="text-red-500">*</span></label>
+          <textarea id="uNote" class="w-full border rounded-xl px-3 py-2.5 h-20" placeholder="接收人可见：说明要求与期望结果"></textarea></div>
         <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
           <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
         <div class="flex justify-end gap-2">
@@ -228,9 +296,29 @@
 (function () {
   let editPctId = null;
   let editNameId = null;
+  let editProgId = null;
+  let editCell = null; // { id, field } priority | status
   let matrixCache = [];
   let planSumState = { cpId: "", filter: "" };
   let taskSumState = { cpId: "", filter: "" };
+  let kwFilter = "";
+  let prioFilter = "";
+  let statusFilter = "";
+  const CP_STATUS_OPTS = ["未开始", "进行中", "关注", "延期", "已完成"];
+  const CP_PRIO_OPTS = ["P0", "P1", "P2"];
+
+  function isEditing(id, field) {
+    return editCell && editCell.id === id && editCell.field === field;
+  }
+  function prioTag(p) {
+    const map = {
+      P0: "background:#fce8e6;color:#c5221f;border-color:#f5c6c4",
+      P1: "background:#fef7e0;color:#e37400;border-color:#fde293",
+      P2: "background:#f1f3f4;color:#5f6368;border-color:#e8eaed",
+    };
+    const v = p || "P2";
+    return `<span class="inline-flex px-2 py-0.5 rounded text-xs border font-medium" style="${map[v] || map.P2}">${v}</span>`;
+  }
 
   function cellCompanyName(cp) {
     if (editNameId === cp.id) {
@@ -248,22 +336,104 @@
     </div>`;
   }
 
+  function cellPriority(cp) {
+    const cur = cp.priority || "P2";
+    if (window.__cpReadOnly) return prioTag(cur);
+    if (isEditing(cp.id, "priority")) {
+      return `<select class="inline-input" data-inline="priority" data-id="${cp.id}" data-inline-focus>
+        ${CP_PRIO_OPTS.map((o) => `<option value="${o}" ${o === cur ? "selected" : ""}>${o}</option>`).join("")}
+      </select>`;
+    }
+    return `<span class="cell-edit" data-start-edit="priority" data-id="${cp.id}">${prioTag(cur)}<i class="fa-solid fa-pen pencil"></i></span>`;
+  }
+
+  function cellStatus(cp) {
+    const cur = cp.status || "进行中";
+    if (window.__cpReadOnly) return BMSUI.statusBadge(cur);
+    if (isEditing(cp.id, "status")) {
+      return `<select class="inline-input" data-inline="status" data-id="${cp.id}" data-inline-focus>
+        ${CP_STATUS_OPTS.map((o) => `<option value="${o}" ${o === cur ? "selected" : ""}>${o}</option>`).join("")}
+      </select>`;
+    }
+    return `<span class="cell-edit" data-start-edit="status" data-id="${cp.id}">${BMSUI.statusBadge(cur)}<i class="fa-solid fa-pen pencil"></i></span>`;
+  }
+
+  function cellProgressNote(cp) {
+    if (window.__cpReadOnly) {
+      return `<span class="text-slate-600 block" title="${escapeAttr(cp.progress || "")}">${escapeHtml(
+        cp.progress || "—"
+      )}</span>`;
+    }
+    if (editProgId === cp.id) {
+      return `<textarea class="prog-area" data-prog-input="${cp.id}" rows="3">${escapeHtml(cp.progress || "")}</textarea>`;
+    }
+    const empty = !(cp.progress || "").trim();
+    return `<span class="prog-edit ${empty ? "empty" : ""}" data-edit-prog="${cp.id}" title="点击编辑进展说明"><span class="prog-text">${
+      empty ? "点击填写" : escapeHtml(cp.progress)
+    }</span><i class="fa-solid fa-pen pencil mt-0.5"></i></span>`;
+  }
+
+  function clearOtherEdits(keep) {
+    if (keep !== "pct") editPctId = null;
+    if (keep !== "name") editNameId = null;
+    if (keep !== "prog") editProgId = null;
+    if (keep !== "cell") editCell = null;
+  }
+
+  function bindActiveSelectEditor() {
+    const el = document.querySelector("[data-inline]");
+    if (!el) return;
+    let done = false;
+    const finish = (save) => {
+      if (done) return;
+      done = true;
+      if (save) {
+        const id = el.getAttribute("data-id");
+        const field = el.getAttribute("data-inline");
+        const prev = BMS4.COMPANY_PLANS.find((c) => c.id === id);
+        if (prev) {
+          if (field === "priority" && el.value !== prev.priority) {
+            BMS4.updateCompanyPlan(id, { priority: el.value });
+            logCpChange(id, "优先级", prev.priority, el.value);
+            BMSUI.toast("优先级已保存");
+          } else if (field === "status" && el.value !== prev.status) {
+            const patch = { status: el.value };
+            if (el.value === "已完成") patch.progressPct = 100;
+            BMS4.updateCompanyPlan(id, patch);
+            logCpChange(id, "状态", prev.status, el.value);
+            BMSUI.toast("状态已保存");
+          }
+        }
+      }
+      editCell = null;
+      render();
+    };
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        finish(true);
+      }
+      if (e.key === "Escape") finish(false);
+    });
+    el.addEventListener("change", () => finish(true));
+    el.addEventListener("blur", () => setTimeout(() => finish(false), 150));
+  }
+
+  function logCpChange(id, field, from, to) {
+    if (!BMS4.appendPlanChangeLog || from === to) return;
+    BMS4.appendPlanChangeLog({
+      refId: id,
+      refKind: "company",
+      field,
+      from: from == null || from === "" ? "—" : String(from),
+      to: to == null || to === "" ? "—" : String(to),
+      operator: (BMS4.getRoleUser() || {}).name || "李家治",
+      note: "公司计划表行内修改",
+    });
+  }
+
   const PLAN_STATUS_ORDER = ["未开始", "进行中", "关注", "延期", "已完成"];
-  const PLAN_STATUS_CLS = {
-    未开始: "text-slate-500",
-    进行中: "text-blue-600",
-    关注: "text-amber-600",
-    延期: "text-rose-600",
-    已完成: "text-emerald-600",
-  };
   const TASK_STATUS_ORDER = ["未开始", "进行中", "延期", "已完成", "已关闭"];
-  const TASK_STATUS_CLS = {
-    未开始: "text-slate-500",
-    进行中: "text-blue-600",
-    延期: "text-rose-600",
-    已完成: "text-emerald-600",
-    已关闭: "text-slate-400",
-  };
 
   function escapeHtml(s) {
     return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -277,12 +447,14 @@
       .filter((k) => counts[k] > 0)
       .map(
         (k) =>
-          `<span class="sum-chip ${cls[k]} whitespace-nowrap" data-sum-kind="${kind}" data-sum-cp="${escapeAttr(
+          `<span class="sum-chip st-${k}" data-sum-kind="${kind}" data-sum-cp="${escapeAttr(
             cpId
-          )}" data-sum-st="${escapeAttr(k)}" title="查看「${escapeAttr(k)}」明细">${k} ${counts[k]}</span>`
+          )}" data-sum-st="${escapeAttr(k)}" title="查看「${escapeAttr(k)}」明细">${k}<b>${counts[k]}</b></span>`
       )
-      .join('<span class="text-slate-300 mx-1">·</span>');
-    return parts || `<span class="text-slate-400">${emptyText}</span>`;
+      .join("");
+    return parts
+      ? `<div class="sum-line">${parts}</div>`
+      : `<span class="text-slate-400 text-xs">${emptyText}</span>`;
   }
 
   function resolveTaskDisplayStatus(t) {
@@ -312,7 +484,7 @@
     });
     return {
       total: plans.length,
-      html: formatStatusParts(PLAN_STATUS_ORDER, counts, PLAN_STATUS_CLS, "暂无子计划", "plan", cpId),
+      html: formatStatusParts(PLAN_STATUS_ORDER, counts, null, "暂无子计划", "plan", cpId),
       latePlans,
       counts,
     };
@@ -330,7 +502,7 @@
     });
     return {
       total: tasks.length,
-      html: formatStatusParts(TASK_STATUS_ORDER, counts, TASK_STATUS_CLS, "暂无任务", "task", cpId),
+      html: formatStatusParts(TASK_STATUS_ORDER, counts, null, "暂无任务", "task", cpId),
       lateTasks,
       counts,
     };
@@ -373,7 +545,6 @@
     document.getElementById("planSumSub").textContent = planSumState.filter
       ? `筛选「${planSumState.filter}」· 共 ${filtered.length} 条`
       : `共 ${filtered.length} 条子计划`;
-    document.getElementById("planSumLink").href = "部门计划表_page.html?cp=" + encodeURIComponent(cpId);
     renderFilterChips("planSumFilters", PLAN_STATUS_ORDER, counts, planSumState.filter, (st) =>
       openPlanSumModal(cpId, st)
     );
@@ -423,8 +594,6 @@
     document.getElementById("taskSumSub").textContent = taskSumState.filter
       ? `筛选「${taskSumState.filter}」· 共 ${filtered.length} 条`
       : `共 ${filtered.length} 条任务`;
-    document.getElementById("taskSumLink").href =
-      "整体计划_任务监督_page.html?cp=" + encodeURIComponent(cpId);
     renderFilterChips("taskSumFilters", TASK_STATUS_ORDER, counts, taskSumState.filter, (st) =>
       openTaskSumModal(cpId, st)
     );
@@ -469,6 +638,7 @@
     document.getElementById("uTarget").value = uid;
     document.getElementById("uTaskId").value = taskId || "";
     document.getElementById("uTitle").value = "催办：" + name;
+    document.getElementById("uNote").value = "请反馈未完成原因、纠偏措施与可兑现节点。";
     document.getElementById("uExpect").value = "2026-08-21";
     BMSUI.openModal("modalUrge");
   };
@@ -477,13 +647,14 @@
     const r = BMS4.createUrge({
       targetUserId: document.getElementById("uTarget").value,
       title: document.getElementById("uTitle").value.trim(),
+      note: document.getElementById("uNote").value.trim(),
       expectReplyDate: document.getElementById("uExpect").value,
       taskId: document.getElementById("uTaskId").value || undefined,
       companyPlanId: taskSumState.cpId || undefined,
     });
     if (!r.ok) return BMSUI.toast(r.reason, false);
     BMSUI.closeModal("modalUrge");
-    BMSUI.toast("已催办");
+    BMSUI.toast("已催办，对象可在待办查看要求说明");
   };
 
   function openDeptModal(cpId) {
@@ -494,7 +665,6 @@
     document.getElementById("deptModalTitle").textContent = "承接部门 · " + cp.name;
     document.getElementById("deptModalSub").textContent =
       "共 " + active.length + " 个部门有承接（子计划或任务）";
-    document.getElementById("deptModalLink").href = "部门计划表_page.html?cp=" + encodeURIComponent(cpId);
     document.getElementById("deptModalBody").innerHTML = active.length
       ? active
           .map((c) => {
@@ -536,74 +706,126 @@
     });
   }
 
+  function countByStatus(items, getStatus, order) {
+    const counts = {};
+    order.forEach((k) => (counts[k] = 0));
+    items.forEach((item) => {
+      const st = getStatus(item);
+      if (counts[st] !== undefined) counts[st]++;
+      else if (counts["进行中"] !== undefined) counts["进行中"]++;
+    });
+    return counts;
+  }
+
+  function statusToneClass(st) {
+    if (st === "未开始") return "tone-idle";
+    if (st === "进行中") return "tone-doing";
+    if (st === "关注") return "tone-watch";
+    if (st === "延期") return "tone-late";
+    if (st === "已完成") return "tone-done";
+    return "";
+  }
+
+  function renderSumCard(total, order, counts) {
+    const totalCell = `<div class="sum-cell is-total ${total > 0 ? "has-val" : ""}">
+      <div class="lab">合计</div>
+      <div class="num ${total === 0 ? "is-zero" : ""}">${total}</div>
+    </div>`;
+    const cells = order
+      .map((k) => {
+        const n = counts[k] || 0;
+        return `<div class="sum-cell ${statusToneClass(k)} ${n > 0 ? "has-val" : ""}">
+          <div class="lab">${k}</div>
+          <div class="num ${n === 0 ? "is-zero" : ""}">${n}</div>
+        </div>`;
+      })
+      .join("");
+    return `<div class="sum-panel"><div class="sum-cols">${totalCell}${cells}</div></div>`;
+  }
+
+  function matchCpFilter(cp) {
+    if (prioFilter && (cp.priority || "P2") !== prioFilter) return false;
+    if (statusFilter && (cp.status || "进行中") !== statusFilter) return false;
+    const kw = kwFilter.trim().toLowerCase();
+    if (kw) {
+      const blob = ((cp.name || "") + " " + (cp.progress || "")).toLowerCase();
+      if (!blob.includes(kw)) return false;
+    }
+    return true;
+  }
+
   function render() {
     matrixCache = BMS4.companyPlanDeptMatrix();
-    let riskCp = 0;
-    let latePlanAll = 0;
-    let missAll = 0;
+    const rows = matrixCache.filter((row) => matchCpFilter(row.companyPlan));
 
-    document.getElementById("cpBody").innerHTML = matrixCache
-      .map((row) => {
+    document.getElementById("cpBody").innerHTML = rows.length
+      ? rows.map((row) => {
         const cp = row.companyPlan;
         const activeDepts = row.cells.filter((c) => c.planNodes + c.taskTotal > 0);
         const missDepts = activeDepts.filter((c) => !c.weekFilled);
         const sub = planStatusSummary(cp.id);
         const taskSum = taskStatusSummary(cp.id);
         const hot = sub.latePlans > 0 || taskSum.lateTasks > 0 || missDepts.length > 0;
-        if (hot) riskCp++;
-        latePlanAll += sub.latePlans;
-        missAll += missDepts.length;
         const pct = BMS4.clampPct(cp.progressPct);
-        const pctCell = window.__cpReadOnly
-          ? `<span class="font-medium tabular-nums">${pct}%</span>`
-          : editPctId === cp.id
+        const barCls = pct >= 100 ? "is-done" : pct < 40 ? "is-low" : "";
+        const pctCell =
+          editPctId === cp.id
             ? `<input type="number" min="0" max="100" class="inline-input" data-pct-input="${cp.id}" value="${pct}" />`
-            : `<span class="cell-edit font-medium tabular-nums" data-edit-pct="${cp.id}" title="点击编辑">${pct}%</span>`;
+            : window.__cpReadOnly
+              ? `<div class="pct-wrap"><div class="font-medium tabular-nums text-slate-800">${pct}%</div><div class="pct-bar"><div class="pct-fill ${barCls}" style="width:${pct}%"></div></div></div>`
+              : `<div class="pct-wrap cell-edit" data-edit-pct="${cp.id}" title="点击编辑进度">
+                  <div class="font-medium tabular-nums text-slate-800">${pct}%<i class="fa-solid fa-pen pencil"></i></div>
+                  <div class="pct-bar"><div class="pct-fill ${barCls}" style="width:${pct}%"></div></div>
+                </div>`;
 
-        return `<tr class="border-t row-hover ${hot ? "row-risk" : ""}">
-          <td class="px-4 py-3 font-medium col-name leading-snug">${cellCompanyName(cp)}</td>
-          <td class="px-4 py-3 whitespace-nowrap">${escapeHtml(cp.priority || "—")}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-slate-600">${escapeHtml(cp.startDate || "—")}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-slate-600">${escapeHtml(cp.endDate || "—")}</td>
-          <td class="px-4 py-3">${BMSUI.statusBadge(cp.status)}</td>
-          <td class="px-4 py-3 text-xs leading-relaxed cell-sum" data-sum-open="plan" data-sum-cp="${cp.id}" title="点击查看子计划明细">
-            <div class="text-[10px] text-slate-400 mb-0.5">共 ${sub.total} · 点击查看</div>
+        return `<tr class="${hot ? "row-risk" : ""}">
+          <td class="col-name font-medium leading-snug">${cellCompanyName(cp)}</td>
+          <td class="whitespace-nowrap">${cellPriority(cp)}</td>
+          <td class="whitespace-nowrap">${cellStatus(cp)}</td>
+          <td class="whitespace-nowrap">${pctCell}</td>
+          <td class="whitespace-nowrap">
+            <button type="button" class="dept-link" data-dept-modal="${cp.id}">${activeDepts.length} 个部门</button>
+          </td>
+          <td class="cell-sum" data-sum-open="plan" data-sum-cp="${cp.id}" title="点击查看子计划明细">
+            <div class="text-[10px] text-slate-400 mb-1">共 ${sub.total}</div>
             ${sub.html}
           </td>
-          <td class="px-4 py-3 text-xs leading-relaxed cell-sum" data-sum-open="task" data-sum-cp="${cp.id}" title="点击查看任务明细">
-            <div class="text-[10px] text-slate-400 mb-0.5">共 ${taskSum.total} · 点击查看</div>
+          <td class="cell-sum" data-sum-open="task" data-sum-cp="${cp.id}" title="点击查看任务明细">
+            <div class="text-[10px] text-slate-400 mb-1">共 ${taskSum.total}</div>
             ${taskSum.html}
           </td>
-          <td class="px-4 py-3 whitespace-nowrap">${pctCell}<div class="text-[10px] text-slate-400">手填</div></td>
-          <td class="px-4 py-3 whitespace-nowrap">
-            <button type="button" class="text-teal-700 hover:underline" data-dept-modal="${cp.id}">${activeDepts.length} 个部门</button>
-          </td>
-          <td class="px-4 py-3 max-w-[12rem] text-slate-600 truncate" title="${escapeAttr(cp.progress || "")}">${escapeHtml(cp.progress || "—")}</td>
+          <td class="col-prog">${cellProgressNote(cp)}</td>
+          <td class="whitespace-nowrap text-slate-600">${escapeHtml(cp.startDate || "—")}</td>
+          <td class="whitespace-nowrap text-slate-600">${escapeHtml(cp.endDate || "—")}</td>
         </tr>`;
-      })
-      .join("");
+      }).join("")
+      : `<tr><td colspan="10" class="text-center text-slate-400 py-12">无匹配的公司计划</td></tr>`;
 
-    const lateAll = BMS4.taskItems.filter((t) => BMS4.isTaskOverdue(t)).length;
-    document.getElementById("kpi").innerHTML = [
-      ["公司计划", BMS4.COMPANY_PLANS.length, ""],
-      ["风险目标", riskCp, riskCp ? "text-rose-600" : ""],
-      ["延期子计划", latePlanAll, latePlanAll ? "text-rose-600" : ""],
-      ["延期任务", lateAll, lateAll ? "text-rose-600" : ""],
-      ["周报缺口部门次", missAll, missAll ? "text-amber-600" : ""],
-    ]
-      .map(
-        ([k, v, cls]) =>
-          `<div class="bg-white rounded-2xl border p-4 shadow-[0_4px_12px_rgba(0,0,0,0.04)]"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1 ${cls}">${v}</div></div>`
-      )
-      .join("");
+    const filteredCps = rows.map((r) => r.companyPlan);
+    const cpStatusOrder = PLAN_STATUS_ORDER.slice();
+    const cpCounts = countByStatus(filteredCps, (cp) => cp.status || "进行中", cpStatusOrder);
+    document.getElementById("kpi").innerHTML = renderSumCard(filteredCps.length, cpStatusOrder, cpCounts);
 
     document.querySelectorAll("[data-dept-modal]").forEach((btn) => {
       btn.onclick = () => openDeptModal(btn.getAttribute("data-dept-modal"));
     });
     bindSumClicks();
+    document.querySelectorAll("[data-start-edit]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        if (window.__cpReadOnly) return;
+        clearOtherEdits("cell");
+        editCell = { id: el.getAttribute("data-id"), field: el.getAttribute("data-start-edit") };
+        render();
+        requestAnimationFrame(() => {
+          const focusEl = document.querySelector("[data-inline-focus]");
+          if (focusEl) focusEl.focus();
+        });
+      };
+    });
     document.querySelectorAll("[data-edit-pct]").forEach((el) => {
       el.onclick = () => {
-        editNameId = null;
+        clearOtherEdits("pct");
         editPctId = el.getAttribute("data-edit-pct");
         render();
         requestAnimationFrame(() => {
@@ -615,10 +837,25 @@
         });
       };
     });
+    document.querySelectorAll("[data-edit-prog]").forEach((el) => {
+      el.onclick = (e) => {
+        e.stopPropagation();
+        clearOtherEdits("prog");
+        editProgId = el.getAttribute("data-edit-prog");
+        render();
+        requestAnimationFrame(() => {
+          const input = document.querySelector("[data-prog-input]");
+          if (input) {
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+          }
+        });
+      };
+    });
     document.querySelectorAll("[data-edit-name]").forEach((el) => {
       el.onclick = (e) => {
         e.stopPropagation();
-        editPctId = null;
+        clearOtherEdits("name");
         editNameId = el.getAttribute("data-edit-name");
         render();
         requestAnimationFrame(() => {
@@ -630,6 +867,7 @@
         });
       };
     });
+    bindActiveSelectEditor();
     document.querySelectorAll("[data-del-cp]").forEach((btn) => {
       btn.onclick = (e) => {
         e.stopPropagation();
@@ -648,8 +886,13 @@
       const finish = (save) => {
         const id = input.getAttribute("data-pct-input");
         if (save) {
-          BMS4.updateCompanyPlan(id, { progressPct: BMS4.clampPct(input.value) });
-          BMSUI.toast("整体进度已保存");
+          const prev = BMS4.COMPANY_PLANS.find((c) => c.id === id);
+          const nextPct = BMS4.clampPct(input.value);
+          if (prev && BMS4.clampPct(prev.progressPct) !== nextPct) {
+            BMS4.updateCompanyPlan(id, { progressPct: nextPct });
+            logCpChange(id, "整体进度", BMS4.clampPct(prev.progressPct) + "%", nextPct + "%");
+            BMSUI.toast("整体进度已保存");
+          }
         }
         editPctId = null;
         render();
@@ -662,6 +905,34 @@
         if (e.key === "Escape") finish(false);
       });
       input.addEventListener("blur", () => setTimeout(() => finish(true), 100));
+    }
+    const progInput = document.querySelector("[data-prog-input]");
+    if (progInput) {
+      const finishProg = (save) => {
+        const id = progInput.getAttribute("data-prog-input");
+        if (save) {
+          const prev = BMS4.COMPANY_PLANS.find((c) => c.id === id);
+          const text = progInput.value.trim();
+          if (prev && (prev.progress || "") !== text) {
+            BMS4.updateCompanyPlan(id, { progress: text });
+            logCpChange(id, "进展说明", prev.progress, text);
+            BMSUI.toast("进展说明已保存");
+          }
+        }
+        editProgId = null;
+        render();
+      };
+      progInput.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          finishProg(false);
+        }
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          finishProg(true);
+        }
+      });
+      progInput.addEventListener("blur", () => setTimeout(() => finishProg(true), 120));
     }
     const nameInput = document.querySelector("[data-name-input]");
     if (nameInput) {
@@ -677,17 +948,7 @@
           const prev = BMS4.COMPANY_PLANS.find((c) => c.id === id);
           if (prev && prev.name !== name) {
             BMS4.updateCompanyPlan(id, { name });
-            if (BMS4.appendPlanChangeLog) {
-              BMS4.appendPlanChangeLog({
-                refId: id,
-                refKind: "company",
-                field: "计划名称",
-                from: prev.name,
-                to: name,
-                operator: (BMS4.getRoleUser() || {}).name || "李家治",
-                note: "公司计划表行内修改",
-              });
-            }
+            logCpChange(id, "计划名称", prev.name, name);
             BMSUI.toast("名称已保存");
           }
         }
@@ -736,20 +997,31 @@
         '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理 / 计划管理员可见，请切换视角。</div>';
       return;
     }
-    const isAdminRo = BMS4.isPlanAdmin(roleUser);
-    if (isAdminRo) {
-      document.getElementById("btnNew").classList.add("hidden");
-      const tip = document.querySelector("#page-main p.text-xs");
-      if (tip) {
-        tip.innerHTML =
-          "计划管理员只读联查公司计划。下达与名称编辑仍由总经理操作；计划拆解与导入请回「计划总控」。";
-      }
-    }
     document.getElementById("btnNew").onclick = () => {
-      if (BMS4.isPlanAdmin(BMS4.getRoleUser())) return BMSUI.toast("公司计划下达请切换总经理视角", false);
       BMSUI.openModal("modal-cp");
     };
-    window.__cpReadOnly = isAdminRo;
+    const kwEl = document.getElementById("kw");
+    const prioEl = document.getElementById("fPrio");
+    const statusEl = document.getElementById("fStatus");
+    if (kwEl) {
+      kwEl.addEventListener("input", () => {
+        kwFilter = kwEl.value || "";
+        render();
+      });
+    }
+    if (prioEl) {
+      prioEl.addEventListener("change", () => {
+        prioFilter = prioEl.value || "";
+        render();
+      });
+    }
+    if (statusEl) {
+      statusEl.addEventListener("change", () => {
+        statusFilter = statusEl.value || "";
+        render();
+      });
+    }
+    window.__cpReadOnly = false;
     render();
   });
 })();

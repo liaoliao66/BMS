@@ -83,7 +83,7 @@
 
   /** 任务：startDate/endDate 必填口径；耗费工时=日历天数(含首尾)×8；deadline 与 endDate 同步供逾期判断 */
   let taskItems = [
-    { id: "t1", name: "编制本周昼夜作业计划并盯控完成率", annualId: "a_p1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-20", deadline: "2026-08-20", createdAt: "2026-08-17", remark: "昼夜班交接后更新完成率；异常船期即时上报。", attachments: [{ name: "昼夜作业计划表_W34.xlsx" }] },
+    { id: "t1", name: "编制本周昼夜作业计划并盯控完成率", annualId: "a_p1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-17", endDate: "2026-08-20", deadline: "2026-08-20", createdAt: "2026-08-17", remark: "昼夜班交接后更新完成率；异常船期即时上报。", completionNote: "昼夜计划表已编制；完成率盯控进行中，民本轮班次已对齐。", attachments: [{ name: "昼夜作业计划表_W34.xlsx" }] },
     { id: "t1b", name: "本周民本/祥云/电富到港作业盯控", annualId: "a_p1_1_1", week: "2026-W34", ownerId: "u_prod_h", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P0", startDate: "2026-08-10", endDate: "2026-08-24", deadline: "2026-08-24", createdAt: "2026-08-10" },
     { id: "t2", name: "理货交接与磅码单核对", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "进行中", source: "下达", dept: "生产操作部", parentId: null, taskType: "生产作业", priority: "P1", startDate: "2026-08-17", endDate: "2026-08-22", deadline: "2026-08-22", createdAt: "2026-08-17" },
     { id: "t2b", name: "劳务作业票开具方法培训", annualId: "a_p3", week: "2026-W34", ownerId: "u_prod_s", status: "已完成", source: "下达", dept: "生产操作部", parentId: "t2", taskType: "生产作业", priority: "P2", startDate: "2026-08-12", endDate: "2026-08-18", deadline: "2026-08-18", createdAt: "2026-08-12" },
@@ -596,7 +596,46 @@
 
   /** 演示「今天」：用于临期/逾期判断 */
   const DEMO_TODAY = "2026-08-18";
-  const NEAR_DUE_DAYS = 3;
+  const BASIC_CONFIG_KEY = "bms_v4_basic_config";
+  const BASIC_CONFIG_DEFAULTS = {
+    weekDay: "5",
+    weekTime: "17:00",
+    monthLastDays: 3,
+    nearDueDays: 3,
+  };
+
+  function getBasicConfig() {
+    try {
+      const raw = localStorage.getItem(BASIC_CONFIG_KEY);
+      if (!raw) return { ...BASIC_CONFIG_DEFAULTS };
+      const parsed = JSON.parse(raw);
+      return { ...BASIC_CONFIG_DEFAULTS, ...parsed };
+    } catch (e) {
+      return { ...BASIC_CONFIG_DEFAULTS };
+    }
+  }
+
+  /** 临期天数：取基础配置 nearDueDays，钳制 1–30，默认 3 */
+  function getNearDueDays() {
+    const n = Number(getBasicConfig().nearDueDays);
+    if (!Number.isFinite(n)) return 3;
+    return Math.max(1, Math.min(30, Math.round(n)));
+  }
+
+  function saveBasicConfig(cfg) {
+    const next = {
+      weekDay: String(cfg.weekDay != null ? cfg.weekDay : BASIC_CONFIG_DEFAULTS.weekDay),
+      weekTime: cfg.weekTime || BASIC_CONFIG_DEFAULTS.weekTime,
+      monthLastDays: Math.max(1, Math.min(15, Number(cfg.monthLastDays) || 3)),
+      nearDueDays: Math.max(1, Math.min(30, Number(cfg.nearDueDays) || 3)),
+    };
+    try {
+      localStorage.setItem(BASIC_CONFIG_KEY, JSON.stringify(next));
+    } catch (e) {
+      /* ignore */
+    }
+    return { ok: true, config: next };
+  }
 
   /** 催办闭环 */
   let urges = [
@@ -618,6 +657,8 @@
       replyRemedy: "",
       replyPromiseDate: "",
       repliedAt: "",
+      noteHistory: [],
+      rejectNote: "",
     },
     {
       id: "ug2",
@@ -637,6 +678,8 @@
       replyRemedy: "本周内锁定更换日并同步生产部作业计划。",
       replyPromiseDate: "2026-08-22",
       repliedAt: "2026-08-18",
+      noteHistory: [],
+      rejectNote: "",
     },
     {
       id: "ug3",
@@ -656,6 +699,8 @@
       replyRemedy: "",
       replyPromiseDate: "",
       repliedAt: "",
+      noteHistory: [],
+      rejectNote: "",
     },
   ];
 
@@ -749,6 +794,7 @@
       annualId: taskKind === "临时" ? "" : annualId,
       taskKind,
       remark: t.remark != null ? String(t.remark) : "",
+      completionNote: t.completionNote != null ? String(t.completionNote) : "",
       attachments: normalizeAttachments(t.attachments),
       startDate,
       endDate,
@@ -774,7 +820,8 @@
     const end = taskEndDate(t);
     if (!taskOpen(t) || isTaskOverdue(t) || !end) return false;
     const d = dayDiff(DEMO_TODAY, end);
-    return d !== null && d >= 0 && d <= NEAR_DUE_DAYS;
+    const near = getNearDueDays();
+    return d !== null && d >= 0 && d <= near;
   }
 
   taskItems = taskItems.map(normalizeTaskDates);
@@ -824,7 +871,8 @@
   function isPlanNearDue(p) {
     if (!p.endDate || resolvePlanStatus(p) === "已完成" || isPlanOverdue(p)) return false;
     const d = dayDiff(DEMO_TODAY, p.endDate);
-    return d !== null && d >= 0 && d <= NEAR_DUE_DAYS;
+    const near = getNearDueDays();
+    return d !== null && d >= 0 && d <= near;
   }
 
   function taskFinishRate(list) {
@@ -1023,6 +1071,7 @@
       .filter((u) => u.status === "待回复")
       .forEach((u) => {
         const overdue = u.expectReplyDate && u.expectReplyDate < DEMO_TODAY;
+        const noteHint = (u.note || "").trim();
         todos.push({
           id: "td_ug_" + u.id,
           type: "催办回复",
@@ -1034,7 +1083,12 @@
           priority: "P0",
           dueDate: u.expectReplyDate || "",
           expectReplyDate: u.expectReplyDate,
-          refLabel: u.dept || "",
+          urgeNote: noteHint,
+          createdBy: u.createdBy || "",
+          refLabel:
+            (u.dept ? u.dept + " · " : "") +
+            (u.expectReplyDate ? "期望回复 " + u.expectReplyDate : "") +
+            (noteHint ? " · " + (noteHint.length > 18 ? noteHint.slice(0, 18) + "…" : noteHint) : ""),
         });
       });
 
@@ -1042,16 +1096,20 @@
       .filter((u) => u.status === "已回复")
       .forEach((u) => {
         const overduePromise = u.replyPromiseDate && u.replyPromiseDate < DEMO_TODAY;
+        const creatorId = u.createdBy || "u_gm";
         todos.push({
           id: "td_ug_re_" + u.id,
           type: "催办复检",
           title: (overduePromise ? "【承诺日已过】" : "【待复检】") + u.title,
-          userId: "u_gm",
+          userId: creatorId,
           urgeId: u.id,
           status: overduePromise ? "逾期" : "待办",
           priority: "P0",
           dueDate: u.replyPromiseDate || u.expectReplyDate || "",
           expectReplyDate: u.expectReplyDate,
+          urgeNote: (u.note || "").trim(),
+          createdBy: creatorId,
+          refLabel: "承诺日 " + (u.replyPromiseDate || "—"),
         });
       });
 
@@ -1202,6 +1260,7 @@
       { field: "开始日", from: taskStartDate(prev), to: taskStartDate(next) },
       { field: "结束日", from: taskEndDate(prev), to: taskEndDate(next) },
       { field: "备注", from: prev.remark || "", to: next.remark || "" },
+      { field: "完成情况说明", from: prev.completionNote || "", to: next.completionNote || "" },
       { field: "附件", from: attachNamesLabel(prev.attachments), to: attachNamesLabel(next.attachments) },
       {
         field: "关联计划",
@@ -1522,6 +1581,14 @@
       const t = taskItems.find((x) => x.id === taskId);
       if (!t) return { ok: false, reason: "任务不存在" };
       if (t.status === "已完成" || t.status === "已关闭") return { ok: true };
+      const pending = urges.find((u) => u.status === "待回复" && u.taskId === taskId);
+      if (pending) {
+        return {
+          ok: false,
+          reason: "该任务有待回复催办，请先在「催办往来」提交原因/措施/承诺日（改任务状态不等于回复催办）",
+          urgeId: pending.id,
+        };
+      }
       taskItems = taskItems.map((x) => (x.id === taskId ? { ...x, status: "已完成" } : x));
       pushTodoArchive({
         id: "td_t_" + taskId,
@@ -1579,10 +1646,14 @@
       const u = user || this.getRoleUser();
       return !!(u && u.role === "计划管理员");
     },
-    /** 可全量浏览计划树（总经理只读 / 计划管理员可编） */
-    canViewAllPlans(user) {
+    /** 管理员视角：总经理或计划管理员（全菜单 / 经营台） */
+    isAdmin(user) {
       const u = user || this.getRoleUser();
       return !!(u && (u.role === "总经理" || u.role === "计划管理员"));
+    },
+    /** 可全量浏览计划树（总经理只读 / 计划管理员可编） */
+    canViewAllPlans(user) {
+      return this.isAdmin(user);
     },
     /** 部门计划可编辑：部门长（本部门）或计划管理员（全量） */
     canEditPlans(user) {
@@ -1666,6 +1737,7 @@
         taskType: payload.taskType || (kind === "临时" ? "其他" : "其他"),
         priority: payload.priority || "P1",
         remark: payload.remark || "",
+        completionNote: payload.completionNote || "",
         attachments: normalizeAttachments(payload.attachments),
         startDate,
         endDate,
@@ -1695,6 +1767,21 @@
     },
     updateTask(id, patch) {
       const prev = taskItems.find((t) => t.id === id);
+      if (!prev) return { ok: false, reason: "任务不存在" };
+      if (
+        patch &&
+        (patch.status === "已完成" || patch.status === "已关闭") &&
+        taskOpen(prev)
+      ) {
+        const pending = urges.find((u) => u.status === "待回复" && u.taskId === id);
+        if (pending) {
+          return {
+            ok: false,
+            reason: "该任务有待回复催办，请先回复催办后再改任务完成状态",
+            urgeId: pending.id,
+          };
+        }
+      }
       taskItems = taskItems.map((t) => {
         if (t.id !== id) return t;
         const merged = { ...t, ...patch };
@@ -1719,6 +1806,7 @@
         });
       }
       rebuildTodos();
+      return { ok: true };
     },
     getTaskChangeLogs(taskId) {
       return taskChangeLogs
@@ -1728,7 +1816,14 @@
     },
     appendTaskChangeLog,
     DEMO_TODAY,
-    NEAR_DUE_DAYS,
+    /** @deprecated 请用 getNearDueDays()；保留兼容读配置 */
+    get NEAR_DUE_DAYS() {
+      return getNearDueDays();
+    },
+    getBasicConfig,
+    getNearDueDays,
+    saveBasicConfig,
+    BASIC_CONFIG_DEFAULTS,
     get urges() {
       return urges;
     },
@@ -1740,146 +1835,51 @@
     taskEndDate,
     WORKDAY_HOURS,
     taskFinishRate,
-    /** 生成例外清单（按严重度排序） */
-    getExceptions() {
-      const list = [];
-      taskItems.forEach((t) => {
-        if (isTaskOverdue(t)) {
-          const lag = t.deadline ? Math.max(0, dayDiff(t.deadline, DEMO_TODAY) || 0) : 0;
-          list.push({
-            id: "ex_od_" + t.id,
-            type: "任务延期",
-            severity: 100 + lag,
-            title: t.name,
-            dept: t.dept,
-            ownerId: t.ownerId,
-            taskId: t.id,
-            companyPlanId: (planById(t.annualId) || {}).companyPlanId || "",
-            lagDays: lag,
-            priority: t.priority || "P2",
-          });
-        } else if (isTaskNearDue(t)) {
-          const left = dayDiff(DEMO_TODAY, t.deadline) || 0;
-          list.push({
-            id: "ex_nd_" + t.id,
-            type: "任务临期",
-            severity: 50 + (NEAR_DUE_DAYS - left),
-            title: t.name,
-            dept: t.dept,
-            ownerId: t.ownerId,
-            taskId: t.id,
-            companyPlanId: (planById(t.annualId) || {}).companyPlanId || "",
-            lagDays: left,
-            priority: t.priority || "P2",
-          });
-        }
-      });
-      planItems.forEach((p) => {
-        const st = resolvePlanStatus(p);
-        if (st === "延期" || st === "关注") {
-          const under = taskItems.filter((t) => t.annualId === p.id || planDescendantIds(p.id).includes(t.annualId));
-          const od = under.filter(isTaskOverdue).length;
-          const ratio = under.length ? od / under.length : 0;
-          if (st === "延期" || st === "关注" || ratio >= 0.3) {
-            const head = USERS.find((u) => u.dept === p.dept && u.role === "部门长");
-            list.push({
-              id: "ex_pl_" + p.id,
-              type: st === "延期" ? "计划卡点" : "计划关注",
-              severity: st === "延期" ? 80 : 60,
-              title: p.name,
-              dept: p.dept,
-              ownerId: p.ownerId || (head ? head.id : ""),
-              taskId: "",
-              planId: p.id,
-              companyPlanId: p.companyPlanId || "",
-              lagDays: 0,
-              priority: p.priority || "P1",
-            });
-          }
-        }
-      });
-      const week = "2026-W34";
-      USERS.filter((u) => u.role === "部门长").forEach((u) => {
-        const missing = COMPANY_PLANS.some(
-          (cp) =>
-            !periodReports.some(
-              (r) =>
-                r.userId === u.id &&
-                r.periodType === "week" &&
-                r.periodKey === week &&
-                r.companyPlanId === cp.id &&
-                (r.planText || "").trim() &&
-                (r.doneText || "").trim()
-            )
-        );
-        if (missing) {
-          list.push({
-            id: "ex_wr_" + u.id,
-            type: "任务周报缺失",
-            severity: 40,
-            title: u.dept + "本周任务周报未填齐",
-            dept: u.dept,
+    /** ISO 周年份周 → 演示月键（如 2026-W34 → 2026-08） */
+    monthFromWeek(week) {
+      const m = String(week || "").match(/^(\d{4})-W(\d+)$/);
+      if (!m) return String(DEMO_TODAY || "2026-08-18").slice(0, 7);
+      const y = Number(m[1]);
+      const w = Number(m[2]);
+      // 演示数据：2026-W32~W35 落在 8 月；其余按周序粗算
+      if (y === 2026 && w >= 32 && w <= 35) return "2026-08";
+      if (y === 2026 && w >= 18 && w <= 22) return "2026-05";
+      const approxMonth = Math.min(12, Math.max(1, Math.ceil((w * 7) / 30.5)));
+      return y + "-" + String(approxMonth).padStart(2, "0");
+    },
+    /**
+     * 部门长任务周报/月报填报缺口（按公司计划条数计）
+     * @param {"week"|"month"} periodType
+     * @param {string} periodKey 如 2026-W34 / 2026-08
+     */
+    listDeptReportGaps(periodType, periodKey) {
+      const total = COMPANY_PLANS.length;
+      return USERS.filter((u) => u.role === "部门长")
+        .map((u) => {
+          const missing = COMPANY_PLANS.filter(
+            (cp) =>
+              !periodReports.some(
+                (r) =>
+                  r.userId === u.id &&
+                  r.periodType === periodType &&
+                  r.periodKey === periodKey &&
+                  r.companyPlanId === cp.id &&
+                  (r.planText || "").trim() &&
+                  (r.doneText || "").trim()
+              )
+          );
+          return {
             ownerId: u.id,
-            taskId: "",
-            companyPlanId: "",
-            lagDays: 0,
-            priority: "P1",
-          });
-        }
-        const month = "2026-08";
-        const monthMissing = COMPANY_PLANS.some(
-          (cp) =>
-            !periodReports.some(
-              (r) =>
-                r.userId === u.id &&
-                r.periodType === "month" &&
-                r.periodKey === month &&
-                r.companyPlanId === cp.id &&
-                (r.planText || "").trim() &&
-                (r.doneText || "").trim()
-            )
-        );
-        if (monthMissing) {
-          list.push({
-            id: "ex_mr_" + u.id,
-            type: "任务月报缺失",
-            severity: 35,
-            title: u.dept + "本月任务月报未填齐",
             dept: u.dept,
-            ownerId: u.id,
-            taskId: "",
-            companyPlanId: "",
-            lagDays: 0,
-            priority: "P2",
-          });
-        }
-      });
-      urges
-        .filter((u) => u.status === "待回复" && u.expectReplyDate && u.expectReplyDate < DEMO_TODAY)
-        .forEach((u) => {
-          const urgeScope =
-            u.planId && !u.taskId
-              ? "plan"
-              : String(u.exceptionType || "").indexOf("计划") === 0
-                ? "plan"
-                : "task";
-          list.push({
-            id: "ex_ug_" + u.id,
-            type: "催办未回复",
-            severity: 90,
-            title: u.title,
-            dept: u.dept,
-            ownerId: u.targetUserId,
-            taskId: u.taskId || "",
-            planId: u.planId || "",
-            urgeId: u.id,
-            urgeScope,
-            companyPlanId: u.companyPlanId || "",
-            lagDays: dayDiff(u.expectReplyDate, DEMO_TODAY) || 0,
-            priority: "P0",
-          });
-        });
-      return list.sort((a, b) => b.severity - a.severity);
+            periodType,
+            periodKey,
+            missingCount: missing.length,
+            total,
+            missingNames: missing.map((cp) => cp.name),
+          };
+        })
+        .filter((x) => x.missingCount > 0)
+        .sort((a, b) => b.missingCount - a.missingCount || a.dept.localeCompare(b.dept, "zh"));
     },
     /** 公司计划进度：各部门任务完成率简单平均 */
     companyPlanDeptMatrix() {
@@ -1928,6 +1928,8 @@
     createUrge(payload) {
       if (!payload.expectReplyDate) return { ok: false, reason: "必须填写期望回复日" };
       if (!payload.targetUserId) return { ok: false, reason: "缺少催办对象" };
+      const note = (payload.note || "").trim();
+      if (!note) return { ok: false, reason: "必须填写要求说明（接收人可见）" };
       const dup = urges.find(
         (u) =>
           u.status === "待回复" &&
@@ -1938,13 +1940,14 @@
       if (dup && !payload.force) {
         return { ok: false, reason: "该对象已有待回复催办，可在催办跟踪中「再次催办」", dupId: dup.id };
       }
+      const actor = this.getRoleUser();
       const id = "ug_" + Date.now();
       const target = userById(payload.targetUserId);
       const item = {
         id,
         targetUserId: payload.targetUserId,
         title: payload.title || "请尽快处理落实事项",
-        note: payload.note || "",
+        note,
         expectReplyDate: payload.expectReplyDate,
         taskId: payload.taskId || "",
         planId: payload.planId || "",
@@ -1953,29 +1956,35 @@
         exceptionType: payload.exceptionType || "",
         status: "待回复",
         createdAt: DEMO_TODAY,
-        createdBy: "u_gm",
+        createdBy: (actor && actor.id) || "u_gm",
         replyReason: "",
         replyRemedy: "",
         replyPromiseDate: "",
         repliedAt: "",
+        noteHistory: [],
+        rejectNote: "",
         parentUrgeId: payload.parentUrgeId || "",
       };
       urges = [item, ...urges];
       rebuildTodos();
       return { ok: true, item };
     },
-    /** 再次催办：刷新期望回复日，保留原催办为历史或更新同一条 */
+    /** 再次催办：刷新期望回复日；要求说明原文保留，补充说明追加到 noteHistory */
     renewUrge(id, expectReplyDate, note) {
       const u = urges.find((x) => x.id === id);
       if (!u) return { ok: false, reason: "催办不存在" };
       if (u.status !== "待回复") return { ok: false, reason: "仅待回复催办可再次催办" };
       if (!expectReplyDate) return { ok: false, reason: "必须填写期望回复日" };
+      const tip = (note || "").trim() || "再次催办：请于新期望日前回复";
+      const actor = this.getRoleUser();
+      const hist = Array.isArray(u.noteHistory) ? u.noteHistory.slice() : [];
+      hist.push({ at: DEMO_TODAY, kind: "renew", text: tip, by: (actor && actor.id) || "" });
       urges = urges.map((x) =>
         x.id === id
           ? {
               ...x,
               expectReplyDate,
-              note: note ? (x.note ? x.note + "；" : "") + note : x.note,
+              noteHistory: hist,
               renewedAt: DEMO_TODAY,
             }
           : x
@@ -1983,18 +1992,25 @@
       rebuildTodos();
       return { ok: true };
     },
-    /** 复检退回：重新进入待回复 */
+    /** 复检退回：重新进入待回复；退回说明追加历史，不覆盖原要求说明 */
     rejectUrge(id, reason) {
       const u = urges.find((x) => x.id === id);
       if (!u) return { ok: false, reason: "催办不存在" };
       if (u.status !== "已回复") return { ok: false, reason: "仅已回复催办可退回" };
+      const actor = this.getRoleUser();
+      if (u.createdBy && actor && actor.id !== u.createdBy && !this.isAdmin(actor)) {
+        return { ok: false, reason: "仅发起人或管理员可复检退回" };
+      }
       const tip = (reason || "复检未通过，请补充措施").trim();
+      const hist = Array.isArray(u.noteHistory) ? u.noteHistory.slice() : [];
+      hist.push({ at: DEMO_TODAY, kind: "reject", text: tip, by: (actor && actor.id) || "" });
       urges = urges.map((x) =>
         x.id === id
           ? {
               ...x,
               status: "待回复",
-              note: (x.note ? x.note + "；" : "") + tip,
+              rejectNote: tip,
+              noteHistory: hist,
               replyReason: "",
               replyRemedy: "",
               replyPromiseDate: "",
@@ -2005,23 +2021,28 @@
       rebuildTodos();
       return { ok: true };
     },
-    /** @deprecated 兼容旧调用：自动补期望回复日 */
+    /** @deprecated 兼容旧调用：自动补期望回复日与要求说明 */
     urge(userId, title) {
       const d = parseDay(DEMO_TODAY);
-      d.setDate(d.getDate() + NEAR_DUE_DAYS);
+      d.setDate(d.getDate() + getNearDueDays());
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
       const day = String(d.getDate()).padStart(2, "0");
       return this.createUrge({
         targetUserId: userId,
         title: title || "请尽快处理逾期/临期事项",
+        note: "请按催办要求反馈原因、措施与承诺日期。",
         expectReplyDate: y + "-" + m + "-" + day,
       });
     },
     replyUrge(id, payload) {
       const u = urges.find((x) => x.id === id);
       if (!u) return { ok: false, reason: "催办不存在" };
-      if (u.status !== "待回复") return { ok: false, reason: "该催办已回复" };
+      if (u.status !== "待回复") return { ok: false, reason: "该催办已回复或已闭环" };
+      const actor = this.getRoleUser();
+      if (!actor || actor.id !== u.targetUserId) {
+        return { ok: false, reason: "仅催办对象本人可提交回复" };
+      }
       if (!(payload.replyReason || "").trim()) return { ok: false, reason: "请填写原因" };
       if (!(payload.replyRemedy || "").trim()) return { ok: false, reason: "请填写补救措施" };
       if (!payload.replyPromiseDate) return { ok: false, reason: "请填写新承诺日期" };
@@ -2034,6 +2055,7 @@
               replyRemedy: payload.replyRemedy.trim(),
               replyPromiseDate: payload.replyPromiseDate,
               repliedAt: DEMO_TODAY,
+              rejectNote: "",
             }
           : x
       );
@@ -2041,12 +2063,27 @@
       return { ok: true };
     },
     closeUrge(id) {
-      urges = urges.map((x) => (x.id === id ? { ...x, status: "已闭环" } : x));
+      const u = urges.find((x) => x.id === id);
+      if (!u) return { ok: false, reason: "催办不存在" };
+      if (u.status !== "已回复") return { ok: false, reason: "仅「已回复」催办可由发起人复检闭环" };
+      const actor = this.getRoleUser();
+      if (u.createdBy && actor && actor.id !== u.createdBy && !this.isAdmin(actor)) {
+        return { ok: false, reason: "仅发起人或管理员可确认闭环" };
+      }
+      urges = urges.map((x) => (x.id === id ? { ...x, status: "已闭环", closedAt: DEMO_TODAY } : x));
       rebuildTodos();
       return { ok: true };
     },
+    /** 禁止手改催办状态；仅回复/复检/退回/再次催办驱动 */
+    setUrgeStatus() {
+      return { ok: false, reason: "催办状态不可手改，请走回复或复检流程" };
+    },
     getUrge(id) {
       return urges.find((x) => x.id === id);
+    },
+    pendingUrgeForTask(taskId) {
+      if (!taskId) return null;
+      return urges.find((u) => u.status === "待回复" && u.taskId === taskId) || null;
     },
     completeTodo(id) {
       todos = todos.filter((t) => t.id !== id);

@@ -16,21 +16,43 @@
     .tag-p0 { background:#fce8e6; color:#c5221f; border-color:#f5c6c4; }
     .tag-p1 { background:#fef7e0; color:#e37400; border-color:#fde293; }
     .tag-p2 { background:#f1f3f4; color:#5f6368; border-color:#e8eaed; }
+    .sum-panel { background:#fff; border:1px solid #e8eaed; border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(60,64,67,0.06); }
+    .sum-cols { display:grid; }
+    .sum-cell { position:relative; padding:18px 12px; text-align:center; border-right:1px solid #f1f5f9; min-height:92px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; }
+    .sum-cell:last-child { border-right:none; }
+    .sum-cell .lab { font-size:12px; color:#64748b; letter-spacing:0.01em; white-space:nowrap; }
+    .sum-cell .num { font-size:26px; font-weight:600; letter-spacing:-0.03em; line-height:1; color:#0f172a; font-variant-numeric:tabular-nums; }
+    .sum-cell .num.is-zero { color:#cbd5e1; font-weight:500; }
+    .sum-cell.is-total { background:#f8fafc; }
+    .sum-cell.is-total .lab { color:#0f766e; font-weight:500; }
+    .sum-cell.tone-idle { background:linear-gradient(180deg, #fff 0%, #fafbfc 100%); }
+    .sum-cell.tone-doing { background:linear-gradient(180deg, #fff 0%, #f5f9ff 100%); }
+    .sum-cell.tone-doing .num:not(.is-zero) { color:#1a73e8; }
+    .sum-cell.tone-todo { background:linear-gradient(180deg, #fff 0%, #f8fafc 100%); }
+    .sum-cell.tone-late { background:linear-gradient(180deg, #fff 0%, #fff7f6 100%); }
+    .sum-cell.tone-late .num:not(.is-zero) { color:#c5221f; }
+    .sum-cell.tone-done { background:linear-gradient(180deg, #fff 0%, #f4fbf6 100%); }
+    .sum-cell.tone-done .num:not(.is-zero) { color:#137333; }
+    .sum-cell.tone-closed { background:linear-gradient(180deg, #fff 0%, #f8fafc 100%); }
+    .sum-cell.tone-closed .num:not(.is-zero) { color:#64748b; }
+    .sum-cell.has-val::after { content:""; position:absolute; left:20%; right:20%; bottom:0; height:2px; border-radius:2px 2px 0 0; background:currentColor; opacity:0.35; }
+    .sum-cell.tone-doing.has-val { color:#1a73e8; }
+    .sum-cell.tone-late.has-val { color:#c5221f; }
+    .sum-cell.tone-done.has-val { color:#137333; }
+    .sum-cell.tone-closed.has-val { color:#64748b; }
+    .sum-cell.is-total.has-val::after { background:#0f766e; opacity:0.45; color:#0f766e; }
+    @media (max-width: 720px) {
+      .sum-cols { grid-template-columns:repeat(3, minmax(0, 1fr)) !important; }
+      .sum-cell { border-right:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9; min-height:84px; }
+      .sum-cell:nth-child(3n) { border-right:none; }
+      .sum-cell:nth-last-child(-n+3) { border-bottom:none; }
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800" data-page="allTasks" data-title="整体任务表">
   <div id="app-root"></div>
   <div id="page-main" class="hidden">
 
-    <div class="flex flex-wrap justify-between gap-3 mb-4 items-start">
-      <p class="text-xs text-slate-500 max-w-3xl" id="pageHint">经营主表③：默认看<strong>全部任务</strong>（计划内执行面）；切换「例外任务」查看<strong>督办任务</strong>（计划外事项）。可按公司计划/部门筛选，并回链公司计划表、部门计划表。</p>
-      <div class="flex flex-wrap gap-2 text-sm">
-        <a href="经营总台账_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">公司计划表</a>
-        <a href="部门计划表_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">部门计划表</a>
-        <a href="任务督办_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white text-teal-700">任务督办</a>
-        <a href="落实驾驶舱_page.html" class="px-3 py-2 rounded-xl border border-slate-200 bg-white">落实驾驶舱</a>
-      </div>
-    </div>
     <div class="flex flex-wrap gap-2 mb-4 items-center">
       <div class="inline-flex rounded-xl overflow-hidden border border-slate-200 text-sm">
         <button type="button" id="fAll" class="tab-on px-3 py-1.5">全部任务</button>
@@ -40,7 +62,7 @@
       <select id="fDept" class="border rounded-xl px-3 py-1.5 text-sm bg-white"></select>
       <input type="search" id="kw" placeholder="搜索任务/部门/责任人" class="border rounded-xl px-3 py-1.5 text-sm w-52" />
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="kpi"></div>
+    <div class="mb-4" id="kpi"></div>
     <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
       <table class="w-full text-sm"><thead class="bg-slate-50 text-slate-500"><tr>
         <th class="px-4 py-3 text-left">任务项</th><th class="px-4 py-3 text-left">部门</th>
@@ -58,6 +80,8 @@
         <input type="hidden" id="uTarget" />
         <input type="hidden" id="uTaskId" />
         <div><label class="block text-slate-600 mb-1">催办标题</label><input id="uTitle" class="w-full border rounded-xl px-3 py-2.5" /></div>
+        <div><label class="block text-slate-600 mb-1">要求说明 <span class="text-red-500">*</span></label>
+          <textarea id="uNote" class="w-full border rounded-xl px-3 py-2.5 h-20" placeholder="接收人可见：说明要求与期望结果"></textarea></div>
         <div><label class="block text-slate-600 mb-1">期望回复日 <span class="text-red-500">*</span></label>
           <input type="date" id="uExpect" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-21" /></div>
         <div class="flex justify-end gap-2">
@@ -89,6 +113,7 @@ function openUrge(uid, name, taskId, exType) {
   document.getElementById("uTarget").value = uid;
   document.getElementById("uTaskId").value = taskId || "";
   document.getElementById("uTitle").value = "催办：" + name;
+  document.getElementById("uNote").value = "请反馈未完成原因、纠偏措施与可兑现节点。";
   document.getElementById("uExpect").value = "2026-08-21";
   document.getElementById("modalUrge").dataset.exType = exType || "";
   BMSUI.openModal("modalUrge");
@@ -97,17 +122,71 @@ function saveUrge() {
   const r = BMS4.createUrge({
     targetUserId: document.getElementById("uTarget").value,
     title: document.getElementById("uTitle").value.trim(),
+    note: document.getElementById("uNote").value.trim(),
     expectReplyDate: document.getElementById("uExpect").value,
     taskId: document.getElementById("uTaskId").value || undefined,
     exceptionType: document.getElementById("modalUrge").dataset.exType || undefined,
   });
   if (!r.ok) return BMSUI.toast(r.reason, false);
   BMSUI.closeModal("modalUrge");
-  BMSUI.toast("已催办");
+  BMSUI.toast("已催办，对象可在待办查看要求说明");
 }
 
 function isSuperviseOverdue(m) {
   return m.endDate && m.endDate < (BMS4.DEMO_TODAY || "2026-08-18") && m.status !== "已完成";
+}
+
+const TASK_STATUS_ORDER = ["未开始", "进行中", "延期", "已完成", "已关闭"];
+const SUPERVISE_STATUS_ORDER = ["待办", "进行中", "延期", "已完成"];
+
+function statusToneClass(st) {
+  if (st === "未开始" || st === "待办") return "tone-idle";
+  if (st === "进行中") return "tone-doing";
+  if (st === "延期") return "tone-late";
+  if (st === "已完成") return "tone-done";
+  if (st === "已关闭") return "tone-closed";
+  return "";
+}
+
+function taskDisplayStatus(t) {
+  if (t.status === "已完成" || t.status === "已关闭") return t.status;
+  if (BMS4.isTaskOverdue(t) || t.status === "延期") return "延期";
+  return t.status || "进行中";
+}
+
+function superviseDisplayStatus(m) {
+  if (m.status === "已完成") return "已完成";
+  if (isSuperviseOverdue(m) || m.status === "延期") return "延期";
+  return m.status || "待办";
+}
+
+function countByOrder(items, getStatus, order) {
+  const counts = {};
+  order.forEach((k) => (counts[k] = 0));
+  items.forEach((item) => {
+    const st = getStatus(item);
+    if (counts[st] !== undefined) counts[st]++;
+    else if (counts["进行中"] !== undefined) counts["进行中"]++;
+  });
+  return counts;
+}
+
+function renderSumCard(total, order, counts) {
+  const n = order.length + 1;
+  const totalCell = `<div class="sum-cell is-total ${total > 0 ? "has-val" : ""}">
+    <div class="lab">合计</div>
+    <div class="num ${total === 0 ? "is-zero" : ""}">${total}</div>
+  </div>`;
+  const cells = order
+    .map((k) => {
+      const c = counts[k] || 0;
+      return `<div class="sum-cell ${statusToneClass(k)} ${c > 0 ? "has-val" : ""}">
+        <div class="lab">${k}</div>
+        <div class="num ${c === 0 ? "is-zero" : ""}">${c}</div>
+      </div>`;
+    })
+    .join("");
+  return `<div class="sum-panel"><div class="sum-cols" style="grid-template-columns:repeat(${n},minmax(0,1fr))">${totalCell}${cells}</div></div>`;
 }
 
 function render() {
@@ -117,9 +196,6 @@ function render() {
   document.getElementById("colPath").textContent = isAll ? "计划路径" : "类型";
   document.getElementById("colHours").textContent = isAll ? "耗费工时" : "配合人";
   document.getElementById("fCp").classList.toggle("hidden", !isAll);
-  document.getElementById("pageHint").innerHTML = isAll
-    ? "经营主表③：默认看<strong>全部任务</strong>（计划内执行面）；切换「例外任务」查看<strong>督办任务</strong>（计划外事项）。"
-    : "当前为<strong>例外任务</strong>＝任务督办下达的<strong>计划外</strong>事项；下达与行内维护请到「任务督办」。";
 
   const kw = (document.getElementById("kw").value || "").trim();
 
@@ -147,19 +223,8 @@ function render() {
       const sb = BMS4.isTaskOverdue(b) ? 2 : BMS4.isTaskNearDue(b) ? 1 : 0;
       return sb - sa;
     });
-    const late = list.filter((t) => BMS4.isTaskOverdue(t)).length;
-    const near = list.filter((t) => BMS4.isTaskNearDue(t)).length;
-    document.getElementById("kpi").innerHTML = [
-      ["全部任务", list.length],
-      ["其中延期/逾期", late],
-      ["其中临期", near],
-      ["例外（督办）", BMS4.superviseItems.filter((m) => m.status !== "已完成").length],
-    ]
-      .map(
-        ([k, v]) =>
-          `<div class="bg-white rounded-2xl border p-4"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1">${v}</div></div>`
-      )
-      .join("");
+    const taskCounts = countByOrder(list, taskDisplayStatus, TASK_STATUS_ORDER);
+    document.getElementById("kpi").innerHTML = renderSumCard(list.length, TASK_STATUS_ORDER, taskCounts);
 
     document.getElementById("tbody").innerHTML = list.length
       ? list
@@ -167,10 +232,6 @@ function render() {
             const u = BMS4.userById(t.ownerId);
             const nameJs = (t.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
             const flag = BMS4.isTaskOverdue(t) ? "延期" : BMS4.isTaskNearDue(t) ? "临期" : "";
-            const pl = BMS4.planById(t.annualId);
-            const deptLink = pl
-              ? `部门计划表_page.html?dept=${encodeURIComponent(t.dept || "")}&cp=${pl.companyPlanId || ""}`
-              : "部门计划表_page.html";
             return `<tr class="border-t row-hover"><td class="px-4 py-3">${BMSUI.taskNameLink(t.name, {
               id: t.id,
             })}${flag ? ` <span class="text-[11px] text-rose-600">[${flag}]</span>` : ""}</td><td class="px-4 py-3">${escapeHtml(
@@ -181,10 +242,6 @@ function render() {
               t.annualId
                 ? BMSUI.planNameLink(BMS4.planPathLabel(t.annualId) || "—", { id: t.annualId, kind: "dept" })
                 : "—"
-            }${
-              pl
-                ? ` <a class="text-[11px] text-slate-400 hover:text-teal-700 hover:underline ml-1" href="${deptLink}" title="打开部门计划表">部门表</a>`
-                : ""
             }</td>
       <td class="px-4 py-3">${prioTag(t.priority)}</td>
       <td class="px-4 py-3">${BMSUI.statusBadge(t.status)}</td>
@@ -223,19 +280,8 @@ function render() {
     const sb = isSuperviseOverdue(b) ? 2 : b.status === "已完成" ? 0 : 1;
     return sb - sa;
   });
-  const openCnt = list.filter((m) => m.status !== "已完成").length;
-  const late = list.filter((m) => isSuperviseOverdue(m)).length;
-  document.getElementById("kpi").innerHTML = [
-    ["例外任务（督办）", list.length],
-    ["未完成", openCnt],
-    ["逾期未完成", late],
-    ["已完成", list.filter((m) => m.status === "已完成").length],
-  ]
-    .map(
-      ([k, v]) =>
-        `<div class="bg-white rounded-2xl border p-4"><div class="text-xs text-slate-500">${k}</div><div class="text-2xl font-semibold mt-1">${v}</div></div>`
-    )
-    .join("");
+  const superviseCounts = countByOrder(list, superviseDisplayStatus, SUPERVISE_STATUS_ORDER);
+  document.getElementById("kpi").innerHTML = renderSumCard(list.length, SUPERVISE_STATUS_ORDER, superviseCounts);
 
   document.getElementById("tbody").innerHTML = list.length
     ? list
@@ -260,9 +306,8 @@ function render() {
         ${
           canUrge
             ? `<button type="button" class="text-teal-700 text-sm hover:underline" onclick="openUrge('${m.ownerId}','${nameJs}','','任务督办')">催办</button>`
-            : ""
+            : "—"
         }
-        <a class="text-slate-500 text-sm hover:underline" href="任务督办_page.html">去督办</a>
       </td>
     </tr>`;
         })
@@ -275,13 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("page-main").innerHTML =
       '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理 / 计划管理员可见。</div>';
     return;
-  }
-  if (BMS4.isPlanAdmin(BMS4.getRoleUser())) {
-    const tip = document.getElementById("pageHint");
-    if (tip) {
-      tip.innerHTML =
-        "计划管理员联查整体任务。维护与导入请回「任务总控」。";
-    }
   }
   const params = new URLSearchParams(location.search);
   if (params.get("ex") === "1" || params.get("supervise") === "1") viewMode = "supervise";

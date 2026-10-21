@@ -32,7 +32,6 @@
   <div id="page-main" class="hidden">
 
     <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
-      <p class="text-xs text-slate-500 max-w-2xl">按业务模块处理待办；左侧切换模块，顶部看紧急总览。保留「全部」汇总与全局日历。临期=3天。</p>
       <div class="inline-flex rounded-xl overflow-hidden text-sm shrink-0">
         <button type="button" id="tabList" class="view-tab view-tab-active px-4 py-2">模块列表</button>
         <button type="button" id="tabCal" class="view-tab px-4 py-2 bg-white text-slate-600">全局日历</button>
@@ -103,19 +102,40 @@
 
     <div id="modalReply" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalReply')"></div>
-      <div class="relative bg-white rounded-2xl w-full max-w-md p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+      <div class="relative bg-white rounded-2xl w-full max-w-lg p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold">回复催办</h3>
         <input type="hidden" id="replyUrgeId" />
-        <p id="replyTitle" class="text-slate-600 text-sm"></p>
+        <div id="replyUrgeDetail" class="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2 text-sm"></div>
+        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          请按下方「要求说明」回复。更新任务/计划进度 <strong>不等于</strong> 回复催办；状态不可手改。
+        </p>
         <div><label class="block text-slate-600 mb-1">原因 <span class="text-red-500">*</span></label>
-          <textarea id="replyReason" class="w-full border rounded-xl px-3 py-2.5 h-16"></textarea></div>
+          <textarea id="replyReason" class="w-full border rounded-xl px-3 py-2.5 h-16" placeholder="说明未达预期的原因"></textarea></div>
         <div><label class="block text-slate-600 mb-1">补救措施 <span class="text-red-500">*</span></label>
-          <textarea id="replyRemedy" class="w-full border rounded-xl px-3 py-2.5 h-16"></textarea></div>
+          <textarea id="replyRemedy" class="w-full border rounded-xl px-3 py-2.5 h-16" placeholder="拟采取的纠偏措施"></textarea></div>
         <div><label class="block text-slate-600 mb-1">新承诺日期 <span class="text-red-500">*</span></label>
           <input type="date" id="replyPromise" class="w-full border rounded-xl px-3 py-2.5" value="2026-08-25" /></div>
         <div class="flex justify-end gap-2">
           <button type="button" onclick="BMSUI.closeModal('modalReply')" class="text-slate-500 px-3">取消</button>
           <button type="button" id="btnReplySave" class="btn-cta text-white px-4 py-2 rounded-xl">提交回复</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalRecheckTodo" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalRecheckTodo')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-lg p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-[90vh] overflow-y-auto">
+        <h3 class="text-lg font-semibold">催办复检</h3>
+        <input type="hidden" id="recheckUrgeId" />
+        <div id="recheckUrgeDetail" class="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2 text-sm"></div>
+        <div>
+          <label class="block text-slate-600 mb-1">退回说明（退回时填写）</label>
+          <input id="recheckRejectNote" class="w-full border rounded-xl px-3 py-2.5" placeholder="复检未通过原因" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalRecheckTodo')" class="text-slate-500 px-3">取消</button>
+          <button type="button" id="btnRejectUrgeTodo" class="px-4 py-2 rounded-xl border border-rose-200 text-rose-700 bg-rose-50">退回重办</button>
+          <button type="button" id="btnCloseUrgeTodo" class="btn-cta text-white px-4 py-2 rounded-xl">确认闭环</button>
         </div>
       </div>
     </div>
@@ -148,7 +168,9 @@
   ];
 
   const DEMO_TODAY = new Date(2026, 7, 18);
-  const NEAR = BMS4.NEAR_DUE_DAYS || 3;
+  function nearDays() {
+    return BMS4.getNearDueDays ? BMS4.getNearDueDays() : BMS4.NEAR_DUE_DAYS || 3;
+  }
 
   let view = "list";
   let moduleId = "all";
@@ -234,7 +256,7 @@
     if (dueKey === todayKey) return "今日";
     if (t.due) {
       const d = dayDiff(DEMO_TODAY, t.due);
-      if (d > 0 && d <= NEAR) return "临期";
+      if (d > 0 && d <= nearDays()) return "临期";
     }
     return "其他";
   }
@@ -260,21 +282,83 @@
     if ((t.type === "计划配合" || t.type === "计划推进") && t.planId) {
       return null; // 弹窗详情，见 actionHtml
     }
-    if (t.type === "催办复检") return "落实驾驶舱_page.html";
+    if (t.type === "催办复检") return null;
     return "#";
+  }
+
+  function urgeHistoryHtml(u) {
+    const hist = Array.isArray(u.noteHistory) ? u.noteHistory : [];
+    if (!hist.length) return "";
+    return (
+      `<div class="pt-1 border-t border-slate-200"><div class="text-slate-400 text-xs mb-1">补充记录</div>` +
+      hist
+        .map((h) => {
+          const tag = h.kind === "reject" ? "退回" : h.kind === "renew" ? "再次催办" : "补充";
+          return `<div class="text-xs text-slate-600 mb-0.5"><span class="text-slate-400">[${escapeHtml(h.at || "")} · ${tag}]</span> ${escapeHtml(h.text || "")}</div>`;
+        })
+        .join("") +
+      `</div>`
+    );
+  }
+
+  function urgeDetailHtml(u, mode) {
+    if (!u) return "<div class='text-slate-400'>催办不存在</div>";
+    const creator = BMS4.userById(u.createdBy);
+    const target = BMS4.userById(u.targetUserId);
+    const overdue = u.status === "待回复" && u.expectReplyDate && u.expectReplyDate < (BMS4.DEMO_TODAY || "");
+    let html = `
+      <div><span class="text-slate-400">催办标题：</span><span class="font-medium text-slate-800">${escapeHtml(u.title)}</span></div>
+      <div><span class="text-slate-400">发起人：</span>${escapeHtml(creator ? creator.name : "—")}
+        <span class="text-slate-400 ml-2">对象：</span>${escapeHtml(target ? target.name : "—")}</div>
+      <div><span class="text-slate-400">期望回复日：</span>
+        <span class="${overdue ? "text-rose-600 font-medium" : "text-slate-800"}">${escapeHtml(u.expectReplyDate || "—")}${overdue ? "（已超时）" : ""}</span></div>
+      <div><div class="text-slate-400 mb-0.5">要求说明：</div>
+        <div class="text-slate-800 whitespace-pre-wrap bg-white border border-slate-100 rounded-lg px-2.5 py-2">${escapeHtml(u.note || "（无）")}</div></div>`;
+    html += urgeHistoryHtml(u);
+    if (u.rejectNote && u.status === "待回复") {
+      html += `<div class="text-rose-700 text-xs">最近退回：${escapeHtml(u.rejectNote)}</div>`;
+    }
+    if (mode === "recheck") {
+      html += `
+        <div class="pt-1 border-t border-slate-200">
+          <div><span class="text-slate-400">回复原因：</span>${escapeHtml(u.replyReason || "—")}</div>
+          <div><span class="text-slate-400">补救措施：</span>${escapeHtml(u.replyRemedy || "—")}</div>
+          <div><span class="text-slate-400">承诺日：</span>${escapeHtml(u.replyPromiseDate || "—")}</div>
+        </div>
+        <p class="text-xs text-slate-500">确认闭环仅关闭催办，不会自动改任务完成状态。</p>`;
+    }
+    return html;
+  }
+
+  function openReplyUrge(id) {
+    const u = BMS4.getUrge(id);
+    document.getElementById("replyUrgeId").value = id;
+    document.getElementById("replyUrgeDetail").innerHTML = urgeDetailHtml(u, "reply");
+    document.getElementById("replyReason").value = "";
+    document.getElementById("replyRemedy").value = "";
+    document.getElementById("replyPromise").value = "2026-08-25";
+    BMSUI.openModal("modalReply");
+  }
+
+  function openRecheckUrge(id) {
+    const u = BMS4.getUrge(id);
+    document.getElementById("recheckUrgeId").value = id;
+    document.getElementById("recheckUrgeDetail").innerHTML = urgeDetailHtml(u, "recheck");
+    document.getElementById("recheckRejectNote").value = "";
+    BMSUI.openModal("modalRecheckTodo");
   }
 
   function actionHtml(t) {
     const parts = [];
     if (t.type === "催办回复" && t.urgeId) {
-      parts.push(`<button type="button" class="text-teal-700 hover:underline text-sm" data-reply="${t.urgeId}">回复催办</button>`);
-    } else if (t.type === "催办复检") {
-      parts.push(`<a class="text-teal-700 hover:underline text-sm" href="落实驾驶舱_page.html">去复检</a>`);
+      parts.push(`<button type="button" class="text-teal-700 hover:underline text-sm" data-reply="${t.urgeId}">回复</button>`);
+    } else if (t.type === "催办复检" && t.urgeId) {
+      parts.push(`<button type="button" class="text-amber-700 hover:underline text-sm" data-recheck="${t.urgeId}">复检闭环</button>`);
     } else if ((t.type === "计划配合" || t.type === "计划推进") && t.planId) {
       parts.push(
         `<button type="button" class="text-teal-700 hover:underline text-sm" data-plan-detail="${BMSUI.escapeAttr(
           t.planId
-        )}" onclick="BMSUI.openPlanDetail(this.getAttribute('data-plan-detail'),'dept')">查看详情</button>`
+        )}" onclick="BMSUI.openPlanDetail(this.getAttribute('data-plan-detail'),'dept')">查看</button>`
       );
     } else {
       parts.push(`<a class="text-teal-700 hover:underline text-sm" href="${hrefFor(t)}">去处理</a>`);
@@ -322,18 +406,10 @@
 
   function bindActions() {
     document.querySelectorAll("[data-reply]").forEach((btn) => {
-      btn.onclick = () => {
-        const id = btn.getAttribute("data-reply");
-        const u = BMS4.getUrge(id);
-        document.getElementById("replyUrgeId").value = id;
-        document.getElementById("replyTitle").textContent = u
-          ? u.title + (u.note ? "（" + u.note + "）" : "") + " · 期望回复 " + u.expectReplyDate
-          : "";
-        document.getElementById("replyReason").value = "";
-        document.getElementById("replyRemedy").value = "";
-        document.getElementById("replyPromise").value = "2026-08-25";
-        BMSUI.openModal("modalReply");
-      };
+      btn.onclick = () => openReplyUrge(btn.getAttribute("data-reply"));
+    });
+    document.querySelectorAll("[data-recheck]").forEach((btn) => {
+      btn.onclick = () => openRecheckUrge(btn.getAttribute("data-recheck"));
     });
     document.querySelectorAll("[data-done-mt]").forEach((btn) => {
       btn.onclick = () => {
@@ -346,7 +422,14 @@
     document.querySelectorAll("[data-done-task]").forEach((btn) => {
       btn.onclick = () => {
         const r = BMS4.completeTaskFromTodo(btn.getAttribute("data-done-task"));
-        if (!r.ok) return BMSUI.toast(r.reason, false);
+        if (!r.ok) {
+          BMSUI.toast(r.reason, false);
+          if (r.urgeId) {
+            moduleId = "urge";
+            renderAll();
+          }
+          return;
+        }
         BMSUI.toast("任务已完成");
         rebuildAndRender();
       };
@@ -405,7 +488,14 @@
     }
     if (mod.id === "urge") {
       const dir = t.type === "催办复检" ? "待我复检" : "待我回复";
-      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap text-xs font-medium ${t.type === "催办复检" ? "text-amber-700" : "text-rose-700"}">${dir}</td><td class="px-4 py-3">${escapeHtml(t.title)}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
+      const noteLine = t.urgeNote
+        ? `<div class="text-xs text-slate-500 mt-0.5 line-clamp-2">要求：${escapeHtml(t.urgeNote)}</div>`
+        : "";
+      const expectLine =
+        t.expectReplyDate
+          ? `<div class="text-xs ${t.urgency === "逾期" ? "text-rose-600" : "text-slate-500"}">期望回复 ${escapeHtml(t.expectReplyDate)}</div>`
+          : "";
+      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap text-xs font-medium ${t.type === "催办复检" ? "text-amber-700" : "text-rose-700"}">${dir}</td><td class="px-4 py-3"><div>${escapeHtml(t.title)}</div>${expectLine}${noteLine}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;
     }
     const m = moduleOfType(t.type);
     return `<tr class="border-t row-hover">
@@ -640,7 +730,24 @@
       });
       if (!r.ok) return BMSUI.toast(r.reason, false);
       BMSUI.closeModal("modalReply");
-      BMSUI.toast("已提交回复");
+      BMSUI.toast("已提交回复，等待发起人复检");
+      rebuildAndRender();
+    };
+    document.getElementById("btnCloseUrgeTodo").onclick = () => {
+      const r = BMS4.closeUrge(document.getElementById("recheckUrgeId").value);
+      if (!r.ok) return BMSUI.toast(r.reason, false);
+      BMSUI.closeModal("modalRecheckTodo");
+      BMSUI.toast("催办已闭环");
+      rebuildAndRender();
+    };
+    document.getElementById("btnRejectUrgeTodo").onclick = () => {
+      const r = BMS4.rejectUrge(
+        document.getElementById("recheckUrgeId").value,
+        document.getElementById("recheckRejectNote").value.trim() || "复检未通过，请补充措施"
+      );
+      if (!r.ok) return BMSUI.toast(r.reason, false);
+      BMSUI.closeModal("modalRecheckTodo");
+      BMSUI.toast("已退回，对象需重新回复");
       rebuildAndRender();
     };
   });

@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>经营管理系统 · V4.0.0 PRD 阅读页</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --toc-w: 260px;
+      --content-max: 940px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--slate-50);
+      color: var(--slate-800);
+      line-height: 1.7;
+    }
+    .layout { display: flex; min-height: 100vh; }
+    .toc {
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
+      width: var(--toc-w);
+      flex-shrink: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--slate-900);
+      color: var(--slate-200);
+      padding: 20px 14px 32px;
+      border-right: 1px solid var(--slate-800);
+    }
+    .toc-brand {
+      font-size: 12px;
+      color: var(--slate-400);
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    .toc-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin: 0 0 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--slate-700);
+    }
+    .toc nav a {
+      display: block;
+      color: var(--slate-300);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 400;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-bottom: 2px;
+      line-height: 1.4;
+    }
+    .toc nav a:hover { background: var(--slate-800); color: #fff; }
+    .toc nav a.active { background: var(--slate-700); color: #fff; font-weight: 400; }
+    /* l1=h2 章；l2=h3 节；l3=h4 小节 — 越深越淡，禁止加粗 */
+    .toc nav a.l1 { font-weight: 400; }
+    .toc nav a.l2 { padding-left: 22px; font-size: 12px; color: var(--slate-400); font-weight: 400; }
+    .toc nav a.l3 { padding-left: 34px; font-size: 11px; color: var(--slate-500); font-weight: 400; }
+    .main-wrap {
+      flex: 1;
+      min-width: 0;
+      padding: 28px 24px 64px;
+    }
+    .main {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      background: #fff;
+      border: 1px solid var(--slate-200);
+      border-radius: 12px;
+      padding: 36px 40px 48px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    .status {
+      color: var(--slate-500);
+      font-size: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+    .status.error { color: #b91c1c; }
+    #content h1 {
+      font-size: 1.75rem;
+      color: var(--slate-900);
+      margin: 0 0 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--slate-200);
+    }
+    #content h2 {
+      font-size: 1.35rem;
+      color: var(--slate-900);
+      margin: 2rem 0 0.85rem;
+      padding-top: 0.5rem;
+      scroll-margin-top: 16px;
+    }
+    #content h3 {
+      font-size: 1.1rem;
+      color: var(--slate-800);
+      margin: 1.5rem 0 0.6rem;
+      scroll-margin-top: 16px;
+    }
+    #content h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      margin: 1.25rem 0 0.5rem;
+      scroll-margin-top: 16px;
+    }
+    /* 正文 h2/h3 保持章节层级；目录侧栏字重由 .toc nav a.l* 单独控制 */
+    #content p { margin: 0.65rem 0; }
+    #content ul, #content ol { margin: 0.5rem 0 0.5rem 1.25rem; padding: 0; }
+    #content li { margin: 0.25rem 0; }
+    #content a { color: var(--slate-700); text-decoration: underline; text-underline-offset: 2px; }
+    #content a:hover { color: var(--slate-900); }
+    #content hr {
+      border: none;
+      border-top: 1px solid var(--slate-200);
+      margin: 1.75rem 0;
+    }
+    #content blockquote {
+      margin: 1rem 0;
+      padding: 0.75rem 1rem;
+      border-left: 3px solid var(--slate-400);
+      background: var(--slate-100);
+      color: var(--slate-600);
+      border-radius: 0 8px 8px 0;
+    }
+    #content blockquote p { margin: 0.35rem 0; }
+    #content table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      display: block;
+    }
+    #content thead { background: var(--slate-100); }
+    #content th, #content td {
+      border: 1px solid var(--slate-200);
+      padding: 0.55rem 0.75rem;
+      text-align: left;
+      vertical-align: top;
+      color: var(--slate-700);
+    }
+    #content th {
+      font-weight: 600;
+      color: var(--slate-800);
+      white-space: nowrap;
+    }
+    #content tbody tr:nth-child(even) { background: var(--slate-50); }
+    #content code {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 0.86em;
+      background: var(--slate-100);
+      color: var(--slate-700);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+      border: 1px solid var(--slate-200);
+    }
+    #content pre {
+      background: var(--slate-800);
+      color: var(--slate-100);
+      padding: 1rem 1.15rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid var(--slate-700);
+    }
+    #content pre code {
+      background: transparent;
+      border: none;
+      color: inherit;
+      padding: 0;
+      font-size: 0.85rem;
+    }
+    #content .mermaid {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      text-align: center;
+    }
+    .footer-note {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--slate-200);
+      font-size: 12px;
+      color: var(--slate-400);
+    }
+    @media (max-width: 900px) {
+      .layout { flex-direction: column; }
+      .toc {
+        position: relative;
+        width: 100%;
+        height: auto;
+        max-height: 42vh;
+      }
+      .main { padding: 24px 18px 36px; border-radius: 0; border-left: none; border-right: none; }
+      .main-wrap { padding: 0 0 48px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="toc" id="toc">
+      <div class="toc-brand">BMS · v4.0.0</div>
+      <h2 class="toc-title">文档目录</h2>
+      <nav id="toc-nav" aria-label="目录导航">
+        <p style="font-size:12px;color:#94a3b8;padding:0 10px;">加载中…</p>
+      </nav>
+    </aside>
+    <div class="main-wrap">
+      <article class="main">
+        <div id="status" class="status">正在加载 PRD…</div>
+        <div id="content" hidden></div>
+        <p class="footer-note" id="footer-note" hidden>本文档由 <code>prd.md</code> 渲染生成 · 经营管理系统</p>
+      </article>
+    </div>
+  </div>
+<textarea id="prd-src" hidden>
+# 经营管理系统 PRD（V4.0.0）
+
+| 项目 | 内容 |
+| --- | --- |
+| 产品名称 | 经营管理系统 |
+| 当前版本 | v4.0.0 |
+| 版本更新时间 | 2026-10-21 |
+| 版本迭代说明 | 按菜单逐页补全§4功能说明（概述/权限/字段/交互/筛选/弹窗） |
+| 文档状态 | **已锁定（研发事实源）**；阅读页见 [`prd.html`](./prd.html) |
+| 范围说明 | [`scope.md`](./scope.md) |
+| 原型入口 | [`prototype/versions/v4.0.0/index.html`](../../../prototype/versions/v4.0.0/index.html) |
+
+### 文档约定
+
+| 约定 | 说明 |
+| --- | --- |
+| 本期对齐 | **以 v4.0.0 原型菜单与交互为准**回写本文；研发/测试按本文验收 |
+| 后续变更 | 先改 PRD 再改实现；禁止静默以原型扩需求 |
+| 非菜单页 | 仓库内遗留 HTML（如经营一表、宏观一表、旧周月报页等）**不在交付范围**，不验收 |
+
+---
+
+## 目录
+
+- [1. 产品概述](#1-产品概述)
+  - [1.1 产品定位](#11-产品定位)
+  - [1.2 产品目标](#12-产品目标)
+  - [1.3 用户角色](#13-用户角色)
+  - [1.4 核心对象关系](#14-核心对象关系)
+- [2. 结论与范围](#2-结论与范围)
+  - [2.1 结论前置](#21-结论前置)
+  - [2.2 本期范围](#22-本期范围)
+  - [2.3 二期范围](#23-二期范围)
+  - [2.4 不在范围](#24-不在范围)
+  - [2.5 场景分类](#25-场景分类)
+- [3. 业务流程](#3-业务流程)
+  - [3.1 主流程](#31-主流程)
+  - [3.2 催办闭环流程](#32-催办闭环流程)
+- [4. 功能说明](#4-功能说明)
+  - [4.1 角色与菜单](#41-角色与菜单)
+  - [4.2 数据权限](#42-数据权限)
+  - [4.3 编写约定](#43-编写约定)
+  - [4.4 落实驾驶舱](#44-落实驾驶舱)
+  - [4.5 我的待办](#45-我的待办)
+  - [4.6 公司计划表](#46-公司计划表)
+  - [4.7 部门计划表](#47-部门计划表)
+  - [4.8 整体任务表](#48-整体任务表)
+  - [4.9 计划管理与计划总控](#49-计划管理与计划总控)
+  - [4.10 任务管理与任务总控](#410-任务管理与任务总控)
+  - [4.11 计划导入与任务导入](#411-计划导入与任务导入)
+  - [4.12 任务周报](#412-任务周报)
+  - [4.13 任务月报](#413-任务月报)
+  - [4.14 任务督办](#414-任务督办)
+  - [4.15 会议纪要](#415-会议纪要)
+  - [4.16 绩效考核](#416-绩效考核)
+  - [4.17 基础配置](#417-基础配置)
+- [5. 用户路径](#5-用户路径)
+- [6. 页面清单](#6-页面清单)
+- [7. 数据字典](#7-数据字典)
+  - [7.1 公司计划](#71-公司计划)
+  - [7.2 部门计划](#72-部门计划)
+  - [7.3 任务](#73-任务)
+  - [7.4 周期报](#74-周期报)
+  - [7.5 督办与会议纪要](#75-督办与会议纪要)
+  - [7.6 催办](#76-催办)
+  - [7.7 基础配置](#77-基础配置)
+  - [7.8 状态规则](#78-状态规则)
+- [8. 研发说明](#8-研发说明)
+  - [8.1 实体关系](#81-实体关系)
+  - [8.2 接口能力](#82-接口能力)
+  - [8.3 验收要点](#83-验收要点)
+- [9. 非功能需求](#9-非功能需求)
+- [10. 风险](#10-风险)
+- [11. 待确认](#11-待确认)
+
+---
+
+## 1. 产品概述
+
+### 1.1 产品定位
+
+码头运营公司经营管理台：公司计划下达 → 部门计划树拆解 → 任务执行 → 周/月报复盘 → 驾驶舱与催办抓偏航 → 督办/纪要/考核闭环。
+
+消息、审批、角色权限配置由内部平台提供；原型用顶部角色切换模拟。
+
+### 1.2 产品目标
+
+| 目标 | 优先级 |
+| --- | --- |
+| 四部门 + 点名人员种子可演示 | P0 |
+| 四角色菜单与数据范围隔离；计划管理员=全菜单管理员 | P0 |
+| 公司计划 → 无限层级部门计划树；任务起止必填；工时按日历天×8 | P0 |
+| 驾驶舱汇总可下钻；催办闭环；临期读基础配置 | P0 |
+| 企微提醒推送引擎 | P1 |
+
+### 1.3 用户角色
+
+| 角色 | 人员（演示） | 核心能力 |
+| --- | --- | --- |
+| 总经理 | 李家治 | 驾驶舱、三主表、闭环查阅、催办、基础配置 |
+| 计划管理员 | 张凯（公司） | 全菜单：总控+导入+三主表+驾驶舱+闭环+基础配置；纪要可写 |
+| 部门长 | 刘伟松、解运富、洪佳伟、钱旦 | 本部门计划/任务、周月报填写、督办、回复催办；纪要只读 |
+| 员工 | 余彪、盛侨、陈子龙、张凯（市场） | 本部门计划可见、任务执行、自建临时任务；周月报/纪要只读 |
+
+### 1.4 核心对象关系
+
+```
+公司计划
+  └─ 部门计划树（parentId；挂 companyPlanId）
+       └─ 工作任务（计划任务挂节点 / 临时任务可空）
+周期报：用户 × 公司计划 × 周|月
+催办 / 督办 / 会议纪要 / 待办 / 基础配置（nearDueDays 等）
+```
+
+---
+
+## 2. 结论与范围
+
+### 2.1 结论前置
+
+本期交付范围 = **原型侧栏可见菜单对应能力**。三主表汇总卡 = 合计 + 分状态；催办须要求说明可见并闭环；临期天数读 `nearDueDays`。
+
+### 2.2 本期范围
+
+| 模块 | 说明 | 详见 |
+| --- | --- | --- |
+| 落实驾驶舱 | 汇总下钻、重点任务、催办篮子、过程盯控、部门完成度 | §4.4 |
+| 我的待办 | 分模块 + 日历；含催办回复/复检 | §4.5 |
+| 公司 / 部门 / 整体任务表 | 汇总卡 + 筛选；公司计划可行内编辑 | §4.6–§4.8 |
+| 计划管理 / 计划总控 | 树维护；详情为大弹窗 | §4.9 |
+| 任务管理 / 任务总控 | 计划/临时；下达/自建 | §4.10 |
+| 计划导入 / 任务导入 | CSV 模板→预览→写入 | §4.11 |
+| 任务周报 / 月报 | 部门长可编 | §4.12–§4.13 |
+| 任务督办 / 会议纪要 / 绩效考核 | 见权限矩阵 | §4.14–§4.16 |
+| 催办 | 发起→回复→复检闭环 | §7.6 |
+| 基础配置 | 周报日、月报日、临期天数 | §4.17；§7.7 |
+
+
+### 2.3 二期范围
+
+| 模块 | 说明 | 优先级 |
+| --- | --- | --- |
+| 提醒推送引擎 | 按配置触发；渠道 **企业微信**（可同步站内待办） | P1 |
+
+### 2.4 不在范围
+
+| 项 |
+| --- |
+| 经营一表、数据分析（宏观一表） |
+| 公司计划×部门贡献矩阵 |
+| 年/月/周计划实体、日计划 |
+| 独立例外清单、重点任务红黄灯 |
+| 消息中心 / 审批流 / 权限配置页 |
+| 综合管理部、资金财务部、智慧港口演示组织 |
+
+### 2.5 场景分类
+
+| 类型 | 要点 |
+| --- | --- |
+| 正常 | 配基础配置 → 维护公司计划 → 拆树下达任务 → 填周月报 → 驾驶舱催办 → 对象回复 → 发起人复检闭环 |
+| 边界 | 临时任务可不挂计划；筛选后汇总与列表同源；再次催办追加说明历史 |
+| 异常 | 有子节点/关联任务不可删计划；待回复催办不可重复新建；配置数值钳制 |
+
+---
+
+## 3. 业务流程
+
+### 3.1 主流程
+
+```mermaid
+flowchart TD
+  A[维护公司计划与基础配置] --> B[拆部门计划树]
+  B --> C[下达或自建任务]
+  C --> D[执行并更新状态]
+  D --> E[部门长填周报/月报]
+  E --> F[驾驶舱/三主表]
+  F --> G{偏航或填报缺口?}
+  G -->|是| H[催办→回复→复检]
+  G -->|否| I[滚动]
+  J[计划外督办] --> K[责任人待办]
+  L[会议纪要] --> M[全员只读]
+```
+
+### 3.2 催办闭环流程
+
+```mermaid
+flowchart TD
+  A[发起：标题+要求说明+期望回复日] --> B[待回复]
+  B --> C[对象查看要求并回复三字段]
+  C --> D[已回复]
+  D --> E{发起人复检}
+  E -->|通过| F[已闭环]
+  E -->|退回| B
+```
+
+---
+
+## 4. 功能说明
+
+### 4.1 角色与菜单
+
+| 角色 | 分组 | 菜单项 |
+| --- | --- | --- |
+| 总经理 | 工作台 | 落实驾驶舱 |
+| 总经理 | 经营主表 | 公司计划表；部门计划表；整体任务表 |
+| 总经理 | 经营闭环 | 任务周报；任务月报；绩效考核；任务督办；会议纪要 |
+| 总经理 | 系统 | 基础配置 |
+| 计划管理员 | 工作台 | 落实驾驶舱；我的待办 |
+| 计划管理员 | 总控 | 计划总控；任务总控；计划导入；任务导入；基础配置 |
+| 计划管理员 | 经营主表 | 公司计划表；部门计划表；整体任务表 |
+| 计划管理员 | 经营闭环 | 任务周报；任务月报；绩效考核；任务督办；会议纪要 |
+| 部门长 | 工作台 | 我的待办 |
+| 部门长 | 本部门 | 计划管理；任务管理 |
+| 部门长 | 填报 | 任务周报；任务月报；任务督办 |
+| 部门长 | 查看 | 会议纪要（只读） |
+| 员工 | 工作台 | 我的待办 |
+| 员工 | 执行 | 计划管理；任务管理 |
+| 员工 | 查看 | 任务周报；任务月报；会议纪要（只读） |
+
+### 4.2 数据权限
+
+| 能力 | 总经理 | 计划管理员 | 部门长 | 员工 |
+| --- | --- | --- | --- | --- |
+| 驾驶舱 / 考核 / 基础配置 | 是 | 是 | 否 | 否 |
+| 维护公司计划 | 是 | 是 | 否 | 否 |
+| 编辑部门计划树 | 否 | 全量 | 本部门 | 否（只读） |
+| 任务 | 催办为主 | 总控全量 | 本部门 | 本人；可自建临时 |
+| 周/月报 | 只读 | 只读 | 可编本人 | 只读 |
+| 会议纪要 | 只读 | **可写** | 只读 | 只读 |
+
+### 4.3 编写约定
+
+| 项 | 说明 |
+| --- | --- |
+| 页面节结构 | 每页：概述 → 权限 → 字段 → 交互 → 筛选 → 弹窗 |
+| 优先级 | 功能点标注 P0/P1/P2；未标默认 P0 |
+| 计划详情 | **非独立菜单页**，一律大弹窗；权限随入口页 |
+| 管理员 | 文中「管理员」= 总经理 ∪ 计划管理员（`isAdmin`） |
+
+---
+
+### 4.4 落实驾驶舱
+
+**原型：** `落实驾驶舱_page.html`　**优先级：** P0
+
+#### 概述
+
+管理员偏航盯控台：①偏航汇总卡 ②重点任务 + 催办篮子 ③周例会/督办 + 填报盯控 ④部门计划完成度。汇总可下钻；可发起/再次催办。
+
+**日期：** `today` = 东八区服务器日（演示可固定）；`nearDueDays` = 基础配置（1–30，默认 3），临期判断即时读配置。
+
+#### 权限
+
+| 角色 | 可见 | 可操作 |
+| --- | --- | --- |
+| 总经理 / 计划管理员 | 是 | 下钻、催办、再次催办、周次切换 |
+| 部门长 / 员工 | 否（门禁提示去待办） | — |
+
+#### 字段 / 展示区
+
+| 区域 | 内容 |
+| --- | --- |
+| 汇总卡 | 计划：延期/关注/催办待回复；任务：逾期/临期/催办待回复；主数字+P0/P1/P2 分段 |
+| 重点任务 | 未闭环且（逾期∨临期∨(P0∧进行中)）；优先级色标；可催办 |
+| 催办篮子 | 三桶：已超时 / 待回复 / 已闭环 |
+| 过程盯控 | meetWeek；周例会状态；该周未闭环督办；填报缺口 |
+| 部门完成度 | 各部门一级计划 `round(avg(progressPct))` |
+
+#### 判定规则
+
+| 规则名 | 说明 |
+| --- | --- |
+| resolvePlanStatus | ① progressPct≥100→已完成；② endDate&lt;today 且进度&lt;100→延期；③ 否则保留手填（含关注）；非法手填延期/已完成回落 |
+| isTaskOverdue | 未闭环且（status=延期 或 endDate&lt;today） |
+| isTaskNearDue | 未逾期未闭环，且 0≤(endDate−today)≤nearDueDays |
+| urgeScope | planId 有且无 taskId→plan；有 taskId→task；否则 exceptionType 以「计划」开头→plan；其余→task |
+| countByPrio | 合计+P0/P1/P2；缺省 priority 计 P2 |
+
+#### 汇总卡口径
+
+| 卡 ID | 公式 | 脚注 / 弹窗 |
+| --- | --- | --- |
+| plan_late | count(部门计划 resolve=延期) | P0/P1/P2 可点分段下钻 |
+| plan_watch | count(resolve=关注) | 同上 |
+| plan_urge | count(催办 待回复 ∧ scope=plan) | 提示其中期望日&lt;today 条数 |
+| task_late | count(isTaskOverdue) | 可分段 |
+| task_near | count(isTaskNearDue) | 脚注 P0 临期数 |
+| task_urge | count(催办 待回复 ∧ scope=task) | 同 plan_urge |
+
+点主数字→全量明细；点分段→仅该优先级；弹窗条数=卡面数字。计划卡不含公司计划实体。
+
+| 用例 | 给定 | 期望 |
+| --- | --- | --- |
+| CK-01 | 部门计划过期且进度 80% | plan_late |
+| CK-02 | 手填关注且未到期 | plan_watch |
+| CK-03 | 结束日=today+nearDueDays | task_near 非 late |
+| CK-04 | 催办仅 planId | plan_urge |
+| CK-05 | 改 nearDueDays 刷新 | 临期集合变 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 点汇总卡/分段 | 打开明细弹窗 | P0 |
+| 重点任务/填报缺口「催办」 | 打开发起催办弹窗 | P0 |
+| 篮子「再次催办」 | 追加说明历史，刷新期望日 | P0 |
+| 切换 meetWeek | 刷新周例会、督办、填报盯控 | P0 |
+| 复检 | **不在本页主路径**；走我的待办 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 周次 meetWeek | 过程盯控区块；汇总卡/重点任务不受周次裁剪（全量偏航） |
+
+#### 弹窗
+
+| 弹窗 | 字段/动作 |
+| --- | --- |
+| 汇总明细 | 列表=卡口径；关闭不改数据 |
+| 发起/再次催办 | 标题、要求说明(note)、期望回复日；确认后对象得「催办回复」待办 |
+| 催办复检（遗留入口） | 正式闭环以待办为准 |
+
+**催办篮子过滤：** 已超时=待回复∧期望日&lt;today；待回复=待回复∧期望日≥today；已闭环=已闭环。待回复全集=plan_urge+task_urge。
+
+**填报缺口：** 每部门长 × 每公司计划，无周期报或 planText/doneText 空 → 缺口；周用 meetWeek，月用 monthFromWeek(meetWeek)。
+
+---
+
+### 4.5 我的待办
+
+**原型：** `工作台_待办_page.html`　**优先级：** P0
+
+#### 概述
+
+个人工作台：按业务模块聚合未完成待办 + 全局日历；催办回复与发起人复检闭环入口。
+
+#### 权限
+
+| 角色 | 可见 | 数据范围 |
+| --- | --- | --- |
+| 计划管理员 / 部门长 / 员工 | 是 | 仅本人待办 |
+| 总经理 | 无菜单 | — |
+
+#### 字段
+
+| 模块 | 待办类型（示意） | 列表关键列 |
+| --- | --- | --- |
+| 全部 | 跨模块聚合 | 模块、类型、优先级、内容、关联、截止日、状态、操作 |
+| 计划 / 任务 / 填报 / 督办 | 对应类型 | 同上 |
+| 催办往来 | 催办回复、催办复检 | 方向、催办内容、关联、关键日期、状态、操作 |
+
+操作文案仅：**查看** / **回复**（复检入口文案可为「复检闭环」）。
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 切换模块 Tab | 过滤类型；「全部」只读聚合 | P0 |
+| 模块列表 ↔ 日历 | 日历按截止日；点日看当日；可跳模块 | P0 |
+| 催办「回复」 | 填三字段提交→催办变已回复；发起人得复检待办 | P0 |
+| 「复检闭环」 | 通过→已闭环；退回→待回复并写原因 | P0 |
+| 「查看」 | 跳转关联计划/任务详情弹窗或页 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 业务模块侧栏 | all / 计划 / 任务 / 填报 / 督办 / 催办往来 |
+| 日历日期 | 当日待办列表 |
+
+#### 弹窗
+
+| 弹窗 | 字段 |
+| --- | --- |
+| 回复催办 | 只读：要求说明、期望日、历史；可填：未完成原因、纠偏措施、可兑现节点 |
+| 催办复检 | 只读回复内容；通过 / 退回（退回原因） |
+
+**边界：** 更新任务进度 ≠ 回复催办；闭环不自动改任务完成。  
+**异常：** 催办已不存在时提示；禁手改催办状态。
+
+---
+
+### 4.6 公司计划表
+
+**原型：** `经营总台账_page.html`　**优先级：** P0
+
+#### 概述
+
+公司计划主表：汇总卡（合计+五态）与列表同源；支持行内编辑、搜索筛选、计划/任务状态胶囊下钻、催办。
+
+#### 权限
+
+| 角色 | 可见 | 可编 |
+| --- | --- | --- |
+| 总经理 / 计划管理员 | 是 | 行内改公司计划字段 |
+| 部门长 / 员工 | 否 | — |
+
+#### 字段（列表）
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| 计划名称 | 是 | 行内可改 |
+| 优先级 | 是 | P0/P1/P2 |
+| 责任人 | 是 | |
+| 起止日期 | 是 | |
+| 进度% / 进展说明 | 进度是 | 进展可空 |
+| 状态 | 是 | 手填五态：未开始/进行中/关注/延期/已完成 |
+| 计划状态汇总 / 任务状态汇总 | — | 胶囊下钻 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 行内编辑 | 改后即时保存 | P0 |
+| 点汇总卡分态 | 与筛选联动高亮/过滤展示逻辑同源 | P0 |
+| 点计划/任务状态胶囊 | 打开对应下钻弹窗 | P0 |
+| 新增公司计划 | 弹窗创建 | P0 |
+| 催办 | 对关联责任人发起 | P0 |
+
+#### 筛选
+
+| 筛选项 | 选项 |
+| --- | --- |
+| 关键词 | 计划名称 / 进展说明 |
+| 优先级 | 全部 / P0 / P1 / P2 |
+| 状态 | 全部 / 五态 |
+
+汇总卡随当前筛选结果重算。
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 新增/编辑公司计划 | 名称、优先级、责任人、起止、进度、状态、进展 |
+| 计划状态汇总明细 | 子部门计划列表（可再筛状态） |
+| 任务状态汇总明细 | 关联任务列表 |
+| 发起催办 | 标题、要求说明、期望回复日 |
+
+---
+
+### 4.7 部门计划表
+
+**原型：** `部门计划表_page.html`　**优先级：** P0
+
+#### 概述
+
+全公司部门计划树只读联查；汇总卡仅统计部门计划节点分状态；维护走计划管理/总控。
+
+#### 权限
+
+| 角色 | 可见 | 可编 |
+| --- | --- | --- |
+| 总经理 / 计划管理员 | 是 | 否（只读树） |
+| 部门长 / 员工 | 否 | — |
+
+#### 字段
+
+| 字段 | 说明 |
+| --- | --- |
+| 树形名称 | 缩进展示层级 |
+| 部门 / 挂接公司计划 | |
+| 优先级 / 责任人 / 起止 / 进度 | |
+| 状态 | **展示以 resolvePlanStatus 为准**；关注/延期标「问题」 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 展开/收起树 | | P0 |
+| 点名称 | 打开计划详情大弹窗（只读） | P0 |
+| 汇总卡 | 随筛选联动 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 公司计划 | 全部 / 指定 |
+| 部门 | 全部 / 指定 |
+| 优先级 | 全部 / P0/P1/P2 |
+| 仅问题节点 | 关注或延期 |
+| 关键词 | 计划名称 |
+
+**边界：** 筛选命中子节点时保留祖先行以便定位。
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 计划详情 | 只读大弹窗 |
+
+---
+
+### 4.8 整体任务表
+
+**原型：** `整体计划_任务监督_page.html`　**优先级：** P0
+
+#### 概述
+
+全量任务监督；Tab「全部任务」按任务分状态汇总；Tab「例外任务」按督办分状态；可催办。
+
+#### 权限
+
+| 角色 | 可见 | 可操作 |
+| --- | --- | --- |
+| 总经理 / 计划管理员 | 是 | 筛、催办 |
+| 部门长 / 员工 | 否 | — |
+
+#### 字段
+
+| Tab | 关键列 |
+| --- | --- |
+| 全部任务 | 任务名、部门、责任人、优先级、起止、状态（逾期未闭环计延期展示） |
+| 例外任务 | 督办标题、周次、责任人、优先级、起止、状态 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 切换 Tab | 切换数据源与汇总口径 | P0 |
+| 催办 | 打开催办弹窗 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 公司计划 | 全部 / 指定 |
+| 部门 | 全部 / 指定 |
+| 关键词 | 任务/部门/责任人（例外 Tab 搜事项/责任人） |
+
+#### 弹窗
+
+| 弹窗 | 字段 |
+| --- | --- |
+| 发起催办 | 标题、要求说明、期望回复日 |
+
+---
+
+### 4.9 计划管理与计划总控
+
+**原型：** `计划管理_page.html`（部门长/员工=计划管理；计划管理员=计划总控）　**优先级：** P0
+
+#### 概述
+
+部门计划树维护：新建根/子/同级、编辑、删除约束、详情大弹窗；无限层级；负责人可跨部门。
+
+#### 权限
+
+| 角色 | 数据范围 | 可编 |
+| --- | --- | --- |
+| 计划管理员 | 全部门 | 是 |
+| 部门长 | 本部门 | 是 |
+| 员工 | 本部门 | 否（只读） |
+| 总经理 | 无此菜单 | — |
+
+#### 字段（编辑弹窗）
+
+| 字段 | 必填 | 约束 |
+| --- | --- | --- |
+| 名称 / 部门 / 公司计划 | 是 | 子节点继承挂接逻辑 |
+| 优先级 / 状态 | 是 | |
+| 负责人 | 是 | 可跨部门 |
+| 配合人 | 否 | 不含负责人 |
+| 起止 / 进度% | 是 | 进度 0–100 |
+| 进展说明 | 否 | |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 新建根计划 | 挂公司计划 | P0 |
+| 添加子级 / 同级 | | P0 |
+| 编辑 / 删除 | 有子或关联任务不可删；禁环 | P0 |
+| 点名称 | 计划详情大弹窗 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 部门 | 管理员可选；部门长固定本部门 |
+| 关键词 | 计划名称 |
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 新建/编辑计划 | 两列表单 |
+| 配合人选择 | |
+| 计划详情 | 大弹窗；权限内可编 |
+
+**异常：** 删前校验子节点/任务；环检测失败拦截保存。
+
+---
+
+### 4.10 任务管理与任务总控
+
+**原型：** `任务管理_page.html`　**优先级：** P0
+
+#### 概述
+
+计划任务与临时任务：下达/自建、更新、详情大弹窗；工时=(结束−开始+1)×8。
+
+#### 权限
+
+| 角色 | 数据范围 | 可编 |
+| --- | --- | --- |
+| 计划管理员 | 全量；可筛部门 | 是 |
+| 部门长 | 本部门 | 是 |
+| 员工 | 本人任务；可自建临时 | 本人 |
+| 总经理 | 无此菜单 | — |
+
+#### 字段
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| 名称 / 任务类型 | 是 | 计划 / 临时 |
+| 关联计划节点 | 计划任务是 | 临时可空 |
+| 处理人 / 优先级 | 是 | |
+| 起止日期 | 是 | 驱动工时 |
+| 完成状态 | 是 | 存储四态；展示可叠加延期/临期 |
+| 完成说明 / 备注 / 附件名 | 否 | |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 新建任务 / 临时任务 | 弹窗 | P0 |
+| 更新任务 | 弹窗 | P0 |
+| 点名称 | 任务详情大弹窗 | P0 |
+| 完成任务 | 有待回复催办时拦截，须先回催办 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 部门（管理员） | 可选 |
+| 关键词 | 计划或任务名称 |
+| 表头筛选（示意） | 类型/优先级/处理人/状态等 |
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 新建/更新任务 | 表单含起止、说明、附件名 |
+| 任务详情 | 大弹窗；子任务列表；权限内可编 |
+
+---
+
+### 4.11 计划导入与任务导入
+
+**原型：** `计划导入_page.html?mode=plan|task`　**优先级：** P0
+
+#### 概述
+
+CSV 模板下载 → 上传/粘贴 → 解析预览 → 有效行写入；计划导入与任务导入同页不同 mode。
+
+#### 权限
+
+| 角色 | 可见 |
+| --- | --- |
+| 计划管理员 | 是（总控菜单两项） |
+| 其余 | 否 |
+
+#### 字段
+
+| 模式 | 模板列（业务） |
+| --- | --- |
+| 计划 | 名称、部门、公司计划、上级、优先级、负责人、起止、进度等 |
+| 任务 | 名称、类型、关联计划、处理人、优先级、起止、状态等 |
+
+预览表：校验结果（通过/失败原因）+ 原列。
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 下载模板 | CSV | P0 |
+| 上传 / 粘贴 | | P0 |
+| 解析并预览 | 标无效行 | P0 |
+| 确认写入 | 仅有效行 | P0 |
+
+#### 筛选
+
+无列表筛；预览可按行状态目视。
+
+#### 弹窗
+
+无独立业务弹窗；错误以行内标注 + Toast。
+
+**边界：** 上级不可解析则该行失败；部分成功允许。  
+**异常：** 空文件/无表头提示。
+
+---
+
+### 4.12 任务周报
+
+**原型：** `任务周报_page.html`　**优先级：** P0
+
+#### 概述
+
+按公司计划矩阵填报周周期报：上期完成情况 + 本期计划；UK(userId, companyPlanId, week, periodKey)。
+
+#### 权限
+
+| 角色 | 可见 | 可编 |
+| --- | --- | --- |
+| 部门长 | 是 | 仅本人行 |
+| 总经理 / 计划管理员 / 员工 | 是（菜单内） | 只读汇总 |
+
+#### 字段
+
+| 字段 | 必填（关闭待办时） | 说明 |
+| --- | --- | --- |
+| periodKey | 是 | 如 2026-W34 |
+| planText | 是 | 本期计划 |
+| doneText | 是 | 上期/本期完成情况 |
+| 公司计划列 | — | 矩阵列头 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 单元格编辑 | 部门长自动/手动保存 | P0 |
+| 预览 | 只读预览弹窗 | P1 |
+| 重置 | 恢复已保存 | P1 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 关键词 | 搜计划/内容 |
+| 周次（若有） | 切换 periodKey |
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 预览 | 打印/只读汇总 |
+
+---
+
+### 4.13 任务月报
+
+**原型：** `任务月报_page.html`　**优先级：** P0
+
+#### 概述
+
+与周报同构，periodType=month；提醒窗口由 `monthLastDays` 配置（推送引擎 P1）。
+
+#### 权限
+
+同 §4.12。
+
+#### 字段 / 交互 / 筛选 / 弹窗
+
+同周报；periodKey 如 `2026-08`；文案为月维度。
+
+---
+
+### 4.14 任务督办
+
+**原型：** `任务督办_page.html`　**优先级：** P0
+
+#### 概述
+
+计划外督办事项：挂自然周、不挂公司计划；可建、改、催办；责任人/配合人产生待办。
+
+#### 权限
+
+| 角色 | 可见 | 可编 |
+| --- | --- | --- |
+| 总经理 / 计划管理员 | 是 | 是 |
+| 部门长 | 是 | 本部门相关可建/跟 |
+| 员工 | 否 | — |
+
+#### 字段
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| 标题 | 是 | 不关联计划 |
+| 周次 | 是 | 自然周 |
+| 责任人 / 优先级 | 是 | |
+| 配合人 | 否 | |
+| 起止 / 状态 | 是 | 待办/进行中/已完成/延期 |
+| 备注 | 否 | |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 新建/编辑督办 | 弹窗 | P0 |
+| 催办 | 对责任人发起 | P0 |
+| 改状态 | 列表或表单 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 状态 | 全部 / 分态 |
+| 关键词 | 事项/责任人 |
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 新建/编辑督办 | 表单 |
+| 发起催办 | 标题、要求说明、期望回复日 |
+
+---
+
+### 4.15 会议纪要
+
+**原型：** `会议纪要_page.html`　**优先级：** P0
+
+#### 概述
+
+周例会 / 月例会 / 总办会纪要；全员可读；仅计划管理员可写。周例会 (类型, periodKey) 唯一。
+
+#### 权限
+
+| 角色 | 可见 | 可写 |
+| --- | --- | --- |
+| 计划管理员 | 是 | **是** |
+| 总经理 / 部门长 / 员工 | 是 | 否（同界面只读） |
+
+#### 字段
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| 类型 | 是 | 周例会/月例会/总办会 |
+| periodKey | 是 | 周如 2026-W34；月如 2026-08 |
+| 概要 | 是 | 结论/风险/关注 |
+| 参与人等 | 否 | 按原型 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 新建/点行编辑 | 管理员可存；他人只读打开 | P0 |
+| 删除 | 仅管理员 | P1 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 类型 | 全部 / 三类 |
+| 关键词 | 类型/周期/概要/人员 |
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 纪要编辑 | 类型、周期、概要；管理员保存 |
+
+**异常：** 周例会重复 periodKey 拦截。
+
+---
+
+### 4.16 绩效考核
+
+**原型：** `绩效考核_page.html`　**优先级：** P0
+
+#### 概述
+
+按责任人聚合任务完成率；延期红区置顶；可催办。完成率=(已完成+已关闭)/总数。
+
+#### 权限
+
+| 角色 | 可见 | 可催办 |
+| --- | --- | --- |
+| 总经理 / 计划管理员 | 是 | 是 |
+| 部门长 / 员工 | 否 | — |
+
+#### 字段
+
+| 字段 | 说明 |
+| --- | --- |
+| 姓名 / 部门 | |
+| 计划完成率 / 任务完成率 | 聚合口径 |
+| 延期等红区指标 | 置顶排序依据 |
+| 展开明细 | 该对象任务行 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 展开行 | 看任务明细 | P0 |
+| 催办 | 红区责任人 | P0 |
+
+#### 筛选
+
+| 筛选项 | 说明 |
+| --- | --- |
+| 关键词 | 部门或姓名 |
+
+#### 弹窗
+
+| 弹窗 | 用途 |
+| --- | --- |
+| 发起催办 | 标题、要求说明、期望回复日 |
+
+---
+
+### 4.17 基础配置
+
+**原型：** `基础配置_page.html`　**优先级：** P0
+
+#### 概述
+
+租户级提醒与临期参数；保存后 `nearDueDays` **即时**影响驾驶舱临期判定；推送引擎为 P1。
+
+#### 权限
+
+| 角色 | 可见 | 可保存 |
+| --- | --- | --- |
+| 总经理 / 计划管理员 | 是 | 是 |
+| 部门长 / 员工 | 否 | — |
+
+#### 字段
+
+| 字段 | 约束 | 默认 | 用途 |
+| --- | --- | --- | --- |
+| weekDay | 0–6 | 5（周五） | 周报提醒星期 |
+| weekTime | HH:mm | 17:00 | 周报提醒时刻 |
+| monthLastDays | 1–15 | 3 | 月末前 N 天提醒月报 |
+| nearDueDays | 1–30 | 3 | 任务临期窗口 |
+
+#### 交互
+
+| 操作 | 说明 | 优先级 |
+| --- | --- | --- |
+| 保存配置 | 钳制后写入；Toast 提示临期即时生效 | P0 |
+| 恢复默认 | 仅表单回默认，须再保存 | P0 |
+
+#### 筛选
+
+无。
+
+#### 弹窗
+
+无；校验失败 Toast。
+
+**异常：** 超范围数值自动钳制到边界。
+
+---
+
+## 5. 用户路径
+
+| 编号 | 路径 | 预期 |
+| --- | --- | --- |
+| UF-01 | 公司计划表维护 | 各部门可挂接 |
+| UF-02 | 计划管理拆树 → 下达任务 | 责任人待办 |
+| UF-03 | 待办 → 填周/月报 | 待办关闭 |
+| UF-04 | 驾驶舱 → 催办 | 对象「催办回复」待办 |
+| UF-05 | 待办回复 → 发起人复检 | 已闭环 |
+| UF-06 | 下达督办 | 责任人/配合人待办 |
+| UF-07 | 计划管理员编纪要 | 全员可见 |
+| UF-08 | 基础配置改临期天数 | 驾驶舱临期变化 |
+| UF-09 | 导入有效行 | 树/任务刷新 |
+
+---
+
+## 6. 页面清单
+
+仅列 **侧栏可达** 页（+ 计划详情弹窗能力）。
+
+| 页面 | 路径 | 角色 | 数据来源 | 功能逻辑摘要 |
+| --- | --- | --- | --- | --- |
+| 落实驾驶舱 | `落实驾驶舱_page.html` | 管理员 | 部门计划、任务、催办、纪要、周期报、督办、配置 | §4.4 |
+| 我的待办 | `工作台_待办_page.html` | 计划管理员/部门长/员工 | todo | §4.5 |
+| 公司计划表 | `经营总台账_page.html` | 管理员 | 公司计划+聚合 | §4.6 |
+| 部门计划表 | `部门计划表_page.html` | 管理员 | 部门计划树 | §4.7 |
+| 整体任务表 | `整体计划_任务监督_page.html` | 管理员 | 任务 / 督办 | §4.8 |
+| 计划管理/总控 | `计划管理_page.html` | 计划管理员/部门长/员工 | 部门计划 | §4.9 |
+| 任务管理/总控 | `任务管理_page.html` | 同上 | 任务 | §4.10 |
+| 计划/任务导入 | `计划导入_page.html` | 计划管理员 | CSV | §4.11 |
+| 任务周报 | `任务周报_page.html` | 见权限 | 周期报(week) | §4.12 |
+| 任务月报 | `任务月报_page.html` | 见权限 | 周期报(month) | §4.13 |
+| 任务督办 | `任务督办_page.html` | 管理员/部门长 | 督办 | §4.14 |
+| 会议纪要 | `会议纪要_page.html` | 全员；管理员可编 | 纪要 | §4.15 |
+| 绩效考核 | `绩效考核_page.html` | 管理员 | 任务聚合 | §4.16 |
+| 基础配置 | `基础配置_page.html` | 管理员 | basic_config | §4.17 |
+| 计划详情 | 页面内弹窗 | 有链接处 | 计划 | 大弹窗；权限内可编 |
+
+
+**正常 / 边界 / 异常：** 同 §2.5；删计划、催办唯一、配置钳制见各章。
+
+---
+
+## 7. 数据字典
+
+### 7.1 公司计划
+
+| 字段 | 必填 | 约束 |
+| --- | --- | --- |
+| name / priority / ownerId / startDate / endDate / progressPct / status | 是 | priority∈P0/P1/P2；progressPct 0–100；status 行内可改 |
+| progress | 否 | 文本 |
+
+### 7.2 部门计划
+
+| 字段 | 必填 | 约束 |
+| --- | --- | --- |
+| name / dept / companyPlanId / priority / ownerId / startDate / endDate / progressPct | 是 | parentId 可空=一级；helperIds 不含负责人；禁环；删前无子无任务 |
+| status | 是 | **展示以 resolvePlanStatus 为准** |
+
+### 7.3 任务
+
+| 字段 | 必填 | 约束 |
+| --- | --- | --- |
+| name / taskKind / ownerId / source / priority / startDate / endDate / status | 是 | 计划任务须挂部门计划节点；工时自动；有待回复催办时不可用「完成任务」代替回复 |
+
+### 7.4 周期报
+
+UK(userId, companyPlanId, periodType, periodKey)；关闭待办时 planText、doneText 非空（亦为填报缺口判定）。
+
+### 7.5 督办与会议纪要
+
+督办：标题、周次、优先级、责任人、起止、状态。  
+纪要：类型、周期键、概要；周例会 (类型, periodKey) 唯一。
+
+### 7.6 催办
+
+| 字段 | 必填 | 说明 |
+| --- | --- | --- |
+| targetUserId / title / **note** / expectReplyDate / createdBy | 是 | note=要求说明，接收人可见 |
+| taskId / planId / companyPlanId / exceptionType | 否 | 决定 urgeScope |
+| replyReason / replyRemedy / replyPromiseDate | 回复时 | — |
+| noteHistory | 否 | 再次催办/退回追加 |
+
+**待回复唯一：** 同 targetUserId +（有 taskId 则同 taskId，否则同 title）至多一条待回复。
+
+**闭环：** 仅对象回复；仅发起人/管理员复检；状态禁手改；闭环不自动改任务完成。
+
+### 7.7 基础配置
+
+| 字段 | 约束 |
+| --- | --- |
+| weekDay | 0–6 |
+| weekTime | HH:mm |
+| monthLastDays | 1–15 |
+| nearDueDays | 1–30；**临期判断即时生效** |
+
+### 7.8 状态规则
+
+| 对象 | 规则 |
+| --- | --- |
+| 公司计划 | 手填五态 |
+| 部门计划 | resolvePlanStatus |
+| 任务 | 存储四态；展示可叠加延期/临期 |
+| 催办 | 待回复→已回复→已闭环 |
+| 督办 | 待办/进行中/已完成/延期 |
+
+---
+
+## 8. 研发说明
+
+### 8.1 实体关系
+
+```
+company_plan 1—* dept_plan（树）1—* task（临时可空）
+user —* period_report / urge / todo
+basic_config 租户单例
+supervise_item、meeting_minute 独立
+```
+
+### 8.2 接口能力
+
+计划 CRUD 与树；任务；周月报；催办创建/再催/回复/复检/退回；督办；纪要；驾驶舱汇总与缺口；待办；考核；基础配置；导入。
+
+### 8.3 验收要点
+
+| 编号 | 要点 |
+| --- | --- |
+| AC-01 | 菜单与 §4.1 一致；无经营一表/数据分析入口 |
+| AC-02 | 驾驶舱汇总卡数字=弹窗条数；符合 §4.4 |
+| AC-03 | 催办篮子仅三桶；复检在待办 |
+| AC-04 | 无部门贡献矩阵 |
+| AC-05 | 催办要求说明可见；禁手改状态；符合 §7.6 |
+| AC-06 | nearDueDays 变更后临期变化 |
+| AC-07 | 三主表汇总仅为对应对象；筛选联动 |
+| AC-08 | 计划管理员全菜单；纪要仅其可写 |
+| AC-09 | 企微推送引擎可不进本期发包 |
+
+---
+
+## 9. 非功能需求
+
+| 项 | 要求 |
+| --- | --- |
+| 端 | PC Web |
+| 原型 | HTML + Tailwind CDN + 原生 JS |
+| today | 正式东八区服务器日；演示可固定 |
+| 附件 | 正式对接文档服务（P1） |
+
+---
+
+## 10. 风险
+
+| 风险 | 缓解 |
+| --- | --- |
+| 计划树过深 | 展开控制；导入要求上级可解析 |
+| 催办与改任务混淆 | 文案+完成拦截 |
+| 手填进度 vs 任务完成率 | 文案区分 |
+
+---
+
+## 11. 待确认
+
+| 编号 | 事项 | 结论 |
+| --- | --- | --- |
+| T15 | 提醒推送渠道 | **企业微信**（P1） |
+| T16 | 正式 today | **东八区服务器日** |
+
+其余角色、菜单、催办、临期配置等均已按原型确认。
+
+---
+
+**文档结束（v4.0.0 · 2026-10-21 · 与原型对齐）**
+
+</textarea>
+<script>
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "neutral",
+      securityLevel: "loose",
+      flowchart: { htmlLabels: true }
+    });
+
+    function slugify(text) {
+      return String(text)
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\u4e00-\u9fff\-]/g, "");
+    }
+
+    function buildToc(container, nav) {
+      const heads = container.querySelectorAll("h1, h2, h3, h4");
+      nav.innerHTML = "";
+      const frag = document.createDocumentFragment();
+      heads.forEach(function (h) {
+        if (!h.id) h.id = slugify(h.textContent);
+        const level = parseInt(h.tagName.substring(1), 10);
+        if (level === 1) return;
+        // 目录深度：h2→l1，h3→l2，h4→l3（勿用 tag 数字直接当 class，否则 h4 变成未定义的 l4）
+        const depth = Math.min(3, Math.max(1, level - 1));
+        const a = document.createElement("a");
+        a.href = "#" + h.id;
+        a.textContent = h.textContent;
+        a.className = "l" + depth;
+        frag.appendChild(a);
+      });
+      if (!frag.childNodes.length) {
+        nav.innerHTML = '<p style="font-size:12px;color:#94a3b8;padding:0 10px;">暂无目录</p>';
+        return;
+      }
+      nav.appendChild(frag);
+    }
+
+    async function renderMermaid(container) {
+      const blocks = container.querySelectorAll("pre code.language-mermaid, pre code.lang-mermaid");
+      let failCount = 0;
+      for (let idx = 0; idx < blocks.length; idx++) {
+        const code = blocks[idx];
+        const pre = code.parentElement;
+        const div = document.createElement("div");
+        div.className = "mermaid";
+        div.textContent = code.textContent;
+        div.setAttribute("data-mermaid-idx", String(idx));
+        pre.replaceWith(div);
+        try {
+          await mermaid.run({ nodes: [div] });
+        } catch (err) {
+          failCount++;
+          const fallback = document.createElement("pre");
+          fallback.className = "mermaid-fallback";
+          fallback.style.cssText = "background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:12px;border-radius:8px;font-size:12px;overflow:auto;white-space:pre-wrap;";
+          fallback.textContent = "流程图渲染失败（不影响正文阅读），源码：\n" + code.textContent;
+          div.replaceWith(fallback);
+          console.warn("Mermaid block " + idx + " failed", err);
+        }
+      }
+      if (failCount) {
+        const note = document.createElement("p");
+        note.className = "footer-note";
+        note.style.color = "#b45309";
+        note.textContent = "部分 Mermaid 流程图未能渲染（共 " + failCount + " 处），正文与表格已正常加载。";
+        container.appendChild(note);
+      }
+    }
+
+    async function renderMarkdown(md) {
+      const status = document.getElementById("status");
+      const content = document.getElementById("content");
+      const nav = document.getElementById("toc-nav");
+      marked.setOptions({ gfm: true, breaks: false });
+      content.innerHTML = marked.parse(md);
+      content.querySelectorAll("h1, h2, h3, h4").forEach(function (h) {
+        if (!h.id) h.id = slugify(h.textContent);
+      });
+      buildToc(content, nav);
+      status.hidden = true;
+      content.hidden = false;
+      document.getElementById("footer-note").hidden = false;
+      await renderMermaid(content);
+    }
+
+    async function loadPrd() {
+      const status = document.getElementById("status");
+      const nav = document.getElementById("toc-nav");
+      const embedded = document.getElementById("prd-src");
+      try {
+        // 优先内嵌正文：随 HTML UTF-8 解析，避免 fetch md 无 charset 导致中文乱码
+        if (embedded && embedded.value.trim()) {
+          await renderMarkdown(embedded.value);
+          return;
+        }
+        const res = await fetch("./prd.md", { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const buf = await res.arrayBuffer();
+        const md = new TextDecoder("utf-8").decode(buf);
+        await renderMarkdown(md);
+      } catch (err) {
+        status.className = "status error";
+        status.textContent = "PRD 加载失败：" + (err && err.message ? err.message : String(err));
+        nav.innerHTML = '<p style="font-size:12px;color:#94a3b8;padding:0 10px;">加载失败</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPrd);
+  </script>
+</body>
+</html>

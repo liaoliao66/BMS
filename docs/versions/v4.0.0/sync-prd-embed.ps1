@@ -24,3 +24,11 @@ if ($html -notmatch "DOMContentLoaded") {
 
 [IO.File]::WriteAllText($htmlPath, $html, $utf8)
 Write-Output "OK re-synced embed ($($md.Length) chars)"
+
+# 同步一份到原型目录，避免菜单相对路径跨出版本目录失败
+$protoPrd = Join-Path $root "..\..\..\prototype\versions\v4.0.0\prd.html"
+$protoPrd = [IO.Path]::GetFullPath($protoPrd)
+if (Test-Path (Split-Path $protoPrd -Parent)) {
+  [IO.File]::WriteAllText($protoPrd, $html, $utf8)
+  Write-Output "OK copied to prototype: $protoPrd"
+}
