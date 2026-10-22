@@ -328,7 +328,7 @@
     const qMode = params.get("mode") === "task" ? "task" : "plan";
     document.getElementById("backLink").href = qMode === "task" ? "任务管理_page.html" : "计划管理_page.html";
     document.getElementById("backLink").innerHTML =
-      '<i class="fa-solid fa-arrow-left text-xs"></i> 返回' + (qMode === "task" ? "任务总控" : "计划总控");
+      '<i class="fa-solid fa-arrow-left text-xs"></i> 返回' + (qMode === "task" ? "任务管理" : "计划管理");
     const hdr = document.querySelector("header .text-sm.font-medium");
     if (hdr) hdr.textContent = qMode === "task" ? "导入任务" : "导入计划";
     document.body.setAttribute("data-title", qMode === "task" ? "导入任务" : "导入计划");

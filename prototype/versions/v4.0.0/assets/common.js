@@ -30,7 +30,7 @@
       },
       // 经营一表 / 数据分析：本期不做，全角色菜单不展示
     ],
-    /** 计划管理员 = 系统管理员：整合经营台 + 总控 + 基础配置 */
+    /** 计划管理员 = 系统管理员：同页同名，靠权限控功能与数据范围 */
     计划管理员: [
       {
         group: "工作台",
@@ -40,14 +40,13 @@
         ],
       },
       {
-        group: "总控",
+        group: "计划任务",
         items: [
-          { id: "plans", name: "计划总控", href: "计划管理_page.html", icon: "fa-sitemap" },
-          { id: "mine", name: "任务总控", href: "任务管理_page.html", icon: "fa-list-check" },
-          { id: "importPlan", name: "计划导入", href: "计划导入_page.html?mode=plan", icon: "fa-file-import" },
-          { id: "importTask", name: "任务导入", href: "计划导入_page.html?mode=task", icon: "fa-file-arrow-up" },
+          { id: "plans", name: "计划管理", href: "计划管理_page.html", icon: "fa-sitemap" },
+          { id: "mine", name: "任务管理", href: "任务管理_page.html", icon: "fa-list-check" },
           { id: "basicConfig", name: "基础配置", href: "基础配置_page.html", icon: "fa-sliders" },
         ],
+        // 计划/任务导入：不进侧栏，入口在对应管理页（仅计划管理员可见）
       },
       {
         group: "经营主表",

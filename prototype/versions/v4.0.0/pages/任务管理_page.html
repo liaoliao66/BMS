@@ -1243,9 +1243,7 @@
       return;
     }
     if (BMS4.isPlanAdmin(user)) {
-      document.body.setAttribute("data-title", "任务总控");
-      const hdr = document.querySelector("header .text-sm.font-medium");
-      if (hdr) hdr.textContent = "任务总控";
+      // 同页同名「任务管理」；管理员全量范围与导入入口由权限控制
       scopeTab = "all";
       const btnImp = document.getElementById("btnImportTask");
       if (btnImp) btnImp.classList.remove("hidden");

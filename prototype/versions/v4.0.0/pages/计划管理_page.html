@@ -856,9 +856,7 @@
     canEdit = BMS4.canEditPlans(user);
     document.getElementById("btnNew").classList.toggle("hidden", !canEdit);
     if (BMS4.isPlanAdmin(user)) {
-      document.body.setAttribute("data-title", "计划总控");
-      const hdr = document.querySelector("header .text-sm.font-medium");
-      if (hdr) hdr.textContent = "计划总控";
+      // 同页同名「计划管理」；管理员多部门筛选与导入入口由权限控制
       const btnImp = document.getElementById("btnImportPlan");
       if (btnImp) btnImp.classList.remove("hidden");
     }
