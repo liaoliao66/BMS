@@ -818,6 +818,76 @@
     }
   }
 
+  /** 表尾行操作样式（注入一次） */
+  function ensureRowOpsStyles() {
+    if (document.getElementById("bms4-row-ops-style")) return;
+    const style = document.createElement("style");
+    style.id = "bms4-row-ops-style";
+    style.textContent = `
+      .row-ops { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 2px 0; white-space: nowrap; position: relative; }
+      .row-op { border: none; background: transparent; padding: 0 2px; font-size: 13px; color: #0f766e; cursor: pointer; line-height: 1.4; }
+      .row-op:hover { text-decoration: underline; }
+      .row-op.is-danger { color: #c5221f; }
+      .row-op-sep { color: #cbd5e1; margin: 0 4px; user-select: none; font-size: 12px; }
+      .row-ops-more { position: relative; display: inline-flex; align-items: center; }
+      .row-ops-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 40; min-width: 132px; background: #fff; border: 1px solid #e8eaed; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,0.12); padding: 6px; display: none; }
+      .row-ops-more.is-open .row-ops-menu { display: block; }
+      .row-ops-menu-item { width: 100%; text-align: left; border: none; background: transparent; border-radius: 8px; padding: 8px 10px; font-size: 13px; color: #334155; cursor: pointer; display: block; }
+      .row-ops-menu-item:hover { background: #f1f5f9; }
+      .row-ops-menu-item.is-danger { color: #c5221f; }
+      .row-ops-menu-item.is-danger:hover { background: #fef2f2; }
+    `;
+    document.head.appendChild(style);
+    if (!window.__bms4RowOpsDocBound) {
+      window.__bms4RowOpsDocBound = true;
+      document.addEventListener("click", () => {
+        document.querySelectorAll(".row-ops-more.is-open").forEach((el) => el.classList.remove("is-open"));
+      });
+    }
+  }
+
+  /**
+   * 表尾行操作：≤3 平铺；>3 前 2 平铺 +「更多」收纳其余
+   * items: [{ label, attrs?, danger? }]
+   */
+  function rowOpsHtml(items) {
+    ensureRowOpsStyles();
+    const list = (items || []).filter(Boolean);
+    if (!list.length) return '<span class="text-slate-300">—</span>';
+    const link = (it, cls) => {
+      const danger = it.danger ? " is-danger" : "";
+      return `<button type="button" class="${cls}${danger}" ${it.attrs || ""}>${escapeHtmlLite(it.label)}</button>`;
+    };
+    if (list.length <= 3) {
+      return `<div class="row-ops">${list
+        .map((it, i) => (i ? '<span class="row-op-sep">|</span>' : "") + link(it, "row-op"))
+        .join("")}</div>`;
+    }
+    const head = list.slice(0, 2);
+    const rest = list.slice(2);
+    return `<div class="row-ops">${head
+      .map((it, i) => (i ? '<span class="row-op-sep">|</span>' : "") + link(it, "row-op"))
+      .join("")}<span class="row-op-sep">|</span><span class="row-ops-more" data-ops-more>
+        <button type="button" class="row-op" data-ops-toggle>更多</button>
+        <div class="row-ops-menu">${rest.map((it) => link(it, "row-ops-menu-item")).join("")}</div>
+      </span></div>`;
+  }
+
+  function bindRowOps(root) {
+    ensureRowOpsStyles();
+    const scope = root || document;
+    scope.querySelectorAll("[data-ops-toggle]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const wrap = btn.closest("[data-ops-more]");
+        if (!wrap) return;
+        const open = wrap.classList.contains("is-open");
+        document.querySelectorAll(".row-ops-more.is-open").forEach((el) => el.classList.remove("is-open"));
+        if (!open) wrap.classList.add("is-open");
+      };
+    });
+  }
+
   window.BMSUI = {
     statusBadge,
     toast,
@@ -832,6 +902,8 @@
     taskNameLink,
     openTaskDetail,
     closeTaskDetail,
+    rowOpsHtml,
+    bindRowOps,
     escapeAttr,
     escapeHtml: escapeHtmlLite,
   };

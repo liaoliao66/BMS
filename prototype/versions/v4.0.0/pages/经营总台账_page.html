@@ -54,12 +54,7 @@
     .prog-area:focus { outline:none; border-color:#1a73e8; }
     .filter-chip { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 12px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; }
     .filter-chip.on { border-color: #99f6e4; background: #f0fdfa; color: #0f766e; font-weight: 500; }
-    .name-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; position: relative; }
-    .name-tools { display: inline-flex; align-items: center; gap: 1px; opacity: 0; margin-left: 4px; flex-shrink: 0; }
-    .name-wrap:hover .name-tools { opacity: 1; }
-    .icon-btn { width: 22px; height: 22px; border: none; background: transparent; border-radius: 6px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 11px; }
-    .icon-btn:hover { background: #eef2f7; color: #0f766e; }
-    .icon-btn.danger:hover { background: #fef2f2; color: #c5221f; }
+    .name-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; }
     .sum-panel { background:#fff; border:1px solid #e8eaed; border-radius:12px; overflow:hidden; box-shadow:0 1px 2px rgba(60,64,67,0.06); }
     .sum-cols { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); }
     .sum-cell { position:relative; padding:18px 12px; text-align:center; border-right:1px solid #f1f5f9; min-height:92px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:6px; }
@@ -132,6 +127,7 @@
             <th class="col-prog">进展说明</th>
             <th>开始时间</th>
             <th>结束时间</th>
+            <th>操作</th>
           </tr>
         </thead>
         <tbody id="cpBody"></tbody>
@@ -141,10 +137,25 @@
     <div id="modal-cp" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
       <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modal-cp')"></div>
       <div class="relative bg-white rounded-2xl w-full max-w-lg shadow-[0_12px_40px_rgba(0,0,0,0.12)] p-6 space-y-3 text-sm max-h-[90vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold">下达公司计划</h3>
+        <h3 class="text-lg font-semibold" id="cpModalTitle">下达公司计划</h3>
+        <input type="hidden" id="cpEditId" value="" />
         <div>
           <label class="block text-slate-600 mb-1">计划名称 <span class="text-red-500">*</span></label>
           <input id="cpName" class="w-full border rounded-xl px-3 py-2.5" placeholder="计划名称" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-600 mb-1">优先级</label>
+            <select id="cpPrio" class="w-full border rounded-xl px-3 py-2.5">
+              <option>P0</option><option selected>P1</option><option>P2</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">状态</label>
+            <select id="cpStatus" class="w-full border rounded-xl px-3 py-2.5">
+              <option>未开始</option><option selected>进行中</option><option>关注</option><option>延期</option><option>已完成</option>
+            </select>
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -166,7 +177,7 @@
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" onclick="BMSUI.closeModal('modal-cp')" class="text-slate-500 px-3">取消</button>
-          <button type="button" onclick="saveCp()" class="btn-cta text-white px-4 py-2 rounded-xl">发布</button>
+          <button type="button" id="btnCpSave" onclick="saveCp()" class="btn-cta text-white px-4 py-2 rounded-xl">发布</button>
         </div>
       </div>
     </div>
@@ -324,16 +335,63 @@
     if (editNameId === cp.id) {
       return `<input class="inline-input name-input" data-name-input="${cp.id}" value="${escapeAttr(cp.name)}" />`;
     }
-    const tools = window.__cpReadOnly
-      ? ""
-      : `<span class="name-tools">
-        <button type="button" class="icon-btn" title="编辑名称" data-edit-name="${cp.id}"><i class="fa-solid fa-pen"></i></button>
-        <button type="button" class="icon-btn danger" title="删除" data-del-cp="${cp.id}"><i class="fa-regular fa-trash-can"></i></button>
-      </span>`;
-    return `<div class="name-wrap" data-name-wrap-cp="${cp.id}">
+    return `<div class="name-wrap">
       ${BMSUI.planNameLink(cp.name, { id: cp.id, kind: "company" })}
-      ${tools}
     </div>`;
+  }
+
+  function resolveCpUrgeTarget(cp) {
+    const byName = BMS4.USERS.find((u) => u.name === (cp.owner || ""));
+    if (byName) return byName.id;
+    const row = matrixCache.find((r) => r.companyPlan.id === cp.id);
+    if (row) {
+      const active = row.cells.find((c) => c.planNodes + c.taskTotal > 0 && c.ownerId);
+      if (active) return active.ownerId;
+    }
+    const head = BMS4.USERS.find((u) => u.role === "部门长");
+    return head ? head.id : "";
+  }
+
+  function cellOpsCompany(cp) {
+    const items = [
+      { label: "查看", attrs: `data-view-cp="${cp.id}"` },
+      { label: "催办", attrs: `data-urge-cp="${cp.id}"` },
+    ];
+    if (!window.__cpReadOnly) {
+      items.push({ label: "编辑", attrs: `data-edit-cp="${cp.id}"` });
+      items.push({ label: "删除", attrs: `data-del-cp="${cp.id}"`, danger: true });
+    }
+    return BMSUI.rowOpsHtml(items);
+  }
+
+  function openNewCp() {
+    document.getElementById("cpEditId").value = "";
+    document.getElementById("cpModalTitle").textContent = "下达公司计划";
+    document.getElementById("btnCpSave").textContent = "发布";
+    document.getElementById("cpName").value = "";
+    document.getElementById("cpPrio").value = "P1";
+    document.getElementById("cpStatus").value = "进行中";
+    document.getElementById("cpStart").value = "2026-01-01";
+    document.getElementById("cpEnd").value = "2026-12-31";
+    document.getElementById("cpPct").value = "0";
+    document.getElementById("cpProg").value = "";
+    BMSUI.openModal("modal-cp");
+  }
+
+  function openEditCp(id) {
+    const cp = BMS4.COMPANY_PLANS.find((c) => c.id === id);
+    if (!cp) return;
+    document.getElementById("cpEditId").value = id;
+    document.getElementById("cpModalTitle").textContent = "编辑公司计划";
+    document.getElementById("btnCpSave").textContent = "保存";
+    document.getElementById("cpName").value = cp.name || "";
+    document.getElementById("cpPrio").value = cp.priority || "P1";
+    document.getElementById("cpStatus").value = cp.status || "进行中";
+    document.getElementById("cpStart").value = cp.startDate || "";
+    document.getElementById("cpEnd").value = cp.endDate || "";
+    document.getElementById("cpPct").value = String(BMS4.clampPct(cp.progressPct));
+    document.getElementById("cpProg").value = cp.progress || "";
+    BMSUI.openModal("modal-cp");
   }
 
   function cellPriority(cp) {
@@ -797,9 +855,10 @@
           <td class="col-prog">${cellProgressNote(cp)}</td>
           <td class="whitespace-nowrap text-slate-600">${escapeHtml(cp.startDate || "—")}</td>
           <td class="whitespace-nowrap text-slate-600">${escapeHtml(cp.endDate || "—")}</td>
+          <td class="whitespace-nowrap">${cellOpsCompany(cp)}</td>
         </tr>`;
       }).join("")
-      : `<tr><td colspan="10" class="text-center text-slate-400 py-12">无匹配的公司计划</td></tr>`;
+      : `<tr><td colspan="11" class="text-center text-slate-400 py-12">无匹配的公司计划</td></tr>`;
 
     const filteredCps = rows.map((r) => r.companyPlan);
     const cpStatusOrder = PLAN_STATUS_ORDER.slice();
@@ -881,6 +940,31 @@
         render();
       };
     });
+    document.querySelectorAll("[data-view-cp]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        BMSUI.openPlanDetail(btn.getAttribute("data-view-cp"), "company");
+      };
+    });
+    document.querySelectorAll("[data-edit-cp]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        openEditCp(btn.getAttribute("data-edit-cp"));
+      };
+    });
+    document.querySelectorAll("[data-urge-cp]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute("data-urge-cp");
+        const cp = BMS4.COMPANY_PLANS.find((c) => c.id === id);
+        if (!cp) return;
+        const uid = resolveCpUrgeTarget(cp);
+        if (!uid) return BMSUI.toast("未找到可催办对象", false);
+        taskSumState.cpId = id;
+        openUrge(uid, cp.name, "");
+      };
+    });
+    BMSUI.bindRowOps(document.getElementById("cpBody"));
     const input = document.querySelector("[data-pct-input]");
     if (input) {
       const finish = (save) => {
@@ -973,16 +1057,33 @@
     const endDate = document.getElementById("cpEnd").value;
     if (!startDate || !endDate) return BMSUI.toast("请填写开始与结束时间", false);
     if (endDate < startDate) return BMSUI.toast("结束时间不能早于开始时间", false);
-    BMS4.COMPANY_PLANS.push({
-      id: "cp_" + Date.now(),
+    const patch = {
       name,
-      status: "进行中",
-      priority: "P1",
+      status: document.getElementById("cpStatus").value || "进行中",
+      priority: document.getElementById("cpPrio").value || "P1",
       progress: document.getElementById("cpProg").value.trim() || "新下达",
-      owner: "李家治",
       startDate,
       endDate,
       progressPct: BMS4.clampPct(document.getElementById("cpPct").value),
+    };
+    const editId = document.getElementById("cpEditId").value;
+    if (editId) {
+      const prev = BMS4.COMPANY_PLANS.find((c) => c.id === editId);
+      BMS4.updateCompanyPlan(editId, patch);
+      if (prev) {
+        if (prev.name !== patch.name) logCpChange(editId, "计划名称", prev.name, patch.name);
+        if (prev.priority !== patch.priority) logCpChange(editId, "优先级", prev.priority, patch.priority);
+        if (prev.status !== patch.status) logCpChange(editId, "状态", prev.status, patch.status);
+      }
+      BMSUI.closeModal("modal-cp");
+      BMSUI.toast("已保存");
+      render();
+      return;
+    }
+    BMS4.COMPANY_PLANS.push({
+      id: "cp_" + Date.now(),
+      ...patch,
+      owner: "李家治",
     });
     if (BMS4.persistDemoData) BMS4.persistDemoData();
     BMSUI.closeModal("modal-cp");
@@ -997,9 +1098,7 @@
         '<div class="bg-white rounded-2xl border p-8 text-slate-500">本页仅总经理 / 计划管理员可见，请切换视角。</div>';
       return;
     }
-    document.getElementById("btnNew").onclick = () => {
-      BMSUI.openModal("modal-cp");
-    };
+    document.getElementById("btnNew").onclick = openNewCp;
     const kwEl = document.getElementById("kw");
     const prioEl = document.getElementById("fPrio");
     const statusEl = document.getElementById("fStatus");

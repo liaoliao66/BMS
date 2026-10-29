@@ -91,6 +91,71 @@
       </div>
     </div>
 
+    <div id="modalEdit" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalEdit')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <div class="px-5 py-4 border-b flex justify-between items-center">
+          <h3 class="text-lg font-semibold" id="editTitle">编辑</h3>
+          <button type="button" onclick="BMSUI.closeModal('modalEdit')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3 text-sm">
+          <input type="hidden" id="eKind" />
+          <input type="hidden" id="eId" />
+          <div>
+            <label class="block text-slate-600 mb-1">名称 <span class="text-red-500">*</span></label>
+            <input id="eName" class="w-full border rounded-xl px-3 py-2.5" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">优先级</label>
+              <select id="ePrio" class="w-full border rounded-xl px-3 py-2.5"><option>P0</option><option>P1</option><option>P2</option></select>
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">状态</label>
+              <select id="eStatus" class="w-full border rounded-xl px-3 py-2.5"></select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">责任人</label>
+            <select id="eOwner" class="w-full border rounded-xl px-3 py-2.5"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-slate-600 mb-1">开始</label>
+              <input type="date" id="eStart" class="w-full border rounded-xl px-3 py-2.5" />
+            </div>
+            <div>
+              <label class="block text-slate-600 mb-1">结束</label>
+              <input type="date" id="eEnd" class="w-full border rounded-xl px-3 py-2.5" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">备注</label>
+            <textarea id="eNote" rows="3" class="w-full border rounded-xl px-3 py-2.5"></textarea>
+          </div>
+        </div>
+        <div class="px-5 py-3 border-t flex justify-end gap-2">
+          <button type="button" onclick="BMSUI.closeModal('modalEdit')" class="text-slate-500 px-3">取消</button>
+          <button type="button" onclick="saveEdit()" class="btn-cta text-white px-4 py-2 rounded-xl">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="modalViewSup" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMSUI.closeModal('modalViewSup')"></div>
+      <div class="relative bg-white rounded-2xl w-full max-w-lg p-6 space-y-3 text-sm shadow-[0_12px_40px_rgba(0,0,0,0.12)]">
+        <div class="flex justify-between items-center">
+          <h3 class="text-lg font-semibold">督办详情</h3>
+          <button type="button" onclick="BMSUI.closeModal('modalViewSup')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div id="viewSupBody" class="space-y-2"></div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="BMSUI.closeModal('modalViewSup')" class="px-3 py-2 rounded-xl border">关闭</button>
+          <button type="button" id="btnViewSupEdit" class="btn-cta text-white px-4 py-2 rounded-xl">编辑</button>
+        </div>
+      </div>
+    </div>
+
   </div>
   <script src="../assets/store.js"></script>
   <script src="../assets/common.js"></script>
@@ -131,6 +196,101 @@ function saveUrge() {
   BMSUI.closeModal("modalUrge");
   BMSUI.toast("已催办，对象可在待办查看要求说明");
 }
+function fillOwnerSelect(selectedId) {
+  document.getElementById("eOwner").innerHTML = BMS4.USERS.map(
+    (u) =>
+      `<option value="${u.id}" ${u.id === selectedId ? "selected" : ""}>${escapeHtml(u.name)} · ${escapeHtml(u.dept)}</option>`
+  ).join("");
+}
+function openEditTask(id) {
+  const t = BMS4.taskItems.find((x) => x.id === id);
+  if (!t) return;
+  document.getElementById("eKind").value = "task";
+  document.getElementById("eId").value = id;
+  document.getElementById("editTitle").textContent = "编辑任务";
+  document.getElementById("eName").value = t.name || "";
+  document.getElementById("ePrio").value = t.priority || "P1";
+  document.getElementById("eStatus").innerHTML = ["未开始", "进行中", "已完成", "已关闭", "延期"]
+    .map((s) => `<option ${s === t.status ? "selected" : ""}>${s}</option>`)
+    .join("");
+  document.getElementById("eStart").value = BMS4.taskStartDate(t) || "";
+  document.getElementById("eEnd").value = BMS4.taskEndDate(t) || "";
+  document.getElementById("eNote").value = t.remark || "";
+  fillOwnerSelect(t.ownerId);
+  BMSUI.openModal("modalEdit");
+}
+function openEditSup(id) {
+  const m = (BMS4.superviseItems || []).find((x) => x.id === id);
+  if (!m) return;
+  document.getElementById("eKind").value = "sup";
+  document.getElementById("eId").value = id;
+  document.getElementById("editTitle").textContent = "编辑督办";
+  document.getElementById("eName").value = m.title || "";
+  document.getElementById("ePrio").value = m.priority || "P1";
+  document.getElementById("eStatus").innerHTML = ["待办", "进行中", "已完成", "延期"]
+    .map((s) => `<option ${s === m.status ? "selected" : ""}>${s}</option>`)
+    .join("");
+  document.getElementById("eStart").value = m.startDate || "";
+  document.getElementById("eEnd").value = m.endDate || "";
+  document.getElementById("eNote").value = m.note || "";
+  fillOwnerSelect(m.ownerId);
+  BMSUI.openModal("modalEdit");
+}
+function openViewSup(id) {
+  const m = (BMS4.superviseItems || []).find((x) => x.id === id);
+  if (!m) return;
+  const u = BMS4.userById(m.ownerId);
+  document.getElementById("viewSupBody").innerHTML = `
+    <div><span class="text-slate-400 text-xs">事项</span><div class="font-medium">${escapeHtml(m.title)}</div></div>
+    <div class="grid grid-cols-2 gap-2">
+      <div><span class="text-slate-400 text-xs">责任人</span><div>${u ? escapeHtml(u.name) : "—"}</div></div>
+      <div><span class="text-slate-400 text-xs">状态</span><div>${BMSUI.statusBadge(m.status)}</div></div>
+      <div><span class="text-slate-400 text-xs">优先级</span><div>${prioTag(m.priority)}</div></div>
+      <div><span class="text-slate-400 text-xs">起止</span><div>${escapeHtml(m.startDate || "—")} ~ ${escapeHtml(m.endDate || "—")}</div></div>
+    </div>
+    <div><span class="text-slate-400 text-xs">备注</span><div>${escapeHtml(m.note || "—")}</div></div>`;
+  document.getElementById("btnViewSupEdit").onclick = () => {
+    BMSUI.closeModal("modalViewSup");
+    openEditSup(id);
+  };
+  BMSUI.openModal("modalViewSup");
+}
+window.saveEdit = function () {
+  const kind = document.getElementById("eKind").value;
+  const id = document.getElementById("eId").value;
+  const name = document.getElementById("eName").value.trim();
+  if (!name) return BMSUI.toast("请填写名称", false);
+  const startDate = document.getElementById("eStart").value;
+  const endDate = document.getElementById("eEnd").value;
+  if (startDate && endDate && endDate < startDate) return BMSUI.toast("结束不能早于开始", false);
+  if (kind === "task") {
+    const r = BMS4.updateTask(id, {
+      name,
+      priority: document.getElementById("ePrio").value,
+      status: document.getElementById("eStatus").value,
+      ownerId: document.getElementById("eOwner").value,
+      startDate,
+      endDate,
+      deadline: endDate,
+      remark: document.getElementById("eNote").value.trim(),
+    });
+    if (!r.ok) return BMSUI.toast(r.reason || "保存失败", false);
+  } else {
+    const r = BMS4.updateSuperviseTask(id, {
+      title: name,
+      priority: document.getElementById("ePrio").value,
+      status: document.getElementById("eStatus").value,
+      ownerId: document.getElementById("eOwner").value,
+      startDate,
+      endDate,
+      note: document.getElementById("eNote").value.trim(),
+    });
+    if (!r.ok) return BMSUI.toast(r.reason || "保存失败", false);
+  }
+  BMSUI.closeModal("modalEdit");
+  BMSUI.toast("已保存");
+  render();
+};
 
 function isSuperviseOverdue(m) {
   return m.endDate && m.endDate < (BMS4.DEMO_TODAY || "2026-08-18") && m.status !== "已完成";
@@ -230,7 +390,6 @@ function render() {
       ? list
           .map((t) => {
             const u = BMS4.userById(t.ownerId);
-            const nameJs = (t.name || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
             const flag = BMS4.isTaskOverdue(t) ? "延期" : BMS4.isTaskNearDue(t) ? "临期" : "";
             return `<tr class="border-t row-hover"><td class="px-4 py-3">${BMSUI.taskNameLink(t.name, {
               id: t.id,
@@ -250,10 +409,40 @@ function render() {
               BMS4.taskEndDate(t) || "—"
             )}</td>
       <td class="px-4 py-3 tabular-nums">${BMS4.taskWorkHours(t) || 0}h</td>
-      <td class="px-4 py-3"><button type="button" class="text-teal-700 text-sm hover:underline" onclick="openUrge('${t.ownerId}','${nameJs}','${t.id}')">催办</button></td></tr>`;
+      <td class="px-4 py-3 whitespace-nowrap">${BMSUI.rowOpsHtml([
+              { label: "查看", attrs: `data-view-task="${t.id}"` },
+              { label: "编辑", attrs: `data-edit-task="${t.id}"` },
+              t.status !== "已完成" && t.status !== "已关闭"
+                ? {
+                    label: "催办",
+                    attrs: `data-urge-task="${t.id}" data-urge-owner="${BMSUI.escapeAttr(
+                      t.ownerId
+                    )}" data-urge-name="${BMSUI.escapeAttr(t.name)}"`,
+                  }
+                : null,
+            ])}</td></tr>`;
           })
           .join("")
       : `<tr><td colspan="10" class="px-4 py-10 text-center text-slate-400">无计划内任务</td></tr>`;
+    document.querySelectorAll("[data-view-task]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        BMSUI.openTaskDetail(btn.getAttribute("data-view-task"));
+      };
+    });
+    document.querySelectorAll("[data-edit-task]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        openEditTask(btn.getAttribute("data-edit-task"));
+      };
+    });
+    document.querySelectorAll("[data-urge-task]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        openUrge(btn.getAttribute("data-urge-owner"), btn.getAttribute("data-urge-name"), btn.getAttribute("data-urge-task"));
+      };
+    });
+    BMSUI.bindRowOps(document.getElementById("tbody"));
     return;
   }
 
@@ -287,7 +476,6 @@ function render() {
     ? list
         .map((m) => {
           const u = BMS4.userById(m.ownerId);
-          const nameJs = (m.title || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
           const flag = isSuperviseOverdue(m) ? "逾期" : "";
           const canUrge = m.status !== "已完成" && m.ownerId;
           return `<tr class="border-t row-hover">
@@ -302,17 +490,42 @@ function render() {
       <td class="px-4 py-3">${escapeHtml(m.endDate || "—")}</td>
       <td class="px-4 py-3 text-xs whitespace-nowrap">${escapeHtml(m.startDate || "—")} ~ ${escapeHtml(m.endDate || "—")}</td>
       <td class="px-4 py-3 text-slate-600">${escapeHtml(m.helper || "—")}</td>
-      <td class="px-4 py-3 space-x-2 whitespace-nowrap">
-        ${
-          canUrge
-            ? `<button type="button" class="text-teal-700 text-sm hover:underline" onclick="openUrge('${m.ownerId}','${nameJs}','','任务督办')">催办</button>`
-            : "—"
-        }
-      </td>
+      <td class="px-4 py-3 whitespace-nowrap">${BMSUI.rowOpsHtml([
+            { label: "查看", attrs: `data-view-sup="${m.id}"` },
+            { label: "编辑", attrs: `data-edit-sup="${m.id}"` },
+            canUrge
+              ? {
+                  label: "催办",
+                  attrs: `data-urge-sup="${m.id}" data-urge-owner="${BMSUI.escapeAttr(
+                    m.ownerId
+                  )}" data-urge-name="${BMSUI.escapeAttr(m.title)}"`,
+                }
+              : null,
+          ])}</td>
     </tr>`;
         })
         .join("")
     : `<tr><td colspan="10" class="px-4 py-10 text-center text-slate-400">暂无例外任务（督办）</td></tr>`;
+
+  document.querySelectorAll("[data-view-sup]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      openViewSup(btn.getAttribute("data-view-sup"));
+    };
+  });
+  document.querySelectorAll("[data-edit-sup]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      openEditSup(btn.getAttribute("data-edit-sup"));
+    };
+  });
+  document.querySelectorAll("[data-urge-sup]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      openUrge(btn.getAttribute("data-urge-owner"), btn.getAttribute("data-urge-name"), "", "任务督办");
+    };
+  });
+  BMSUI.bindRowOps(document.getElementById("tbody"));
 }
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -39,12 +39,7 @@
     .inline-input:focus { outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.15); }
     .pencil { color: #9aa0a6; font-size: 11px; opacity: 0; }
     .cell-edit:hover .pencil, .name-wrap:hover .pencil { opacity: 1; }
-    .name-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; position: relative; }
-    .name-tools { display: inline-flex; align-items: center; gap: 1px; opacity: 0; margin-left: 4px; flex-shrink: 0; }
-    .name-wrap:hover .name-tools { opacity: 1; }
-    .icon-btn { width: 20px; height: 20px; border: none; background: transparent; border-radius: 4px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 11px; }
-    .icon-btn:hover { background: #eef2f7; color: #0f766e; }
-    .icon-btn.danger:hover { background: #fef2f2; color: #c5221f; }
+    .name-wrap { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; }
     .frac { color: #9aa0a6; font-size: 12px; margin-left: 6px; }
     .attach-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; font-size: 12px; color: #475569; }
     .attach-chip button { border: none; background: transparent; color: #94a3b8; cursor: pointer; padding: 0 2px; line-height: 1; }
@@ -516,7 +511,8 @@
       <th><span class="col-head">开始时间 <i class="fa-solid fa-pen"></i></span></th>
       <th><span class="col-head">结束时间 <i class="fa-solid fa-pen"></i></span></th>
       <th><span class="col-head">耗费工时</span></th>
-      <th><span class="col-head">创建时间 <i class="fa-solid fa-sort"></i></span></th>`;
+      <th><span class="col-head">创建时间 <i class="fa-solid fa-sort"></i></span></th>
+      <th><span class="col-head">操作</span></th>`;
     document.getElementById("thead").innerHTML =
       viewMode === "flat"
         ? `<tr>
@@ -566,7 +562,7 @@
 
     const pool = filteredTasks();
     const rows = viewMode === "tree" ? buildTreeRows(pool) : buildFlatRows(pool);
-    const colSpan = viewMode === "flat" ? 11 : 10; // 计划/序号 + 名称…创建时间
+    const colSpan = viewMode === "flat" ? 12 : 11; // 计划/序号 + 名称…创建时间 + 操作
 
     document.getElementById("tbody").innerHTML = rows.length
       ? rows.map((row) => (row.kind === "plan" ? renderPlanRow(row) : renderTaskRow(row))).join("")
@@ -610,6 +606,7 @@
         deleteTask(el.getAttribute("data-task-del"));
       };
     });
+    BMSUI.bindRowOps(document.getElementById("tbody"));
     bindActiveEditor();
   }
 
@@ -641,6 +638,7 @@
       <td>—</td>
       <td class="text-right text-slate-600 tabular-nums">${row.workHours || 0}h</td>
       <td class="text-slate-500">—</td>
+      <td class="text-slate-300">—</td>
     </tr>`;
   }
 
@@ -684,17 +682,22 @@
       <td>${cellDateField(t, "endDate")}</td>
       <td class="text-right text-slate-700 tabular-nums whitespace-nowrap" title="按起止日期×每天8小时自动计算">${hoursLabel(t)}</td>
       <td class="text-slate-500 whitespace-nowrap">${t.createdAt || "—"}</td>
+      <td class="whitespace-nowrap">${cellOpsTask(t)}</td>
     </tr>`;
   }
 
   function cellName(t) {
     return `<div class="name-wrap">
       <span class="name-link" data-task-detail="${t.id}" title="查看详情">${escapeHtml(t.name)}</span>
-      <span class="name-tools">
-        <button type="button" class="icon-btn" title="编辑" data-task-edit="${t.id}"><i class="fa-solid fa-pen"></i></button>
-        <button type="button" class="icon-btn danger" title="删除" data-task-del="${t.id}"><i class="fa-regular fa-trash-can"></i></button>
-      </span>
     </div>`;
+  }
+
+  function cellOpsTask(t) {
+    return BMSUI.rowOpsHtml([
+      { label: "查看", attrs: `data-task-detail="${t.id}"` },
+      { label: "编辑", attrs: `data-task-edit="${t.id}"` },
+      { label: "删除", attrs: `data-task-del="${t.id}"`, danger: true },
+    ]);
   }
 
   function renderAttachList() {

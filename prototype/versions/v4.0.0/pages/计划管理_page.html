@@ -23,20 +23,8 @@
     .cell-edit { cursor: pointer; min-height: 24px; display: inline-flex; align-items: center; gap: 4px; }
     .cell-edit:hover { background: #eef5f4; border-radius: 4px; }
     .inline-input { border: 1px solid #1a73e8; border-radius: 4px; padding: 2px 6px; font-size: 13px; background: #fff; max-width: 100%; min-width: 5rem; }
-    .name-wrap { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; position: relative; }
+    .name-wrap { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; }
     .frac { color: #9aa0a6; font-size: 12px; margin-left: 4px; }
-    .name-tools { display: inline-flex; align-items: center; gap: 2px; opacity: 0; margin-left: 2px; }
-    .name-wrap:hover .name-tools, .name-menu-open .name-tools { opacity: 1; }
-    .icon-btn { width: 22px; height: 22px; border: none; background: transparent; border-radius: 4px; color: #94a3b8; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-    .icon-btn:hover { background: #eef2f7; color: #0f766e; }
-    .name-menu { position: absolute; left: 0; top: calc(100% + 4px); z-index: 30; min-width: 168px; background: #fff; border: 1px solid #e8eaed; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,0.12); padding: 6px; display: none; }
-    .name-menu-open .name-menu { display: block; }
-    .menu-item { width: 100%; text-align: left; border: none; background: transparent; border-radius: 8px; padding: 8px 10px; font-size: 13px; color: #334155; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-    .menu-item:hover { background: #f1f5f9; }
-    .menu-item.danger { color: #c5221f; }
-    .menu-item.danger:hover { background: #fef2f2; }
-    .menu-item i { width: 16px; text-align: center; color: #64748b; }
-    .menu-item.danger i { color: #c5221f; }
     .pct-num { font-variant-numeric: tabular-nums; }
     .helper-box { max-height: 120px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; background: #fff; }
     .helper-box label { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; font-size: 13px; cursor: pointer; }
@@ -85,6 +73,7 @@
             <th><span class="col-head">关联任务</span></th>
             <th><span class="col-head">开始时间</span></th>
             <th><span class="col-head">结束时间</span></th>
+            <th><span class="col-head">操作</span></th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
@@ -105,6 +94,7 @@
           <input type="hidden" id="fParentId" />
           <input type="hidden" id="fMode" value="root" />
           <input type="hidden" id="fRefId" />
+          <input type="hidden" id="fEditId" value="" />
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
             <div class="space-y-3">
@@ -356,15 +346,6 @@
   }
 
   function cellCompanyName(cp, cpId) {
-    const menu =
-      canEdit && cpId !== "__none__"
-        ? `<span class="name-tools">
-            <button type="button" class="icon-btn" title="更多操作" data-menu-cp="${cpId}"><i class="fa-solid fa-ellipsis"></i></button>
-          </span>
-          <div class="name-menu" data-menu-panel-cp="${cpId}">
-            <button type="button" class="menu-item" data-add-under-cp="${cpId}"><i class="fa-solid fa-sitemap"></i>新建部门计划</button>
-          </div>`
-        : "";
     const nameHtml =
       cpId === "__none__"
         ? `<span class="font-semibold text-slate-800">${escapeHtml(cp.name)}</span>`
@@ -373,12 +354,11 @@
             kind: "company",
             className: "plan-name-link text-teal-800 hover:underline font-semibold",
           });
-    return `<div class="name-wrap" data-name-wrap-cp="${cpId}">
+    return `<div class="name-wrap">
       <span class="inline-flex items-center gap-2">
         <span class="tag" style="background:#e8f0fe;color:#1a73e8;border-color:#c6dafc">年度</span>
         ${nameHtml}
       </span>
-      ${menu}
     </div>`;
   }
 
@@ -390,29 +370,33 @@
       kind: "dept",
       className: "plan-name-link hover:underline font-medium " + (hot ? "text-rose-700" : "text-teal-800"),
     });
-    if (!canEdit) {
-      return `<div><span>${nameLink}${
-        hot ? '<span class="ml-1 text-[10px] text-rose-500">问题</span>' : ""
-      }</span>${meta}</div>`;
-    }
-    if (isEditing(p.id, "name")) {
+    if (canEdit && isEditing(p.id, "name")) {
       return `<input class="inline-input" style="min-width:14rem" data-inline="name" data-id="${p.id}" data-inline-focus value="${escapeAttr(p.name)}" />`;
     }
     return `<div>
-      <div class="name-wrap" data-name-wrap="${p.id}">
-        ${nameLink}
-        <span class="name-tools">
-          <button type="button" class="icon-btn" title="编辑名称" data-start-edit="name" data-id="${p.id}"><i class="fa-solid fa-pen"></i></button>
-          <button type="button" class="icon-btn" title="更多操作" data-menu="${p.id}"><i class="fa-solid fa-ellipsis"></i></button>
-        </span>
-        <div class="name-menu" data-menu-panel="${p.id}">
-          <button type="button" class="menu-item" data-add-sibling="${p.id}"><i class="fa-solid fa-location-dot"></i>新建同级计划</button>
-          <button type="button" class="menu-item" data-add-child="${p.id}"><i class="fa-solid fa-sitemap"></i>新建子计划</button>
-          <button type="button" class="menu-item danger" data-del="${p.id}"><i class="fa-regular fa-trash-can"></i>删除</button>
-        </div>
-      </div>
+      <div class="name-wrap">${nameLink}${
+      hot ? '<span class="ml-1 text-[10px] text-rose-500">问题</span>' : ""
+    }</div>
       ${meta}
     </div>`;
+  }
+
+  function cellOpsCompany(cpId) {
+    if (cpId === "__none__") return BMSUI.rowOpsHtml([]);
+    const items = [{ label: "查看", attrs: `data-view-cp="${cpId}"` }];
+    if (canEdit) items.push({ label: "新建部门计划", attrs: `data-add-under-cp="${cpId}"` });
+    return BMSUI.rowOpsHtml(items);
+  }
+
+  function cellOpsPlan(p) {
+    const items = [{ label: "查看", attrs: `data-view-plan="${p.id}"` }];
+    if (canEdit) {
+      items.push({ label: "编辑", attrs: `data-edit-plan="${p.id}"` });
+      items.push({ label: "新建同级", attrs: `data-add-sibling="${p.id}"` });
+      items.push({ label: "新建子计划", attrs: `data-add-child="${p.id}"` });
+      items.push({ label: "删除", attrs: `data-del="${p.id}"`, danger: true });
+    }
+    return BMSUI.rowOpsHtml(items);
   }
 
   function cellPct(p) {
@@ -520,6 +504,7 @@
       <td class="text-right text-slate-600">${row.taskCnt}</td>
       <td class="text-slate-400 text-xs whitespace-nowrap">${escapeHtml(cp.startDate || "—")}</td>
       <td class="text-slate-400 text-xs whitespace-nowrap">${escapeHtml(cp.endDate || "—")}</td>
+      <td class="whitespace-nowrap">${cellOpsCompany(row.cpId)}</td>
     </tr>`;
   }
 
@@ -545,6 +530,7 @@
       <td class="text-right text-slate-600">${row.taskCnt}</td>
       <td>${cellDate(p, "startDate")}</td>
       <td>${cellDate(p, "endDate")}</td>
+      <td class="whitespace-nowrap">${cellOpsPlan(p)}</td>
     </tr>`;
   }
 
@@ -629,7 +615,7 @@
     const rows = buildRows(pool);
     document.getElementById("tbody").innerHTML = rows.length
       ? rows.map(renderRow).join("")
-      : `<tr><td colspan="10" class="text-center text-slate-400 py-10">暂无计划，请在公司目标下新建部门计划</td></tr>`;
+      : `<tr><td colspan="11" class="text-center text-slate-400 py-10">暂无计划，请在公司目标下新建部门计划</td></tr>`;
 
     document.querySelectorAll("[data-toggle]").forEach((btn) => {
       btn.onclick = (e) => {
@@ -643,7 +629,6 @@
     document.querySelectorAll("[data-start-edit]").forEach((el) => {
       el.onclick = (e) => {
         e.stopPropagation();
-        closeAllMenus();
         editCell = { id: el.getAttribute("data-id"), field: el.getAttribute("data-start-edit") };
         render();
         requestAnimationFrame(() => {
@@ -655,55 +640,48 @@
     document.querySelectorAll("[data-edit-helpers]").forEach((el) => {
       el.onclick = (e) => {
         e.stopPropagation();
-        closeAllMenus();
         openHelpersModal(el.getAttribute("data-edit-helpers"));
       };
     });
-    document.querySelectorAll("[data-menu]").forEach((btn) => {
+    document.querySelectorAll("[data-view-cp]").forEach((btn) => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        const id = btn.getAttribute("data-menu");
-        const wrap = document.querySelector(`[data-name-wrap="${id}"]`);
-        const open = wrap && wrap.classList.contains("name-menu-open");
-        closeAllMenus();
-        if (wrap && !open) wrap.classList.add("name-menu-open");
+        BMSUI.openPlanDetail(btn.getAttribute("data-view-cp"), "company");
       };
     });
-    document.querySelectorAll("[data-menu-cp]").forEach((btn) => {
+    document.querySelectorAll("[data-view-plan]").forEach((btn) => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        const id = btn.getAttribute("data-menu-cp");
-        const wrap = document.querySelector(`[data-name-wrap-cp="${id}"]`);
-        const open = wrap && wrap.classList.contains("name-menu-open");
-        closeAllMenus();
-        if (wrap && !open) wrap.classList.add("name-menu-open");
+        BMSUI.openPlanDetail(btn.getAttribute("data-view-plan"), "dept");
+      };
+    });
+    document.querySelectorAll("[data-edit-plan]").forEach((btn) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        openEditPlan(btn.getAttribute("data-edit-plan"));
       };
     });
     document.querySelectorAll("[data-add-under-cp]").forEach((btn) => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        closeAllMenus();
         openModal({ mode: "underCp", companyPlanId: btn.getAttribute("data-add-under-cp") });
       };
     });
     document.querySelectorAll("[data-add-child]").forEach((btn) => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        closeAllMenus();
         openModal({ mode: "child", refId: btn.getAttribute("data-add-child") });
       };
     });
     document.querySelectorAll("[data-add-sibling]").forEach((btn) => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        closeAllMenus();
         openModal({ mode: "sibling", refId: btn.getAttribute("data-add-sibling") });
       };
     });
     document.querySelectorAll("[data-del]").forEach((btn) => {
       btn.onclick = (e) => {
         e.stopPropagation();
-        closeAllMenus();
         const id = btn.getAttribute("data-del");
         const r = BMS4.removePlan(id);
         if (!r.ok) return BMSUI.toast(r.reason, false);
@@ -711,11 +689,8 @@
         render();
       };
     });
+    BMSUI.bindRowOps(document.getElementById("tbody"));
     bindActiveEditor();
-  }
-
-  function closeAllMenus() {
-    document.querySelectorAll(".name-menu-open").forEach((el) => el.classList.remove("name-menu-open"));
   }
 
   function openHelpersModal(planId) {
@@ -738,11 +713,45 @@
     render();
   }
 
+  function openEditPlan(id) {
+    const p = BMS4.planById(id);
+    if (!p) return;
+    document.getElementById("fMode").value = "edit";
+    document.getElementById("fEditId").value = id;
+    document.getElementById("fRefId").value = "";
+    document.getElementById("fParentId").value = p.parentId || "";
+    document.getElementById("modalTitle").textContent = "编辑计划";
+    const hint = document.getElementById("parentHint");
+    const rootFields = document.getElementById("rootFields");
+    hint.classList.remove("hidden");
+    hint.textContent = "路径：" + (BMS4.planPathLabel(p.id) || p.name);
+    if (p.parentId) {
+      rootFields.classList.add("hidden");
+    } else {
+      rootFields.classList.remove("hidden");
+      document.getElementById("fDeptModal").value = p.dept || user.dept;
+      if (p.companyPlanId) document.getElementById("fCompany").value = p.companyPlanId;
+    }
+    document.getElementById("fName").value = p.name || "";
+    document.getElementById("fProgress").value = p.progress || "";
+    document.getElementById("fStatus").value = BMS4.resolvePlanStatus(p) === "延期" ? p.status || "进行中" : p.status || "进行中";
+    document.getElementById("fPriority").value = p.priority || "P1";
+    document.getElementById("fPct").value = String(BMS4.clampPct(p.progressPct));
+    document.getElementById("fStart").value = p.startDate || "";
+    document.getElementById("fEnd").value = p.endDate || "";
+    document.getElementById("fOwner").innerHTML = userOpts(p.ownerId || user.id);
+    fillHelpers(p.helperIds || [], p.ownerId || user.id);
+    document.getElementById("fOwner").onchange = () =>
+      fillHelpers(selectedHelpers(), document.getElementById("fOwner").value);
+    BMSUI.openModal("modal");
+  }
+
   function openModal(opts) {
     const mode = (opts && opts.mode) || "root";
     const refId = (opts && opts.refId) || "";
     const presetCp = (opts && opts.companyPlanId) || "";
     document.getElementById("fMode").value = mode;
+    document.getElementById("fEditId").value = "";
     document.getElementById("fRefId").value = refId;
     document.getElementById("fName").value = "";
     document.getElementById("fProgress").value = "";
@@ -820,6 +829,7 @@
     const ownerId = document.getElementById("fOwner").value;
     if (!ownerId) return BMSUI.toast("请选择计划负责人", false);
     const mode = document.getElementById("fMode").value || "root";
+    const editId = document.getElementById("fEditId").value;
     const refId = document.getElementById("fRefId").value;
     const ref = refId ? BMS4.planById(refId) : null;
     const parentId = document.getElementById("fParentId").value || null;
@@ -828,7 +838,6 @@
     if (status === "已完成") progressPct = 100;
     const payload = {
       name,
-      parentId,
       status,
       progress: document.getElementById("fProgress").value.trim(),
       priority: document.getElementById("fPriority").value,
@@ -838,6 +847,20 @@
       endDate,
       progressPct,
     };
+    if (mode === "edit" && editId) {
+      const cur = BMS4.planById(editId);
+      if (!cur) return BMSUI.toast("计划不存在", false);
+      if (!cur.parentId) {
+        payload.dept = document.getElementById("fDeptModal").value || cur.dept || user.dept;
+        payload.companyPlanId = document.getElementById("fCompany").value || cur.companyPlanId || "";
+      }
+      BMS4.updatePlan(editId, payload);
+      BMSUI.closeModal("modal");
+      BMSUI.toast("已保存");
+      render();
+      return;
+    }
+    payload.parentId = parentId;
     if (!parentId) {
       payload.dept = document.getElementById("fDeptModal").value || (ref && ref.dept) || user.dept;
       payload.companyPlanId = document.getElementById("fCompany").value || (ref && ref.companyPlanId) || "";
@@ -898,7 +921,6 @@
       render();
     };
     document.getElementById("kw").addEventListener("input", render);
-    document.addEventListener("click", () => closeAllMenus());
     render();
   });
 })();
