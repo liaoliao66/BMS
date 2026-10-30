@@ -1678,6 +1678,7 @@
       const id = "p_" + Date.now();
       const parent = payload.parentId ? planById(payload.parentId) : null;
       const dept = payload.dept || (parent ? parent.dept : "");
+      const actor = this.getRoleUser && this.getRoleUser();
       const item = normalizePlan({
         id,
         name: payload.name,
@@ -1692,6 +1693,8 @@
         startDate: payload.startDate || (parent && parent.startDate) || "",
         endDate: payload.endDate || (parent && parent.endDate) || "",
         progressPct: payload.progressPct != null ? payload.progressPct : 0,
+        creatorId: payload.creatorId || (actor && actor.id) || "",
+        creatorDept: payload.creatorDept || (actor && actor.dept) || "",
       });
       planItems = [...planItems, item];
       rebuildTodos();
@@ -1723,6 +1726,7 @@
       const startDate = payload.startDate || today;
       const endDate = payload.endDate || payload.deadline || "2026-08-31";
       const kind = payload.taskKind === "临时" || !payload.annualId ? "临时" : "计划";
+      const actor = this.getRoleUser && this.getRoleUser();
       const item = normalizeTaskDates({
         id,
         name: payload.name,
@@ -1743,6 +1747,8 @@
         endDate,
         deadline: endDate,
         createdAt: today,
+        creatorId: payload.creatorId || (actor && actor.id) || "",
+        creatorDept: payload.creatorDept || (actor && actor.dept) || "",
       });
       taskItems = [item, ...taskItems];
       appendTaskChangeLog({

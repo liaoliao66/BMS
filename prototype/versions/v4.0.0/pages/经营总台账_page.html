@@ -139,6 +139,7 @@
       <div class="relative bg-white rounded-2xl w-full max-w-lg shadow-[0_12px_40px_rgba(0,0,0,0.12)] p-6 space-y-3 text-sm max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold" id="cpModalTitle">下达公司计划</h3>
         <input type="hidden" id="cpEditId" value="" />
+        <input type="hidden" id="cpCreatorId" value="" />
         <div>
           <label class="block text-slate-600 mb-1">计划名称 <span class="text-red-500">*</span></label>
           <input id="cpName" class="w-full border rounded-xl px-3 py-2.5" placeholder="计划名称" />
@@ -174,6 +175,16 @@
         <div>
           <label class="block text-slate-600 mb-1">进展说明</label>
           <textarea id="cpProg" class="w-full border rounded-xl px-3 py-2.5 h-24" placeholder="初始说明/完成情况"></textarea>
+        </div>
+        <div id="cpCreatorWrap" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-600 mb-1">创建人</label>
+            <input id="cpCreatorName" class="w-full border rounded-xl px-3 py-2.5 bg-slate-50 text-slate-700" readonly />
+          </div>
+          <div>
+            <label class="block text-slate-600 mb-1">创建人部门</label>
+            <select id="cpCreatorDept" class="w-full border rounded-xl px-3 py-2.5"></select>
+          </div>
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" onclick="BMSUI.closeModal('modal-cp')" class="text-slate-500 px-3">取消</button>
@@ -364,10 +375,23 @@
     return BMSUI.rowOpsHtml(items);
   }
 
+  function fillCpCreatorFields() {
+    const u = BMS4.getRoleUser();
+    document.getElementById("cpCreatorId").value = (u && u.id) || "";
+    document.getElementById("cpCreatorName").value = (u && u.name) || "—";
+    const sel = document.getElementById("cpCreatorDept");
+    const depts = BMS4.DEPTS && BMS4.DEPTS.length ? BMS4.DEPTS.slice() : [];
+    if (u && u.dept && !depts.includes(u.dept)) depts.unshift(u.dept);
+    sel.innerHTML = depts.map((d) => `<option value="${escapeAttr(d)}">${escapeHtml(d)}</option>`).join("");
+    sel.value = (u && u.dept) || (depts[0] || "");
+  }
+
   function openNewCp() {
     document.getElementById("cpEditId").value = "";
     document.getElementById("cpModalTitle").textContent = "下达公司计划";
     document.getElementById("btnCpSave").textContent = "发布";
+    document.getElementById("cpCreatorWrap").classList.remove("hidden");
+    fillCpCreatorFields();
     document.getElementById("cpName").value = "";
     document.getElementById("cpPrio").value = "P1";
     document.getElementById("cpStatus").value = "进行中";
@@ -384,6 +408,7 @@
     document.getElementById("cpEditId").value = id;
     document.getElementById("cpModalTitle").textContent = "编辑公司计划";
     document.getElementById("btnCpSave").textContent = "保存";
+    document.getElementById("cpCreatorWrap").classList.add("hidden");
     document.getElementById("cpName").value = cp.name || "";
     document.getElementById("cpPrio").value = cp.priority || "P1";
     document.getElementById("cpStatus").value = cp.status || "进行中";
@@ -1080,10 +1105,13 @@
       render();
       return;
     }
+    const actor = BMS4.getRoleUser();
     BMS4.COMPANY_PLANS.push({
       id: "cp_" + Date.now(),
       ...patch,
-      owner: "李家治",
+      owner: (actor && actor.name) || "李家治",
+      creatorId: document.getElementById("cpCreatorId").value || (actor && actor.id) || "",
+      creatorDept: document.getElementById("cpCreatorDept").value || (actor && actor.dept) || "",
     });
     if (BMS4.persistDemoData) BMS4.persistDemoData();
     BMSUI.closeModal("modal-cp");

@@ -176,6 +176,23 @@
               </div>
             </div>
           </div>
+
+          <div class="form-section mt-3" id="creatorWrap">
+            <div class="form-section-hd">创建信息</div>
+            <div class="form-section-bd">
+              <input type="hidden" id="fCreatorId" value="" />
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">创建人</label>
+                  <input id="fCreatorName" class="form-ctrl bg-slate-50" readonly />
+                </div>
+                <div>
+                  <label class="form-label">创建人部门</label>
+                  <select id="fCreatorDept" class="form-ctrl"></select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 shrink-0 bg-slate-50/80">
           <button type="button" onclick="BMSUI.closeModal('modal')" class="text-sm px-4 py-2 rounded-[10px] border border-slate-200 bg-white text-slate-600">取消</button>
@@ -713,6 +730,18 @@
     render();
   }
 
+  function fillCreatorFields() {
+    const wrap = document.getElementById("creatorWrap");
+    if (wrap) wrap.classList.remove("hidden");
+    document.getElementById("fCreatorId").value = (user && user.id) || "";
+    document.getElementById("fCreatorName").value = (user && user.name) || "—";
+    const sel = document.getElementById("fCreatorDept");
+    const depts = BMS4.DEPTS.slice();
+    if (user && user.dept && !depts.includes(user.dept)) depts.unshift(user.dept);
+    sel.innerHTML = depts.map((d) => `<option value="${escapeAttr(d)}">${escapeHtml(d)}</option>`).join("");
+    sel.value = (user && user.dept) || depts[0] || "";
+  }
+
   function openEditPlan(id) {
     const p = BMS4.planById(id);
     if (!p) return;
@@ -721,6 +750,8 @@
     document.getElementById("fRefId").value = "";
     document.getElementById("fParentId").value = p.parentId || "";
     document.getElementById("modalTitle").textContent = "编辑计划";
+    const creatorWrap = document.getElementById("creatorWrap");
+    if (creatorWrap) creatorWrap.classList.add("hidden");
     const hint = document.getElementById("parentHint");
     const rootFields = document.getElementById("rootFields");
     hint.classList.remove("hidden");
@@ -760,6 +791,7 @@
     document.getElementById("fPct").value = "0";
     document.getElementById("fStart").value = "";
     document.getElementById("fEnd").value = "";
+    fillCreatorFields();
     const hint = document.getElementById("parentHint");
     const rootFields = document.getElementById("rootFields");
     const ref = refId ? BMS4.planById(refId) : null;
@@ -861,6 +893,8 @@
       return;
     }
     payload.parentId = parentId;
+    payload.creatorId = document.getElementById("fCreatorId").value || (user && user.id) || "";
+    payload.creatorDept = document.getElementById("fCreatorDept").value || (user && user.dept) || "";
     if (!parentId) {
       payload.dept = document.getElementById("fDeptModal").value || (ref && ref.dept) || user.dept;
       payload.companyPlanId = document.getElementById("fCompany").value || (ref && ref.companyPlanId) || "";

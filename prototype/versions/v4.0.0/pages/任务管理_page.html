@@ -236,6 +236,23 @@
               </div>
             </div>
           </div>
+
+          <div class="form-section hidden mt-3" id="creatorWrap">
+            <div class="form-section-hd">创建信息</div>
+            <div class="form-section-bd">
+              <input type="hidden" id="fCreatorId" value="" />
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="form-label">创建人</label>
+                  <input id="fCreatorName" class="form-ctrl bg-slate-50" readonly />
+                </div>
+                <div>
+                  <label class="form-label">创建人部门</label>
+                  <select id="fCreatorDept" class="form-ctrl"></select>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 shrink-0 bg-slate-50/80">
           <button type="button" onclick="BMSUI.closeModal('modal')" class="btn-ghost">取消</button>
@@ -1082,6 +1099,18 @@
     refreshParent();
   }
 
+  function fillCreatorFields() {
+    const wrap = document.getElementById("creatorWrap");
+    if (wrap) wrap.classList.remove("hidden");
+    document.getElementById("fCreatorId").value = (user && user.id) || "";
+    document.getElementById("fCreatorName").value = (user && user.name) || "—";
+    const sel = document.getElementById("fCreatorDept");
+    const depts = BMS4.DEPTS.slice();
+    if (user && user.dept && !depts.includes(user.dept)) depts.unshift(user.dept);
+    sel.innerHTML = depts.map((d) => `<option value="${escapeAttr(d)}">${escapeHtml(d)}</option>`).join("");
+    sel.value = (user && user.dept) || depts[0] || "";
+  }
+
   function openNew(preferAssign, kind) {
     document.getElementById("editId").value = "";
     document.getElementById("editExtra").classList.add("hidden");
@@ -1102,6 +1131,7 @@
     document.getElementById("fType").value = typeMap[user.dept] || "其他";
     const canAssign = canAssignTasks();
     document.getElementById("createModeWrap").classList.toggle("hidden", !canAssign);
+    fillCreatorFields();
     applyTaskKindUI(kind === "临时" ? "临时" : "计划");
     setCreateMode(preferAssign && canAssign ? "assign" : "self");
     document.getElementById("modalTitle").textContent = modalCreateTitle();
@@ -1122,6 +1152,7 @@
     badge.classList.remove("hidden");
     badgeText.textContent = kind === "临时" ? "临时任务" : "关联计划任务";
     document.getElementById("createModeWrap").classList.add("hidden");
+    document.getElementById("creatorWrap").classList.add("hidden");
     document.getElementById("ownerWrap").classList.add("hidden");
     document.getElementById("fName").value = t.name;
     document.getElementById("fType").value = t.taskType || "其他";
@@ -1174,6 +1205,8 @@
       source: isAssign ? "下达" : "自建",
     };
     if (!editId) {
+      payload.creatorId = document.getElementById("fCreatorId").value || (user && user.id) || "";
+      payload.creatorDept = document.getElementById("fCreatorDept").value || (user && user.dept) || "";
       BMS4.addAssignTask(payload);
       BMSUI.closeModal("modal");
       BMSUI.toast(
