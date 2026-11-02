@@ -1523,6 +1523,46 @@
     getCurrentWeek() {
       return "2026-W34";
     },
+    /**
+     * ISO 周年份周 → 周一/周日（UTC 日历日）
+     * @param {string} weekKey 如 2026-W34
+     * @returns {{ start: string, end: string } | null} YYYY-MM-DD
+     */
+    weekDateRange(weekKey) {
+      const m = String(weekKey || "").match(/^(\d{4})-W(\d{1,2})$/);
+      if (!m) return null;
+      const year = Number(m[1]);
+      const week = Number(m[2]);
+      if (!year || week < 1 || week > 53) return null;
+      const jan4 = new Date(Date.UTC(year, 0, 4));
+      const dow = jan4.getUTCDay() || 7;
+      const monday = new Date(jan4);
+      monday.setUTCDate(jan4.getUTCDate() - (dow - 1) + (week - 1) * 7);
+      const sunday = new Date(monday);
+      sunday.setUTCDate(monday.getUTCDate() + 6);
+      const fmt = (d) => {
+        const y = d.getUTCFullYear();
+        const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const da = String(d.getUTCDate()).padStart(2, "0");
+        return y + "-" + mo + "-" + da;
+      };
+      return { start: fmt(monday), end: fmt(sunday) };
+    },
+    /** 界面展示：周键 →「YYYY-MM-DD ~ YYYY-MM-DD」；非周键原样返回 */
+    formatWeekRange(weekKey) {
+      const r = this.weekDateRange(weekKey);
+      if (!r) return String(weekKey || "") || "—";
+      return r.start + " ~ " + r.end;
+    },
+    /** 周期键展示：周→日期范围；月→YYYY年M月；日→原样 */
+    formatPeriodLabel(periodKey) {
+      const k = String(periodKey || "").trim();
+      if (!k) return "—";
+      if (/^\d{4}-W\d{1,2}$/.test(k)) return this.formatWeekRange(k);
+      const ym = k.match(/^(\d{4})-(\d{2})$/);
+      if (ym) return ym[1] + "年" + Number(ym[2]) + "月";
+      return k;
+    },
     listMeetingWeeks() {
       const set = new Set(
         meetingMinutes.filter((x) => x.meetingType === "周例会").map((x) => x.periodKey || x.week)

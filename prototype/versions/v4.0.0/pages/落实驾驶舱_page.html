@@ -480,7 +480,10 @@
     const weeks = BMS4.listMeetingWeeks ? BMS4.listMeetingWeeks() : [meetWeek];
     const opts = weeks
       .filter(Boolean)
-      .map((w) => `<option value="${escapeAttr(w)}">${escapeHtml(w)}</option>`)
+      .map((w) => {
+        const label = BMS4.formatWeekRange ? BMS4.formatWeekRange(w) : w;
+        return `<option value="${escapeAttr(w)}">${escapeHtml(label)}</option>`;
+      })
       .join("");
     if (sel.innerHTML !== opts && sel.dataset.opts !== weeks.join("|")) {
       sel.innerHTML = opts;
@@ -672,12 +675,13 @@
     const mm = BMS4.getMeetingMinuteByWeek ? BMS4.getMeetingMinuteByWeek(meetWeek) : null;
     const weekMeetsAll = BMS4.superviseItems.filter((m) => m.week === meetWeek && m.status !== "已完成");
     const weekMeets = weekMeetsAll.slice(0, 5);
+    const meetWeekLabel = BMS4.formatWeekRange ? BMS4.formatWeekRange(meetWeek) : meetWeek;
     document.getElementById("weekMinuteStatus").innerHTML = mm
-      ? `<div class="text-xs text-slate-600">${escapeHtml(meetWeek)} · 纪要已录入 · ${escapeHtml(mm.updatedAt || "")}</div>
+      ? `<div class="text-xs text-slate-600">${escapeHtml(meetWeekLabel)} · 纪要已录入 · ${escapeHtml(mm.updatedAt || "")}</div>
          <div class="text-[11px] text-slate-400 mt-1 truncate" title="${escapeAttr(mm.summary || "")}">${escapeHtml(
           (mm.summary || "").replace(/\s+/g, " ").slice(0, 64)
         )}${(mm.summary || "").length > 64 ? "…" : ""}</div>`
-      : `<div class="text-xs text-amber-700">${escapeHtml(meetWeek)} · 纪要尚未补录</div>`;
+      : `<div class="text-xs text-amber-700">${escapeHtml(meetWeekLabel)} · 纪要尚未补录</div>`;
     document.getElementById("weekMeetBody").innerHTML = weekMeets.length
       ? weekMeets
           .map((m) => {
@@ -729,7 +733,9 @@
           .join("")
       : `<div class="text-sm text-slate-400 py-4 text-center sm:col-span-2 lg:col-span-5">暂无部门计划</div>`;
 
-    document.getElementById("reportGapPeriod").textContent = meetWeek + " · " + meetMonth;
+    const meetWeekLabelGap = BMS4.formatWeekRange ? BMS4.formatWeekRange(meetWeek) : meetWeek;
+    const meetMonthLabel = BMS4.formatPeriodLabel ? BMS4.formatPeriodLabel(meetMonth) : meetMonth;
+    document.getElementById("reportGapPeriod").textContent = meetWeekLabelGap + " · " + meetMonthLabel;
     document.getElementById("reportGapSummary").innerHTML = `
       <span class="${weekGaps.length ? "text-rose-600 font-medium" : "text-slate-500"}">周报缺口部门 ${weekGaps.length}</span>
       <span class="text-slate-300">|</span>
@@ -751,7 +757,13 @@
                   g.ownerId
                     ? `<button type="button" class="text-teal-700 text-sm hover:underline" data-urge="${urgePayloadJson({
                         targetUserId: g.ownerId,
-                        title: "催办：" + g.dept + g.typeLabel + "填报（" + g.periodKey + "）",
+                        title:
+                          "催办：" +
+                          g.dept +
+                          g.typeLabel +
+                          "填报（" +
+                          (BMS4.formatPeriodLabel ? BMS4.formatPeriodLabel(g.periodKey) : g.periodKey) +
+                          "）",
                         dept: g.dept,
                         exceptionType: g.exType,
                       })}">催办</button>`

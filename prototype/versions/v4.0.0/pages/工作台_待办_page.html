@@ -468,8 +468,10 @@
     const typeChip = `<span class="inline-flex px-2 py-0.5 rounded-full text-xs border ${CHIP[t.type] || "bg-slate-50"}">${t.type}</span>`;
 
     if (mod.id === "report") {
-      const period = t.week || t.month || "—";
-      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap">${period}</td><td class="px-4 py-3">${escapeHtml(t.title)}</td>${due}${st}${act}</tr>`;
+      const raw = t.week || t.month || "—";
+      const period =
+        raw !== "—" && BMS4.formatPeriodLabel ? BMS4.formatPeriodLabel(raw) : raw;
+      return `<tr class="border-t row-hover"><td class="px-4 py-3 whitespace-nowrap">${escapeHtml(period)}</td><td class="px-4 py-3">${escapeHtml(t.title)}</td>${due}${st}${act}</tr>`;
     }
     if (mod.id === "task") {
       return `<tr class="border-t row-hover"><td class="px-4 py-3">${prioTag(t.priority)}</td><td class="px-4 py-3">${escapeHtml(t.title)}</td><td class="px-4 py-3 text-xs text-slate-500">${escapeHtml(t.refLabel || "—")}</td>${due}${st}${act}</tr>`;

@@ -164,9 +164,9 @@
   }
   function periodLabelText() {
     if (periodType === "week") {
-      const [y, w] = periodKey().split("-W");
-      return y + "年第" + Number(w) + "周";
+      return BMS4.formatWeekRange ? BMS4.formatWeekRange(periodKey()) : periodKey();
     }
+    if (BMS4.formatPeriodLabel) return BMS4.formatPeriodLabel(periodKey());
     const [y, m] = periodKey().split("-");
     return y + "年" + Number(m) + "月";
   }

@@ -39,7 +39,7 @@
       <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div class="flex flex-wrap gap-2 items-center">
           <button type="button" id="btnNew" class="btn-cta text-white text-sm px-3 py-2 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>下达督办</button>
-          <span class="text-[11px] text-slate-400" id="currentWeekHint">当前自然周：2026-W34</span>
+          <span class="text-[11px] text-slate-400" id="currentWeekHint">当前自然周：2026-08-17 ~ 2026-08-23</span>
         </div>
         <div class="flex flex-wrap gap-2 items-center text-sm">
           <select id="fStatusFilter" class="border border-slate-200 rounded-xl px-3 py-1.5 bg-white">
@@ -327,11 +327,13 @@
     const ou = BMS4.userById(m.ownerId);
     const cu = BMS4.userById(m.creatorId);
     const week = m.week || "—";
+    const weekLabel =
+      week !== "—" && BMS4.formatWeekRange ? BMS4.formatWeekRange(week) : week;
     const isCur = week === getNaturalWeek();
     return `<tr>
       <td class="text-slate-500 whitespace-nowrap">${idx}</td>
       <td>${cellTitle(m)}</td>
-      <td class="whitespace-nowrap text-slate-600">${escapeHtml(week)}${
+      <td class="whitespace-nowrap text-slate-600">${escapeHtml(weekLabel)}${
         isCur ? '<span class="tag ml-1" style="background:#ecfdf5;color:#0f766e;border-color:#a7f3d0">本周</span>' : ""
       }</td>
       <td>${cellSelect(m, "priority", prioTag(m.priority), ["P0", "P1", "P2"])}</td>
@@ -511,7 +513,9 @@
     document.getElementById("viewBody").innerHTML = `
       <div><div class="text-xs text-slate-400">事项名称</div><div class="font-medium text-slate-800 mt-0.5">${escapeHtml(m.title)}</div></div>
       <div class="grid grid-cols-2 gap-3">
-        <div><div class="text-xs text-slate-400">周次</div><div class="mt-0.5">${escapeHtml(m.week || "—")}</div></div>
+        <div><div class="text-xs text-slate-400">周次</div><div class="mt-0.5">${escapeHtml(
+          m.week && BMS4.formatWeekRange ? BMS4.formatWeekRange(m.week) : m.week || "—"
+        )}</div></div>
         <div><div class="text-xs text-slate-400">优先级</div><div class="mt-0.5">${prioTag(m.priority)}</div></div>
         <div><div class="text-xs text-slate-400">责任人</div><div class="mt-0.5">${ou ? escapeHtml(ou.name + " · " + ou.dept) : "—"}</div></div>
         <div><div class="text-xs text-slate-400">状态</div><div class="mt-0.5">${statusTag(m.status)}</div></div>
@@ -573,7 +577,8 @@
     user = BMS4.getRoleUser();
     currentWeek = getNaturalWeek();
     canEdit = user.role === "总经理" || user.role === "部门长" || user.role === "计划管理员";
-    document.getElementById("currentWeekHint").textContent = "当前自然周：" + currentWeek;
+    document.getElementById("currentWeekHint").textContent =
+      "当前自然周：" + (BMS4.formatWeekRange ? BMS4.formatWeekRange(currentWeek) : currentWeek);
     if (!canEdit) {
       document.getElementById("btnNew").classList.add("hidden");
     }

@@ -235,7 +235,8 @@
     const banner = document.getElementById("mmWeekBanner");
     if (!hasCurrent) {
       banner.classList.remove("hidden");
-      banner.innerHTML = `当前自然周 <strong>${week}</strong> 的周例会纪要尚未补录。${
+      const weekLabel = BMS4.formatWeekRange ? BMS4.formatWeekRange(week) : week;
+      banner.innerHTML = `当前自然周 <strong>${escapeHtml(weekLabel)}</strong> 的周例会纪要尚未补录。${
         canEditMinute
           ? ` <button type="button" class="underline font-medium" id="bannerUpload">立即新建</button>`
           : "请联系计划管理员补录。"
@@ -264,9 +265,9 @@
         const isCur = m.meetingType === "周例会" && m.periodKey === week;
         return `<tr class="row-click" data-mm-open="${escapeAttr(m.id)}">
           <td class="whitespace-nowrap">${typeTag(m.meetingType)}</td>
-          <td class="whitespace-nowrap font-medium text-slate-800">${escapeHtml(m.periodKey || "—")}${
-            isCur ? '<span class="tag ml-1 tag-week">本周</span>' : ""
-          }</td>
+          <td class="whitespace-nowrap font-medium text-slate-800">${escapeHtml(
+            m.periodKey && BMS4.formatPeriodLabel ? BMS4.formatPeriodLabel(m.periodKey) : m.periodKey || "—"
+          )}${isCur ? '<span class="tag ml-1 tag-week">本周</span>' : ""}</td>
           <td class="max-w-[22rem]"><span class="name-link">${escapeHtml(summaryPreview(m.summary, 48))}</span></td>
           <td class="max-w-[12rem] text-slate-600">${escapeHtml(people.length ? people.join("、") : "—")}</td>
           <td class="whitespace-nowrap text-slate-600">${atts.length} 个</td>
