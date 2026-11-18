@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>洽谈记录 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }</style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="crm-talks" data-title="洽谈记录">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <header class="flex justify-between items-center mb-6">
+      <div><h1 class="text-2xl font-bold">洽谈记录</h1><p class="text-slate-500 text-sm mt-1">PC 端录入 · 共 312 条</p></div>
+      <button type="button" onclick="CRM_MODALS.talkCreate()" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium active:scale-95"><i class="fa-solid fa-plus mr-2"></i>新建洽谈</button>
+    </header>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600"><tr>
+          <th class="px-4 py-3 text-left font-medium">洽谈时间</th>
+          <th class="px-4 py-3 text-left font-medium">客户</th>
+          <th class="px-4 py-3 text-left font-medium">方式</th>
+          <th class="px-4 py-3 text-left font-medium">洽谈内容</th>
+          <th class="px-4 py-3 text-left font-medium">下次计划</th>
+          <th class="px-4 py-3 text-left font-medium">负责人</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.talkDetail()">
+            <td class="px-4 py-3">2026-08-27 14:30</td>
+            <td class="px-4 py-3 text-teal-700">宝钢股份</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">拜访</span></td>
+            <td class="px-4 py-3 text-slate-600 max-w-md truncate">讨论 Q4 铁矿卸船量及铁水联运比例调整…</td>
+            <td class="px-4 py-3">2026-09-03</td>
+            <td class="px-4 py-3">张明</td>
+          </tr>
+          <tr class="hover:bg-slate-50 cursor-pointer" onclick="CRM_MODALS.talkDetail()">
+            <td class="px-4 py-3">2026-08-26 10:15</td>
+            <td class="px-4 py-3 text-teal-700">首钢集团</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs">电话</span></td>
+            <td class="px-4 py-3 text-slate-600 max-w-md truncate">确认合同续签中堆存费计费标准…</td>
+            <td class="px-4 py-3">—</td>
+            <td class="px-4 py-3">李华</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <template id="tpl-talk-create">
+    <div class="space-y-4">
+      <div class="crm-field"><label class="crm-label">关联客户 <span class="crm-req">*</span></label><select id="modal-talk-customer"><option selected>宝钢股份有限公司</option><option>首钢集团有限公司</option></select></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="crm-field"><label class="crm-label">洽谈方式</label><select><option>拜访</option><option>电话</option><option>会议</option><option>邮件</option></select></div>
+        <div class="crm-field"><label class="crm-label">洽谈时间</label><input type="datetime-local" value="2026-08-27T14:30"></div>
+      </div>
+      <div class="crm-field"><label class="crm-label">洽谈内容 <span class="crm-req">*</span></label><textarea rows="5" placeholder="记录本次沟通要点…"></textarea></div>
+      <div class="crm-field"><label class="crm-label">下次洽谈计划</label><input type="date"></div>
+      <div class="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center text-slate-500 text-xs"><i class="fa-solid fa-cloud-arrow-up text-lg block mb-1 text-slate-400"></i>上传附件（会议纪要等）</div>
+    </div>
+  </template>
+
+  <template id="tpl-talk-detail">
+    <div class="space-y-4">
+      <div class="flex gap-4 text-sm"><span class="px-2 py-0.5 bg-slate-100 rounded">拜访</span><span class="text-slate-500">2026-08-27 14:30</span><span class="text-slate-500">张明</span></div>
+      <div class="p-4 bg-slate-50 rounded-xl"><p class="text-xs text-slate-500 mb-1">关联客户</p><p class="font-medium text-teal-700">宝钢股份有限公司</p></div>
+      <div><p class="text-xs text-slate-500 mb-1">洽谈内容</p><p class="leading-relaxed">讨论 Q4 铁矿卸船量及铁水联运比例调整，客户希望堆存免费天数延长至 7 天。已记录待内部评估后回复。</p></div>
+      <div><p class="text-xs text-slate-500 mb-1">下次洽谈计划</p><p class="font-medium">2026-09-03</p></div>
+    </div>
+  </template>
+
+  <script src="../assets/crm-modals.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    window.CRM_MODALS = {
+      talkCreate() {
+        openModalFromTemplate('tpl-talk-create', { title: '新建洽谈', size: 'md', footer: modalFooter('取消', '保存', 'bg-teal-600 hover:bg-teal-700 text-white', "closeModal(); showToast('洽谈已保存')") });
+      },
+      talkDetail() {
+        openModalFromTemplate('tpl-talk-detail', { title: '洽谈详情', size: 'md', footer: `<button type="button" data-close-modal class="px-5 py-2.5 border rounded-xl text-sm">关闭</button>` });
+      }
+    };
+    CRM_MODALS['talk-create'] = () => CRM_MODALS.talkCreate();
+    CRM_MODALS['followup-create'] = () => CRM_MODALS.talkCreate();
+  </script>
+</body>
+</html>

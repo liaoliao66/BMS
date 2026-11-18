@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>分组管理 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .btn-cta:disabled { opacity: .45; cursor: not-allowed; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800" data-page="crm-groups" data-title="分组管理">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <header class="flex justify-between items-center mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">分组管理</h1>
+        <p class="text-slate-500 text-sm mt-1">一客户仅属一组；可在分组内直接添加 / 移出客户；停用后不可再选入新客户</p>
+      </div>
+      <button type="button" onclick="openGroupForm('create')" class="px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium transition active:scale-95"><i class="fa-solid fa-plus mr-2"></i>新建分组</button>
+    </header>
+
+    <div class="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
+      <div><label class="text-xs text-slate-500 block mb-1">分组名称</label><input id="fName" type="text" placeholder="搜索分组" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-48 outline-none focus:ring-2 focus:ring-teal-500"></div>
+      <div><label class="text-xs text-slate-500 block mb-1">状态</label>
+        <select id="fStatus" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-32">
+          <option value="all">全部</option>
+          <option value="启用">启用</option>
+          <option value="停用">停用</option>
+        </select>
+      </div>
+      <button type="button" onclick="renderGroups()" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm hover:bg-slate-700">查询</button>
+      <button type="button" onclick="document.getElementById('fName').value='';document.getElementById('fStatus').value='all';renderGroups();" class="px-4 py-2 border border-slate-200 rounded-xl text-sm hover:bg-slate-50">重置</button>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="px-4 py-3 text-left font-medium">分组名称</th>
+            <th class="px-4 py-3 text-left font-medium">客户数</th>
+            <th class="px-4 py-3 text-left font-medium">负责人</th>
+            <th class="px-4 py-3 text-left font-medium">备注</th>
+            <th class="px-4 py-3 text-left font-medium">创建时间</th>
+            <th class="px-4 py-3 text-left font-medium">状态</th>
+            <th class="px-4 py-3 text-left font-medium">操作</th>
+          </tr>
+        </thead>
+        <tbody id="groupBody" class="divide-y divide-slate-100"></tbody>
+      </table>
+      <div class="px-4 py-3 border-t text-sm text-slate-500" id="groupFooter">共 0 条</div>
+    </div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- 管理客户 -->
+  <div id="modal-group-members" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-group-members')"></div>
+    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="shrink-0 px-6 py-4 border-b flex flex-wrap justify-between items-start gap-3">
+        <div>
+          <h3 class="text-lg font-semibold" id="membersTitle">管理客户</h3>
+          <p class="text-sm text-slate-500 mt-1" id="membersSub">—</p>
+        </div>
+        <button type="button" onclick="BMS.closeModal('modal-group-members')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="shrink-0 px-6 py-3 border-b flex flex-wrap gap-2 justify-between items-center bg-slate-50/80">
+        <span class="text-xs text-slate-500">一客户仅属一组；移出后回落为「未分组」</span>
+        <div class="flex gap-2">
+          <a id="membersGotoList" href="CRM_客户列表_page.html" class="text-xs text-teal-700 hover:underline px-2 py-1.5">去客户列表</a>
+          <button type="button" id="btnAddMembers" onclick="openAddMembers()" class="btn-cta text-white text-sm px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5"><i class="fa-solid fa-plus"></i>添加客户</button>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto px-6 py-4">
+        <div class="border border-slate-100 rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-4 py-2.5 text-left">客户名称</th>
+                <th class="px-4 py-2.5 text-left">类型</th>
+                <th class="px-4 py-2.5 text-left">状态</th>
+                <th class="px-4 py-2.5 text-left">操作</th>
+              </tr>
+            </thead>
+            <tbody id="membersBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="shrink-0 px-6 py-4 border-t flex justify-end">
+        <button type="button" onclick="BMS.closeModal('modal-group-members')" class="text-sm text-slate-500 px-3">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加客户 -->
+  <div id="modal-add-members" data-modal class="fixed inset-0 z-[55] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-add-members')"></div>
+    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-semibold">添加客户到分组</h3>
+          <p class="text-sm text-slate-500 mt-0.5" id="addMembersSub">—</p>
+        </div>
+        <button type="button" onclick="BMS.closeModal('modal-add-members')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="shrink-0 px-6 py-3 border-b flex flex-wrap gap-2 items-center">
+        <input id="addMemberKw" type="text" placeholder="搜索客户名称" class="border border-slate-200 rounded-xl px-3 py-2 text-sm flex-1 min-w-[160px]" oninput="renderAddMemberList()">
+        <select id="addMemberFilter" class="border border-slate-200 rounded-xl px-3 py-2 text-sm" onchange="renderAddMemberList()">
+          <option value="all">全部可添加</option>
+          <option value="ungrouped">仅未分组</option>
+          <option value="other">仅其他组</option>
+        </select>
+      </div>
+      <div class="flex-1 overflow-y-auto px-6 py-4">
+        <div class="border border-slate-100 rounded-2xl overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500">
+              <tr>
+                <th class="px-4 py-2.5 text-left w-10"><input type="checkbox" id="addCheckAll" onchange="toggleAddAll(this.checked)"></th>
+                <th class="px-4 py-2.5 text-left">客户名称</th>
+                <th class="px-4 py-2.5 text-left">当前分组</th>
+                <th class="px-4 py-2.5 text-left">类型</th>
+              </tr>
+            </thead>
+            <tbody id="addMembersBody"></tbody>
+          </table>
+        </div>
+        <p class="text-xs text-slate-400 mt-3" id="addMembersHint">已勾选 0 人；若原属其他组，确认后将改挂到本组</p>
+      </div>
+      <div class="shrink-0 px-6 py-4 border-t flex justify-end gap-2">
+        <button type="button" onclick="BMS.closeModal('modal-add-members')" class="text-sm text-slate-500 px-3">取消</button>
+        <button type="button" onclick="confirmAddMembers()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 改组确认 -->
+  <div id="modal-move-confirm" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-move-confirm')"></div>
+    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-md p-6">
+      <h3 class="text-lg font-semibold mb-2">确认改组</h3>
+      <p class="text-sm text-slate-600 leading-relaxed mb-4" id="moveConfirmText">所选客户中部分已属其他分组，确认后将改挂到当前分组。</p>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="BMS.closeModal('modal-move-confirm')" class="text-sm text-slate-500 px-3">取消</button>
+        <button type="button" onclick="applyAddMembers(true)" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm">确认改组并添加</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-group" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-group')"></div>
+    <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+        <h3 id="groupFormTitle" class="text-lg font-semibold">新建分组</h3>
+        <button type="button" onclick="BMS.closeModal('modal-group')" class="w-9 h-9 rounded-xl border text-slate-400"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4 text-sm">
+        <div>
+          <label class="block text-slate-600 mb-1">分组名称 <span class="text-red-500">*</span></label>
+          <input id="gName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5" placeholder="如：战略钢厂" maxlength="40">
+        </div>
+        <div>
+          <label class="block text-slate-600 mb-1">负责人</label>
+          <select id="gOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5">
+            <option value="">— 不指定 —</option>
+            <option>张明</option>
+            <option>李华</option>
+            <option>王芳</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-600 mb-1">状态 <span class="text-red-500">*</span></label>
+          <select id="gStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5">
+            <option selected>启用</option>
+            <option>停用</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-600 mb-1">备注</label>
+          <textarea id="gNote" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 h-20" placeholder="可选" maxlength="200"></textarea>
+        </div>
+        <p class="text-xs text-slate-400">规则：一个客户只能归属一个分组；停用后新建/编辑客户时不可再选该组。</p>
+      </div>
+      <div class="shrink-0 px-6 py-4 border-t flex justify-end gap-3">
+        <button type="button" onclick="BMS.closeModal('modal-group')" class="px-5 py-2.5 border border-slate-200 rounded-xl text-sm">取消</button>
+        <button type="button" onclick="saveGroup()" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-medium">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/common.js"></script>
+  <script>
+    let formMode = 'create';
+    let formIndex = -1;
+    let membersGroupId = null;
+    let pendingAddIds = [];
+
+    let GROUPS = [
+      { id: 1, name: '战略钢厂', owner: '张明', note: '宝钢、首钢等战略客户', created: '2026-01-10', status: '启用' },
+      { id: 2, name: '船东重点', owner: '王芳', note: '船公司重点洽谈', created: '2026-02-18', status: '启用' },
+      { id: 3, name: '散货潜力', owner: '李华', note: '潜在货主池', created: '2026-03-05', status: '启用' },
+      { id: 4, name: '休眠观察', owner: '', note: '半年无洽谈，观察后决定是否激活', created: '2026-05-20', status: '停用' }
+    ];
+
+    let CUSTOMERS = [
+      { id: 1, name: '宝钢股份有限公司', type: '钢厂', status: '合作中', groupId: 1 },
+      { id: 2, name: '首钢集团有限公司', type: '钢厂', status: '合作中', groupId: 1 },
+      { id: 3, name: '河钢集团有限公司', type: '钢厂', status: '潜在', groupId: 1 },
+      { id: 4, name: '鞍钢集团有限公司', type: '钢厂', status: '合作中', groupId: 1 },
+      { id: 5, name: '中远海运散货运输有限公司', type: '船公司', status: '潜在', groupId: 2 },
+      { id: 6, name: '招商轮船股份有限公司', type: '船公司', status: '合作中', groupId: 2 },
+      { id: 7, name: '中谷海运集团', type: '船公司', status: '潜在', groupId: 2 },
+      { id: 8, name: '中粮储运', type: '货主', status: '合作中', groupId: 3 },
+      { id: 9, name: '中谷物流', type: '物流商', status: '合作中', groupId: 3 },
+      { id: 10, name: '港联贸易', type: '货主', status: '潜在', groupId: 3 },
+      { id: 11, name: '远洋货运', type: '物流商', status: '休眠', groupId: 4 },
+      { id: 12, name: '海河储运', type: '货主', status: '休眠', groupId: 4 },
+      { id: 13, name: '港机粮贸', type: '货主', status: '潜在', groupId: null },
+      { id: 14, name: '华北矿贸', type: '货主', status: '潜在', groupId: null },
+      { id: 15, name: '津门船务代理', type: '物流商', status: '潜在', groupId: null }
+    ];
+
+    function findGroup(id) {
+      return GROUPS.find(g => g.id === id);
+    }
+
+    function groupCustomerCount(groupId) {
+      return CUSTOMERS.filter(c => c.groupId === groupId).length;
+    }
+
+    function syncGroupCounts() {
+      GROUPS.forEach(g => { g.count = groupCustomerCount(g.id); });
+    }
+
+    function statusBadge(s) {
+      return s === '启用'
+        ? '<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">启用</span>'
+        : '<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">停用</span>';
+    }
+
+    function custStatusBadge(s) {
+      if (s === '合作中') return '<span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs">合作中</span>';
+      if (s === '休眠') return '<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">休眠</span>';
+      return '<span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded text-xs">潜在</span>';
+    }
+
+    function renderGroups() {
+      syncGroupCounts();
+      const kw = (document.getElementById('fName').value || '').trim();
+      const st = document.getElementById('fStatus').value;
+      const list = GROUPS.filter(g => {
+        if (kw && !g.name.includes(kw)) return false;
+        if (st !== 'all' && g.status !== st) return false;
+        return true;
+      });
+      document.getElementById('groupBody').innerHTML = list.length ? list.map(g => {
+        const idx = GROUPS.findIndex(x => x.id === g.id);
+        const toggleLabel = g.status === '启用' ? '停用' : '启用';
+        return `<tr class="hover:bg-slate-50">
+          <td class="px-4 py-3 font-medium text-slate-900">${g.name}</td>
+          <td class="px-4 py-3">
+            <button type="button" class="text-teal-700 hover:underline font-medium" onclick="openGroupMembers(${g.id})">${g.count}</button>
+          </td>
+          <td class="px-4 py-3">${g.owner || '—'}</td>
+          <td class="px-4 py-3 text-slate-500 max-w-xs truncate" title="${g.note || ''}">${g.note || '—'}</td>
+          <td class="px-4 py-3 text-slate-500">${g.created}</td>
+          <td class="px-4 py-3">${statusBadge(g.status)}</td>
+          <td class="px-4 py-3 space-x-2 whitespace-nowrap">
+            <button type="button" class="text-teal-600 hover:underline" onclick="openGroupMembers(${g.id})">管理客户</button>
+            <button type="button" class="text-teal-600 hover:underline" onclick="openGroupForm('edit', ${idx})">编辑</button>
+            <button type="button" class="text-slate-500 hover:underline" onclick="toggleGroupStatus(${idx})">${toggleLabel}</button>
+            <button type="button" class="text-red-500 hover:underline" onclick="deleteGroup(${idx})">删除</button>
+          </td>
+        </tr>`;
+      }).join('') : `<tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">暂无分组</td></tr>`;
+      document.getElementById('groupFooter').textContent = '共 ' + list.length + ' 条 · 一客户仅属一组 · 可在组内直接添加/移出客户';
+    }
+
+    function openGroupForm(mode, idx) {
+      formMode = mode;
+      formIndex = typeof idx === 'number' ? idx : -1;
+      document.getElementById('groupFormTitle').textContent = mode === 'create' ? '新建分组' : '编辑分组';
+      if (mode === 'edit' && GROUPS[formIndex]) {
+        const g = GROUPS[formIndex];
+        document.getElementById('gName').value = g.name;
+        document.getElementById('gOwner').value = g.owner || '';
+        document.getElementById('gStatus').value = g.status;
+        document.getElementById('gNote').value = g.note || '';
+      } else {
+        document.getElementById('gName').value = '';
+        document.getElementById('gOwner').value = '';
+        document.getElementById('gStatus').value = '启用';
+        document.getElementById('gNote').value = '';
+      }
+      BMS.openModal('modal-group');
+    }
+
+    function saveGroup() {
+      const name = document.getElementById('gName').value.trim();
+      const owner = document.getElementById('gOwner').value;
+      const status = document.getElementById('gStatus').value;
+      const note = document.getElementById('gNote').value.trim();
+      if (!name) { BMS.toast('请填写分组名称', 'error'); return; }
+      const dup = GROUPS.some((g, i) => g.name === name && i !== formIndex);
+      if (dup) { BMS.toast('分组名称已存在', 'error'); return; }
+      if (formMode === 'create') {
+        GROUPS.unshift({ id: Date.now(), name, owner, note, created: '2026-09-01', status });
+        BMS.toast('分组已创建');
+      } else {
+        const g = GROUPS[formIndex];
+        const oldName = g.name;
+        g.name = name;
+        g.owner = owner;
+        g.status = status;
+        g.note = note;
+        if (membersGroupId === g.id) {
+          document.getElementById('membersTitle').textContent = '管理客户 · ' + g.name;
+        }
+        BMS.toast(oldName !== name ? '分组已保存' : '分组已保存');
+      }
+      BMS.closeModal('modal-group');
+      renderGroups();
+    }
+
+    function toggleGroupStatus(idx) {
+      const g = GROUPS[idx];
+      if (!g) return;
+      if (g.status === '启用') {
+        g.status = '停用';
+        BMS.toast('已停用「' + g.name + '」；已归属客户仍展示该组，不可再选入新客户');
+      } else {
+        g.status = '启用';
+        BMS.toast('已启用「' + g.name + '」');
+      }
+      renderGroups();
+      if (membersGroupId === g.id) renderMembersModal();
+    }
+
+    function deleteGroup(idx) {
+      const g = GROUPS[idx];
+      if (!g) return;
+      const n = groupCustomerCount(g.id);
+      if (n > 0) {
+        CUSTOMERS.forEach(c => { if (c.groupId === g.id) c.groupId = null; });
+        BMS.toast('组内 ' + n + ' 家客户已回落为「未分组」后删除分组', 'warn');
+      } else {
+        BMS.toast('分组已删除');
+      }
+      if (membersGroupId === g.id) {
+        BMS.closeModal('modal-group-members');
+        membersGroupId = null;
+      }
+      GROUPS.splice(idx, 1);
+      renderGroups();
+    }
+
+    function openGroupMembers(groupId) {
+      const g = findGroup(groupId);
+      if (!g) return;
+      membersGroupId = groupId;
+      renderMembersModal();
+      BMS.openModal('modal-group-members');
+    }
+
+    function renderMembersModal() {
+      const g = findGroup(membersGroupId);
+      if (!g) return;
+      const members = CUSTOMERS.filter(c => c.groupId === g.id);
+      document.getElementById('membersTitle').textContent = '管理客户 · ' + g.name;
+      document.getElementById('membersSub').textContent = '当前 ' + members.length + ' 家 · 状态：' + g.status;
+      document.getElementById('membersGotoList').href = 'CRM_客户列表_page.html?group=' + encodeURIComponent(g.name);
+      const addBtn = document.getElementById('btnAddMembers');
+      if (addBtn) {
+        addBtn.disabled = g.status !== '启用';
+        addBtn.title = g.status === '启用' ? '' : '停用分组不可再添加客户';
+      }
+      const body = document.getElementById('membersBody');
+      if (!members.length) {
+        body.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">暂无客户 · 点击「添加客户」将客户加入本组</td></tr>';
+      } else {
+        body.innerHTML = members.map(c => `
+          <tr class="border-t hover:bg-slate-50">
+            <td class="px-4 py-2.5 font-medium text-slate-900">${c.name}</td>
+            <td class="px-4 py-2.5">${c.type}</td>
+            <td class="px-4 py-2.5">${custStatusBadge(c.status)}</td>
+            <td class="px-4 py-2.5"><button type="button" class="text-red-500 hover:underline" onclick="removeMember(${c.id})">移出</button></td>
+          </tr>`).join('');
+      }
+    }
+
+    function removeMember(customerId) {
+      const c = CUSTOMERS.find(x => x.id === customerId);
+      if (!c || c.groupId !== membersGroupId) return;
+      c.groupId = null;
+      BMS.toast('已移出「' + c.name + '」，回落为未分组');
+      renderMembersModal();
+      renderGroups();
+    }
+
+    function openAddMembers() {
+      const g = findGroup(membersGroupId);
+      if (!g) return;
+      if (g.status !== '启用') {
+        BMS.toast('停用分组不可再添加客户', 'error');
+        return;
+      }
+      document.getElementById('addMembersSub').textContent = '目标分组：' + g.name;
+      document.getElementById('addMemberKw').value = '';
+      document.getElementById('addMemberFilter').value = 'all';
+      document.getElementById('addCheckAll').checked = false;
+      renderAddMemberList();
+      BMS.openModal('modal-add-members');
+    }
+
+    function getAddableCustomers() {
+      const g = findGroup(membersGroupId);
+      if (!g) return [];
+      const kw = (document.getElementById('addMemberKw').value || '').trim();
+      const filter = document.getElementById('addMemberFilter').value;
+      return CUSTOMERS.filter(c => {
+        if (c.groupId === g.id) return false;
+        if (kw && !c.name.includes(kw)) return false;
+        if (filter === 'ungrouped' && c.groupId != null) return false;
+        if (filter === 'other' && c.groupId == null) return false;
+        return true;
+      });
+    }
+
+    function renderAddMemberList() {
+      const list = getAddableCustomers();
+      const body = document.getElementById('addMembersBody');
+      if (!list.length) {
+        body.innerHTML = '<tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">暂无可添加客户</td></tr>';
+      } else {
+        body.innerHTML = list.map(c => {
+          const g = c.groupId != null ? findGroup(c.groupId) : null;
+          const groupLabel = g ? g.name : '未分组';
+          const groupCls = g ? 'text-amber-700' : 'text-slate-400';
+          return `<tr class="border-t hover:bg-slate-50">
+            <td class="px-4 py-2.5"><input type="checkbox" class="add-check" value="${c.id}" onchange="updateAddHint()"></td>
+            <td class="px-4 py-2.5 font-medium">${c.name}</td>
+            <td class="px-4 py-2.5 ${groupCls}">${groupLabel}</td>
+            <td class="px-4 py-2.5">${c.type}</td>
+          </tr>`;
+        }).join('');
+      }
+      updateAddHint();
+    }
+
+    function toggleAddAll(on) {
+      document.querySelectorAll('.add-check').forEach(c => { c.checked = on; });
+      updateAddHint();
+    }
+
+    function selectedAddIds() {
+      return Array.from(document.querySelectorAll('.add-check:checked')).map(el => parseInt(el.value, 10));
+    }
+
+    function updateAddHint() {
+      const ids = selectedAddIds();
+      const moveN = ids.filter(id => {
+        const c = CUSTOMERS.find(x => x.id === id);
+        return c && c.groupId != null;
+      }).length;
+      let text = '已勾选 ' + ids.length + ' 家';
+      if (moveN) text += ' · 其中 ' + moveN + ' 家将从其他组改挂';
+      document.getElementById('addMembersHint').textContent = text;
+      const all = document.querySelectorAll('.add-check');
+      const checkAll = document.getElementById('addCheckAll');
+      if (checkAll) checkAll.checked = all.length > 0 && ids.length === all.length;
+    }
+
+    function confirmAddMembers() {
+      const ids = selectedAddIds();
+      if (!ids.length) {
+        BMS.toast('请先选择客户', 'error');
+        return;
+      }
+      pendingAddIds = ids;
+      const moveN = ids.filter(id => {
+        const c = CUSTOMERS.find(x => x.id === id);
+        return c && c.groupId != null;
+      }).length;
+      if (moveN > 0) {
+        const g = findGroup(membersGroupId);
+        document.getElementById('moveConfirmText').textContent =
+          '所选 ' + ids.length + ' 家客户中，有 ' + moveN + ' 家已属其他分组。确认后将改挂到「' + (g ? g.name : '') + '」。';
+        BMS.openModal('modal-move-confirm');
+        return;
+      }
+      applyAddMembers(false);
+    }
+
+    function applyAddMembers(fromConfirm) {
+      const g = findGroup(membersGroupId);
+      if (!g) return;
+      const ids = pendingAddIds.length ? pendingAddIds : selectedAddIds();
+      let added = 0;
+      let moved = 0;
+      ids.forEach(id => {
+        const c = CUSTOMERS.find(x => x.id === id);
+        if (!c || c.groupId === g.id) return;
+        if (c.groupId != null) moved++;
+        c.groupId = g.id;
+        added++;
+      });
+      pendingAddIds = [];
+      if (fromConfirm) BMS.closeModal('modal-move-confirm');
+      BMS.closeModal('modal-add-members');
+      renderMembersModal();
+      renderGroups();
+      if (moved) BMS.toast('已添加 ' + added + ' 家（含改组 ' + moved + ' 家）');
+      else BMS.toast('已添加 ' + added + ' 家客户');
+    }
+
+    document.addEventListener('DOMContentLoaded', renderGroups);
+    if (document.readyState !== 'loading') renderGroups();
+  </script>
+</body>
+</html>

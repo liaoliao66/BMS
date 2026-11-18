@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>合同台账 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; }
+    .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .fee-card { border:1px solid #e2e8f0; background:#fff; border-radius:12px; padding:10px 12px; cursor:pointer; transition: border-color .15s, background .15s, box-shadow .15s; }
+    .fee-card:hover { border-color:#99f6e4; background:#f8fafc; }
+    .fee-card.is-on { border-color:#0f766e; background:#f0fdfa; box-shadow: inset 0 0 0 1px #0f766e; }
+    .fee-card.is-added { border-color:#cbd5e1; background:#f8fafc; cursor:default; opacity:.72; }
+    .fee-card .ck { width:16px; height:16px; border-radius:4px; border:1px solid #cbd5e1; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; background:#fff; color:transparent; font-size:10px; }
+    .fee-card.is-on .ck { background:#0f766e; border-color:#0f766e; color:#fff; }
+    .fee-card.is-added .ck { background:#94a3b8; border-color:#94a3b8; color:#fff; }
+    .step-dot { width:22px; height:22px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; }
+    .step-dot.on { background:#0f766e; color:#fff; }
+    .step-dot.off { background:#e2e8f0; color:#64748b; }
+    .step-dot.cur { background:#0f766e; color:#fff; box-shadow:0 0 0 3px rgba(15,118,110,.18); }
+    .bill-scroll::-webkit-scrollbar { width:6px; height:6px; }
+    .bill-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+    .cust-drop { max-height:220px; overflow-y:auto; }
+    .cust-drop button:hover, .cust-drop button.on { background:#f0fdfa; color:#0f766e; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="contracts" data-title="合同台账">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <input class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-48" placeholder="搜索合同名称/编号" />
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部状态</option><option>执行中</option><option>已完成</option><option>已终止</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部类型</option><option>综合</option><option>装卸服务</option><option>堆存</option><option>铁水联运框架</option></select>
+        <select class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm"><option>全部部门</option><option>商务部</option><option>调度中心</option></select>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="openContractForm('create')" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新建合同</button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-5">
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总数</div><div class="text-2xl font-semibold mt-1">13</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">合同总额（万元）</div><div class="text-2xl font-semibold mt-1">4,540</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">累计开票（万元）</div><div class="text-2xl font-semibold mt-1 text-violet-700">2,900</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">回款总额（万元）</div><div class="text-2xl font-semibold mt-1 text-emerald-600">2,385</div></div>
+      <div class="bg-white rounded-2xl p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)]"><div class="text-sm text-slate-500">剩余收款（万元）</div><div class="text-2xl font-semibold mt-1 text-amber-600">2,155</div></div>
+    </div>
+
+    <p class="text-xs text-slate-500 mb-3">流程：先<strong>保存合同</strong> → 再配<strong>计费方式</strong>；列表可看<strong>详情</strong>（含计费、开票、收款）。客户支持搜索选择（主数据见 <a href="CRM_客户列表_page.html" class="text-teal-700">客户管理</a>）。</p>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">合同名称</th>
+            <th class="px-4 py-3 text-left">合同编号</th>
+            <th class="px-4 py-3 text-left">合同类型</th>
+            <th class="px-4 py-3 text-left">客户（CRM）</th>
+            <th class="px-4 py-3 text-left">付款条件 / 账期</th>
+            <th class="px-4 py-3 text-left">合同金额</th>
+            <th class="px-4 py-3 text-left">计费方式</th>
+            <th class="px-4 py-3 text-left">已开票</th>
+            <th class="px-4 py-3 text-left">已回款</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="contractTableBody"></tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500" id="contractCount">共 0 条合同</div>
+    </div>
+
+    <!-- 新建/编辑：仅基本信息 -->
+    <div id="modal-contract" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-contract')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <div>
+            <h3 id="contractFormTitle" class="text-lg font-semibold">新建合同</h3>
+            <p class="text-xs text-slate-500 mt-0.5">本步只录入合同基本信息；保存后配置计费方式</p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-contract')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <input type="hidden" id="cFormMode" value="create" />
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">合同名称 <span class="text-red-500">*</span></label><input id="cName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026 年度集装箱装卸服务合同" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">合同编号 <span class="text-red-500">*</span></label><input id="cCode" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="HT-2026-0012" /></div>
+          </div>
+          <div class="relative" id="cCustomerWrap">
+            <label class="block text-sm text-slate-600 mb-1">客户 <span class="text-red-500">*</span></label>
+            <input type="hidden" id="cCustomer" value="" />
+            <div class="relative">
+              <input id="cCustomerSearch" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm pr-9" placeholder="输入关键词搜索客户" autocomplete="off" />
+              <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 text-xs pointer-events-none"></i>
+            </div>
+            <div id="cCustomerDrop" class="cust-drop hidden absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg py-1"></div>
+            <p class="text-xs text-slate-400 mt-1">支持搜索选择；主数据在 <a href="CRM_客户列表_page.html" class="text-teal-700">客户管理</a> 维护。</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">合同类型 <span class="text-red-500">*</span></label>
+              <select id="cType" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>综合</option>
+                <option selected>装卸服务</option>
+                <option>堆存</option>
+                <option>铁水联运框架</option>
+              </select>
+            </div>
+            <div><label class="block text-sm text-slate-600 mb-1">合同金额（万元） <span class="text-red-500">*</span></label><input id="cAmount" type="number" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="1200" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">签订日期 <span class="text-red-500">*</span></label><input id="cSign" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-01-15" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">责任部门 <span class="text-red-500">*</span></label><select id="cDept" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>商务部</option><option>调度中心</option><option>设备部</option></select></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">付款条件 / 账期 <span class="text-red-500">*</span></label>
+              <select id="cTerms" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>月结 30 天</option>
+                <option selected>货到后 45 天</option>
+                <option>月结 60 天</option>
+                <option>季度结算（季末）</option>
+                <option>未约定</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">约定应付日起算</label>
+              <select id="cDueFrom" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>开票日后 N 天</option>
+                <option selected>货到 / 作业完成后 N 天</option>
+                <option>自然月结日</option>
+                <option>季度末</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">开始日期 <span class="text-red-500">*</span></label><input id="cStart" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-01-01" /></div>
+            <div><label class="block text-sm text-slate-600 mb-1">结束日期 <span class="text-red-500">*</span></label><input id="cEnd" type="date" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="2026-12-31" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="block text-sm text-slate-600 mb-1">负责人 <span class="text-red-500">*</span></label><select id="cOwner" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>陈敏</option><option>刘强</option><option>周杰</option><option>张明</option></select></div>
+            <div><label class="block text-sm text-slate-600 mb-1">合同状态 <span class="text-red-500">*</span></label><select id="cStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option selected>执行中</option><option>已完成</option><option>已终止</option><option>已作废</option></select></div>
+          </div>
+          <div><label class="block text-sm text-slate-600 mb-1">合同说明</label><textarea id="cRemark" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-20" placeholder="可选">含桥吊装卸、堆场周转相关服务条款。</textarea></div>
+          <div class="rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-2 text-xs text-amber-800">保存合同后将自动进入「计费方式」配置；也可稍后在列表操作中补配。</div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveContract()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存合同</button>
+          <button type="button" onclick="BMS.closeModal('modal-contract')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 计费方式：左全部费种 / 右配置参数 -->
+    <div id="modal-billing" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-billing')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-[920px] max-w-[calc(100vw-1.5rem)] h-[640px] max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-5 sm:px-6 py-4 border-b">
+          <div class="flex justify-between items-start gap-3">
+            <div class="min-w-0">
+              <h3 class="text-lg font-semibold text-slate-900">配置计费方式</h3>
+              <p class="text-xs text-slate-500 mt-1 truncate" id="billingSub">左栏费种 · 右栏配置本合同参数</p>
+            </div>
+            <button type="button" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50" onclick="BMS.closeModal('modal-billing')"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <p class="mt-2 text-[11px] text-slate-400 leading-relaxed">费种就这些。点左侧费种，右侧按货种配置；通过弹窗选模板看详参，并可在本页完整编辑费用。</p>
+        </div>
+
+        <div class="flex-1 min-h-0 flex flex-col md:flex-row">
+          <!-- 左：全部费种 -->
+          <aside class="md:w-48 shrink-0 border-b md:border-b-0 md:border-r border-slate-200 bg-slate-50/80 flex flex-col">
+            <div class="p-3 border-b border-slate-200">
+              <p class="text-xs font-medium text-slate-600">全部费种</p>
+            </div>
+            <div id="feeSideList" class="flex-1 overflow-y-auto bill-scroll p-2 space-y-1"></div>
+          </aside>
+
+          <!-- 右：当前费种参数（按货种分行） -->
+          <div class="flex-1 min-w-0 flex flex-col min-h-0">
+            <div class="shrink-0 px-4 sm:px-5 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p class="text-sm font-semibold text-slate-900" id="feePanelTitle">请选择费种</p>
+                <p class="text-[11px] text-slate-400 mt-0.5" id="feePanelHint">为本合同配置该费种在不同货种下的参数</p>
+              </div>
+              <div id="feeAddBar" class="hidden flex flex-wrap gap-1.5 items-center">
+                <select id="cargoPick" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm bg-white">
+                  <option value="散货">散货</option>
+                  <option value="件杂货">件杂货</option>
+                  <option value="集装箱">集装箱</option>
+                </select>
+                <button type="button" onclick="addCargoLine()" class="text-sm px-3 py-1.5 rounded-lg btn-cta text-white inline-flex items-center gap-1"><i class="fa-solid fa-plus"></i>添加货种参数</button>
+              </div>
+            </div>
+            <div id="feeItemList" class="bill-scroll flex-1 overflow-y-auto px-4 sm:px-5 py-4 space-y-3"></div>
+            <p class="shrink-0 px-4 sm:px-5 pb-3 text-[11px] text-slate-400">选模板 / 编辑费用均只改本合同；不回写 <a href="基础配置_费用模块_page.html" class="text-teal-700 hover:underline">基础配置 · 费用模块</a>。</p>
+          </div>
+        </div>
+
+        <div class="shrink-0 px-5 sm:px-6 py-3.5 border-t bg-white flex flex-wrap gap-2 sm:gap-3 items-center justify-between">
+          <div class="flex flex-wrap gap-2 items-center">
+            <button type="button" onclick="saveBilling()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存计费方式</button>
+            <button type="button" onclick="BMS.closeModal('modal-billing')" class="text-sm px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50">稍后配置</button>
+          </div>
+          <span id="billingSaveHint" class="text-xs text-slate-400">左选费种，右配参数</span>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- 选择费用模板（详参） -->
+    <div id="modal-pick-tpl" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-3 sm:p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-pick-tpl')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.16)] w-[880px] max-w-[calc(100vw-1.5rem)] h-[560px] max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-5 py-3.5 border-b flex justify-between items-start gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-900">选择费用模板</h3>
+            <p class="text-xs text-slate-500 mt-0.5" id="pickTplSub">查看参数后选用，仅快速填充本合同，不改模板库</p>
+          </div>
+          <button type="button" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50" onclick="BMS.closeModal('modal-pick-tpl')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 flex">
+          <aside class="w-56 shrink-0 border-r border-slate-200 bg-slate-50/80 overflow-y-auto bill-scroll p-2 space-y-1" id="pickTplList"></aside>
+          <div class="flex-1 min-w-0 overflow-y-auto bill-scroll px-5 py-4" id="pickTplDetail"></div>
+        </div>
+        <div class="shrink-0 px-5 py-3 border-t flex gap-2 items-center">
+          <button type="button" id="pickTplConfirm" onclick="confirmPickTpl()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">使用此模板</button>
+          <button type="button" onclick="BMS.closeModal('modal-pick-tpl')" class="text-sm px-3 py-2 rounded-xl border border-slate-200 text-slate-600">取消</button>
+          <span class="text-xs text-slate-400 ml-auto">选用后可在「编辑费用」中继续改</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑合同费用参数 -->
+    <div id="modal-edit-line" data-modal class="fixed inset-0 z-[60] hidden items-center justify-center p-3 sm:p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-edit-line')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.16)] w-[720px] max-w-[calc(100vw-1.5rem)] h-[600px] max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-5 py-3.5 border-b flex justify-between items-start gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-slate-900" id="editLineTitle">编辑费用</h3>
+            <p class="text-xs text-slate-500 mt-0.5">仅改本合同参数，不回写基础配置</p>
+          </div>
+          <button type="button" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50" onclick="BMS.closeModal('modal-edit-line')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-y-auto bill-scroll px-5 py-4 space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">计价方式</label>
+              <select id="elPriceMode" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
+                <option>单价×数量</option><option>固定包干</option><option>免堆+超期</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">计量单位</label>
+              <select id="elUnit" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"></select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-500 mb-1">基准单价 / 包干（元）</label>
+              <input id="elBase" type="number" step="0.01" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+            </div>
+            <div id="elFreeWrap" class="hidden">
+              <label class="block text-xs text-slate-500 mb-1">免堆天数</label>
+              <input id="elFreeDays" type="number" min="0" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" value="7" />
+            </div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-sm font-medium text-slate-800">等级计费</p>
+              <label class="inline-flex items-center gap-2 text-sm"><input id="elTierOn" type="checkbox" class="rounded border-slate-300" />启用等级</label>
+            </div>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-1">触发维度</label>
+                <select id="elTrigger" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                  <option>累计计费量</option><option>累计金额</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-1">档位结果</label>
+                <select id="elResult" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                  <option>单价</option><option>折扣</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-500 mb-1">跨档算法</label>
+                <select id="elAlgo" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                  <option>分段累进</option><option>全量落档</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs bg-white rounded-xl border border-slate-100">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="px-2 py-2 text-left">等级</th>
+                    <th class="px-2 py-2 text-left">名称</th>
+                    <th class="px-2 py-2 text-left">下限</th>
+                    <th class="px-2 py-2 text-left">上限</th>
+                    <th class="px-2 py-2 text-left">单价/折扣</th>
+                    <th class="px-2 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody id="elTierBody"></tbody>
+              </table>
+            </div>
+            <button type="button" onclick="addEditTierRow()" class="text-xs text-teal-700 hover:underline">+ 增加等级</button>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">备注</label>
+            <textarea id="elRemark" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm h-16" placeholder="可选"></textarea>
+          </div>
+        </div>
+        <div class="shrink-0 px-5 py-3 border-t flex gap-2">
+          <button type="button" onclick="saveEditLine()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存费用参数</button>
+          <button type="button" onclick="BMS.closeModal('modal-edit-line')" class="text-sm px-3 py-2 rounded-xl border border-slate-200 text-slate-600">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 详情：合同全部数据只读 -->
+    <div id="modal-contract-detail" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-contract-detail')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-[920px] max-w-[calc(100vw-1.5rem)] h-[640px] max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-5 sm:px-6 py-4 border-b flex justify-between items-start gap-3">
+          <div class="min-w-0">
+            <h3 id="dName" class="text-lg font-semibold text-slate-900">合同详情</h3>
+            <p id="dMeta" class="text-sm text-slate-500 mt-1 truncate"></p>
+          </div>
+          <button type="button" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50" onclick="BMS.closeModal('modal-contract-detail')"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 min-h-0 overflow-y-auto bill-scroll px-5 sm:px-6 py-4 space-y-5">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">合同金额</div><div id="dAmount" class="mt-1 font-medium">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">已开票</div><div id="dInvoice" class="mt-1 font-medium text-violet-700">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">已回款</div><div id="dReceipt" class="mt-1 font-medium text-emerald-600">—</div></div>
+            <div class="bg-slate-50 rounded-xl p-3"><div class="text-xs text-slate-500">计费方式</div><div id="dBilling" class="mt-1 font-medium">未配置</div></div>
+          </div>
+
+          <section>
+            <p class="text-sm font-medium text-slate-800 mb-2">基本信息</p>
+            <div id="dBasicGrid" class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm border border-slate-100 rounded-2xl p-4 bg-white"></div>
+          </section>
+
+          <section>
+            <div class="text-sm font-medium mb-2 flex justify-between items-center">
+              <span>计费方式（费种与参数）</span>
+              <button type="button" id="dBillingBtn" class="text-xs text-teal-700 hover:underline">配置计费方式</button>
+            </div>
+            <div id="dFeeTable" class="border border-slate-100 rounded-2xl overflow-hidden text-sm"></div>
+          </section>
+
+          <section>
+            <p class="text-sm font-medium text-slate-800 mb-2">开票记录 <span id="dInvoiceCount" class="text-xs font-normal text-slate-400"></span></p>
+            <div id="dInvoiceList" class="border border-slate-100 rounded-2xl overflow-hidden text-sm"></div>
+          </section>
+
+          <section>
+            <p class="text-sm font-medium text-slate-800 mb-2">收款记录 <span id="dReceiptCount" class="text-xs font-normal text-slate-400"></span></p>
+            <div id="dReceiptList" class="border border-slate-100 rounded-2xl overflow-hidden text-sm"></div>
+          </section>
+        </div>
+        <div class="shrink-0 px-5 sm:px-6 py-3 border-t flex flex-wrap gap-2">
+          <button type="button" id="dEditBtn" class="btn-cta text-white px-4 py-2 rounded-xl text-sm">编辑合同</button>
+          <button type="button" id="dBillingBtn2" class="border px-4 py-2 rounded-xl text-sm">配置计费</button>
+          <button type="button" onclick="BMS.closeModal('modal-contract-detail')" class="text-sm text-slate-500 px-3">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/fee-config.js"></script>
+  <script src="../assets/biz-data.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const CONTRACT_KEY = 'bms_v5_contracts';
+    const BILLING_KEY = 'bms_v5_contract_billing_v5';
+
+    const ALL_FEE_TYPES = ['装卸费', '堆存费', '过磅费', '清舱费', '过驳费'];
+    const ALL_CARGO_TYPES = ['散货', '件杂货', '集装箱'];
+
+    const CUSTOMERS = (window.BMSBizData && BMSBizData.customerNames()) || [
+      '宝钢股份有限公司', '首钢集团有限公司', '中远海运散货运输有限公司',
+      '远洋航运有限公司', '港联物流集团', '港机装备股份', '东海集装箱代理',
+    ];
+    function DEMO_INVOICES() { return (window.BMSBizData && BMSBizData.getInvoices()) || []; }
+    function DEMO_RECEIPTS() { return (window.BMSBizData && BMSBizData.getReceipts()) || []; }
+
+    const DEFAULT_CONTRACTS = [
+      { code: 'HT-2026-0076', name: '宝钢铁矿铁水联运框架合同', type: '铁水联运框架', customer: '宝钢股份有限公司', terms: '月结 60 天', amount: 860, invoice: 320, receipt: 240, status: '执行中', sign: '2026-01-10', start: '2026-01-01', end: '2026-12-31', dept: '商务部', owner: '陈敏', dueFrom: '自然月结日', remark: '' },
+      { code: 'HT-2026-0012', name: '2026 年度集装箱装卸服务合同', type: '装卸服务', customer: '远洋航运有限公司', terms: '货到后 45 天', amount: 1200, invoice: 900, receipt: 680, status: '执行中', sign: '2026-01-15', start: '2026-01-01', end: '2026-12-31', dept: '商务部', owner: '陈敏', dueFrom: '货到 / 作业完成后 N 天', remark: '含桥吊装卸、堆场周转相关服务条款。' },
+      { code: 'HT-2026-0008', name: '堆场仓储服务合同', type: '堆存', customer: '港联物流集团', terms: '月结 30 天', amount: 860, invoice: 860, receipt: 860, status: '已完成', sign: '2025-12-01', start: '2026-01-01', end: '2026-06-30', dept: '调度中心', owner: '刘强', dueFrom: '自然月结日', remark: '' },
+      { code: 'HT-2026-0015', name: '设备维保年度合同', type: '综合', customer: '港机装备股份', terms: '季度结算（季末）', amount: 420, invoice: 280, receipt: 150, status: '执行中', sign: '2026-02-01', start: '2026-01-01', end: '2026-12-31', dept: '设备部', owner: '周杰', dueFrom: '季度末', remark: '' },
+    ];
+
+    const FEE_TEMPLATE_MAP = {
+      '装卸费': { '散货': 'BULK_TON', '件杂货': 'BULK_TON', '集装箱': 'CNTR_TEU' },
+      '堆存费': { '散货': 'STG_TON_DAY', '件杂货': 'STG_TON_DAY', '集装箱': 'STG_TEU_DAY' },
+      '过磅费': { '散货': 'FEE_WEIGH', '件杂货': 'FEE_WEIGH', '集装箱': 'FEE_WEIGH' },
+      '清舱费': { '散货': 'BULK_SWEEP', '件杂货': 'BULK_SWEEP', '集装箱': 'BULK_SWEEP' },
+      '过驳费': { '散货': 'BULK_LIGHTER', '件杂货': 'BULK_LIGHTER', '集装箱': 'BULK_LIGHTER' },
+    };
+
+    const FEE_CAT = {
+      '装卸费': '装卸', '堆存费': '堆存', '过磅费': '附加', '清舱费': '装卸', '过驳费': '装卸',
+    };
+
+    /** feeGroups: [{ feeName, lines: [{ cargoType, sourceId, sourceName, unitCode, basePrice, priceMode, edited }] }] */
+    const DEFAULT_BILLING = {
+      'HT-2026-0012': {
+        feeGroups: [
+          { feeName: '装卸费', lines: [
+            { cargoType: '集装箱', sourceId: 'CNTR_TEU', sourceName: '集装箱装卸 · 按 TEU', unitCode: 'TEU', basePrice: 420, priceMode: '单价×数量', edited: false },
+          ]},
+        ],
+      },
+      'HT-2026-0076': {
+        feeGroups: [
+          { feeName: '装卸费', lines: [
+            { cargoType: '散货', sourceId: 'BULK_TON', sourceName: '散货装卸 · 按吨计价', unitCode: 'TON', basePrice: 12, priceMode: '单价×数量', edited: false },
+          ]},
+          { feeName: '堆存费', lines: [
+            { cargoType: '散货', sourceId: 'STG_TON_DAY', sourceName: '堆存 · 吨·天超期', unitCode: 'TON_DAY', basePrice: 0.8, priceMode: '单价×数量', edited: false },
+          ]},
+        ],
+      },
+      'HT-2026-0008': {
+        feeGroups: [
+          { feeName: '装卸费', lines: [
+            { cargoType: '散货', sourceId: 'BULK_TON', sourceName: '散货装卸 · 按吨计价', unitCode: 'TON', basePrice: 12, priceMode: '单价×数量', edited: false },
+            { cargoType: '件杂货', sourceId: 'BULK_TON', sourceName: '散货装卸 · 按吨计价', unitCode: 'TON', basePrice: 12, priceMode: '单价×数量', edited: false },
+          ]},
+          { feeName: '堆存费', lines: [
+            { cargoType: '散货', sourceId: 'STG_TON_DAY', sourceName: '堆存 · 吨·天超期', unitCode: 'TON_DAY', basePrice: 0.8, priceMode: '单价×数量', edited: false },
+          ]},
+        ],
+      },
+    };
+
+    function readJson(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return JSON.parse(JSON.stringify(fallback));
+        return JSON.parse(raw);
+      } catch (e) {
+        return JSON.parse(JSON.stringify(fallback));
+      }
+    }
+
+    let contracts = readJson(CONTRACT_KEY, DEFAULT_CONTRACTS);
+    let billingMap = readJson(BILLING_KEY, DEFAULT_BILLING);
+    let billingCode = '';
+    /** @type {{ feeName: string, lines: any[] }[]} */
+    let billFeeGroups = [];
+    let activeFee = ALL_FEE_TYPES[0];
+    let formMode = 'create';
+
+    function persistContracts() {
+      localStorage.setItem(CONTRACT_KEY, JSON.stringify(contracts));
+    }
+    function persistBilling() {
+      localStorage.setItem(BILLING_KEY, JSON.stringify(billingMap));
+    }
+
+    function uid() {
+      return 'BI_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    function ensureFeeGroup(feeName) {
+      let g = billFeeGroups.find((x) => x.feeName === feeName);
+      if (!g) {
+        g = { feeName, lines: [] };
+        billFeeGroups.push(g);
+      }
+      return g;
+    }
+
+    function activeFeeGroup() {
+      return billFeeGroups.find((x) => x.feeName === activeFee) || null;
+    }
+
+    function lineCount(groups) {
+      return (groups || []).reduce((s, g) => s + (g.lines || []).length, 0);
+    }
+
+    /** 兼容 v4 cargoGroups / 更早结构 → feeGroups */
+    function normalizeBilling(raw) {
+      if (!raw) return { feeGroups: [] };
+      if (Array.isArray(raw)) return { feeGroups: [] };
+      if (raw.feeGroups) return { feeGroups: JSON.parse(JSON.stringify(raw.feeGroups)) };
+
+      const map = {};
+      const push = (feeName, cargoType, f) => {
+        if (!map[feeName]) map[feeName] = { feeName, lines: [] };
+        if (map[feeName].lines.some((l) => l.cargoType === cargoType)) return;
+        map[feeName].lines.push({
+          instanceId: uid(),
+          cargoType,
+          sourceId: f.sourceId || '',
+          sourceName: f.sourceName || f.sourceId || '',
+          unitCode: f.unitCode || 'TON',
+          basePrice: f.basePrice != null ? f.basePrice : 0,
+          priceMode: f.priceMode || '单价×数量',
+          edited: !!f.edited,
+        });
+      };
+
+      if (raw.cargoGroups) {
+        raw.cargoGroups.forEach((g) => {
+          (g.fees || []).forEach((f) => push(f.feeName, g.cargoType, f));
+        });
+      } else if (raw.feeItems) {
+        (raw.feeItems || []).forEach((f) => {
+          const cargos = (f.applyCargo && f.applyCargo.length) ? f.applyCargo : (raw.cargoTypes || ['散货']);
+          cargos.forEach((ct) => push(f.feeName, ct, f));
+        });
+      }
+      return { feeGroups: Object.values(map) };
+    }
+
+    function getBilling(code) {
+      return normalizeBilling(billingMap[code]);
+    }
+
+    function billingStatusText(code) {
+      const b = getBilling(code);
+      const fees = (b.feeGroups || []).filter((g) => (g.lines || []).length).length;
+      const lines = lineCount(b.feeGroups);
+      if (!fees) {
+        return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">未配置</span>';
+      }
+      return `<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">费种 ${fees} · 参数 ${lines}</span>`;
+    }
+
+    function statusBadge(st) {
+      if (st === '已完成') return 'bg-emerald-50 text-emerald-700';
+      if (st === '已终止' || st === '已作废') return 'bg-slate-100 text-slate-500';
+      return 'bg-sky-50 text-sky-700';
+    }
+
+    function typeBadge(t) {
+      return t === '铁水联运框架' ? 'bg-teal-50 text-teal-800' : 'bg-slate-100 text-slate-700';
+    }
+
+    function renderContractTable() {
+      const body = document.getElementById('contractTableBody');
+      body.innerHTML = contracts.map((c) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3"><button type="button" class="text-teal-700 hover:underline text-left" onclick="openContractDetail('${c.code}')">${c.name}</button></td>
+          <td class="px-4 py-3">${c.code}</td>
+          <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full ${typeBadge(c.type)}">${c.type}</span></td>
+          <td class="px-4 py-3">${c.customer}</td>
+          <td class="px-4 py-3">${c.terms}</td>
+          <td class="px-4 py-3">${Number(c.amount).toLocaleString('zh-CN')} 万</td>
+          <td class="px-4 py-3">${billingStatusText(c.code)}</td>
+          <td class="px-4 py-3 text-violet-700">${Number(c.invoice || 0).toLocaleString('zh-CN')} 万</td>
+          <td class="px-4 py-3">${Number(c.receipt || 0).toLocaleString('zh-CN')} 万</td>
+          <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full ${statusBadge(c.status)}">${c.status}</span></td>
+          <td class="px-5 py-3 space-x-2 whitespace-nowrap">
+            <button type="button" onclick="openContractDetail('${c.code}')" class="text-teal-700 hover:underline">详情</button>
+            <button type="button" onclick="openBilling('${c.code}')" class="text-teal-700 hover:underline">计费方式</button>
+            <button type="button" onclick="openContractForm('edit','${c.code}')" class="hover:text-teal-700">编辑</button>
+          </td>
+        </tr>`).join('');
+      document.getElementById('contractCount').textContent = '共 ' + contracts.length + ' 条合同';
+    }
+
+    function setCustomerValue(name) {
+      document.getElementById('cCustomer').value = name || '';
+      document.getElementById('cCustomerSearch').value = name || '';
+      document.getElementById('cCustomerDrop').classList.add('hidden');
+    }
+
+    function renderCustomerDrop(keyword) {
+      const kw = (keyword || '').trim().toLowerCase();
+      const list = CUSTOMERS.filter((n) => !kw || n.toLowerCase().includes(kw));
+      const box = document.getElementById('cCustomerDrop');
+      if (!list.length) {
+        box.innerHTML = '<p class="px-3 py-2 text-xs text-slate-400">无匹配客户</p>';
+        box.classList.remove('hidden');
+        return;
+      }
+      const cur = document.getElementById('cCustomer').value;
+      box.innerHTML = list.map((n) =>
+        `<button type="button" class="w-full text-left px-3 py-2 text-sm ${n === cur ? 'on' : ''}" data-name="${n.replace(/"/g, '&quot;')}">${n}</button>`
+      ).join('');
+      box.classList.remove('hidden');
+      Array.from(box.querySelectorAll('button')).forEach((btn) => {
+        btn.onclick = () => setCustomerValue(btn.getAttribute('data-name'));
+      });
+    }
+
+    function initCustomerSearch() {
+      const input = document.getElementById('cCustomerSearch');
+      const drop = document.getElementById('cCustomerDrop');
+      input.addEventListener('focus', () => renderCustomerDrop(input.value));
+      input.addEventListener('input', () => {
+        document.getElementById('cCustomer').value = '';
+        renderCustomerDrop(input.value);
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') drop.classList.add('hidden');
+      });
+      document.addEventListener('click', (e) => {
+        if (!document.getElementById('cCustomerWrap').contains(e.target)) drop.classList.add('hidden');
+      });
+    }
+
+    function syncBillingHint() {
+      const used = billFeeGroups.filter((g) => g.lines.length);
+      document.getElementById('billingSaveHint').textContent = used.length
+        ? ('已配 ' + used.map((g) => g.feeName).join('、') + ' · 当前：' + activeFee)
+        : ('当前费种：' + activeFee + '（尚未配置参数）');
+    }
+
+    function modulesFor(cargoType, feeName) {
+      const cat = FEE_CAT[feeName] || '';
+      const all = BMSFeeConfig.enabledFees();
+      const prefer = all.filter((m) => {
+        const cargoOk = !m.cargoType || m.cargoType === '通用' || m.cargoType === cargoType || (cargoType === '件杂货' && m.cargoType === '散货');
+        const catOk = !cat || m.category === cat || m.category === '附加';
+        return cargoOk && catOk;
+      });
+      return prefer.length ? prefer : all;
+    }
+
+    function moduleOptionsHtml(cargoType, feeName, selectedId) {
+      const list = modulesFor(cargoType, feeName);
+      let html = '<option value="">不选模块（手工填）</option>';
+      list.forEach((m) => {
+        html += `<option value="${m.id}" ${m.id === selectedId ? 'selected' : ''}>${m.name}（${m.basePrice} 元）</option>`;
+      });
+      return html;
+    }
+
+    function renderFeeSide() {
+      const box = document.getElementById('feeSideList');
+      box.innerHTML = ALL_FEE_TYPES.map((name) => {
+        const g = billFeeGroups.find((x) => x.feeName === name);
+        const n = g ? g.lines.length : 0;
+        const on = name === activeFee;
+        return `<button type="button" onclick="selectFeeType('${name}')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm flex items-center justify-between gap-2 ${on ? 'bg-teal-700 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:border-teal-200'}">
+          <span class="truncate">${name}</span>
+          <span class="text-[10px] shrink-0 ${on ? 'text-teal-100' : (n ? 'text-teal-700' : 'text-slate-300')}">${n ? n + ' 行' : '未配'}</span>
+        </button>`;
+      }).join('');
+      renderFeePanel();
+      syncBillingHint();
+    }
+
+    function selectFeeType(name) {
+      activeFee = name;
+      renderFeeSide();
+    }
+
+    function lineFromTpl(tpl, cargoType) {
+      if (!tpl) {
+        return {
+          instanceId: uid(), cargoType, sourceId: '', sourceName: '',
+          unitCode: 'TON', basePrice: 0, priceMode: '单价×数量',
+          tierEnabled: false, trigger: '累计计费量', resultType: '单价', algorithm: '全量落档',
+          window: '合同期累计', freeDays: null, tiers: [], remark: '', edited: false,
+        };
+      }
+      return {
+        instanceId: uid(),
+        cargoType,
+        sourceId: tpl.sourceId || tpl.id || '',
+        sourceName: tpl.name || '',
+        unitCode: tpl.unitCode || 'TON',
+        basePrice: tpl.basePrice != null ? tpl.basePrice : 0,
+        priceMode: tpl.priceMode || '单价×数量',
+        tierEnabled: !!tpl.tierEnabled,
+        trigger: tpl.trigger || '累计计费量',
+        resultType: tpl.resultType || '单价',
+        algorithm: tpl.algorithm || '全量落档',
+        window: tpl.window || '合同期累计',
+        freeDays: tpl.freeDays != null ? tpl.freeDays : null,
+        tiers: JSON.parse(JSON.stringify(tpl.tiers || [])),
+        remark: tpl.remark || '',
+        edited: false,
+      };
+    }
+
+    function applyModuleToLine(line, moduleId) {
+      if (!moduleId) {
+        line.sourceId = '';
+        line.sourceName = '';
+        return;
+      }
+      const tpl = BMSFeeConfig.cloneForContract(moduleId);
+      if (!tpl) return;
+      const filled = lineFromTpl(tpl, line.cargoType);
+      Object.assign(line, filled, { instanceId: line.instanceId || filled.instanceId, cargoType: line.cargoType });
+    }
+
+    function emptyLine(feeName, cargoType) {
+      const tid = (FEE_TEMPLATE_MAP[feeName] || {})[cargoType] || '';
+      if (tid) {
+        const tpl = BMSFeeConfig.cloneForContract(tid);
+        if (tpl) return lineFromTpl(tpl, cargoType);
+      }
+      return lineFromTpl(null, cargoType);
+    }
+
+    function ruleSummary(line) {
+      const unit = BMSFeeConfig.unitName(line.unitCode);
+      const tier = line.tierEnabled
+        ? ((line.algorithm || '') + ' · ' + ((line.tiers || []).length) + ' 档')
+        : '一口价';
+      return (line.priceMode || '—') + ' · ' + unit + ' · ' + line.basePrice + ' 元 · ' + tier;
+    }
+
+    function tierTableHtml(tiers, resultType) {
+      if (!(tiers || []).length) return '<p class="text-xs text-slate-400">无等级档</p>';
+      const valHead = resultType === '折扣' ? '折扣%' : '单价';
+      return `<table class="w-full text-xs border border-slate-100 rounded-xl overflow-hidden">
+        <thead class="bg-slate-50 text-slate-500"><tr>
+          <th class="text-left px-2 py-1.5">等级</th><th class="text-left px-2 py-1.5">名称</th>
+          <th class="text-left px-2 py-1.5">下限</th><th class="text-left px-2 py-1.5">上限</th>
+          <th class="text-left px-2 py-1.5">${valHead}</th>
+        </tr></thead>
+        <tbody>${tiers.map((x) => `<tr class="border-t border-slate-50">
+          <td class="px-2 py-1.5">${x.level || ''}</td><td class="px-2 py-1.5">${x.name || ''}</td>
+          <td class="px-2 py-1.5">${x.min}</td><td class="px-2 py-1.5">${x.max == null ? '∞' : x.max}</td>
+          <td class="px-2 py-1.5">${resultType === '折扣' ? (x.discount != null ? x.discount : 100) : x.price}</td>
+        </tr>`).join('')}</tbody></table>`;
+    }
+
+    function moduleDetailHtml(m) {
+      if (!m) return '<p class="text-sm text-slate-400 text-center py-10">请选择左侧模板查看参数</p>';
+      return `<div class="space-y-3">
+        <div>
+          <p class="text-base font-semibold text-slate-900">${m.name}</p>
+          <p class="text-xs text-slate-400 mt-1">${m.cargoType || '—'} · ${m.category || ''} · ${m.modeName || ''}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <div class="rounded-xl bg-slate-50 px-3 py-2"><div class="text-[11px] text-slate-400">计价方式</div><div class="mt-0.5">${m.priceMode}</div></div>
+          <div class="rounded-xl bg-slate-50 px-3 py-2"><div class="text-[11px] text-slate-400">单位</div><div class="mt-0.5">${BMSFeeConfig.unitName(m.unitCode)}</div></div>
+          <div class="rounded-xl bg-slate-50 px-3 py-2"><div class="text-[11px] text-slate-400">基准价</div><div class="mt-0.5">${m.basePrice} 元</div></div>
+          <div class="rounded-xl bg-slate-50 px-3 py-2"><div class="text-[11px] text-slate-400">等级</div><div class="mt-0.5">${m.tierEnabled ? (m.algorithm + ' / ' + m.resultType) : '未启用'}</div></div>
+          <div class="rounded-xl bg-slate-50 px-3 py-2"><div class="text-[11px] text-slate-400">触发</div><div class="mt-0.5">${m.trigger || '—'}</div></div>
+          <div class="rounded-xl bg-slate-50 px-3 py-2"><div class="text-[11px] text-slate-400">累计窗口</div><div class="mt-0.5">${m.window || '合同期累计'}</div></div>
+        </div>
+        ${m.tierEnabled ? ('<div><p class="text-xs font-medium text-slate-600 mb-1.5">等级档位</p>' + tierTableHtml(m.tiers, m.resultType) + '</div>') : ''}
+        ${m.remark ? ('<p class="text-xs text-slate-500 leading-relaxed">' + m.remark + '</p>') : ''}
+      </div>`;
+    }
+
+    let pickTplLineIdx = -1;
+    let pickTplSelectedId = '';
+    let editLineIdx = -1;
+
+    function openPickTpl(idx) {
+      const g = ensureFeeGroup(activeFee);
+      const line = g.lines[idx];
+      if (!line) return;
+      pickTplLineIdx = idx;
+      pickTplSelectedId = line.sourceId || '';
+      document.getElementById('pickTplSub').textContent =
+        activeFee + ' · ' + line.cargoType + ' — 查看参数后选用（快速填充）';
+      const list = modulesFor(line.cargoType, activeFee);
+      if (!pickTplSelectedId && list.length) pickTplSelectedId = list[0].id;
+      const box = document.getElementById('pickTplList');
+      box.innerHTML = list.map((m) => {
+        const on = m.id === pickTplSelectedId;
+        return `<button type="button" onclick="selectPickTpl('${m.id}')" class="w-full text-left px-3 py-2.5 rounded-xl text-xs ${on ? 'bg-teal-700 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:border-teal-200'}">
+          <div class="font-medium truncate">${m.modeName || m.name}</div>
+          <div class="${on ? 'text-teal-100' : 'text-slate-400'} mt-0.5 truncate">${m.basePrice} 元 · ${BMSFeeConfig.unitName(m.unitCode)}</div>
+        </button>`;
+      }).join('') || '<p class="text-xs text-slate-400 p-3 text-center">暂无可用模板</p>';
+      renderPickTplDetail();
+      BMS.openModal('modal-pick-tpl');
+    }
+
+    function selectPickTpl(id) {
+      pickTplSelectedId = id;
+      const g = ensureFeeGroup(activeFee);
+      const line = g.lines[pickTplLineIdx];
+      if (!line) return;
+      const list = modulesFor(line.cargoType, activeFee);
+      document.getElementById('pickTplList').innerHTML = list.map((m) => {
+        const on = m.id === pickTplSelectedId;
+        return `<button type="button" onclick="selectPickTpl('${m.id}')" class="w-full text-left px-3 py-2.5 rounded-xl text-xs ${on ? 'bg-teal-700 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:border-teal-200'}">
+          <div class="font-medium truncate">${m.modeName || m.name}</div>
+          <div class="${on ? 'text-teal-100' : 'text-slate-400'} mt-0.5 truncate">${m.basePrice} 元 · ${BMSFeeConfig.unitName(m.unitCode)}</div>
+        </button>`;
+      }).join('');
+      renderPickTplDetail();
+    }
+
+    function renderPickTplDetail() {
+      const m = BMSFeeConfig.getFees().find((x) => x.id === pickTplSelectedId);
+      document.getElementById('pickTplDetail').innerHTML = moduleDetailHtml(m);
+      document.getElementById('pickTplConfirm').disabled = !m;
+    }
+
+    function confirmPickTpl() {
+      if (pickTplLineIdx < 0 || !pickTplSelectedId) return;
+      const g = ensureFeeGroup(activeFee);
+      if (!g.lines[pickTplLineIdx]) return;
+      applyModuleToLine(g.lines[pickTplLineIdx], pickTplSelectedId);
+      BMS.closeModal('modal-pick-tpl');
+      renderFeeSide();
+      BMS.toast('已填充模板，可继续「编辑费用」');
+    }
+
+    function syncElFreeWrap() {
+      const on = document.getElementById('elPriceMode').value === '免堆+超期';
+      document.getElementById('elFreeWrap').classList.toggle('hidden', !on);
+    }
+
+    function renderEditTierBody(tiers, resultType) {
+      const body = document.getElementById('elTierBody');
+      const list = tiers && tiers.length ? tiers : [];
+      if (!list.length) {
+        body.innerHTML = '<tr><td colspan="6" class="px-3 py-3 text-slate-400 text-center">暂无等级，可点下方增加</td></tr>';
+        return;
+      }
+      body.innerHTML = list.map((t, i) => `
+        <tr class="border-t border-slate-50">
+          <td class="px-2 py-1.5">${i + 1}</td>
+          <td class="px-2 py-1.5"><input data-k="name" data-i="${i}" class="w-full border border-slate-200 rounded-lg px-2 py-1" value="${t.name || ''}" /></td>
+          <td class="px-2 py-1.5"><input data-k="min" data-i="${i}" type="number" class="w-20 border border-slate-200 rounded-lg px-2 py-1" value="${t.min != null ? t.min : 0}" /></td>
+          <td class="px-2 py-1.5"><input data-k="max" data-i="${i}" type="number" class="w-20 border border-slate-200 rounded-lg px-2 py-1" value="${t.max == null ? '' : t.max}" placeholder="空=∞" /></td>
+          <td class="px-2 py-1.5"><input data-k="${resultType === '折扣' ? 'discount' : 'price'}" data-i="${i}" type="number" step="0.01" class="w-20 border border-slate-200 rounded-lg px-2 py-1" value="${resultType === '折扣' ? (t.discount != null ? t.discount : 100) : (t.price != null ? t.price : 0)}" /></td>
+          <td class="px-2 py-1.5"><button type="button" class="text-slate-300 hover:text-rose-500" onclick="removeEditTierRow(${i})"><i class="fa-solid fa-xmark"></i></button></td>
+        </tr>`).join('');
+    }
+
+    function collectEditTiers() {
+      const resultType = document.getElementById('elResult').value;
+      const rows = Array.from(document.querySelectorAll('#elTierBody tr')).filter((tr) => tr.querySelector('input'));
+      return rows.map((tr, i) => {
+        const get = (k) => {
+          const el = tr.querySelector(`input[data-k="${k}"]`);
+          return el ? el.value : '';
+        };
+        const maxRaw = get('max');
+        const row = {
+          level: i + 1,
+          name: get('name') || ('等级' + (i + 1)),
+          min: Number(get('min')) || 0,
+          max: maxRaw === '' ? null : Number(maxRaw),
+          price: 0,
+          discount: 100,
+        };
+        if (resultType === '折扣') row.discount = Number(get('discount')) || 100;
+        else row.price = Number(get('price')) || 0;
+        return row;
+      });
+    }
+
+    function addEditTierRow() {
+      const tiers = collectEditTiers();
+      const resultType = document.getElementById('elResult').value;
+      const last = tiers[tiers.length - 1];
+      tiers.push({
+        level: tiers.length + 1,
+        name: '等级' + (tiers.length + 1),
+        min: last ? (last.max != null ? last.max : last.min) : 0,
+        max: null,
+        price: last ? last.price : Number(document.getElementById('elBase').value) || 0,
+        discount: 100,
+      });
+      renderEditTierBody(tiers, resultType);
+    }
+
+    function removeEditTierRow(i) {
+      const tiers = collectEditTiers();
+      tiers.splice(i, 1);
+      renderEditTierBody(tiers, document.getElementById('elResult').value);
+    }
+
+    function openEditLine(idx) {
+      const g = ensureFeeGroup(activeFee);
+      const line = g.lines[idx];
+      if (!line) return;
+      editLineIdx = idx;
+      document.getElementById('editLineTitle').textContent = '编辑费用 · ' + activeFee + ' · ' + line.cargoType;
+      const unitSel = document.getElementById('elUnit');
+      unitSel.innerHTML = BMSFeeConfig.getUnits().filter((u) => u.status === '启用').map((u) =>
+        `<option value="${u.code}" ${u.code === line.unitCode ? 'selected' : ''}>${u.name}</option>`
+      ).join('');
+      document.getElementById('elPriceMode').value = line.priceMode || '单价×数量';
+      document.getElementById('elBase').value = line.basePrice != null ? line.basePrice : 0;
+      document.getElementById('elFreeDays').value = line.freeDays != null ? line.freeDays : 7;
+      document.getElementById('elTierOn').checked = !!line.tierEnabled;
+      document.getElementById('elTrigger').value = line.trigger || '累计计费量';
+      document.getElementById('elResult').value = line.resultType || '单价';
+      document.getElementById('elAlgo').value = line.algorithm || '分段累进';
+      document.getElementById('elRemark').value = line.remark || '';
+      syncElFreeWrap();
+      renderEditTierBody(line.tiers || [], line.resultType || '单价');
+      document.getElementById('elPriceMode').onchange = syncElFreeWrap;
+      document.getElementById('elResult').onchange = () => renderEditTierBody(collectEditTiers(), document.getElementById('elResult').value);
+      BMS.openModal('modal-edit-line');
+    }
+
+    function saveEditLine() {
+      const g = ensureFeeGroup(activeFee);
+      if (editLineIdx < 0 || !g.lines[editLineIdx]) return;
+      const line = g.lines[editLineIdx];
+      const tierOn = document.getElementById('elTierOn').checked;
+      const tiers = tierOn ? collectEditTiers() : [];
+      if (tierOn && !tiers.length) { BMS.toast('启用等级时请至少一档', 'warn'); return; }
+      line.priceMode = document.getElementById('elPriceMode').value;
+      line.unitCode = document.getElementById('elUnit').value;
+      line.basePrice = Number(document.getElementById('elBase').value) || 0;
+      line.freeDays = line.priceMode === '免堆+超期' ? (Number(document.getElementById('elFreeDays').value) || 0) : null;
+      line.tierEnabled = tierOn;
+      line.trigger = document.getElementById('elTrigger').value;
+      line.resultType = document.getElementById('elResult').value;
+      line.algorithm = document.getElementById('elAlgo').value;
+      line.window = '合同期累计';
+      line.tiers = tiers;
+      line.remark = document.getElementById('elRemark').value.trim();
+      line.edited = true;
+      BMS.closeModal('modal-edit-line');
+      renderFeeSide();
+      BMS.toast('费用参数已更新（仅本合同）');
+    }
+
+    function renderFeePanel() {
+      const g = ensureFeeGroup(activeFee);
+      const addBar = document.getElementById('feeAddBar');
+      const title = document.getElementById('feePanelTitle');
+      const hint = document.getElementById('feePanelHint');
+      const box = document.getElementById('feeItemList');
+      const pick = document.getElementById('cargoPick');
+
+      addBar.classList.remove('hidden');
+      title.textContent = activeFee + ' · 合同参数';
+      hint.textContent = '按货种分行；选模板看详参，或直接编辑费用';
+
+      Array.from(pick.options).forEach((o) => {
+        o.disabled = g.lines.some((l) => l.cargoType === o.value);
+      });
+
+      if (!g.lines.length) {
+        box.innerHTML = `<div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-8 text-center text-sm text-slate-400">「${activeFee}」尚未配置。<br/>选择货种后点「添加货种参数」，再「选择模板」或「编辑费用」。</div>`;
+        return;
+      }
+
+      box.innerHTML = g.lines.map((line, idx) => `
+        <div class="rounded-xl border border-slate-200 p-4 bg-white">
+          <div class="flex flex-wrap justify-between gap-2 items-start">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-slate-900">${line.cargoType}${line.edited ? ' <span class="text-amber-600 text-xs font-normal">已改</span>' : ''}</p>
+              <p class="text-[11px] text-slate-400 mt-0.5 truncate">${line.sourceName ? ('模板：' + line.sourceName) : '未选模板（手工）'}</p>
+              <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">${ruleSummary(line)}</p>
+            </div>
+            <button type="button" class="text-slate-400 hover:text-rose-600 text-xs px-2 py-1 shrink-0" onclick="removeCargoLine(${idx})"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" onclick="openPickTpl(${idx})" class="text-sm px-3 py-1.5 rounded-lg border border-teal-200 text-teal-800 bg-teal-50 hover:bg-teal-100"><i class="fa-solid fa-table-list mr-1"></i>选择模板</button>
+            <button type="button" onclick="openEditLine(${idx})" class="text-sm px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50"><i class="fa-solid fa-pen-to-square mr-1"></i>编辑费用</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function addCargoLine() {
+      const g = ensureFeeGroup(activeFee);
+      const cargo = document.getElementById('cargoPick').value;
+      if (g.lines.some((l) => l.cargoType === cargo)) {
+        BMS.toast('「' + activeFee + '」下已有「' + cargo + '」', 'warn');
+        return;
+      }
+      g.lines.push(emptyLine(activeFee, cargo));
+      renderFeeSide();
+      BMS.toast('已添加「' + cargo + '」参数');
+    }
+
+    function removeCargoLine(idx) {
+      const g = ensureFeeGroup(activeFee);
+      g.lines.splice(idx, 1);
+      if (!g.lines.length) {
+        billFeeGroups = billFeeGroups.filter((x) => x.feeName !== activeFee || x.lines.length);
+      }
+      renderFeeSide();
+    }
+
+    function openBilling(code, fromCreate) {
+      const c = contracts.find((x) => x.code === code);
+      if (!c) { BMS.toast('合同不存在', 'error'); return; }
+      billingCode = code;
+      const b = getBilling(code);
+      billFeeGroups = b.feeGroups;
+      const firstUsed = billFeeGroups.find((g) => g.lines.length);
+      activeFee = firstUsed ? firstUsed.feeName : ALL_FEE_TYPES[0];
+      document.getElementById('billingSub').textContent =
+        (fromCreate ? '合同已保存 · ' : '') + c.name + '（' + c.code + '）';
+      renderFeeSide();
+      BMS.openModal('modal-billing');
+    }
+
+    function saveBilling() {
+      if (!billingCode) return;
+      const used = billFeeGroups.filter((g) => g.lines.length);
+      if (!used.length) {
+        BMS.toast('请至少配置一个费种参数', 'warn');
+        return;
+      }
+      billingMap[billingCode] = {
+        feeGroups: JSON.parse(JSON.stringify(used)),
+      };
+      persistBilling();
+      if (window.BMSBizData) {
+        const facts = BMSBizData.recalcContractRevenue(billingCode);
+        const miss = (facts || []).filter((f) => f.status === 'missing_rule').length;
+        BMS.toast('计费已保存，已重算营收' + (miss ? '（' + miss + ' 条缺规则）' : ''));
+      } else {
+        BMS.toast('计费方式已保存');
+      }
+      renderContractTable();
+      BMS.closeModal('modal-billing');
+    }
+
+    function openContractForm(mode, code) {
+      formMode = mode;
+      document.getElementById('cFormMode').value = mode;
+      document.getElementById('contractFormTitle').textContent = mode === 'create' ? '新建合同' : '编辑合同';
+      const c = code ? contracts.find((x) => x.code === code) : null;
+      if (c) {
+        document.getElementById('cName').value = c.name;
+        document.getElementById('cCode').value = c.code;
+        document.getElementById('cCode').disabled = true;
+        setCustomerValue(c.customer || '');
+        document.getElementById('cType').value = c.type;
+        document.getElementById('cAmount').value = c.amount;
+        document.getElementById('cSign').value = c.sign || '';
+        document.getElementById('cDept').value = c.dept || '商务部';
+        document.getElementById('cTerms').value = c.terms;
+        document.getElementById('cDueFrom').value = c.dueFrom || '货到 / 作业完成后 N 天';
+        document.getElementById('cStart').value = c.start || '';
+        document.getElementById('cEnd').value = c.end || '';
+        document.getElementById('cOwner').value = c.owner || '陈敏';
+        document.getElementById('cStatus').value = c.status;
+        document.getElementById('cRemark').value = c.remark || '';
+      } else {
+        document.getElementById('cCode').disabled = false;
+        document.getElementById('cName').value = '';
+        document.getElementById('cCode').value = 'HT-2026-' + String(Math.floor(Math.random() * 9000) + 1000);
+        setCustomerValue('');
+        document.getElementById('cType').value = '装卸服务';
+        document.getElementById('cAmount').value = '';
+        document.getElementById('cSign').value = '2026-03-01';
+        document.getElementById('cDept').value = '商务部';
+        document.getElementById('cTerms').value = '货到后 45 天';
+        document.getElementById('cDueFrom').value = '货到 / 作业完成后 N 天';
+        document.getElementById('cStart').value = '2026-01-01';
+        document.getElementById('cEnd').value = '2026-12-31';
+        document.getElementById('cOwner').value = '陈敏';
+        document.getElementById('cStatus').value = '执行中';
+        document.getElementById('cRemark').value = '';
+      }
+      BMS.openModal('modal-contract');
+    }
+
+    function saveContract() {
+      const name = document.getElementById('cName').value.trim();
+      const code = document.getElementById('cCode').value.trim();
+      let cust = document.getElementById('cCustomer').value.trim();
+      if (!cust) {
+        const hit = CUSTOMERS.find((n) => n === document.getElementById('cCustomerSearch').value.trim());
+        if (hit) { setCustomerValue(hit); cust = hit; }
+      }
+      const amt = Number(document.getElementById('cAmount').value);
+      if (!name || !code) { BMS.toast('请填写合同名称与编号', 'error'); return; }
+      if (!cust) { BMS.toast('请搜索并从列表选择客户', 'error'); return; }
+      if (!amt || amt <= 0) { BMS.toast('请填写有效合同金额', 'error'); return; }
+
+      const row = {
+        code, name,
+        type: document.getElementById('cType').value,
+        customer: cust,
+        terms: document.getElementById('cTerms').value,
+        amount: amt,
+        invoice: 0,
+        receipt: 0,
+        status: document.getElementById('cStatus').value,
+        sign: document.getElementById('cSign').value,
+        start: document.getElementById('cStart').value,
+        end: document.getElementById('cEnd').value,
+        dept: document.getElementById('cDept').value,
+        owner: document.getElementById('cOwner').value,
+        dueFrom: document.getElementById('cDueFrom').value,
+        remark: document.getElementById('cRemark').value.trim(),
+      };
+
+      const mode = document.getElementById('cFormMode').value;
+      if (mode === 'create') {
+        if (contracts.some((c) => c.code === code)) { BMS.toast('合同编号已存在', 'error'); return; }
+        contracts.unshift(row);
+        persistContracts();
+        renderContractTable();
+        BMS.closeModal('modal-contract');
+        BMS.toast('合同已保存，请配置计费方式');
+        setTimeout(() => openBilling(code, true), 200);
+      } else {
+        const old = contracts.find((c) => c.code === code);
+        if (old) {
+          row.invoice = old.invoice || 0;
+          row.receipt = old.receipt || 0;
+        }
+        contracts = contracts.map((c) => (c.code === code ? row : c));
+        persistContracts();
+        renderContractTable();
+        BMS.closeModal('modal-contract');
+        BMS.toast('合同基本信息已保存');
+      }
+    }
+
+    function kv(label, value) {
+      return `<div><div class="text-[11px] text-slate-400">${label}</div><div class="mt-0.5 text-slate-800">${value || '—'}</div></div>`;
+    }
+
+    function openContractDetail(code) {
+      const c = contracts.find((x) => x.code === code);
+      if (!c) return;
+      const b = getBilling(code);
+      const used = (b.feeGroups || []).filter((g) => (g.lines || []).length);
+      const invoices = DEMO_INVOICES().filter((x) => x.contract === code);
+      const receipts = DEMO_RECEIPTS().filter((x) => x.contract === code);
+      const remain = Number(c.amount || 0) - Number(c.receipt || 0);
+
+      document.getElementById('dName').textContent = c.name;
+      document.getElementById('dMeta').textContent = `${c.code} · ${c.type} · ${c.customer} · ${c.status}`;
+      document.getElementById('dAmount').textContent = Number(c.amount).toLocaleString('zh-CN') + ' 万';
+      document.getElementById('dInvoice').textContent = Number(c.invoice || 0).toLocaleString('zh-CN') + ' 万';
+      document.getElementById('dReceipt').textContent = Number(c.receipt || 0).toLocaleString('zh-CN') + ' 万';
+      const ok = used.length > 0;
+      document.getElementById('dBilling').textContent = ok
+        ? (`费种 ${used.length} · 参数 ${lineCount(used)}`)
+        : '未配置';
+      document.getElementById('dBilling').className = 'mt-1 font-medium ' + (ok ? 'text-emerald-700' : 'text-amber-700');
+
+      document.getElementById('dBasicGrid').innerHTML = [
+        kv('合同编号', c.code),
+        kv('客户', c.customer),
+        kv('合同类型', c.type),
+        kv('合同状态', c.status),
+        kv('签订日期', c.sign),
+        kv('有效期', (c.start || '—') + ' ~ ' + (c.end || '—')),
+        kv('责任部门', c.dept),
+        kv('负责人', c.owner),
+        kv('付款条件 / 账期', c.terms),
+        kv('应付日起算', c.dueFrom),
+        kv('剩余收款', remain.toLocaleString('zh-CN') + ' 万'),
+        kv('合同说明', c.remark || '无'),
+      ].join('');
+
+      document.getElementById('dFeeTable').innerHTML = ok
+        ? used.map((g) => `
+          <div class="border-b border-slate-100 last:border-0">
+            <div class="px-4 py-2.5 bg-slate-50 text-sm font-medium text-slate-800">${g.feeName}<span class="ml-2 text-xs font-normal text-slate-400">${g.lines.length} 个货种</span></div>
+            <table class="w-full">
+              <thead class="text-slate-500 text-xs"><tr><th class="text-left px-4 py-2">货种</th><th class="text-left px-4 py-2">模板</th><th class="text-left px-4 py-2">计费规则</th></tr></thead>
+              <tbody>
+                ${g.lines.map((line) => `<tr class="border-t border-slate-50">
+                  <td class="px-4 py-2.5">${line.cargoType}</td>
+                  <td class="px-4 py-2.5 text-slate-500">${line.sourceName || line.sourceId || '手工'}</td>
+                  <td class="px-4 py-2.5">${ruleSummary(line)}${line.edited ? ' <span class="text-amber-600 text-xs">已改</span>' : ''}</td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`).join('')
+        : '<div class="px-4 py-6 text-center text-slate-400 text-sm">尚未配置计费方式</div>';
+
+      document.getElementById('dInvoiceCount').textContent = '共 ' + invoices.length + ' 笔';
+      document.getElementById('dInvoiceList').innerHTML = invoices.length
+        ? `<table class="w-full">
+            <thead class="bg-slate-50 text-slate-500 text-xs"><tr>
+              <th class="text-left px-4 py-2">开票日</th><th class="text-left px-4 py-2">发票号</th>
+              <th class="text-left px-4 py-2">金额</th><th class="text-left px-4 py-2">票种</th><th class="text-left px-4 py-2">状态</th>
+            </tr></thead>
+            <tbody>${invoices.map((i) => `<tr class="border-t border-slate-50">
+              <td class="px-4 py-2.5">${i.date}</td>
+              <td class="px-4 py-2.5">${i.no}</td>
+              <td class="px-4 py-2.5 ${i.status === 'void' ? 'text-slate-400 line-through' : ''}">${i.amount} 万</td>
+              <td class="px-4 py-2.5">${i.type}</td>
+              <td class="px-4 py-2.5">${i.status === 'void' ? '<span class="text-xs text-slate-400">已作废</span>' : '<span class="text-xs text-emerald-700">已开票</span>'}</td>
+            </tr>`).join('')}</tbody></table>`
+        : '<div class="px-4 py-6 text-center text-slate-400 text-sm">暂无开票记录</div>';
+
+      document.getElementById('dReceiptCount').textContent = '共 ' + receipts.length + ' 笔';
+      document.getElementById('dReceiptList').innerHTML = receipts.length
+        ? `<table class="w-full">
+            <thead class="bg-slate-50 text-slate-500 text-xs"><tr>
+              <th class="text-left px-4 py-2">收款日</th><th class="text-left px-4 py-2">关联发票</th>
+              <th class="text-left px-4 py-2">金额</th><th class="text-left px-4 py-2">方式</th><th class="text-left px-4 py-2">说明</th>
+            </tr></thead>
+            <tbody>${receipts.map((r) => `<tr class="border-t border-slate-50">
+              <td class="px-4 py-2.5">${r.date}</td>
+              <td class="px-4 py-2.5">${r.invoiceNo || '—'}</td>
+              <td class="px-4 py-2.5">${r.amount} 万</td>
+              <td class="px-4 py-2.5">${r.method}</td>
+              <td class="px-4 py-2.5 text-slate-500">${r.remark || '—'}</td>
+            </tr>`).join('')}</tbody></table>`
+        : '<div class="px-4 py-6 text-center text-slate-400 text-sm">暂无收款记录</div>';
+
+      const goBill = () => { BMS.closeModal('modal-contract-detail'); openBilling(code); };
+      document.getElementById('dBillingBtn').onclick = goBill;
+      document.getElementById('dBillingBtn2').onclick = goBill;
+      document.getElementById('dEditBtn').onclick = () => { BMS.closeModal('modal-contract-detail'); openContractForm('edit', code); };
+      BMS.openModal('modal-contract-detail');
+    }
+
+    (function applyQueryPrefill() {
+      const p = new URLSearchParams(location.search);
+      const type = p.get('type');
+      const customer = p.get('customer');
+      if (type || customer) {
+        openContractForm('create');
+        if (type) {
+          const sel = document.getElementById('cType');
+          const opt = Array.from(sel.options).find((o) => o.value === type || o.textContent === type);
+          if (opt) sel.value = opt.value;
+          if (type === '铁水联运框架') {
+            document.getElementById('cName').value = '宝钢铁矿铁水联运框架合同';
+            document.getElementById('cAmount').value = '860';
+          }
+        }
+        if (customer) {
+          if (CUSTOMERS.includes(customer)) setCustomerValue(customer);
+          else {
+            CUSTOMERS.push(customer);
+            setCustomerValue(customer);
+          }
+        }
+      }
+    })();
+
+    initCustomerSearch();
+    renderContractTable();
+  </script>
+</body>
+</html>

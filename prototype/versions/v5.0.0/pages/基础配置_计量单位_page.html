@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>计量单位 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="cfg-units" data-title="计量单位">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">维护作业量与费用共用的计量单位。费用模块、合同计费、作业量登记须引用启用中的单位。</p>
+
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <input id="q" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-48" placeholder="搜索编码/名称" />
+        <select id="fStatus" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">全部状态</option>
+          <option>启用</option>
+          <option>停用</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="resetUnits()" class="border bg-white text-sm px-4 py-2 rounded-xl">恢复预置</button>
+        <button type="button" onclick="openUnitForm()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新增单位</button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">编码</th>
+            <th class="px-4 py-3 text-left">名称</th>
+            <th class="px-4 py-3 text-left">量纲</th>
+            <th class="px-4 py-3 text-left">小数位</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="unitBody"></tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500" id="unitCount">共 0 条</div>
+    </div>
+
+    <div id="modal-unit" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-unit')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-lg overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 id="unitFormTitle" class="text-lg font-semibold">新增计量单位</h3>
+          <button type="button" onclick="BMS.closeModal('modal-unit')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="px-6 py-5 space-y-4">
+          <input type="hidden" id="uEditCode" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">单位编码 <span class="text-red-500">*</span></label>
+              <input id="uCode" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="如 TON" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">单位名称 <span class="text-red-500">*</span></label>
+              <input id="uName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="如 吨" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">量纲类型 <span class="text-red-500">*</span></label>
+              <select id="uDim" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>质量</option><option>箱量</option><option>次数</option><option>时间</option><option>时间积</option><option>金额</option><option>体积</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">小数位 <span class="text-red-500">*</span></label>
+              <input id="uDec" type="number" min="0" max="6" value="2" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">状态</label>
+            <select id="uStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>启用</option><option>停用</option></select>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveUnit()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-unit')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/fee-config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    let units = BMSFeeConfig.getUnits();
+
+    function filtered() {
+      const q = (document.getElementById('q').value || '').trim().toLowerCase();
+      const st = document.getElementById('fStatus').value;
+      return units.filter((u) => {
+        if (st && u.status !== st) return false;
+        if (!q) return true;
+        return (u.code + u.name + u.dim).toLowerCase().includes(q);
+      });
+    }
+
+    function render() {
+      const list = filtered();
+      const body = document.getElementById('unitBody');
+      body.innerHTML = list.map((u) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3 font-mono text-xs">${u.code}</td>
+          <td class="px-4 py-3">${u.name}</td>
+          <td class="px-4 py-3 text-slate-500">${u.dim}</td>
+          <td class="px-4 py-3">${u.decimals}</td>
+          <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full ${u.status === '启用' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${u.status}</span></td>
+          <td class="px-5 py-3 space-x-2">
+            <button type="button" class="hover:text-teal-700" onclick="openUnitForm('${u.code}')">编辑</button>
+            <button type="button" class="hover:text-teal-700" onclick="toggleUnit('${u.code}')">${u.status === '启用' ? '停用' : '启用'}</button>
+          </td>
+        </tr>`).join('') || `<tr><td colspan="6" class="px-5 py-8 text-center text-slate-400">暂无数据</td></tr>`;
+      document.getElementById('unitCount').textContent = '共 ' + list.length + ' 条';
+    }
+
+    function openUnitForm(code) {
+      const u = code ? units.find((x) => x.code === code) : null;
+      document.getElementById('unitFormTitle').textContent = u ? '编辑计量单位' : '新增计量单位';
+      document.getElementById('uEditCode').value = u ? u.code : '';
+      document.getElementById('uCode').value = u ? u.code : '';
+      document.getElementById('uCode').disabled = !!u;
+      document.getElementById('uName').value = u ? u.name : '';
+      document.getElementById('uDim').value = u ? u.dim : '质量';
+      document.getElementById('uDec').value = u ? u.decimals : 2;
+      document.getElementById('uStatus').value = u ? u.status : '启用';
+      BMS.openModal('modal-unit');
+    }
+
+    function saveUnit() {
+      const code = document.getElementById('uCode').value.trim().toUpperCase();
+      const name = document.getElementById('uName').value.trim();
+      const edit = document.getElementById('uEditCode').value;
+      if (!code || !name) { BMS.toast('请填写编码与名称', 'error'); return; }
+      if (!edit && units.some((u) => u.code === code)) { BMS.toast('编码已存在', 'error'); return; }
+      const row = {
+        code, name,
+        dim: document.getElementById('uDim').value,
+        decimals: Number(document.getElementById('uDec').value) || 0,
+        status: document.getElementById('uStatus').value,
+      };
+      if (edit) {
+        units = units.map((u) => (u.code === edit ? row : u));
+      } else {
+        units.push(row);
+      }
+      BMSFeeConfig.saveUnits(units);
+      BMS.toast('计量单位已保存');
+      BMS.closeModal('modal-unit');
+      render();
+    }
+
+    function toggleUnit(code) {
+      units = units.map((u) => u.code === code ? { ...u, status: u.status === '启用' ? '停用' : '启用' } : u);
+      BMSFeeConfig.saveUnits(units);
+      BMS.toast('状态已更新');
+      render();
+    }
+
+    function resetUnits() {
+      units = BMSFeeConfig.resetUnits();
+      BMS.toast('已恢复预置单位');
+      render();
+    }
+
+    document.getElementById('q').addEventListener('input', render);
+    document.getElementById('fStatus').addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

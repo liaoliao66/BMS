@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>经营目标 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+    .month-inp { width: 4.25rem; }
+    .sticky-col { position: sticky; left: 0; background: #fff; z-index: 1; }
+    thead .sticky-col { background: #f8fafc; z-index: 2; }
+    .sum-cell { background: #f0fdfa; color: #0f766e; font-weight: 600; }
+    .readonly-sum { background: #f8fafc; color: #64748b; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="biz-goals" data-title="经营目标">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">按<strong>货类</strong>填写<strong>月目标</strong>，系统自动汇总<strong>季目标 / 年目标</strong>。集装箱同时维护<strong>万吨</strong>与<strong>TEU</strong>；营收同步按月填写。吞吐量（万吨）= 散货 + 件杂货 + 集装箱（万吨）。</p>
+
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2 items-center">
+        <select id="yearSel" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="2026">2026 年</option>
+          <option value="2025">2025 年</option>
+        </select>
+        <span class="text-xs text-slate-400">列表展示年 / 季汇总；点「编辑年度目标」维护 12 个月</span>
+      </div>
+      <button type="button" onclick="openYearEditor()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2">
+        <i class="fa-solid fa-pen-to-square"></i>编辑年度目标
+      </button>
+    </div>
+
+    <!-- 吞吐量（万吨） -->
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden mb-5">
+      <div class="px-5 py-3 border-b flex flex-wrap justify-between gap-2 items-center">
+        <div class="font-medium text-slate-800">吞吐量目标（万吨）· <span id="tonYearLabel">2026</span></div>
+        <div class="text-xs text-slate-500">月录入 → 季 / 年自动汇总</div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[720px]">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left sticky-col">货类</th>
+              <th class="px-3 py-3 text-right">Q1</th>
+              <th class="px-3 py-3 text-right">Q2</th>
+              <th class="px-3 py-3 text-right">Q3</th>
+              <th class="px-3 py-3 text-right">Q4</th>
+              <th class="px-4 py-3 text-right">年目标</th>
+              <th class="px-4 py-3 text-right">实际</th>
+              <th class="px-5 py-3 text-right">完成率</th>
+            </tr>
+          </thead>
+          <tbody id="tonSummaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 集装箱 TEU -->
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden mb-5">
+      <div class="px-5 py-3 border-b font-medium text-slate-800">集装箱目标（TEU）· <span id="teuYearLabel">2026</span></div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[720px]">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left">指标</th>
+              <th class="px-3 py-3 text-right">Q1</th>
+              <th class="px-3 py-3 text-right">Q2</th>
+              <th class="px-3 py-3 text-right">Q3</th>
+              <th class="px-3 py-3 text-right">Q4</th>
+              <th class="px-4 py-3 text-right">年目标</th>
+              <th class="px-4 py-3 text-right">实际</th>
+              <th class="px-5 py-3 text-right">完成率</th>
+            </tr>
+          </thead>
+          <tbody id="teuSummaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 营收 -->
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden mb-5">
+      <div class="px-5 py-3 border-b font-medium text-slate-800">营收目标（万元）· <span id="revYearLabel">2026</span></div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[720px]">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="px-5 py-3 text-left">指标</th>
+              <th class="px-3 py-3 text-right">Q1</th>
+              <th class="px-3 py-3 text-right">Q2</th>
+              <th class="px-3 py-3 text-right">Q3</th>
+              <th class="px-3 py-3 text-right">Q4</th>
+              <th class="px-4 py-3 text-right">年目标</th>
+              <th class="px-4 py-3 text-right">实际</th>
+              <th class="px-5 py-3 text-right">完成率</th>
+            </tr>
+          </thead>
+          <tbody id="revSummaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 编辑弹窗：月录入 -->
+    <div id="modal-target" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-target')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-6xl max-h-[92vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex flex-wrap justify-between items-center gap-2">
+          <div>
+            <h3 class="text-lg font-semibold">编辑经营目标 · <span id="editYearTitle">2026</span></h3>
+            <p class="text-xs text-slate-500 mt-0.5">仅填写月目标；季 / 年只读自动汇总。空月按 0 计。</p>
+          </div>
+          <button type="button" onclick="BMS.closeModal('modal-target')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-auto px-6 py-5 space-y-6">
+          <!-- 万吨货类 -->
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-sm font-medium text-slate-800">吞吐量货类（万吨）</h4>
+              <span class="text-xs text-slate-400">吞吐量汇总 = 散货 + 件杂货 + 集装箱（万吨）</span>
+            </div>
+            <div class="overflow-x-auto border border-slate-100 rounded-2xl">
+              <table class="w-full text-xs min-w-[1100px]">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr id="tonHead"></tr>
+                </thead>
+                <tbody id="tonEditBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TEU -->
+          <div>
+            <h4 class="text-sm font-medium text-slate-800 mb-2">集装箱（TEU）</h4>
+            <div class="overflow-x-auto border border-slate-100 rounded-2xl">
+              <table class="w-full text-xs min-w-[1100px]">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr id="teuHead"></tr>
+                </thead>
+                <tbody id="teuEditBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 营收 -->
+          <div>
+            <h4 class="text-sm font-medium text-slate-800 mb-2">营收（万元）</h4>
+            <div class="overflow-x-auto border border-slate-100 rounded-2xl">
+              <table class="w-full text-xs min-w-[1100px]">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr id="revHead"></tr>
+                </thead>
+                <tbody id="revEditBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveYearTargets()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-target')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STORE_KEY = 'bms_v5_biz_targets';
+    const MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12];
+    const TON_ROWS = [
+      { key: 'bulk', name: '散货', editable: true },
+      { key: 'general', name: '件杂货', editable: true },
+      { key: 'cntr_ton', name: '集装箱（万吨）', editable: true },
+      { key: 'throughput', name: '吞吐量汇总', editable: false },
+    ];
+
+    const DEFAULT_ACTUAL = {
+      2026: {
+        bulk: { q: [130, 135, 120, 101], year: 486 },
+        general: { q: [8, 9, 7, 6], year: 30 },
+        cntr_ton: { q: [9, 10, 9, 8], year: 36 },
+        throughput: { q: [147, 154, 136, 115], year: 552 },
+        cntr_teu: { q: [4200, 4500, 4100, 3800], year: 16600 },
+        revenue: { q: [280, 300, 220, 186], year: 986 },
+      },
+      2025: {
+        bulk: { q: [120, 125, 118, 110], year: 473 },
+        general: { q: [7, 8, 7, 6], year: 28 },
+        cntr_ton: { q: [8, 9, 8, 7], year: 32 },
+        throughput: { q: [135, 142, 133, 123], year: 533 },
+        cntr_teu: { q: [3900, 4100, 4000, 3700], year: 15700 },
+        revenue: { q: [260, 270, 250, 230], year: 1010 },
+      },
+    };
+
+    function defaultMonths(seed) {
+      // 演示：把年目标大致摊到各月
+      return MONTHS.map((_, i) => Math.round((seed / 12) * (0.9 + (i % 3) * 0.05) * 10) / 10);
+    }
+
+    function defaultData() {
+      return {
+        2026: {
+          bulk: defaultMonths(530),
+          general: defaultMonths(34),
+          cntr_ton: defaultMonths(36),
+          cntr_teu: defaultMonths(18000),
+          revenue: defaultMonths(1200),
+        },
+        2025: {
+          bulk: defaultMonths(500),
+          general: defaultMonths(30),
+          cntr_ton: defaultMonths(32),
+          cntr_teu: defaultMonths(16000),
+          revenue: defaultMonths(1100),
+        },
+      };
+    }
+
+    function loadStore() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+      const d = defaultData();
+      localStorage.setItem(STORE_KEY, JSON.stringify(d));
+      return d;
+    }
+
+    function saveStore(data) {
+      localStorage.setItem(STORE_KEY, JSON.stringify(data));
+    }
+
+    let store = loadStore();
+    let editDraft = null;
+
+    function num(v) {
+      const n = Number(v);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function sumRange(arr, from, to) {
+      let s = 0;
+      for (let i = from; i <= to; i++) s += num(arr[i]);
+      return Math.round(s * 100) / 100;
+    }
+
+    function quarters(months) {
+      return [
+        sumRange(months, 0, 2),
+        sumRange(months, 3, 5),
+        sumRange(months, 6, 8),
+        sumRange(months, 9, 11),
+      ];
+    }
+
+    function yearSum(months) {
+      return sumRange(months, 0, 11);
+    }
+
+    function fmt(n, dig) {
+      const d = dig == null ? 1 : dig;
+      return Number(n || 0).toLocaleString('zh-CN', { maximumFractionDigits: d, minimumFractionDigits: 0 });
+    }
+
+    function rate(actual, target) {
+      if (!target) return '—';
+      return Math.round((actual / target) * 100) + '%';
+    }
+
+    function rateClass(actual, target) {
+      if (!target) return 'text-slate-400';
+      const r = actual / target;
+      if (r >= 0.9) return 'text-teal-700';
+      if (r >= 0.8) return 'text-amber-700';
+      return 'text-rose-600';
+    }
+
+    function yearOf() {
+      return document.getElementById('yearSel').value;
+    }
+
+    function getYearData(y) {
+      if (!store[y]) {
+        store[y] = defaultData()[y] || {
+          bulk: Array(12).fill(0),
+          general: Array(12).fill(0),
+          cntr_ton: Array(12).fill(0),
+          cntr_teu: Array(12).fill(0),
+          revenue: Array(12).fill(0),
+        };
+      }
+      return store[y];
+    }
+
+    function throughputMonths(data) {
+      return MONTHS.map((_, i) => num(data.bulk[i]) + num(data.general[i]) + num(data.cntr_ton[i]));
+    }
+
+    function renderSummaryRow(name, q, year, actual, dig, strong) {
+      const a = actual || { q: [0,0,0,0], year: 0 };
+      return `<tr class="border-t row-hover ${strong ? 'bg-teal-50/40' : ''}">
+        <td class="px-5 py-3 ${strong ? 'font-semibold text-slate-900' : ''}">${name}</td>
+        ${q.map((v) => `<td class="px-3 py-3 text-right">${fmt(v, dig)}</td>`).join('')}
+        <td class="px-4 py-3 text-right font-medium">${fmt(year, dig)}</td>
+        <td class="px-4 py-3 text-right text-slate-600">${fmt(a.year, dig)}</td>
+        <td class="px-5 py-3 text-right ${rateClass(a.year, year)}">${rate(a.year, year)}</td>
+      </tr>`;
+    }
+
+    function renderList() {
+      const y = yearOf();
+      const data = getYearData(y);
+      const act = DEFAULT_ACTUAL[y] || DEFAULT_ACTUAL[2026];
+      document.getElementById('tonYearLabel').textContent = y;
+      document.getElementById('teuYearLabel').textContent = y;
+      document.getElementById('revYearLabel').textContent = y;
+
+      const tonRows = [
+        { key: 'bulk', name: '散货' },
+        { key: 'general', name: '件杂货' },
+        { key: 'cntr_ton', name: '集装箱（万吨）' },
+      ];
+      let html = tonRows.map((r) => {
+        const q = quarters(data[r.key]);
+        return renderSummaryRow(r.name, q, yearSum(data[r.key]), act[r.key], 1, false);
+      }).join('');
+      const tp = throughputMonths(data);
+      html += renderSummaryRow('吞吐量汇总', quarters(tp), yearSum(tp), act.throughput, 1, true);
+      document.getElementById('tonSummaryBody').innerHTML = html;
+
+      document.getElementById('teuSummaryBody').innerHTML = renderSummaryRow(
+        '集装箱', quarters(data.cntr_teu), yearSum(data.cntr_teu), act.cntr_teu, 0, true
+      );
+      document.getElementById('revSummaryBody').innerHTML = renderSummaryRow(
+        '营收', quarters(data.revenue), yearSum(data.revenue), act.revenue, 0, true
+      );
+    }
+
+    function headHtml() {
+      let h = '<th class="px-3 py-2 text-left sticky-col min-w-[7rem]">货类 / 指标</th>';
+      MONTHS.forEach((m) => { h += `<th class="px-1 py-2 text-center">${m}月</th>`; });
+      h += '<th class="px-2 py-2 text-right">Q1</th><th class="px-2 py-2 text-right">Q2</th><th class="px-2 py-2 text-right">Q3</th><th class="px-2 py-2 text-right">Q4</th><th class="px-3 py-2 text-right">年</th>';
+      return h;
+    }
+
+    function buildEditRow(key, name, months, editable, dig) {
+      const q = quarters(months);
+      const y = yearSum(months);
+      const inputs = MONTHS.map((m, i) => {
+        if (!editable) {
+          return `<td class="px-1 py-1.5 text-center readonly-sum" data-sum-month="${key}-${i}">${fmt(months[i], dig)}</td>`;
+        }
+        return `<td class="px-1 py-1.5 text-center"><input type="number" step="any" min="0" class="month-inp border border-slate-200 rounded-lg px-1.5 py-1 text-center text-xs" data-key="${key}" data-m="${i}" value="${months[i]}" /></td>`;
+      }).join('');
+      return `<tr class="border-t ${editable ? '' : 'bg-slate-50/80'}" data-row="${key}">
+        <td class="px-3 py-2 sticky-col font-medium ${editable ? '' : 'text-teal-800'}">${name}</td>
+        ${inputs}
+        <td class="px-2 py-2 text-right sum-cell" data-sum-q="${key}-0">${fmt(q[0], dig)}</td>
+        <td class="px-2 py-2 text-right sum-cell" data-sum-q="${key}-1">${fmt(q[1], dig)}</td>
+        <td class="px-2 py-2 text-right sum-cell" data-sum-q="${key}-2">${fmt(q[2], dig)}</td>
+        <td class="px-2 py-2 text-right sum-cell" data-sum-q="${key}-3">${fmt(q[3], dig)}</td>
+        <td class="px-3 py-2 text-right sum-cell" data-sum-y="${key}">${fmt(y, dig)}</td>
+      </tr>`;
+    }
+
+    function readEditMonths(key) {
+      return MONTHS.map((_, i) => {
+        const el = document.querySelector(`input[data-key="${key}"][data-m="${i}"]`);
+        return el ? num(el.value) : 0;
+      });
+    }
+
+    function refreshEditSums() {
+      const digMap = { bulk: 1, general: 1, cntr_ton: 1, throughput: 1, cntr_teu: 0, revenue: 0 };
+      ['bulk', 'general', 'cntr_ton', 'cntr_teu', 'revenue'].forEach((key) => {
+        const months = readEditMonths(key);
+        editDraft[key] = months;
+        const q = quarters(months);
+        const dig = digMap[key];
+        q.forEach((v, i) => {
+          const cell = document.querySelector(`[data-sum-q="${key}-${i}"]`);
+          if (cell) cell.textContent = fmt(v, dig);
+        });
+        const yCell = document.querySelector(`[data-sum-y="${key}"]`);
+        if (yCell) yCell.textContent = fmt(yearSum(months), dig);
+      });
+      const tp = throughputMonths(editDraft);
+      MONTHS.forEach((_, i) => {
+        const cell = document.querySelector(`[data-sum-month="throughput-${i}"]`);
+        if (cell) cell.textContent = fmt(tp[i], 1);
+      });
+      const tq = quarters(tp);
+      tq.forEach((v, i) => {
+        const cell = document.querySelector(`[data-sum-q="throughput-${i}"]`);
+        if (cell) cell.textContent = fmt(v, 1);
+      });
+      const ty = document.querySelector('[data-sum-y="throughput"]');
+      if (ty) ty.textContent = fmt(yearSum(tp), 1);
+    }
+
+    function openYearEditor() {
+      const y = yearOf();
+      const data = getYearData(y);
+      editDraft = JSON.parse(JSON.stringify(data));
+      document.getElementById('editYearTitle').textContent = y + ' 年';
+      document.getElementById('tonHead').innerHTML = headHtml();
+      document.getElementById('teuHead').innerHTML = headHtml();
+      document.getElementById('revHead').innerHTML = headHtml();
+
+      document.getElementById('tonEditBody').innerHTML =
+        buildEditRow('bulk', '散货', editDraft.bulk, true, 1) +
+        buildEditRow('general', '件杂货', editDraft.general, true, 1) +
+        buildEditRow('cntr_ton', '集装箱（万吨）', editDraft.cntr_ton, true, 1) +
+        buildEditRow('throughput', '吞吐量汇总', throughputMonths(editDraft), false, 1);
+
+      document.getElementById('teuEditBody').innerHTML =
+        buildEditRow('cntr_teu', '集装箱（TEU）', editDraft.cntr_teu, true, 0);
+
+      document.getElementById('revEditBody').innerHTML =
+        buildEditRow('revenue', '营收', editDraft.revenue, true, 0);
+
+      document.querySelectorAll('#modal-target input[data-key]').forEach((inp) => {
+        inp.addEventListener('input', refreshEditSums);
+      });
+      refreshEditSums();
+      BMS.openModal('modal-target');
+    }
+
+    function saveYearTargets() {
+      refreshEditSums();
+      const y = yearOf();
+      store[y] = {
+        bulk: editDraft.bulk.slice(),
+        general: editDraft.general.slice(),
+        cntr_ton: editDraft.cntr_ton.slice(),
+        cntr_teu: editDraft.cntr_teu.slice(),
+        revenue: editDraft.revenue.slice(),
+      };
+      saveStore(store);
+      renderList();
+      BMS.toast('经营目标已保存（月→季/年已汇总）');
+      BMS.closeModal('modal-target');
+    }
+
+    document.getElementById('yearSel').addEventListener('change', renderList);
+    renderList();
+  </script>
+</body>
+</html>

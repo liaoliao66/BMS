@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>费用模块 · 经营管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .btn-cta { background:#0f766e; } .btn-cta:hover { background:#0d9488; }
+    .row-hover:hover { background:#f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50" data-page="cfg-fee-modules" data-title="费用模块">
+  <div id="app-root"></div>
+  <div id="page-main">
+    <p class="text-xs text-slate-500 mb-4">按<strong>货类 × 计费模式</strong>维护模板（如散货预置 10 种模式）。合同侧<strong>引用副本</strong>后可改价改规则，不回写本页。支持等级计费（分段累进 / 全量落档），升档仅影响后续期间。</p>
+
+    <div class="flex flex-wrap gap-3 justify-between mb-5">
+      <div class="flex flex-wrap gap-2">
+        <input id="q" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm w-48" placeholder="搜索编码/名称" />
+        <select id="fCat" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">全部大类</option>
+          <option>装卸</option><option>堆存</option><option>附加</option><option>船舶</option><option>违约</option>
+        </select>
+        <select id="fCargo" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">全部货类</option>
+          <option>散货</option><option>集装箱</option><option>通用</option>
+        </select>
+        <select id="fStatus" class="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm">
+          <option value="">全部状态</option>
+          <option>启用</option><option>停用</option>
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="button" onclick="resetFees()" class="border bg-white text-sm px-4 py-2 rounded-xl">恢复预置</button>
+        <button type="button" onclick="openFeeForm()" class="btn-cta text-white text-sm px-4 py-2 rounded-xl inline-flex items-center gap-2"><i class="fa-solid fa-plus"></i>新增费用模块</button>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-slate-500">
+          <tr>
+            <th class="px-5 py-3 text-left">计费模式</th>
+            <th class="px-4 py-3 text-left">货类</th>
+            <th class="px-4 py-3 text-left">大类</th>
+            <th class="px-4 py-3 text-left">单位</th>
+            <th class="px-4 py-3 text-left">基准单价</th>
+            <th class="px-4 py-3 text-left">等级</th>
+            <th class="px-4 py-3 text-left">算法</th>
+            <th class="px-4 py-3 text-left">状态</th>
+            <th class="px-5 py-3 text-left">操作</th>
+          </tr>
+        </thead>
+        <tbody id="feeBody"></tbody>
+      </table>
+      <div class="px-5 py-3 border-t text-sm text-slate-500" id="feeCount">共 0 条</div>
+    </div>
+
+    <div id="modal-fee" data-modal class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+      <div class="absolute inset-0 bg-slate-900/40" onclick="BMS.closeModal('modal-fee')"></div>
+      <div class="relative bg-white rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div class="shrink-0 px-6 py-4 border-b flex justify-between items-center">
+          <h3 id="feeFormTitle" class="text-lg font-semibold">新增费用模块</h3>
+          <button type="button" onclick="BMS.closeModal('modal-fee')"><i class="fa-solid fa-xmark text-slate-400"></i></button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+          <input type="hidden" id="fEditId" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">模块编码 <span class="text-red-500">*</span></label>
+              <input id="fId" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="FEE_LOAD_BULK" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">模块名称 <span class="text-red-500">*</span></label>
+              <input id="fName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="散货装卸费" />
+            </div>
+          </div>
+          <p id="linkHint" class="text-xs text-teal-800 bg-teal-50 border border-teal-100 rounded-xl px-3 py-2">切换「费目大类 / 计价方式」将重置关联字段为推荐默认值。</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">货类</label>
+              <select id="fCargoType" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>散货</option><option>集装箱</option><option>通用</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">计费模式名称</label>
+              <input id="fModeName" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" placeholder="如 按吨计价" />
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">费目大类</label>
+              <select id="fCategory" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>装卸</option><option>堆存</option><option>附加</option><option>船舶</option><option>违约</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">默认计量单位</label>
+              <select id="fUnit" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"></select>
+              <p id="unitHint" class="text-[11px] text-slate-400 mt-1"></p>
+            </div>
+            <div>
+              <label id="fBaseLabel" class="block text-sm text-slate-600 mb-1">基准单价（元）</label>
+              <input id="fBase" type="number" step="0.01" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="12" />
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">计价方式</label>
+              <select id="fPriceMode" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <option>单价×数量</option><option>固定包干</option><option>免堆+超期</option>
+              </select>
+            </div>
+            <div id="freeDaysWrap" class="hidden">
+              <label class="block text-sm text-slate-600 mb-1">免堆天数</label>
+              <input id="fFreeDays" type="number" min="0" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm" value="7" />
+            </div>
+            <div>
+              <label class="block text-sm text-slate-600 mb-1">状态</label>
+              <select id="fStatusSel" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"><option>启用</option><option>停用</option></select>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 rounded-2xl p-4 space-y-3 bg-slate-50/60">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p class="text-sm font-medium text-slate-800">等级计费</p>
+                <p id="tierHint" class="text-xs text-slate-500 mt-0.5">累计窗口固定为<strong>合同期累计</strong>；达档后仅影响后续期间</p>
+              </div>
+              <label class="inline-flex items-center gap-2 text-sm">
+                <input id="fTierOn" type="checkbox" class="rounded border-slate-300" checked />
+                启用等级
+              </label>
+            </div>
+            <div id="tierRules" class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">触发维度</label>
+                <select id="fTrigger" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                  <option>累计计费量</option><option>累计金额</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">档位结果（二选一）</label>
+                <select id="fResult" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                  <option>单价</option><option>折扣</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-500 mb-1">跨档算法</label>
+                <select id="fAlgo" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                  <option>分段累进</option><option>全量落档</option>
+                </select>
+              </div>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs bg-white rounded-xl overflow-hidden border border-slate-100">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th class="px-3 py-2 text-left">等级</th>
+                    <th class="px-3 py-2 text-left">名称</th>
+                    <th class="px-3 py-2 text-left" id="tierMinHead">下限（含）</th>
+                    <th class="px-3 py-2 text-left" id="tierMaxHead">上限（不含）</th>
+                    <th class="px-3 py-2 text-left" id="tierValHead">档位单价</th>
+                    <th class="px-3 py-2 text-left"></th>
+                  </tr>
+                </thead>
+                <tbody id="tierBody"></tbody>
+              </table>
+            </div>
+            <button type="button" id="btnAddTier" onclick="addTierRow()" class="text-xs text-teal-700 hover:underline">+ 增加等级</button>
+          </div>
+
+          <div>
+            <label class="block text-sm text-slate-600 mb-1">备注</label>
+            <textarea id="fRemark" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm h-16" placeholder="计费说明"></textarea>
+          </div>
+
+          <div class="border border-teal-100 bg-teal-50/50 rounded-2xl p-4">
+            <div class="flex flex-wrap gap-2 items-end justify-between mb-2">
+              <div>
+                <p class="text-sm font-medium text-slate-800">试算（演示）</p>
+                <p id="trialHint" class="text-xs text-slate-500">输入本期计费量，按当前规则试算；不回溯历史</p>
+              </div>
+              <div class="flex gap-2 items-center">
+                <input id="trialQty" type="number" class="border border-slate-200 rounded-xl px-3 py-2 text-sm w-32 bg-white" value="75000" />
+                <button type="button" onclick="runTrial()" class="border bg-white text-sm px-3 py-2 rounded-xl">试算</button>
+              </div>
+            </div>
+            <pre id="trialOut" class="text-xs text-slate-600 whitespace-pre-wrap bg-white rounded-xl p-3 border border-teal-50 min-h-[3rem]">点击试算查看分段明细</pre>
+          </div>
+        </div>
+        <div class="shrink-0 px-6 py-4 border-t flex gap-3">
+          <button type="button" onclick="saveFee()" class="btn-cta text-white text-sm px-5 py-2.5 rounded-xl">保存</button>
+          <button type="button" onclick="BMS.closeModal('modal-fee')" class="text-sm text-slate-500 px-3">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../assets/fee-config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    let fees = BMSFeeConfig.getFees();
+    let suppressLink = false;
+
+    const CAT_PRESETS = {
+      '装卸': {
+        priceMode: '单价×数量',
+        unitCodes: ['TON', 'TEU', 'BOX'],
+        unitCode: 'TON',
+        basePrice: 12,
+        baseLabel: '基准单价（元）',
+        tierEnabled: true,
+        trigger: '累计计费量',
+        resultType: '单价',
+        algorithm: '分段累进',
+        freeDays: null,
+        trialQty: 75000,
+        remark: '装卸按作业量计费；等级按合同期累计，升档不回溯。',
+        tiers: [
+          { level: 1, name: '基础档', min: 0, max: 50000, price: 12, discount: 100 },
+          { level: 2, name: '协议档', min: 50000, max: 100000, price: 11, discount: 100 },
+          { level: 3, name: '战略档', min: 100000, max: null, price: 10, discount: 100 },
+        ],
+        hint: '装卸：推荐按量计价；单位常用吨 / TEU。',
+      },
+      '堆存': {
+        priceMode: '免堆+超期',
+        unitCodes: ['TON_DAY', 'TEU_DAY', 'DAY'],
+        unitCode: 'TON_DAY',
+        basePrice: 0.8,
+        baseLabel: '超期单价（元）',
+        tierEnabled: true,
+        trigger: '累计计费量',
+        resultType: '单价',
+        algorithm: '分段累进',
+        freeDays: 7,
+        trialQty: 20,
+        remark: '免堆期内不计费；超期按天数分段累进。',
+        tiers: [
+          { level: 1, name: '超期 1–7 天', min: 0, max: 7, price: 0.8, discount: 100 },
+          { level: 2, name: '超期 8–30 天', min: 7, max: 30, price: 1.2, discount: 100 },
+          { level: 3, name: '超期 31 天以上', min: 30, max: null, price: 2.0, discount: 100 },
+        ],
+        hint: '堆存：默认免堆+超期；单位推荐吨·天 / TEU·天。',
+      },
+      '附加': {
+        priceMode: '单价×数量',
+        unitCodes: ['TRIP', 'TON', 'BOX'],
+        unitCode: 'TRIP',
+        basePrice: 25,
+        baseLabel: '基准单价（元）',
+        tierEnabled: false,
+        trigger: '累计计费量',
+        resultType: '单价',
+        algorithm: '全量落档',
+        freeDays: null,
+        trialQty: 10,
+        remark: '附加作业一口价，默认可不启用等级。',
+        tiers: [],
+        hint: '附加：默认一口价；单位常用车次 / 次。',
+      },
+      '船舶': {
+        priceMode: '固定包干',
+        unitCodes: ['VESSEL', 'DAY'],
+        unitCode: 'VESSEL',
+        basePrice: 8000,
+        baseLabel: '包干金额（元）',
+        tierEnabled: false,
+        trigger: '累计计费量',
+        resultType: '单价',
+        algorithm: '全量落档',
+        freeDays: null,
+        trialQty: 1,
+        remark: '船舶使费按艘次/天包干，默认可不启用等级。',
+        tiers: [],
+        hint: '船舶：默认固定包干；单位推荐艘次。',
+      },
+      '违约': {
+        priceMode: '固定包干',
+        unitCodes: ['DAY', 'CNY', 'VESSEL'],
+        unitCode: 'DAY',
+        basePrice: 5000,
+        baseLabel: '违约日费率 / 包干（元）',
+        tierEnabled: false,
+        trigger: '累计金额',
+        resultType: '折扣',
+        algorithm: '全量落档',
+        freeDays: null,
+        trialQty: 3,
+        remark: '滞期/违约按约定日费率或包干；默认可不启用等级。',
+        tiers: [],
+        hint: '违约：默认包干/日费率；单位推荐天。',
+      },
+    };
+
+    const MODE_PRESETS = {
+      '单价×数量': {
+        baseLabel: '基准单价（元）',
+        freeDays: null,
+        tierEnabled: true,
+        algorithm: '分段累进',
+        resultType: '单价',
+        trigger: '累计计费量',
+      },
+      '固定包干': {
+        baseLabel: '包干金额（元）',
+        freeDays: null,
+        tierEnabled: false,
+        algorithm: '全量落档',
+        resultType: '单价',
+        trigger: '累计金额',
+      },
+      '免堆+超期': {
+        baseLabel: '超期单价（元）',
+        freeDays: 7,
+        tierEnabled: true,
+        algorithm: '分段累进',
+        resultType: '单价',
+        trigger: '累计计费量',
+        tiers: [
+          { level: 1, name: '超期 1–7 天', min: 0, max: 7, price: 0.8, discount: 100 },
+          { level: 2, name: '超期 8–30 天', min: 7, max: 30, price: 1.2, discount: 100 },
+          { level: 3, name: '超期 31 天以上', min: 30, max: null, price: 2.0, discount: 100 },
+        ],
+      },
+    };
+
+    function fillUnits(preferCodes, selected) {
+      const all = BMSFeeConfig.getUnits().filter((u) => u.status === '启用');
+      const prefer = (preferCodes || []).filter((c) => all.some((u) => u.code === c));
+      const rest = all.filter((u) => !prefer.includes(u.code));
+      const ordered = [...prefer.map((c) => all.find((u) => u.code === c)), ...rest];
+      const sel = document.getElementById('fUnit');
+      sel.innerHTML = ordered.map((u) => `<option value="${u.code}">${u.name}（${u.code}）</option>`).join('');
+      const pick = selected && ordered.some((u) => u.code === selected) ? selected : (prefer[0] || ordered[0]?.code);
+      if (pick) sel.value = pick;
+      document.getElementById('unitHint').textContent = prefer.length
+        ? '推荐：' + prefer.map((c) => BMSFeeConfig.unitName(c)).join(' / ')
+        : '';
+    }
+
+    function filtered() {
+      const q = (document.getElementById('q').value || '').trim().toLowerCase();
+      const cat = document.getElementById('fCat').value;
+      const cargo = document.getElementById('fCargo').value;
+      const st = document.getElementById('fStatus').value;
+      return fees.filter((f) => {
+        if (cat && f.category !== cat) return false;
+        if (cargo && (f.cargoType || '通用') !== cargo) return false;
+        if (st && f.status !== st) return false;
+        if (!q) return true;
+        return (f.id + f.name + (f.modeName || '') + (f.cargoType || '')).toLowerCase().includes(q);
+      });
+    }
+
+    function tierSummary(f) {
+      if (!f.tierEnabled) return '一口价';
+      return `${f.resultType} · ${f.algorithm} · ${(f.tiers || []).length} 档`;
+    }
+
+    function render() {
+      const list = filtered();
+      document.getElementById('feeBody').innerHTML = list.map((f) => `
+        <tr class="border-t row-hover">
+          <td class="px-5 py-3">
+            <div class="font-medium">${f.modeName || f.name}</div>
+            <div class="text-xs text-slate-400">${f.name}</div>
+            <div class="text-[11px] text-slate-400 font-mono">${f.id}</div>
+          </td>
+          <td class="px-4 py-3">${f.cargoType || '通用'}</td>
+          <td class="px-4 py-3">${f.category}</td>
+          <td class="px-4 py-3">${BMSFeeConfig.unitName(f.unitCode)}</td>
+          <td class="px-4 py-3">${f.basePrice}</td>
+          <td class="px-4 py-3 text-slate-600">${tierSummary(f)}</td>
+          <td class="px-4 py-3">${f.tierEnabled ? f.algorithm : '—'}</td>
+          <td class="px-4 py-3"><span class="text-xs px-2 py-0.5 rounded-full ${f.status === '启用' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}">${f.status}</span></td>
+          <td class="px-5 py-3 space-x-2">
+            <button type="button" class="hover:text-teal-700" onclick="openFeeForm('${f.id}')">编辑</button>
+            <button type="button" class="hover:text-teal-700" onclick="toggleFee('${f.id}')">${f.status === '启用' ? '停用' : '启用'}</button>
+          </td>
+        </tr>`).join('') || `<tr><td colspan="9" class="px-5 py-8 text-center text-slate-400">暂无数据</td></tr>`;
+      document.getElementById('feeCount').textContent = '共 ' + list.length + ' 条';
+    }
+
+    function setTiers(tiers) {
+      document.getElementById('tierBody').innerHTML = '';
+      (tiers || []).forEach(addTierRow);
+      if (!(tiers || []).length && document.getElementById('fTierOn').checked) {
+        addTierRow({ level: 1, name: '基础档', min: 0, max: '', price: Number(document.getElementById('fBase').value) || 0, discount: 100 });
+      }
+    }
+
+    function syncTierUi() {
+      const on = document.getElementById('fTierOn').checked;
+      document.getElementById('tierRules').classList.toggle('opacity-40', !on);
+      document.getElementById('tierRules').querySelectorAll('select').forEach((el) => { el.disabled = !on; });
+      document.getElementById('btnAddTier').classList.toggle('hidden', !on);
+      document.getElementById('tierBody').closest('.overflow-x-auto').classList.toggle('opacity-40', !on);
+
+      const result = document.getElementById('fResult').value;
+      const trigger = document.getElementById('fTrigger').value;
+      const mode = document.getElementById('fPriceMode').value;
+      document.getElementById('tierValHead').textContent = result === '折扣' ? '折扣（%）' : '档位单价';
+      const rangeUnit = trigger === '累计金额' ? '元' : (mode === '免堆+超期' ? '天' : '量');
+      document.getElementById('tierMinHead').textContent = '下限（含·' + rangeUnit + '）';
+      document.getElementById('tierMaxHead').textContent = '上限（不含·' + rangeUnit + '）';
+      document.getElementById('tierHint').innerHTML = trigger === '累计金额'
+        ? '按<strong>合同期累计金额</strong>达档；升档仅影响后续期间'
+        : (mode === '免堆+超期'
+          ? '按<strong>超期天数</strong>分段；免堆期内不计费；升档不回溯'
+          : '累计窗口固定为<strong>合同期累计</strong>；达档后仅影响后续期间');
+      document.getElementById('trialHint').textContent = trigger === '累计金额'
+        ? '试算输入本期金额基数；达档改折扣/单价，不回溯历史'
+        : (mode === '免堆+超期' ? '试算输入超期天数' : '输入本期计费量，按当前规则试算；不回溯历史');
+      document.querySelectorAll('#tierBody .tier-val').forEach((inp) => {
+        inp.placeholder = result === '折扣' ? '如 97' : '如 11';
+      });
+    }
+
+    function syncFreeDaysUi(freeDays) {
+      const wrap = document.getElementById('freeDaysWrap');
+      const show = freeDays != null;
+      wrap.classList.toggle('hidden', !show);
+      if (show) document.getElementById('fFreeDays').value = freeDays;
+    }
+
+    function applyCategoryPreset(showToast) {
+      const cat = document.getElementById('fCategory').value;
+      const p = CAT_PRESETS[cat];
+      if (!p) return;
+      document.getElementById('fPriceMode').value = p.priceMode;
+      document.getElementById('fBase').value = p.basePrice;
+      document.getElementById('fBaseLabel').textContent = p.baseLabel;
+      document.getElementById('fTierOn').checked = p.tierEnabled;
+      document.getElementById('fTrigger').value = p.trigger;
+      document.getElementById('fResult').value = p.resultType;
+      document.getElementById('fAlgo').value = p.algorithm;
+      document.getElementById('fRemark').value = p.remark;
+      document.getElementById('trialQty').value = p.trialQty;
+      document.getElementById('linkHint').textContent = p.hint + ' 已按大类重置关联字段。';
+      fillUnits(p.unitCodes, p.unitCode);
+      syncFreeDaysUi(p.freeDays);
+      setTiers(p.tiers);
+      syncTierUi();
+      document.getElementById('trialOut').textContent = '字段已按「' + cat + '」重置，可点试算验证';
+      if (showToast) BMS.toast('已按「' + cat + '」重置关联字段');
+    }
+
+    function applyPriceModePreset(showToast) {
+      const mode = document.getElementById('fPriceMode').value;
+      const m = MODE_PRESETS[mode];
+      if (!m) return;
+      const cat = document.getElementById('fCategory').value;
+      const catP = CAT_PRESETS[cat] || {};
+      document.getElementById('fBaseLabel').textContent = m.baseLabel;
+      document.getElementById('fTierOn').checked = m.tierEnabled;
+      document.getElementById('fTrigger').value = m.trigger;
+      document.getElementById('fResult').value = m.resultType;
+      document.getElementById('fAlgo').value = m.algorithm;
+      syncFreeDaysUi(m.freeDays);
+      if (mode === '免堆+超期') {
+        document.getElementById('fBase').value = catP.basePrice != null ? Math.min(catP.basePrice, 0.8) || 0.8 : 0.8;
+        setTiers(m.tiers);
+        fillUnits(catP.unitCodes || ['TON_DAY', 'TEU_DAY', 'DAY'], cat === '堆存' ? 'TON_DAY' : document.getElementById('fUnit').value);
+      } else if (mode === '固定包干') {
+        if (cat === '船舶' || cat === '违约') document.getElementById('fBase').value = catP.basePrice || 5000;
+        setTiers([]);
+      } else {
+        document.getElementById('fBase').value = catP.basePrice != null ? catP.basePrice : 12;
+        setTiers(catP.tiers && catP.tiers.length ? catP.tiers : [
+          { level: 1, name: '基础档', min: 0, max: 50000, price: 12, discount: 100 },
+          { level: 2, name: '协议档', min: 50000, max: 100000, price: 11, discount: 100 },
+          { level: 3, name: '战略档', min: 100000, max: null, price: 10, discount: 100 },
+        ]);
+      }
+      document.getElementById('linkHint').textContent = '计价方式已切换为「' + mode + '」，关联字段已重置。';
+      syncTierUi();
+      document.getElementById('trialOut').textContent = '字段已按「' + mode + '」重置，可点试算验证';
+      if (showToast) BMS.toast('已按「' + mode + '」重置关联字段');
+    }
+
+    function addTierRow(data) {
+      const t = data || { level: document.querySelectorAll('#tierBody tr').length + 1, name: '', min: 0, max: '', price: '', discount: 100 };
+      const result = document.getElementById('fResult').value;
+      const tr = document.createElement('tr');
+      tr.className = 'border-t';
+      tr.innerHTML = `
+        <td class="px-3 py-2"><input type="number" class="tier-level border border-slate-200 rounded-lg px-2 py-1 w-14" value="${t.level}" /></td>
+        <td class="px-3 py-2"><input class="tier-name border border-slate-200 rounded-lg px-2 py-1 w-24" value="${t.name || ''}" /></td>
+        <td class="px-3 py-2"><input type="number" class="tier-min border border-slate-200 rounded-lg px-2 py-1 w-24" value="${t.min}" /></td>
+        <td class="px-3 py-2"><input type="number" class="tier-max border border-slate-200 rounded-lg px-2 py-1 w-24" value="${t.max == null ? '' : t.max}" placeholder="空=无穷" /></td>
+        <td class="px-3 py-2"><input type="number" step="0.01" class="tier-val border border-slate-200 rounded-lg px-2 py-1 w-24" value="${result === '折扣' ? t.discount : t.price}" /></td>
+        <td class="px-3 py-2"><button type="button" class="text-red-400" onclick="this.closest('tr').remove()"><i class="fa-solid fa-trash"></i></button></td>`;
+      document.getElementById('tierBody').appendChild(tr);
+      syncTierUi();
+    }
+
+    function collectTiers() {
+      const result = document.getElementById('fResult').value;
+      return Array.from(document.querySelectorAll('#tierBody tr')).map((tr, i) => {
+        const min = Number(tr.querySelector('.tier-min').value);
+        const maxRaw = tr.querySelector('.tier-max').value;
+        const val = Number(tr.querySelector('.tier-val').value);
+        return {
+          level: Number(tr.querySelector('.tier-level').value) || i + 1,
+          name: tr.querySelector('.tier-name').value.trim() || ('L' + (i + 1)),
+          min: isNaN(min) ? 0 : min,
+          max: maxRaw === '' ? null : Number(maxRaw),
+          price: result === '单价' ? val : Number(document.getElementById('fBase').value) || 0,
+          discount: result === '折扣' ? val : 100,
+        };
+      });
+    }
+
+    function openFeeForm(id) {
+      const f = id ? fees.find((x) => x.id === id) : null;
+      suppressLink = true;
+      document.getElementById('feeFormTitle').textContent = f ? '编辑费用模块' : '新增费用模块';
+      document.getElementById('fEditId').value = f ? f.id : '';
+      document.getElementById('fId').value = f ? f.id : '';
+      document.getElementById('fId').disabled = !!f;
+      document.getElementById('fName').value = f ? f.name : '';
+      document.getElementById('fStatusSel').value = f ? f.status : '启用';
+
+      if (f) {
+        document.getElementById('fCategory').value = f.category;
+        document.getElementById('fCargoType').value = f.cargoType || '通用';
+        document.getElementById('fModeName').value = f.modeName || f.name || '';
+        document.getElementById('fPriceMode').value = f.priceMode;
+        const catP = CAT_PRESETS[f.category] || CAT_PRESETS['装卸'];
+        fillUnits(catP.unitCodes, f.unitCode);
+        document.getElementById('fBase').value = f.basePrice;
+        document.getElementById('fBaseLabel').textContent = MODE_PRESETS[f.priceMode]?.baseLabel || '基准单价（元）';
+        document.getElementById('fTierOn').checked = !!f.tierEnabled;
+        document.getElementById('fTrigger').value = f.trigger;
+        document.getElementById('fResult').value = f.resultType;
+        document.getElementById('fAlgo').value = f.algorithm;
+        document.getElementById('fRemark').value = f.remark || '';
+        syncFreeDaysUi(f.priceMode === '免堆+超期' ? (f.freeDays != null ? f.freeDays : 7) : null);
+        setTiers(f.tiers || []);
+        document.getElementById('linkHint').textContent = '编辑中：切换大类/计价方式将重置关联字段。';
+        document.getElementById('trialOut').textContent = '点击试算查看分段明细';
+      } else {
+        document.getElementById('fCategory').value = '装卸';
+        document.getElementById('fCargoType').value = '散货';
+        document.getElementById('fModeName').value = '';
+        document.getElementById('fName').value = '';
+        document.getElementById('fId').value = '';
+        applyCategoryPreset(false);
+      }
+      syncTierUi();
+      suppressLink = false;
+      BMS.openModal('modal-fee');
+    }
+
+    function saveFee() {
+      const edit = document.getElementById('fEditId').value;
+      const id = document.getElementById('fId').value.trim().toUpperCase();
+      const name = document.getElementById('fName').value.trim();
+      if (!id || !name) { BMS.toast('请填写编码与名称', 'error'); return; }
+      if (!edit && fees.some((f) => f.id === id)) { BMS.toast('编码已存在', 'error'); return; }
+      const tierEnabled = document.getElementById('fTierOn').checked;
+      const tiers = tierEnabled ? collectTiers() : [];
+      if (tierEnabled && tiers.length < 1) { BMS.toast('启用等级时至少配置一档', 'error'); return; }
+      for (let i = 1; i < tiers.length; i++) {
+        if (tiers[i].min < tiers[i - 1].min) { BMS.toast('等级下限须递增', 'error'); return; }
+      }
+      const priceMode = document.getElementById('fPriceMode').value;
+      const cargoType = document.getElementById('fCargoType').value;
+      const modeName = document.getElementById('fModeName').value.trim() || name;
+      const row = {
+        id, name,
+        cargoType,
+        modeName,
+        category: document.getElementById('fCategory').value,
+        unitCode: document.getElementById('fUnit').value,
+        priceMode,
+        tierEnabled,
+        trigger: document.getElementById('fTrigger').value,
+        resultType: document.getElementById('fResult').value,
+        algorithm: document.getElementById('fAlgo').value,
+        window: '合同期累计',
+        basePrice: Number(document.getElementById('fBase').value) || 0,
+        freeDays: priceMode === '免堆+超期' ? Number(document.getElementById('fFreeDays').value) || 0 : null,
+        tiers,
+        status: document.getElementById('fStatusSel').value,
+        remark: document.getElementById('fRemark').value.trim(),
+      };
+      if (edit) fees = fees.map((f) => (f.id === edit ? row : f));
+      else fees.push(row);
+      BMSFeeConfig.saveFees(fees);
+      BMS.toast('费用模块已保存');
+      BMS.closeModal('modal-fee');
+      render();
+    }
+
+    function toggleFee(id) {
+      fees = fees.map((f) => f.id === id ? { ...f, status: f.status === '启用' ? '停用' : '启用' } : f);
+      BMSFeeConfig.saveFees(fees);
+      BMS.toast('状态已更新');
+      render();
+    }
+
+    function resetFees() {
+      fees = BMSFeeConfig.resetFees();
+      BMS.toast('已恢复预置费用模块');
+      render();
+    }
+
+    function runTrial() {
+      const draft = {
+        basePrice: Number(document.getElementById('fBase').value) || 0,
+        tierEnabled: document.getElementById('fTierOn').checked,
+        resultType: document.getElementById('fResult').value,
+        algorithm: document.getElementById('fAlgo').value,
+        tiers: collectTiers(),
+      };
+      const qty = Number(document.getElementById('trialQty').value) || 0;
+      const r = BMSFeeConfig.calcFee(draft, qty);
+      const lines = r.detail.map((d) => `· ${d.name || ('L' + d.level)}：量 ${d.qty} × ${d.price} = ${d.amount.toFixed(2)} 元`).join('\n');
+      document.getElementById('trialOut').textContent =
+        `大类：${document.getElementById('fCategory').value}｜计价：${document.getElementById('fPriceMode').value}\n算法：${draft.algorithm}｜结果：${draft.resultType}｜输入：${qty}\n累计窗口：合同期累计｜升档不回溯历史\n合计：${r.amount.toFixed(2)} 元\n${lines}`;
+    }
+
+    document.getElementById('q').addEventListener('input', render);
+    document.getElementById('fCat').addEventListener('change', render);
+    document.getElementById('fCargo').addEventListener('change', render);
+    document.getElementById('fStatus').addEventListener('change', render);
+    document.getElementById('fTierOn').addEventListener('change', syncTierUi);
+    document.getElementById('fResult').addEventListener('change', () => {
+      // 切换单价/折扣时重置档位列展示，并按当前基准价重建默认档（若用户仅改结果类型）
+      const result = document.getElementById('fResult').value;
+      const base = Number(document.getElementById('fBase').value) || 0;
+      const rows = collectTiers();
+      if (rows.length) {
+        setTiers(rows.map((t) => ({
+          ...t,
+          price: result === '单价' ? (t.price || base) : base,
+          discount: result === '折扣' ? (t.discount || 100) : 100,
+        })));
+      }
+      syncTierUi();
+    });
+    document.getElementById('fTrigger').addEventListener('change', syncTierUi);
+    document.getElementById('fCategory').addEventListener('change', () => {
+      if (suppressLink) return;
+      applyCategoryPreset(true);
+    });
+    document.getElementById('fPriceMode').addEventListener('change', () => {
+      if (suppressLink) return;
+      applyPriceModePreset(true);
+    });
+    render();
+  </script>
+</body>
+</html>
